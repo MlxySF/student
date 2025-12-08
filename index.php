@@ -226,8 +226,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 receipt_data,
                 receipt_mime_type,
                 receipt_size,
-                admin_notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                admin_notes,
+                invoice_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
 
         $note_prefix = $invoice_id ? "Invoice Payment - Invoice ID: $invoice_id. " : "";
@@ -242,23 +243,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $receiptData['data'],         // Base64 encoded receipt
             $receiptData['mime'],         // MIME type (image/jpeg, application/pdf, etc)
             $receiptData['size'],         // Original file size in bytes
-            $full_notes
+            $full_notes,
+            $invoice_id                   // Link to invoice
         ]);
 
         if ($success) {
-    // If this came from an invoice, update that invoice status
-    if ($invoice_id) {
-        $update = $pdo->prepare("UPDATE invoices SET status = 'paid' WHERE id = ?");
-        $update->execute([$invoice_id]);
-    }
+            // If this came from an invoice, update invoice status to 'pending' (awaiting verification)
+            if ($invoice_id) {
+                $update = $pdo->prepare("UPDATE invoices SET status = 'pending' WHERE id = ?");
+                $update->execute([$invoice_id]);
+            }
 
-    $_SESSION['success'] = "Payment uploaded successfully! Waiting for admin verification.";
-    if ($invoice_id) {
-        $_SESSION['success'] .= " (Invoice payment recorded)";
-    }
-} else {
-    $_SESSION['error'] = "Failed to save payment record.";
-}
+            $_SESSION['success'] = "Payment uploaded successfully! Waiting for admin verification.";
+            if ($invoice_id) {
+                $_SESSION['success'] .= " (Invoice payment submitted)";
+            }
+        } else {
+            $_SESSION['error'] = "Failed to save payment record.";
+        }
 
     } else {
         $_SESSION['error'] = "Please select a receipt file.";
