@@ -746,9 +746,25 @@ $page = $_GET['page'] ?? 'login';
                 font-size: 14px;
             }
 
-            .modal-dialog {
-                margin: 10px;
-            }
+            /* Center all admin modals vertically on screen */
+.modal.fade .modal-dialog {
+    display: flex;
+    align-items: center;
+    min-height: 100vh;   /* full viewport height */
+}
+
+/* Remove default top/bottom margin so centering is exact */
+.modal-dialog {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+/* Small padding on mobile so dialog doesn't touch edges */
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 0 10px;
+    }
+}
 
             .table-responsive {
                 overflow-x: auto;

@@ -246,14 +246,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         ]);
 
         if ($success) {
-            $_SESSION['success'] = "Payment uploaded successfully! Waiting for admin verification.";
+    // If this came from an invoice, update that invoice status
+    if ($invoice_id) {
+        $update = $pdo->prepare("UPDATE invoices SET status = 'paid' WHERE id = ?");
+        $update->execute([$invoice_id]);
+    }
 
-            if ($invoice_id) {
-                $_SESSION['success'] .= " (Invoice payment recorded)";
-            }
-        } else {
-            $_SESSION['error'] = "Failed to save payment record.";
-        }
+    $_SESSION['success'] = "Payment uploaded successfully! Waiting for admin verification.";
+    if ($invoice_id) {
+        $_SESSION['success'] .= " (Invoice payment recorded)";
+    }
+} else {
+    $_SESSION['error'] = "Failed to save payment record.";
+}
 
     } else {
         $_SESSION['error'] = "Please select a receipt file.";

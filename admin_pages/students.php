@@ -169,13 +169,18 @@ $all_classes = $pdo->query("SELECT * FROM classes ORDER BY class_code")->fetchAl
                     </table>
 
                     <div class="mt-3">
-                        <a href="?page=students&student_id=<?php echo $student['id']; ?>" class="btn btn-sm btn-primary">
-                            <i class="fas fa-chalkboard-teacher"></i> View Classes
-                        </a>
-                        <a href="?page=payments&student_id=<?php echo $student['id']; ?>" class="btn btn-sm btn-success">
-                            <i class="fas fa-credit-card"></i> View Payments
-                        </a>
-                    </div>
+    <button type="button" class="btn btn-sm btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#studentClassesModal<?php echo $student['id']; ?>">
+        <i class="fas fa-chalkboard-teacher"></i> View Classes
+    </button>
+    <button type="button" class="btn btn-sm btn-success"
+            data-bs-toggle="modal"
+            data-bs-target="#studentPaymentsModal<?php echo $student['id']; ?>">
+        <i class="fas fa-credit-card"></i> View Payments
+    </button>
+</div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -232,6 +237,163 @@ $all_classes = $pdo->query("SELECT * FROM classes ORDER BY class_code")->fetchAl
             </div>
         </div>
     </div>
+    <?php
+// Get this student's active enrollments
+$enroll_stmt = $pdo->prepare("
+    SELECT c.class_code, c.class_name, c.monthly_fee, e.enrollment_date, e.status
+    FROM enrollments e
+    JOIN classes c ON e.class_id = c.id
+    WHERE e.student_id = ?
+    ORDER BY e.enrollment_date DESC
+");
+$enroll_stmt->execute([$student['id']]);
+$student_classes = $enroll_stmt->fetchAll();
+
+// Get this student's payments
+$pay_stmt = $pdo->prepare("
+    SELECT p.*, c.class_code, c.class_name
+    FROM payments p
+    JOIN classes c ON p.class_id = c.id
+    WHERE p.student_id = ?
+    ORDER BY p.upload_date DESC
+");
+$pay_stmt->execute([$student['id']]);
+$student_payments = $pay_stmt->fetchAll();
+?>
+
+<!-- Student Classes Modal -->
+<div class="modal fade" id="studentClassesModal<?php echo $student['id']; ?>" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+            <i class="fas fa-chalkboard-teacher"></i>
+            Classes - <?php echo htmlspecialchars($student['full_name']); ?>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <?php if (count($student_classes) > 0): ?>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Class Code</th>
+                  <th>Class Name</th>
+                  <th>Monthly Fee</th>
+                  <th>Enrollment Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($student_classes as $c): ?>
+                  <tr>
+                    <td><span class="badge bg-info"><?php echo htmlspecialchars($c['class_code']); ?></span></td>
+                    <td><?php echo htmlspecialchars($c['class_name']); ?></td>
+                    <td><?php echo formatCurrency($c['monthly_fee']); ?></td>
+                    <td><?php echo formatDate($c['enrollment_date']); ?></td>
+                    <td>
+                      <?php if ($c['status'] === 'active'): ?>
+                        <span class="badge bg-success">Active</span>
+                      <?php else: ?>
+                        <span class="badge bg-secondary">Inactive</span>
+                      <?php endif; ?>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        <?php else: ?>
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            This student is not enrolled in any classes.
+          </div>
+        <?php endif; ?>
+      </div>
+      <div class="modal-footer">
+    <button type="button"
+            class="btn btn-secondary"
+            data-bs-target="#viewStudentModal<?php echo $student['id']; ?>"
+            data-bs-toggle="modal"
+            data-bs-dismiss="modal">
+        ← Back
+    </button>
+    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+        Close
+    </button>
+</div>
+    </div>
+  </div>
+</div>
+
+<!-- Student Payments Modal -->
+<div class="modal fade" id="studentPaymentsModal<?php echo $student['id']; ?>" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+            <i class="fas fa-credit-card"></i>
+            Payments - <?php echo htmlspecialchars($student['full_name']); ?>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <?php if (count($student_payments) > 0): ?>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Class</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($student_payments as $p): ?>
+                  <tr>
+                    <td><?php echo formatDate($p['upload_date']); ?></td>
+                    <td><span class="badge bg-info"><?php echo htmlspecialchars($p['class_code']); ?></span></td>
+                    <td><strong><?php echo formatCurrency($p['amount']); ?></strong></td>
+                    <td>
+                      <?php if ($p['verification_status'] === 'pending'): ?>
+                        <span class="badge bg-warning">Pending</span>
+                      <?php elseif ($p['verification_status'] === 'verified'): ?>
+                        <span class="badge bg-success">Verified</span>
+                      <?php else: ?>
+                        <span class="badge bg-danger">Rejected</span>
+                      <?php endif; ?>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        <?php else: ?>
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            This student has no payments yet.
+          </div>
+        <?php endif; ?>
+      </div>
+      <div class="modal-footer">
+    <button type="button"
+            class="btn btn-secondary"
+            data-bs-target="#viewStudentModal<?php echo $student['id']; ?>"
+            data-bs-toggle="modal"
+            data-bs-dismiss="modal">
+        ← Back
+    </button>
+    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+        Close
+    </button>
+</div>
+
+    </div>
+  </div>
+</div>
+
 <?php endforeach; ?>
 
 <!-- Create Student Modal -->
