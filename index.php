@@ -598,115 +598,6 @@ $page = $_GET['page'] ?? 'login';
             padding: 40px;
         }
 
-        /* ============================================
-           MOBILE-RESPONSIVE ACTIVITY CARDS
-           ============================================ */
-
-        /* Activity card container */
-        .activity-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .activity-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-        }
-
-        .activity-card .activity-date {
-            font-size: 14px;
-            color: #64748b;
-            font-weight: 600;
-            margin-bottom: 10px;
-            display: block;
-        }
-
-        .activity-card .activity-name {
-            font-size: 18px;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 12px;
-        }
-
-        .activity-card .activity-badges {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .activity-card .activity-badge {
-            display: inline-block;
-            padding: 6px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            color: white;
-        }
-
-        .activity-card .activity-badge.gray {
-            background: #6b7280;
-        }
-
-        .activity-card .activity-badge.cyan {
-            background: #06b6d4;
-        }
-
-        .activity-card .activity-amount {
-            font-size: 24px;
-            font-weight: 700;
-            color: #1e293b;
-            margin: 15px 0;
-        }
-
-        .activity-card .activity-status {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 15px;
-        }
-
-        .activity-card .activity-status.pending {
-            background: #fbbf24;
-            color: #78350f;
-        }
-
-        .activity-card .activity-status.verified {
-            background: #10b981;
-            color: white;
-        }
-
-        .activity-card .activity-status.rejected {
-            background: #ef4444;
-            color: white;
-        }
-
-        .activity-card .activity-btn {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: transform 0.2s;
-        }
-
-        .activity-card .activity-btn:hover {
-            transform: scale(1.02);
-        }
-
         /* Desktop View */
         @media (min-width: 769px) {
             .header-menu-btn {
@@ -719,13 +610,6 @@ $page = $_GET['page'] ?? 'login';
 
             .sidebar-overlay {
                 display: none !important;
-            }
-
-            /* Desktop can show activity cards in grid */
-            .activity-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-                gap: 20px;
             }
         }
 
@@ -801,24 +685,6 @@ $page = $_GET['page'] ?? 'login';
             .modal-dialog {
                 margin: 10px;
             }
-
-            /* Mobile activity cards */
-            .activity-card {
-                padding: 18px;
-            }
-
-            .activity-card .activity-name {
-                font-size: 16px;
-            }
-
-            .activity-card .activity-amount {
-                font-size: 20px;
-            }
-
-            .activity-card .activity-btn {
-                padding: 10px;
-                font-size: 14px;
-            }
         }
 
         @media (max-width: 480px) {
@@ -872,33 +738,6 @@ $page = $_GET['page'] ?? 'login';
             }
 
             .btn {
-                padding: 6px 12px;
-                font-size: 13px;
-            }
-
-            /* Smaller activity cards on tiny screens */
-            .activity-card {
-                padding: 15px;
-            }
-
-            .activity-card .activity-date {
-                font-size: 13px;
-            }
-
-            .activity-card .activity-name {
-                font-size: 15px;
-            }
-
-            .activity-card .activity-badge {
-                padding: 5px 12px;
-                font-size: 12px;
-            }
-
-            .activity-card .activity-amount {
-                font-size: 18px;
-            }
-
-            .activity-card .activity-status {
                 padding: 6px 12px;
                 font-size: 13px;
             }
