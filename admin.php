@@ -280,10 +280,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
         $status = $_POST['status'];
         $notes = $_POST['notes'];
 
-        $stmt = $pdo->prepare("UPDATE payments SET verification_status = ?, admin_notes = ?, verified_by = ?, verified_date = NOW() WHERE id = ?");
-        $stmt->execute([$status, $notes, $_SESSION['admin_id'], $payment_id]);
+        try {
+            // Get payment details including invoice_id
+            $stmt = $pdo->prepare("SELECT invoice_id FROM payments WHERE id = ?");
+            $stmt->execute([$payment_id]);
+            $payment = $stmt->fetch();
 
-        $_SESSION['success'] = "Payment status updated!";
+            // Update payment verification status
+            $stmt = $pdo->prepare("UPDATE payments SET verification_status = ?, admin_notes = ?, verified_by = ?, verified_date = NOW() WHERE id = ?");
+            $stmt->execute([$status, $notes, $_SESSION['admin_id'], $payment_id]);
+
+            // If payment is verified and linked to an invoice, mark invoice as paid
+            if ($status === 'verified' && !empty($payment['invoice_id'])) {
+                $stmt = $pdo->prepare("UPDATE invoices SET status = 'paid', paid_date = NOW() WHERE id = ?");
+                $stmt->execute([$payment['invoice_id']]);
+                $_SESSION['success'] = "Payment verified and invoice marked as paid!";
+            } else {
+                $_SESSION['success'] = "Payment status updated!";
+            }
+        } catch(PDOException $e) {
+            $_SESSION['error'] = "Failed to verify payment: " . $e->getMessage();
+        }
+
         header('Location: admin.php?page=payments');
         exit;
     }
@@ -1057,8 +1075,7 @@ $page = $_GET['page'] ?? 'login';
                 icon.className = 'fas fa-times';
             } else {
                 icon.className = 'fas fa-bars';
-            }
-        }
+            }        }
 
         // Event listeners
         menuToggle.addEventListener('click', toggleSidebar);
