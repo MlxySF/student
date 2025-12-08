@@ -204,3 +204,9 @@ Stack trace:
 [08-Dec-2025 07:35:31 UTC] PHP Notice:  Undefined index: receipt_image in /home/mlxysf/wushusportacademy.app.tc/student/admin_pages/payments.php on line 66
 [08-Dec-2025 07:35:31 UTC] PHP Notice:  Undefined index: receipt_image in /home/mlxysf/wushusportacademy.app.tc/student/admin_pages/payments.php on line 50
 [08-Dec-2025 07:35:31 UTC] PHP Notice:  Undefined index: receipt_image in /home/mlxysf/wushusportacademy.app.tc/student/admin_pages/payments.php on line 66
+[08-Dec-2025 09:08:00 UTC] PHP Notice:  Undefined index: receipt_image in /home/mlxysf/wushusportacademy.app.tc/student/admin_pages/payments.php on line 50
+[08-Dec-2025 09:08:00 UTC] PHP Notice:  Undefined index: receipt_image in /home/mlxysf/wushusportacademy.app.tc/student/admin_pages/payments.php on line 66
+[08-Dec-2025 09:08:00 UTC] PHP Notice:  Undefined index: receipt_image in /home/mlxysf/wushusportacademy.app.tc/student/admin_pages/payments.php on line 50
+[08-Dec-2025 09:08:00 UTC] PHP Notice:  Undefined index: receipt_image in /home/mlxysf/wushusportacademy.app.tc/student/admin_pages/payments.php on line 66
+[08-Dec-2025 09:08:00 UTC] PHP Notice:  Undefined index: receipt_image in /home/mlxysf/wushusportacademy.app.tc/student/admin_pages/payments.php on line 50
+[08-Dec-2025 09:08:00 UTC] PHP Notice:  Undefined index: receipt_image in /home/mlxysf/wushusportacademy.app.tc/student/admin_pages/payments.php on line 66

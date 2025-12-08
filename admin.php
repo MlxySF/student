@@ -1,21 +1,17 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 session_start();
 require_once 'config.php';
 
-// Helper Functions
+// Helper function to check if admin is logged in
 function isAdminLoggedIn() {
     return isset($_SESSION['admin_id']);
 }
 
-function requireAdminLogin() {
-    if (!isAdminLoggedIn()) {
-        header('Location: admin.php');
-        exit;
-    }
-}
-
 // Handle Admin Login
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'admin_login') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'login') {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
@@ -54,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
         } catch(PDOException $e) {
             $_SESSION['error'] = "Failed to create student. Email may already exist.";
         }
+
         header('Location: admin.php?page=students');
         exit;
     }
@@ -80,6 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
         } catch(PDOException $e) {
             $_SESSION['error'] = "Failed to update student.";
         }
+
         header('Location: admin.php?page=students');
         exit;
     }
@@ -87,6 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
     // Delete Student
     if (isset($_POST['action']) && $_POST['action'] === 'delete_student') {
         $id = $_POST['student_id'];
+
         try {
             $stmt = $pdo->prepare("DELETE FROM students WHERE id = ?");
             $stmt->execute([$id]);
@@ -94,6 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
         } catch(PDOException $e) {
             $_SESSION['error'] = "Failed to delete student. They may have associated records.";
         }
+
         header('Location: admin.php?page=students');
         exit;
     }
@@ -114,6 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
         } catch(PDOException $e) {
             $_SESSION['error'] = "Failed to create class. Class code may already exist.";
         }
+
         header('Location: admin.php?page=classes');
         exit;
     }
@@ -133,6 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
         } catch(PDOException $e) {
             $_SESSION['error'] = "Failed to update class.";
         }
+
         header('Location: admin.php?page=classes');
         exit;
     }
@@ -140,6 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
     // Delete Class
     if (isset($_POST['action']) && $_POST['action'] === 'delete_class') {
         $id = $_POST['class_id'];
+
         try {
             $stmt = $pdo->prepare("DELETE FROM classes WHERE id = ?");
             $stmt->execute([$id]);
@@ -147,6 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
         } catch(PDOException $e) {
             $_SESSION['error'] = "Failed to delete class. It may have enrolled students.";
         }
+
         header('Location: admin.php?page=classes');
         exit;
     }
@@ -172,6 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
         } catch(PDOException $e) {
             $_SESSION['error'] = "Failed to create invoice: " . $e->getMessage();
         }
+
         header('Location: admin.php?page=invoices');
         exit;
     }
@@ -188,15 +193,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
             // If marking as paid, set paid_date
             if ($status === 'paid') {
                 $stmt = $pdo->prepare("UPDATE invoices SET description = ?, amount = ?, due_date = ?, status = ?, paid_date = NOW() WHERE id = ?");
-                $stmt->execute([$description, $amount, $due_date, $status, $id]);
             } else {
                 $stmt = $pdo->prepare("UPDATE invoices SET description = ?, amount = ?, due_date = ?, status = ? WHERE id = ?");
-                $stmt->execute([$description, $amount, $due_date, $status, $id]);
             }
+            $stmt->execute([$description, $amount, $due_date, $status, $id]);
             $_SESSION['success'] = "Invoice updated successfully!";
         } catch(PDOException $e) {
             $_SESSION['error'] = "Failed to update invoice.";
         }
+
         header('Location: admin.php?page=invoices');
         exit;
     }
@@ -204,6 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
     // Delete Invoice
     if (isset($_POST['action']) && $_POST['action'] === 'delete_invoice') {
         $id = $_POST['invoice_id'];
+
         try {
             $stmt = $pdo->prepare("DELETE FROM invoices WHERE id = ?");
             $stmt->execute([$id]);
@@ -211,6 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
         } catch(PDOException $e) {
             $_SESSION['error'] = "Failed to delete invoice.";
         }
+
         header('Location: admin.php?page=invoices');
         exit;
     }
@@ -218,6 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
     // Send Invoice Notification
     if (isset($_POST['action']) && $_POST['action'] === 'send_invoice') {
         $invoice_id = $_POST['invoice_id'];
+
         try {
             $stmt = $pdo->prepare("
                 SELECT i.*, s.full_name, s.email, s.student_id 
@@ -239,11 +247,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
         } catch(PDOException $e) {
             $_SESSION['error'] = "Failed to send invoice.";
         }
+
         header('Location: admin.php?page=invoices');
         exit;
     }
 
-    // ============ EXISTING ACTIONS ============
+    // ============ ENROLLMENT ============
 
     // Enroll Student
     if (isset($_POST['action']) && $_POST['action'] === 'enroll_student') {
@@ -258,9 +267,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
         } catch(PDOException $e) {
             $_SESSION['error'] = "Enrollment failed. Student may already be enrolled.";
         }
+
         header('Location: admin.php?page=students');
         exit;
     }
+
+    // ============ PAYMENT VERIFICATION ============
 
     // Verify Payment
     if (isset($_POST['action']) && $_POST['action'] === 'verify_payment') {
@@ -270,10 +282,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
 
         $stmt = $pdo->prepare("UPDATE payments SET verification_status = ?, admin_notes = ?, verified_by = ?, verified_date = NOW() WHERE id = ?");
         $stmt->execute([$status, $notes, $_SESSION['admin_id'], $payment_id]);
+
         $_SESSION['success'] = "Payment status updated!";
         header('Location: admin.php?page=payments');
         exit;
     }
+
+    // ============ ATTENDANCE ============
 
     // Mark Attendance
     if (isset($_POST['action']) && $_POST['action'] === 'mark_attendance') {
@@ -285,7 +300,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
 
         try {
             $stmt = $pdo->prepare("
-                INSERT INTO attendance (student_id, class_id, attendance_date, status, marked_by, notes) 
+                INSERT INTO attendance (student_id, class_id, attendance_date, status, marked_by, notes)
                 VALUES (?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE status = ?, notes = ?
             ");
@@ -294,6 +309,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
         } catch(PDOException $e) {
             $_SESSION['error'] = "Failed to mark attendance.";
         }
+
         header('Location: admin.php?page=attendance');
         exit;
     }
@@ -306,12 +322,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdminLoggedIn()) {
 
         foreach($attendances as $student_id => $status) {
             $stmt = $pdo->prepare("
-                INSERT INTO attendance (student_id, class_id, attendance_date, status, marked_by) 
+                INSERT INTO attendance (student_id, class_id, attendance_date, status, marked_by)
                 VALUES (?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE status = ?
             ");
             $stmt->execute([$student_id, $class_id, $attendance_date, $status, $_SESSION['admin_id'], $status]);
         }
+
         $_SESSION['success'] = "Bulk attendance marked successfully!";
         header('Location: admin.php?page=attendance');
         exit;
@@ -333,277 +350,477 @@ $page = $_GET['page'] ?? 'login';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo SITE_NAME; ?> - Admin Portal</title>
+
+    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
     <style>
         :root {
-            --primary: #dc2626;
-            --secondary: #991b1b;
+            --primary-color: #4f46e5;
+            --secondary-color: #7c3aed;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
         }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding-top: 0;
         }
+
+        /* ============================================
+           FIXED HEADER DESIGN - ADMIN
+           ============================================ */
+
+        /* Fixed Top Header */
+        .top-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-menu-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .header-menu-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+
+        .school-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            text-decoration: none;
+        }
+
+        .school-logo img {
+            height: 45px;
+            width: auto;
+            border-radius: 8px;
+        }
+
+        .school-logo .logo-placeholder {
+            width: 45px;
+            height: 45px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .school-logo .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .school-logo .logo-title {
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .school-logo .logo-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+        }
+
+        .header-user-avatar {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .header-user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-user-name {
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .header-user-role {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 70px);
+            background: rgba(0,0,0,0.5);
+            z-index: 998;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 70px;
+            width: 280px;
+            height: calc(100vh - 70px);
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            z-index: 999;
+            transition: left 0.3s ease;
+            overflow-y: auto;
+            padding: 20px 0;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 14px 25px;
+            margin: 3px 0;
+            border-radius: 0;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-left: 4px solid #4f46e5;
+        }
+
+        .sidebar .nav-link i {
+            width: 20px;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        body.logged-in {
+            padding-top: 70px;
+        }
+
         .main-container {
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            margin: 30px auto;
-            max-width: 1400px;
+            margin: 0;
+            max-width: none;
         }
-        .sidebar {
-            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-            color: white;
-            border-radius: 20px 0 0 20px;
-            padding: 30px 0;
-            min-height: 600px;
+
+        .content-area {
+            margin-left: 280px;
+            padding: 30px;
+            min-height: calc(100vh - 70px);
         }
-        .sidebar .nav-link {
-            color: rgba(255,255,255,0.8);
-            padding: 12px 30px;
-            margin: 5px 0;
-            transition: all 0.3s;
-        }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active {
-            background: rgba(255,255,255,0.1);
-            color: white;
-            border-left: 4px solid var(--primary);
-        }
-        .content-area { padding: 40px; }
+
         .card {
             border: none;
             border-radius: 15px;
             box-shadow: 0 2px 15px rgba(0,0,0,0.1);
             margin-bottom: 25px;
         }
+
         .card-header {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
             border-radius: 15px 15px 0 0 !important;
             padding: 18px 25px;
             font-weight: 600;
         }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 20px;
+        }
+
+        .stat-icon.bg-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .stat-icon.bg-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+        .stat-icon.bg-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+        .stat-icon.bg-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; }
+        .stat-icon.bg-info { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; }
+
+        .stat-content h3 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        .stat-content p {
+            margin: 0;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .badge-status {
+            padding: 8px 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 10px 25px;
+            border-radius: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
         .login-container {
             max-width: 450px;
             margin: 100px auto;
         }
+
         .login-card {
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             padding: 40px;
         }
-        .stat-card {
-            text-align: center;
-            padding: 25px;
-            border-radius: 15px;
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        /* ============================================
-       MOBILE OPTIMIZATION - ADD THIS
-       ============================================ */
 
-    /* Hamburger Menu Button (Hidden on Desktop) */
-    .mobile-menu-btn {
-        display: none;
-        position: fixed;
-        top: 15px;
-        left: 15px;
-        z-index: 1001;
-        background: linear-gradient(135deg, #4f46e5, #7c3aed);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        padding: 12px 15px;
-        font-size: 20px;
-        cursor: pointer;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    }
+        /* Desktop View */
+        @media (min-width: 769px) {
+            .header-menu-btn {
+                display: none;
+            }
 
-    .mobile-menu-btn:hover {
-        transform: scale(1.05);
-    }
+            .sidebar {
+                left: 0;
+            }
 
-    /* Mobile Overlay */
-    .sidebar-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-        z-index: 999;
-    }
-
-    .sidebar-overlay.active {
-        display: block;
-    }
-
-    /* Mobile Responsive Styles */
-    @media (max-width: 768px) {
-        /* Show Hamburger Button */
-        .mobile-menu-btn {
-            display: block;
+            .sidebar-overlay {
+                display: none !important;
+            }
         }
 
-        /* Make main container full width */
-        .main-container {
-            margin: 0;
-            border-radius: 0;
-            min-height: 100vh;
+        /* Mobile View */
+        @media (max-width: 768px) {
+            .top-header {
+                padding: 0 15px;
+            }
+
+            .school-logo .logo-text {
+                display: none;
+            }
+
+            .header-user-info {
+                display: none;
+            }
+
+            .sidebar {
+                left: -280px;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .content-area {
+                margin-left: 0;
+                padding: 20px 15px;
+            }
+
+            .stat-card {
+                margin-bottom: 15px;
+            }
+
+            .stat-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+                margin-right: 15px;
+            }
+
+            .stat-content h3 {
+                font-size: 24px;
+            }
+
+            .stat-content p {
+                font-size: 12px;
+            }
+
+            .card-header {
+                padding: 12px 15px;
+                font-size: 14px;
+            }
+
+            .card-body {
+                padding: 15px;
+            }
+
+            .btn {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+
+            h3.mb-4 {
+                font-size: 20px;
+                margin-bottom: 15px !important;
+            }
+
+            .form-control, .form-select {
+                font-size: 14px;
+            }
+
+            .modal-dialog {
+                margin: 10px;
+            }
+
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
         }
 
-        /* Hide sidebar by default */
-        .sidebar {
-            position: fixed;
-            left: -100%;
-            top: 0;
-            height: 100vh;
-            width: 280px;
-            z-index: 1000;
-            transition: left 0.3s ease;
-            border-radius: 0;
-            overflow-y: auto;
-        }
+        @media (max-width: 480px) {
+            .top-header {
+                height: 60px;
+            }
 
-        /* Show sidebar when active */
-        .sidebar.active {
-            left: 0;
-        }
+            body.logged-in {
+                padding-top: 60px;
+            }
 
-        /* Adjust content area for mobile */
-        .content-area {
-            padding: 70px 15px 20px 15px;
-            margin-left: 0 !important;
-        }
+            .sidebar {
+                top: 60px;
+                height: calc(100vh - 60px);
+            }
 
-        /* Compact admin profile in sidebar */
-        .sidebar .text-center {
-            padding: 15px 10px 10px 10px;
-        }
+            .sidebar-overlay {
+                top: 60px;
+                height: calc(100vh - 60px);
+            }
 
-        .sidebar .text-center i {
-            font-size: 2rem;
-        }
+            .school-logo img,
+            .school-logo .logo-placeholder {
+                height: 38px;
+                width: 38px;
+            }
 
-        .sidebar .text-center h5 {
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
+            .header-menu-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
 
-        .sidebar .text-center p {
-            font-size: 12px;
-        }
+            .header-user-avatar {
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+            }
 
-        /* Compact navigation links */
-        .sidebar .nav-link {
-            padding: 10px 20px;
-            font-size: 14px;
-        }
+            .content-area {
+                padding: 15px 10px;
+                min-height: calc(100vh - 60px);
+            }
 
-        .sidebar .nav-link i {
-            font-size: 16px;
-        }
+            h3.mb-4 {
+                font-size: 18px;
+            }
 
-        /* Make stat cards stack vertically */
-        .stat-card {
-            margin-bottom: 15px;
-        }
+            .stat-content h3 {
+                font-size: 20px;
+            }
 
-        /* Smaller stat icons */
-        .stat-icon {
-            width: 50px;
-            height: 50px;
-            font-size: 20px;
-            margin-right: 15px;
+            .btn {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
         }
-
-        .stat-content h3 {
-            font-size: 24px;
-        }
-
-        .stat-content p {
-            font-size: 12px;
-        }
-
-        /* Make tables responsive */
-        .table-responsive {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        /* Compact cards */
-        .card {
-            margin-bottom: 15px;
-        }
-
-        .card-header {
-            padding: 12px 15px;
-            font-size: 14px;
-        }
-
-        .card-body {
-            padding: 15px;
-        }
-
-        /* Smaller buttons */
-        .btn {
-            padding: 8px 15px;
-            font-size: 14px;
-        }
-
-        /* Page title */
-        h3.mb-4 {
-            font-size: 20px;
-            margin-bottom: 15px !important;
-        }
-
-        /* Forms on mobile */
-        .form-control, .form-select {
-            font-size: 14px;
-        }
-
-        .modal-dialog {
-            margin: 10px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        /* Extra small screens */
-        .sidebar {
-            width: 250px;
-        }
-
-        .content-area {
-            padding: 60px 10px 15px 10px;
-        }
-
-        h3.mb-4 {
-            font-size: 18px;
-        }
-
-        .stat-content h3 {
-            font-size: 20px;
-        }
-
-        .btn {
-            padding: 6px 12px;
-            font-size: 13px;
-        }
-    }
     </style>
 </head>
-<body>
+<body<?php echo ($page !== 'login') ? ' class="logged-in"' : ''; ?>>
 
 <?php if ($page === 'login'): ?>
     <!-- Login Page -->
-    <div class="login-container">
+    <div class="login-container animate__animated animate__fadeIn">
         <div class="login-card">
             <div class="text-center mb-4">
-                <i class="fas fa-shield-alt fa-4x text-danger mb-3"></i>
+                <i class="fas fa-user-shield fa-4x text-primary mb-3"></i>
                 <h2>Admin Portal</h2>
                 <p class="text-muted">Sign in to continue</p>
             </div>
@@ -614,17 +831,23 @@ $page = $_GET['page'] ?? 'login';
                 </div>
             <?php endif; ?>
 
-            <form method="POST">
-                <input type="hidden" name="action" value="admin_login">
-                <div class="mb-3">
-                    <label class="form-label">Username</label>
-                    <input type="text" name="username" class="form-control" required>
+            <?php if (isset($_SESSION['success'])): ?>
+                <div class="alert alert-success">
+                    <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
                 </div>
+            <?php endif; ?>
+
+            <form method="POST" action="">
+                <input type="hidden" name="action" value="login">
                 <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-control" required>
+                    <label class="form-label"><i class="fas fa-user"></i> Username</label>
+                    <input type="text" name="username" class="form-control form-control-lg" required autofocus>
                 </div>
-                <button type="submit" class="btn btn-danger w-100">
+                <div class="mb-4">
+                    <label class="form-label"><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" name="password" class="form-control form-control-lg" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg w-100">
                     <i class="fas fa-sign-in-alt"></i> Login
                 </button>
             </form>
@@ -632,136 +855,219 @@ $page = $_GET['page'] ?? 'login';
     </div>
 
 <?php else: ?>
-    <?php requireAdminLogin(); ?>
+    <?php if (!isAdminLoggedIn()): header('Location: admin.php'); exit; endif; ?>
 
-    <!-- Main Layout -->
-    <div class="main-container">
-        <div class="row g-0">
-            <!-- Sidebar -->
-            <div class="col-md-3 sidebar">
-                <div class="text-center mb-4 px-3">
-                    <i class="fas fa-user-shield fa-3x mb-2"></i>
-                    <h5><?php echo $_SESSION['admin_name']; ?></h5>
-                    <p class="text-muted small"><?php echo ucfirst($_SESSION['admin_role']); ?></p>
+    <!-- Fixed Top Header -->
+    <div class="top-header">
+        <!-- Left Side: Menu + Logo -->
+        <div class="header-left">
+            <!-- Hamburger Menu Button -->
+            <button class="header-menu-btn" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <!-- School Logo -->
+            <a href="?page=dashboard" class="school-logo">
+                <!-- Option 1: If you have a logo image, use this: -->
+                <!-- <img src="assets/logo.png" alt="School Logo"> -->
+
+                <!-- Option 2: Placeholder icon (current) -->
+                <div class="logo-placeholder">
+                    <i class="fas fa-graduation-cap"></i>
                 </div>
 
-                <nav class="nav flex-column">
-                    <a class="nav-link <?php echo $page === 'dashboard' ? 'active' : ''; ?>" href="?page=dashboard">
-                        <i class="fas fa-home"></i> Dashboard
-                    </a>
-                    <a class="nav-link <?php echo $page === 'students' ? 'active' : ''; ?>" href="?page=students">
-                        <i class="fas fa-users"></i> Students
-                    </a>
-                    <a class="nav-link <?php echo $page === 'classes' ? 'active' : ''; ?>" href="?page=classes">
-                        <i class="fas fa-book"></i> Classes
-                    </a>
-                    <a class="nav-link <?php echo $page === 'invoices' ? 'active' : ''; ?>" href="?page=invoices">
-                        <i class="fas fa-file-invoice"></i> Invoices
-                    </a>
-                    <a class="nav-link <?php echo $page === 'payments' ? 'active' : ''; ?>" href="?page=payments">
-                        <i class="fas fa-credit-card"></i> Payments
-                    </a>
-                    <a class="nav-link <?php echo $page === 'attendance' ? 'active' : ''; ?>" href="?page=attendance">
-                        <i class="fas fa-calendar-check"></i> Attendance
-                    </a>
-                    <hr class="text-white mx-3">
-                    <a class="nav-link" href="?logout=1">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
-                </nav>
-            </div>
+                <div class="logo-text">
+                    <span class="logo-title">Wushu Academy</span>
+                    <span class="logo-subtitle">Admin Portal</span>
+                </div>
+            </a>
+        </div>
 
-            <!-- Content -->
-            <div class="col-md-9">
-                <div class="content-area">
-                    <?php if (isset($_SESSION['success'])): ?>
-                        <div class="alert alert-success alert-dismissible fade show">
-                            <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if (isset($_SESSION['error'])): ?>
-                        <div class="alert alert-danger alert-dismissible fade show">
-                            <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php
-                    $page_file = "admin_pages/{$page}.php";
-                    if (file_exists($page_file)) {
-                        include $page_file;
-                    } else {
-                        echo '<div class="alert alert-warning">Page not found.</div>';
-                    }
-                    ?>
+        <!-- Right Side: User Info -->
+        <div class="header-right">
+            <div class="header-user">
+                <div class="header-user-avatar">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="header-user-info">
+                    <span class="header-user-name"><?php echo $_SESSION['admin_name']; ?></span>
+                    <span class="header-user-role">Administrator</span>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar Navigation -->
+    <div class="sidebar" id="sidebar">
+        <nav class="nav flex-column">
+            <a class="nav-link <?php echo $page === 'dashboard' ? 'active' : ''; ?>" href="?page=dashboard">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a class="nav-link <?php echo $page === 'students' ? 'active' : ''; ?>" href="?page=students">
+                <i class="fas fa-users"></i>
+                <span>Students</span>
+            </a>
+            <a class="nav-link <?php echo $page === 'classes' ? 'active' : ''; ?>" href="?page=classes">
+                <i class="fas fa-chalkboard-teacher"></i>
+                <span>Classes</span>
+            </a>
+            <a class="nav-link <?php echo $page === 'invoices' ? 'active' : ''; ?>" href="?page=invoices">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>Invoices</span>
+            </a>
+            <a class="nav-link <?php echo $page === 'payments' ? 'active' : ''; ?>" href="?page=payments">
+                <i class="fas fa-credit-card"></i>
+                <span>Payments</span>
+            </a>
+            <a class="nav-link <?php echo $page === 'attendance' ? 'active' : ''; ?>" href="?page=attendance">
+                <i class="fas fa-calendar-check"></i>
+                <span>Attendance</span>
+            </a>
+            <hr class="text-white mx-3">
+            <a class="nav-link" href="?logout=1">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+        <h3 class="mb-4">
+            <i class="fas fa-<?php 
+                echo $page === 'dashboard' ? 'home' : 
+                    ($page === 'students' ? 'users' :
+                    ($page === 'classes' ? 'chalkboard-teacher' :
+                    ($page === 'invoices' ? 'file-invoice-dollar' : 
+                    ($page === 'payments' ? 'credit-card' : 'calendar-check')))); 
+            ?>"></i>
+            <?php echo ucfirst($page); ?>
+        </h3>
+
+        <?php if (isset($_SESSION['success'])): ?>
+            <div class="alert alert-success alert-dismissible fade show animate__animated animate__fadeInDown temp-alert">
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_SESSION['error'])): ?>
+            <div class="alert alert-danger alert-dismissible fade show animate__animated animate__fadeInDown temp-alert">
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+            </div>
+        <?php endif; ?>
+
+        <?php
+        // Include admin pages
+        $pages_dir = 'admin_pages/';
+        switch($page) {
+            case 'dashboard':
+                if (file_exists($pages_dir . 'dashboard.php')) {
+                    include $pages_dir . 'dashboard.php';
+                }
+                break;
+            case 'students':
+                if (file_exists($pages_dir . 'students.php')) {
+                    include $pages_dir . 'students.php';
+                }
+                break;
+            case 'classes':
+                if (file_exists($pages_dir . 'classes.php')) {
+                    include $pages_dir . 'classes.php';
+                }
+                break;
+            case 'invoices':
+                if (file_exists($pages_dir . 'invoices.php')) {
+                    include $pages_dir . 'invoices.php';
+                }
+                break;
+            case 'payments':
+                if (file_exists($pages_dir . 'payments.php')) {
+                    include $pages_dir . 'payments.php';
+                }
+                break;
+            case 'attendance':
+                if (file_exists($pages_dir . 'attendance.php')) {
+                    include $pages_dir . 'attendance.php';
+                }
+                break;
+            default:
+                if (file_exists($pages_dir . 'dashboard.php')) {
+                    include $pages_dir . 'dashboard.php';
+                }
+        }
+        ?>
+    </div>
 <?php endif; ?>
 
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// ============================================
-// MOBILE MENU OPTIMIZATION
-// ============================================
-document.addEventListener('DOMContentLoaded', function() {
-    // Create hamburger button
-    const menuBtn = document.createElement('button');
-    menuBtn.className = 'mobile-menu-btn';
-    menuBtn.innerHTML = '<i class="fas fa-bars"></i>';
-    document.body.appendChild(menuBtn);
+    // Auto-dismiss ONLY temporary alerts
+    setTimeout(() => {
+        document.querySelectorAll('.temp-alert').forEach(alert => {
+            alert.style.transition = 'opacity 0.5s';
+            alert.style.opacity = '0';
+            setTimeout(() => {
+                alert.remove();
+            }, 500);
+        });
+    }, 5000);
 
-    // Create overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'sidebar-overlay';
-    document.body.appendChild(overlay);
+    // ============================================
+    // MOBILE MENU TOGGLE
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
 
-    // Get sidebar
-    const sidebar = document.querySelector('.sidebar');
+        if (!menuToggle || !sidebar || !overlay) return;
 
-    // Toggle sidebar
-    function toggleSidebar() {
-        if (sidebar) {
+        // Toggle sidebar
+        function toggleSidebar() {
             sidebar.classList.toggle('active');
             overlay.classList.toggle('active');
 
             // Change icon
+            const icon = menuToggle.querySelector('i');
             if (sidebar.classList.contains('active')) {
-                menuBtn.innerHTML = '<i class="fas fa-times"></i>';
+                icon.className = 'fas fa-times';
             } else {
-                menuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+                icon.className = 'fas fa-bars';
             }
         }
-    }
 
-    // Event listeners
-    menuBtn.addEventListener('click', toggleSidebar);
-    overlay.addEventListener('click', toggleSidebar);
+        // Event listeners
+        menuToggle.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
 
-    // Close sidebar when clicking a link (on mobile)
-    if (sidebar) {
+        // Close sidebar when clicking a link (mobile only)
         const navLinks = document.querySelectorAll('.sidebar .nav-link');
         navLinks.forEach(link => {
             link.addEventListener('click', function() {
                 if (window.innerWidth <= 768) {
-                    setTimeout(toggleSidebar, 300);
+                    setTimeout(toggleSidebar, 200);
                 }
             });
         });
-    }
 
-    // Handle window resize
-    window.addEventListener('resize', function() {
-        if (window.innerWidth > 768 && sidebar) {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-            menuBtn.innerHTML = '<i class="fas fa-bars"></i>';
-        }
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                const icon = menuToggle.querySelector('i');
+                if (icon) icon.className = 'fas fa-bars';
+            }
+        });
     });
-});
 </script>
 </body>
 </html>

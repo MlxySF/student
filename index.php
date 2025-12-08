@@ -299,45 +299,213 @@ $page = $_GET['page'] ?? 'login';
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding-top: 0;
+        }
+
+        /* ============================================
+           FIXED HEADER DESIGN
+           ============================================ */
+
+        /* Fixed Top Header */
+        .top-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        /* Left Side - Logo & Menu */
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Hamburger Menu Button */
+        .header-menu-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .header-menu-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+
+        /* School Logo */
+        .school-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            text-decoration: none;
+        }
+
+        .school-logo img {
+            height: 45px;
+            width: auto;
+            border-radius: 8px;
+        }
+
+        .school-logo .logo-placeholder {
+            width: 45px;
+            height: 45px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .school-logo .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .school-logo .logo-title {
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .school-logo .logo-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        /* Right Side - User Info */
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+        }
+
+        .header-user-avatar {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .header-user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-user-name {
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .header-user-role {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+
+        /* Sidebar Overlay */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 70px);
+            background: rgba(0,0,0,0.5);
+            z-index: 998;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 70px;
+            width: 280px;
+            height: calc(100vh - 70px);
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            z-index: 999;
+            transition: left 0.3s ease;
+            overflow-y: auto;
+            padding: 20px 0;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+        }
+
+        /* Sidebar Links */
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 14px 25px;
+            margin: 3px 0;
+            border-radius: 0;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-left: 4px solid #4f46e5;
+        }
+
+        .sidebar .nav-link i {
+            width: 20px;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        /* Adjust main content for fixed header */
+        body.logged-in {
+            padding-top: 70px;
         }
 
         .main-container {
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            margin: 30px auto;
-            max-width: 1400px;
-        }
-
-        .sidebar {
-            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-            color: white;
-            border-radius: 20px 0 0 20px;
-            padding: 30px 0;
-            min-height: 600px;
-        }
-
-        .sidebar .nav-link {
-            color: rgba(255,255,255,0.8);
-            padding: 12px 30px;
-            margin: 5px 0;
-            border-radius: 0;
-            transition: all 0.3s;
-        }
-
-        .sidebar .nav-link:hover, .sidebar .nav-link.active {
-            background: rgba(255,255,255,0.1);
-            color: white;
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .sidebar .nav-link i {
-            width: 20px;
-            margin-right: 10px;
+            margin: 0;
+            max-width: none;
         }
 
         .content-area {
-            padding: 40px;
+            margin-left: 280px;
+            padding: 30px;
+            min-height: calc(100vh - 70px);
         }
 
         .card {
@@ -430,119 +598,52 @@ $page = $_GET['page'] ?? 'login';
             padding: 40px;
         }
 
-        /* ============================================
-           MOBILE OPTIMIZATION CSS
-           ============================================ */
-
-        /* Hamburger Menu Button (Hidden on Desktop) */
-        .mobile-menu-btn {
-            display: none;
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            z-index: 1001;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            border: none;
-            border-radius: 10px;
-            padding: 12px 15px;
-            font-size: 20px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        .mobile-menu-btn:hover {
-            transform: scale(1.05);
-        }
-
-        /* Mobile Overlay */
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 999;
-        }
-
-        .sidebar-overlay.active {
-            display: block;
-        }
-
-        /* Mobile Responsive Styles */
-        @media (max-width: 768px) {
-            /* Show Hamburger Button */
-            .mobile-menu-btn {
-                display: block;
+        /* Desktop View */
+        @media (min-width: 769px) {
+            .header-menu-btn {
+                display: none;
             }
 
-            /* Make main container full width */
-            .main-container {
-                margin: 0;
-                border-radius: 0;
-                min-height: 100vh;
-            }
-
-            /* Hide sidebar by default */
             .sidebar {
-                position: fixed;
-                left: -100%;
-                top: 0;
-                height: 100vh;
-                width: 280px;
-                z-index: 1000;
-                transition: left 0.3s ease;
-                border-radius: 0;
-                overflow-y: auto;
+                left: 0;
             }
 
-            /* Show sidebar when active */
+            .sidebar-overlay {
+                display: none !important;
+            }
+        }
+
+        /* Mobile View */
+        @media (max-width: 768px) {
+            .top-header {
+                padding: 0 15px;
+            }
+
+            .school-logo .logo-text {
+                display: none;
+            }
+
+            .header-user-info {
+                display: none;
+            }
+
+            .sidebar {
+                left: -280px;
+            }
+
             .sidebar.active {
                 left: 0;
             }
 
-            /* Adjust content area for mobile */
             .content-area {
-                padding: 70px 15px 20px 15px;
-                margin-left: 0 !important;
+                margin-left: 0;
+                padding: 20px 15px;
             }
 
-            /* Compact user profile in sidebar */
-            .sidebar .text-center {
-                padding: 15px 10px 10px 10px;
-            }
-
-            .sidebar .text-center i {
-                font-size: 2rem;
-            }
-
-            .sidebar .text-center h5 {
-                font-size: 16px;
-                margin-bottom: 5px;
-            }
-
-            .sidebar .text-center p {
-                font-size: 12px;
-            }
-
-            /* Compact navigation links */
-            .sidebar .nav-link {
-                padding: 10px 20px;
-                font-size: 14px;
-            }
-
-            .sidebar .nav-link i {
-                font-size: 16px;
-            }
-
-            /* Make stat cards stack vertically */
             .stat-card {
                 margin-bottom: 15px;
             }
 
-            /* Smaller stat icons */
             .stat-icon {
                 width: 50px;
                 height: 50px;
@@ -558,17 +659,6 @@ $page = $_GET['page'] ?? 'login';
                 font-size: 12px;
             }
 
-            /* Make tables responsive */
-            .table-responsive {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            /* Compact cards */
-            .card {
-                margin-bottom: 15px;
-            }
-
             .card-header {
                 padding: 12px 15px;
                 font-size: 14px;
@@ -578,19 +668,16 @@ $page = $_GET['page'] ?? 'login';
                 padding: 15px;
             }
 
-            /* Smaller buttons */
             .btn {
                 padding: 8px 15px;
                 font-size: 14px;
             }
 
-            /* Page title */
             h3.mb-4 {
                 font-size: 20px;
                 margin-bottom: 15px !important;
             }
 
-            /* Forms on mobile */
             .form-control, .form-select {
                 font-size: 14px;
             }
@@ -601,13 +688,45 @@ $page = $_GET['page'] ?? 'login';
         }
 
         @media (max-width: 480px) {
-            /* Extra small screens */
+            .top-header {
+                height: 60px;
+            }
+
+            body.logged-in {
+                padding-top: 60px;
+            }
+
             .sidebar {
-                width: 250px;
+                top: 60px;
+                height: calc(100vh - 60px);
+            }
+
+            .sidebar-overlay {
+                top: 60px;
+                height: calc(100vh - 60px);
+            }
+
+            .school-logo img,
+            .school-logo .logo-placeholder {
+                height: 38px;
+                width: 38px;
+            }
+
+            .header-menu-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+
+            .header-user-avatar {
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
             }
 
             .content-area {
-                padding: 60px 10px 15px 10px;
+                padding: 15px 10px;
+                min-height: calc(100vh - 60px);
             }
 
             h3.mb-4 {
@@ -625,7 +744,7 @@ $page = $_GET['page'] ?? 'login';
         }
     </style>
 </head>
-<body>
+<body<?php echo ($page !== 'login') ? ' class="logged-in"' : ''; ?>>
 
 <?php if ($page === 'login'): ?>
     <!-- Login Page -->
@@ -669,92 +788,151 @@ $page = $_GET['page'] ?? 'login';
 <?php else: ?>
     <?php redirectIfNotLoggedIn(); ?>
 
-    <!-- Dashboard Layout -->
-    <div class="main-container">
-        <div class="row g-0">
-            <!-- Sidebar -->
-            <div class="col-md-3 sidebar">
-                <div class="text-center mb-4 px-3">
-                    <i class="fas fa-user-circle fa-3x mb-2"></i>
-                    <h5><?php echo $_SESSION['student_name']; ?></h5>
-                    <p class="text-muted small mb-0">Student</p>
+    <!-- Fixed Top Header -->
+    <div class="top-header">
+        <!-- Left Side: Menu + Logo -->
+        <div class="header-left">
+            <!-- Hamburger Menu Button -->
+            <button class="header-menu-btn" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <!-- School Logo -->
+            <a href="?page=dashboard" class="school-logo">
+                <!-- Option 1: If you have a logo image, use this: -->
+                <!-- <img src="assets/logo.png" alt="School Logo"> -->
+
+                <!-- Option 2: Placeholder icon (current) -->
+                <div class="logo-placeholder">
+                    <i class="fas fa-graduation-cap"></i>
                 </div>
 
-                <nav class="nav flex-column">
-                    <a class="nav-link <?php echo $page === 'dashboard' ? 'active' : ''; ?>" href="?page=dashboard">
-                        <i class="fas fa-home"></i> Dashboard
-                    </a>
-                    <a class="nav-link <?php echo $page === 'invoices' ? 'active' : ''; ?>" href="?page=invoices">
-                        <i class="fas fa-file-invoice-dollar"></i> My Invoices
-                    </a>
-                    <a class="nav-link <?php echo $page === 'payments' ? 'active' : ''; ?>" href="?page=payments">
-                        <i class="fas fa-credit-card"></i> Payments
-                    </a>
-                    <a class="nav-link <?php echo $page === 'attendance' ? 'active' : ''; ?>" href="?page=attendance">
-                        <i class="fas fa-calendar-check"></i> Attendance
-                    </a>
-                    <a class="nav-link <?php echo $page === 'profile' ? 'active' : ''; ?>" href="?page=profile">
-                        <i class="fas fa-user"></i> Profile
-                    </a>
-                    <hr class="text-white mx-3">
-                    <a class="nav-link" href="?logout=1">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
-                </nav>
-            </div>
+                <div class="logo-text">
+                    <span class="logo-title">Wushu Academy</span>
+                    <span class="logo-subtitle">Student Portal</span>
+                </div>
+            </a>
+        </div>
 
-            <!-- Content Area -->
-            <div class="col-md-9">
-                <div class="content-area">
-                    <h3 class="mb-4">
-                        <i class="fas fa-<?php 
-                            echo $page === 'dashboard' ? 'home' : 
-                                ($page === 'invoices' ? 'file-invoice-dollar' :
-                                ($page === 'payments' ? 'credit-card' : 
-                                ($page === 'attendance' ? 'calendar-check' : 'user'))); 
-                        ?>"></i>
-                        <?php echo ucfirst($page); ?>
-                    </h3>
-
-                    <?php if (isset($_SESSION['success'])): ?>
-                        <div class="alert alert-success alert-dismissible fade show animate__animated animate__fadeInDown temp-alert">
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if (isset($_SESSION['error'])): ?>
-                        <div class="alert alert-danger alert-dismissible fade show animate__animated animate__fadeInDown temp-alert">
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php
-                    // Include pages
-                    switch($page) {
-                        case 'dashboard':
-                            include 'pages/dashboard.php';
-                            break;
-                        case 'invoices':
-                            include 'pages/invoices.php';
-                            break;
-                        case 'payments':
-                            include 'pages/payments.php';
-                            break;
-                        case 'attendance':
-                            include 'pages/attendance.php';
-                            break;
-                        case 'profile':
-                            include 'pages/profile.php';
-                            break;
-                        default:
-                            include 'pages/dashboard.php';
-                    }
-                    ?>
+        <!-- Right Side: User Info -->
+        <div class="header-right">
+            <div class="header-user">
+                <div class="header-user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="header-user-info">
+                    <span class="header-user-name"><?php echo $_SESSION['student_name']; ?></span>
+                    <span class="header-user-role">Student</span>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar Navigation -->
+    <div class="sidebar" id="sidebar">
+        <nav class="nav flex-column">
+            <a class="nav-link <?php echo $page === 'dashboard' ? 'active' : ''; ?>" href="?page=dashboard">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a class="nav-link <?php echo $page === 'invoices' ? 'active' : ''; ?>" href="?page=invoices">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>My Invoices</span>
+            </a>
+            <a class="nav-link <?php echo $page === 'payments' ? 'active' : ''; ?>" href="?page=payments">
+                <i class="fas fa-credit-card"></i>
+                <span>Payments</span>
+            </a>
+            <a class="nav-link <?php echo $page === 'attendance' ? 'active' : ''; ?>" href="?page=attendance">
+                <i class="fas fa-calendar-check"></i>
+                <span>Attendance</span>
+            </a>
+            <a class="nav-link <?php echo $page === 'classes' ? 'active' : ''; ?>" href="?page=classes">
+                <i class="fas fa-chalkboard-teacher"></i>
+                <span>My Classes</span>
+            </a>
+            <a class="nav-link <?php echo $page === 'profile' ? 'active' : ''; ?>" href="?page=profile">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            <hr class="text-white mx-3">
+            <a class="nav-link" href="?logout=1">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+        <h3 class="mb-4">
+            <i class="fas fa-<?php 
+                echo $page === 'dashboard' ? 'home' : 
+                    ($page === 'invoices' ? 'file-invoice-dollar' :
+                    ($page === 'payments' ? 'credit-card' : 
+                    ($page === 'attendance' ? 'calendar-check' : 
+                    ($page === 'classes' ? 'chalkboard-teacher' : 'user')))); 
+            ?>"></i>
+            <?php echo ucfirst($page); ?>
+        </h3>
+
+        <?php if (isset($_SESSION['success'])): ?>
+            <div class="alert alert-success alert-dismissible fade show animate__animated animate__fadeInDown temp-alert">
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_SESSION['error'])): ?>
+            <div class="alert alert-danger alert-dismissible fade show animate__animated animate__fadeInDown temp-alert">
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+            </div>
+        <?php endif; ?>
+
+        <?php
+        // Include pages
+        $pages_dir = 'pages/';
+        switch($page) {
+            case 'dashboard':
+                if (file_exists($pages_dir . 'dashboard.php')) {
+                    include $pages_dir . 'dashboard.php';
+                }
+                break;
+            case 'invoices':
+                if (file_exists($pages_dir . 'invoices.php')) {
+                    include $pages_dir . 'invoices.php';
+                }
+                break;
+            case 'payments':
+                if (file_exists($pages_dir . 'payments.php')) {
+                    include $pages_dir . 'payments.php';
+                }
+                break;
+            case 'attendance':
+                if (file_exists($pages_dir . 'attendance.php')) {
+                    include $pages_dir . 'attendance.php';
+                }
+                break;
+            case 'classes':
+                if (file_exists($pages_dir . 'classes.php')) {
+                    include $pages_dir . 'classes.php';
+                }
+                break;
+            case 'profile':
+                if (file_exists($pages_dir . 'profile.php')) {
+                    include $pages_dir . 'profile.php';
+                }
+                break;
+            default:
+                if (file_exists($pages_dir . 'dashboard.php')) {
+                    include $pages_dir . 'dashboard.php';
+                }
+        }
+        ?>
     </div>
 <?php endif; ?>
 
@@ -774,60 +952,50 @@ $page = $_GET['page'] ?? 'login';
     }, 5000);
 
     // ============================================
-    // MOBILE MENU OPTIMIZATION
+    // MOBILE MENU TOGGLE
     // ============================================
     document.addEventListener('DOMContentLoaded', function() {
-        // Create hamburger button
-        const menuBtn = document.createElement('button');
-        menuBtn.className = 'mobile-menu-btn';
-        menuBtn.innerHTML = '<i class="fas fa-bars"></i>';
-        document.body.appendChild(menuBtn);
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
 
-        // Create overlay
-        const overlay = document.createElement('div');
-        overlay.className = 'sidebar-overlay';
-        document.body.appendChild(overlay);
-
-        // Get sidebar
-        const sidebar = document.querySelector('.sidebar');
+        if (!menuToggle || !sidebar || !overlay) return;
 
         // Toggle sidebar
         function toggleSidebar() {
-            if (sidebar) {
-                sidebar.classList.toggle('active');
-                overlay.classList.toggle('active');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
 
-                // Change icon
-                if (sidebar.classList.contains('active')) {
-                    menuBtn.innerHTML = '<i class="fas fa-times"></i>';
-                } else {
-                    menuBtn.innerHTML = '<i class="fas fa-bars"></i>';
-                }
+            // Change icon
+            const icon = menuToggle.querySelector('i');
+            if (sidebar.classList.contains('active')) {
+                icon.className = 'fas fa-times';
+            } else {
+                icon.className = 'fas fa-bars';
             }
         }
 
         // Event listeners
-        menuBtn.addEventListener('click', toggleSidebar);
+        menuToggle.addEventListener('click', toggleSidebar);
         overlay.addEventListener('click', toggleSidebar);
 
-        // Close sidebar when clicking a link (on mobile)
-        if (sidebar) {
-            const navLinks = document.querySelectorAll('.sidebar .nav-link');
-            navLinks.forEach(link => {
-                link.addEventListener('click', function() {
-                    if (window.innerWidth <= 768) {
-                        setTimeout(toggleSidebar, 300);
-                    }
-                });
+        // Close sidebar when clicking a link (mobile only)
+        const navLinks = document.querySelectorAll('.sidebar .nav-link');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    setTimeout(toggleSidebar, 200);
+                }
             });
-        }
+        });
 
         // Handle window resize
         window.addEventListener('resize', function() {
-            if (window.innerWidth > 768 && sidebar) {
+            if (window.innerWidth > 768) {
                 sidebar.classList.remove('active');
                 overlay.classList.remove('active');
-                menuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+                const icon = menuToggle.querySelector('i');
+                if (icon) icon.className = 'fas fa-bars';
             }
         });
     });
