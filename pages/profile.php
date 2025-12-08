@@ -1,0 +1,334 @@
+<?php
+// Student Profile Page - View and update profile information
+
+// Get student information
+$stmt = $pdo->prepare("SELECT * FROM students WHERE id = ?");
+$stmt->execute([getStudentId()]);
+$student = $stmt->fetch();
+
+// Get enrolled classes count
+$stmt = $pdo->prepare("
+    SELECT COUNT(*) as class_count 
+    FROM enrollments 
+    WHERE student_id = ? AND status = 'active'
+");
+$stmt->execute([getStudentId()]);
+$enrollment_stats = $stmt->fetch();
+
+// Get payment statistics
+$stmt = $pdo->prepare("
+    SELECT 
+        COUNT(*) as total_payments,
+        SUM(CASE WHEN verification_status = 'verified' THEN 1 ELSE 0 END) as verified_payments,
+        SUM(CASE WHEN verification_status = 'verified' THEN amount ELSE 0 END) as total_paid
+    FROM payments 
+    WHERE student_id = ?
+");
+$stmt->execute([getStudentId()]);
+$payment_stats = $stmt->fetch();
+
+// Get invoice statistics
+$stmt = $pdo->prepare("
+    SELECT 
+        COUNT(*) as total_invoices,
+        SUM(CASE WHEN status = 'unpaid' THEN 1 ELSE 0 END) as unpaid_invoices,
+        SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) as paid_invoices
+    FROM invoices 
+    WHERE student_id = ?
+");
+$stmt->execute([getStudentId()]);
+$invoice_stats = $stmt->fetch();
+?>
+
+<div class="row">
+    <!-- Profile Information Card -->
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-user"></i> My Profile Information
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-12 text-center mb-4">
+                        <div class="profile-avatar">
+                            <i class="fas fa-user-circle fa-5x text-primary"></i>
+                        </div>
+                        <h4 class="mt-3 mb-1"><?php echo htmlspecialchars($student['full_name']); ?></h4>
+                        <p class="text-muted">
+                            <span class="badge bg-dark"><?php echo $student['student_id']; ?></span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-borderless">
+                        <tbody>
+                            <tr>
+                                <td width="30%"><strong><i class="fas fa-id-card text-primary"></i> Student ID:</strong></td>
+                                <td><?php echo $student['student_id']; ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong><i class="fas fa-user text-primary"></i> Full Name:</strong></td>
+                                <td><?php echo htmlspecialchars($student['full_name']); ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong><i class="fas fa-envelope text-primary"></i> Email:</strong></td>
+                                <td><?php echo htmlspecialchars($student['email']); ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong><i class="fas fa-phone text-primary"></i> Phone:</strong></td>
+                                <td><?php echo htmlspecialchars($student['phone']); ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong><i class="fas fa-calendar text-primary"></i> Registered:</strong></td>
+                                <td><?php echo formatDateTime($student['created_at']); ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong><i class="fas fa-globe text-primary"></i> Timezone:</strong></td>
+                                <td>GMT+8 (Malaysia)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                        <i class="fas fa-edit"></i> Edit Profile
+                    </button>
+                    <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                        <i class="fas fa-key"></i> Change Password
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="fas fa-chart-bar"></i> My Statistics
+            </div>
+            <div class="card-body">
+                <div class="stat-item mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-book text-primary"></i>
+                            <strong>Enrolled Classes</strong>
+                        </div>
+                        <span class="badge bg-primary"><?php echo $enrollment_stats['class_count']; ?></span>
+                    </div>
+                </div>
+
+                <div class="stat-item mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-credit-card text-success"></i>
+                            <strong>Total Payments</strong>
+                        </div>
+                        <span class="badge bg-success"><?php echo $payment_stats['total_payments']; ?></span>
+                    </div>
+                </div>
+
+                <div class="stat-item mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-check-circle text-success"></i>
+                            <strong>Verified Payments</strong>
+                        </div>
+                        <span class="badge bg-success"><?php echo $payment_stats['verified_payments']; ?></span>
+                    </div>
+                </div>
+
+                <div class="stat-item mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-money-bill text-info"></i>
+                            <strong>Total Paid</strong>
+                        </div>
+                        <strong class="text-success"><?php echo formatCurrency($payment_stats['total_paid']); ?></strong>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="stat-item mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-file-invoice text-warning"></i>
+                            <strong>Unpaid Invoices</strong>
+                        </div>
+                        <span class="badge bg-warning"><?php echo $invoice_stats['unpaid_invoices']; ?></span>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-file-invoice text-success"></i>
+                            <strong>Paid Invoices</strong>
+                        </div>
+                        <span class="badge bg-success"><?php echo $invoice_stats['paid_invoices']; ?></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i> Account Info
+            </div>
+            <div class="card-body">
+                <p class="mb-2"><strong>Account Status:</strong> <span class="badge bg-success">Active</span></p>
+                <p class="mb-2"><strong>Member Since:</strong> <?php echo formatDate($student['created_at']); ?></p>
+                <p class="mb-0"><strong>Last Login:</strong> <?php echo formatDateTime(getCurrentDateTime()); ?></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- My Classes -->
+<?php
+$stmt = $pdo->prepare("
+    SELECT c.*, e.enrollment_date, e.status
+    FROM enrollments e
+    JOIN classes c ON e.class_id = c.id
+    WHERE e.student_id = ?
+    ORDER BY e.enrollment_date DESC
+");
+$stmt->execute([getStudentId()]);
+$my_classes = $stmt->fetchAll();
+?>
+
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-book"></i> My Enrolled Classes
+    </div>
+    <div class="card-body">
+        <?php if ($my_classes): ?>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Class Code</th>
+                            <th>Class Name</th>
+                            <th>Monthly Fee</th>
+                            <th>Enrollment Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach($my_classes as $class): ?>
+                            <tr>
+                                <td><span class="badge bg-primary"><?php echo $class['class_code']; ?></span></td>
+                                <td><?php echo htmlspecialchars($class['class_name']); ?></td>
+                                <td><strong><?php echo formatCurrency($class['monthly_fee']); ?></strong></td>
+                                <td><?php echo formatDateTime($class['enrollment_date']); ?></td>
+                                <td>
+                                    <?php if ($class['status'] === 'active'): ?>
+                                        <span class="badge bg-success">Active</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php else: ?>
+            <div class="text-center py-4">
+                <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                <p class="text-muted">You are not enrolled in any classes yet.</p>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="">
+                <input type="hidden" name="action" value="update_profile">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-edit"></i> Edit Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" name="full_name" class="form-control" 
+                               value="<?php echo htmlspecialchars($student['full_name']); ?>" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" 
+                               value="<?php echo htmlspecialchars($student['email']); ?>" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone</label>
+                        <input type="text" name="phone" class="form-control" 
+                               value="<?php echo htmlspecialchars($student['phone']); ?>" required>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Your Student ID cannot be changed.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="">
+                <input type="hidden" name="action" value="change_password">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-key"></i> Change Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Current Password</label>
+                        <input type="password" name="current_password" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New Password</label>
+                        <input type="password" name="new_password" class="form-control" required minlength="6">
+                        <small class="text-muted">Minimum 6 characters</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirm New Password</label>
+                        <input type="password" name="confirm_password" class="form-control" required minlength="6">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Update Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-item {
+    padding: 10px;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+.profile-avatar {
+    display: inline-block;
+}
+</style>
