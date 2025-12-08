@@ -662,93 +662,6 @@ $page = $_GET['page'] ?? 'login';
             padding: 40px;
         }
 
-        /* ============================================
-           MOBILE-RESPONSIVE TABLE DESIGN
-           ============================================ */
-
-        /* Hide table headers on mobile */
-        @media (max-width: 768px) {
-            .table-responsive table thead {
-                display: none;
-            }
-
-            .table-responsive table,
-            .table-responsive table tbody,
-            .table-responsive table tr,
-            .table-responsive table td {
-                display: block;
-                width: 100%;
-            }
-
-            .table-responsive table tr {
-                background: white;
-                border: 1px solid #dee2e6;
-                border-radius: 10px;
-                margin-bottom: 15px;
-                padding: 15px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            }
-
-            .table-responsive table td {
-                text-align: left !important;
-                padding: 10px 0;
-                border: none;
-                position: relative;
-                padding-left: 45%;
-                min-height: 40px;
-                display: flex;
-                align-items: center;
-            }
-
-            .table-responsive table td:before {
-                content: attr(data-label);
-                position: absolute;
-                left: 0;
-                width: 40%;
-                padding-right: 10px;
-                font-weight: 600;
-                color: #4f46e5;
-                text-align: left;
-                font-size: 13px;
-            }
-
-            .table-responsive table td:first-child {
-                padding-top: 0;
-            }
-
-            .table-responsive table td:last-child {
-                padding-bottom: 0;
-                border-bottom: none;
-            }
-
-            /* Action buttons in mobile view */
-            .table-responsive table td .btn {
-                padding: 6px 12px;
-                font-size: 12px;
-                margin: 2px;
-            }
-
-            .table-responsive table td .btn-group {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 5px;
-            }
-
-            /* Badges in mobile view */
-            .table-responsive table td .badge {
-                display: inline-block;
-                font-size: 11px;
-                padding: 5px 10px;
-            }
-
-            /* Forms in tables (attendance, etc) */
-            .table-responsive table td select,
-            .table-responsive table td input {
-                font-size: 13px;
-                padding: 6px 10px;
-            }
-        }
-
         /* Desktop View */
         @media (min-width: 769px) {
             .header-menu-btn {
@@ -838,7 +751,7 @@ $page = $_GET['page'] ?? 'login';
             }
 
             .table-responsive {
-                overflow-x: visible;
+                overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
             }
         }
@@ -896,23 +809,6 @@ $page = $_GET['page'] ?? 'login';
             .btn {
                 padding: 6px 12px;
                 font-size: 13px;
-            }
-
-            /* Even more compact mobile tables */
-            .table-responsive table td {
-                padding: 8px 0;
-                padding-left: 40%;
-                font-size: 13px;
-            }
-
-            .table-responsive table td:before {
-                font-size: 12px;
-                width: 38%;
-            }
-
-            .table-responsive table tr {
-                padding: 12px;
-                margin-bottom: 12px;
             }
         }
     </style>
