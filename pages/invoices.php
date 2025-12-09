@@ -550,6 +550,9 @@ foreach ($payable_invoices as $invoice):
         <span class="badge bg-light text-dark float-end"><?php echo count($paid_invoices); ?></span>
     </div>
     <div class="card-body">
+        <div class="alert alert-success">
+            <i class="fas fa-download"></i> <strong>Download Official Invoices:</strong> Click the "Download PDF" button to get your official invoice receipt.
+        </div>
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
@@ -559,6 +562,7 @@ foreach ($payable_invoices as $invoice):
                         <th>Description</th>
                         <th>Amount</th>
                         <th>Paid Date/Time</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -579,6 +583,14 @@ foreach ($payable_invoices as $invoice):
                                 <?php else: ?>
                                     -
                                 <?php endif; ?>
+                            </td>
+                            <td>
+                                <a href="generate_invoice_pdf.php?invoice_id=<?php echo $invoice['id']; ?>" 
+                                   class="btn btn-sm btn-success" 
+                                   target="_blank"
+                                   title="Download official PDF invoice">
+                                    <i class="fas fa-download"></i> Download PDF
+                                </a>
                             </td>
                         </tr>
                     <?php endforeach; ?>

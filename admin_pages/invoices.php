@@ -280,6 +280,14 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                         title="View Details">
                     <i class="fas fa-eye"></i>
                 </button>
+                <?php if ($invoice['status'] === 'paid'): ?>
+            <a href="generate_invoice_pdf.php?invoice_id=<?php echo $invoice['id']; ?>" 
+               class="btn btn-success btn-sm" 
+               target="_blank"
+               title="Download Invoice PDF">
+                <i class="fas fa-file-pdf"></i>
+            </a>
+        <?php endif; ?>
                 <button class="btn btn-warning"
                         data-bs-toggle="modal"
                         data-bs-target="#editInvoiceModal<?php echo $invoice['id']; ?>"

@@ -259,3 +259,54 @@ Stack trace:
 [09-Dec-2025 02:08:45 UTC] PHP Notice:  Undefined index: payment_month in /home/mlxysf/wushusportacademy.app.tc/student/pages/invoices.php on line 431
 [09-Dec-2025 02:18:21 UTC] PHP Notice:  Undefined index: payment_month in /home/mlxysf/wushusportacademy.app.tc/student/pages/invoices.php on line 431
 [09-Dec-2025 10:40:43 Asia/Kuala_Lumpur] PHP Notice:  Undefined index: payment_month in /home/mlxysf/wushusportacademy.app.tc/student/pages/invoices.php on line 437
+[09-Dec-2025 14:35:01 Asia/Kuala_Lumpur] PHP Notice:  Undefined index: payment_month in /home/mlxysf/wushusportacademy.app.tc/student/pages/invoices.php on line 437
+[09-Dec-2025 14:37:39 Asia/Kuala_Lumpur] PHP Warning:  include(/home/mlxysf/wushusportacademy.app.tc/student/font/helveticab.php): failed to open stream: No such file or directory in /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php on line 1137
+[09-Dec-2025 14:37:39 Asia/Kuala_Lumpur] PHP Warning:  include(): Failed opening '/home/mlxysf/wushusportacademy.app.tc/student/font/helveticab.php' for inclusion (include_path='.:/opt/remi/php74/root/usr/share/pear:/opt/remi/php74/root/usr/share/php:/usr/share/pear:/usr/share/php') in /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php on line 1137
+[09-Dec-2025 14:37:39 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Exception: FPDF error: Could not include font definition file: /home/mlxysf/wushusportacademy.app.tc/student/font/helveticab.php in /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php:267
+Stack trace:
+#0 /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php(1139): FPDF->Error()
+#1 /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php(461): FPDF->_loadfont()
+#2 /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php(510): FPDF->AddFont()
+#3 /home/mlxysf/wushusportacademy.app.tc/student/generate_invoice_pdf.php(97): FPDF->SetFont()
+#4 /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php(330): InvoicePDF->Header()
+#5 /home/mlxysf/wushusportacademy.app.tc/student/generate_invoice_pdf.php(143): FPDF->AddPage()
+#6 {main}
+  thrown in /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php on line 267
+[09-Dec-2025 14:37:41 Asia/Kuala_Lumpur] PHP Warning:  include(/home/mlxysf/wushusportacademy.app.tc/student/font/helveticab.php): failed to open stream: No such file or directory in /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php on line 1137
+[09-Dec-2025 14:37:41 Asia/Kuala_Lumpur] PHP Warning:  include(): Failed opening '/home/mlxysf/wushusportacademy.app.tc/student/font/helveticab.php' for inclusion (include_path='.:/opt/remi/php74/root/usr/share/pear:/opt/remi/php74/root/usr/share/php:/usr/share/pear:/usr/share/php') in /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php on line 1137
+[09-Dec-2025 14:37:41 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Exception: FPDF error: Could not include font definition file: /home/mlxysf/wushusportacademy.app.tc/student/font/helveticab.php in /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php:267
+Stack trace:
+#0 /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php(1139): FPDF->Error()
+#1 /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php(461): FPDF->_loadfont()
+#2 /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php(510): FPDF->AddFont()
+#3 /home/mlxysf/wushusportacademy.app.tc/student/generate_invoice_pdf.php(97): FPDF->SetFont()
+#4 /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php(330): InvoicePDF->Header()
+#5 /home/mlxysf/wushusportacademy.app.tc/student/generate_invoice_pdf.php(143): FPDF->AddPage()
+#6 {main}
+  thrown in /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php on line 267
+[09-Dec-2025 14:41:28 Asia/Kuala_Lumpur] PHP Warning:  include(/home/mlxysf/wushusportacademy.app.tc/student/font/helveticab.php): failed to open stream: No such file or directory in /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php on line 1137
+[09-Dec-2025 14:41:28 Asia/Kuala_Lumpur] PHP Warning:  include(): Failed opening '/home/mlxysf/wushusportacademy.app.tc/student/font/helveticab.php' for inclusion (include_path='.:/opt/remi/php74/root/usr/share/pear:/opt/remi/php74/root/usr/share/php:/usr/share/pear:/usr/share/php') in /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php on line 1137
+[09-Dec-2025 14:41:28 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Exception: FPDF error: Could not include font definition file: /home/mlxysf/wushusportacademy.app.tc/student/font/helveticab.php in /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php:267
+Stack trace:
+#0 /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php(1139): FPDF->Error()
+#1 /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php(461): FPDF->_loadfont()
+#2 /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php(510): FPDF->AddFont()
+#3 /home/mlxysf/wushusportacademy.app.tc/student/generate_invoice_pdf.php(134): FPDF->SetFont()
+#4 /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php(330): InvoicePDF->Header()
+#5 /home/mlxysf/wushusportacademy.app.tc/student/generate_invoice_pdf.php(177): FPDF->AddPage()
+#6 {main}
+  thrown in /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php on line 267
+[09-Dec-2025 14:43:09 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Exception: FPDF error: Some data has already been output, can't send PDF file in /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php:267
+Stack trace:
+#0 /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php(1058): FPDF->Error()
+#1 /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php(1017): FPDF->_checkoutput()
+#2 /home/mlxysf/wushusportacademy.app.tc/student/generate_invoice_pdf.php(315): FPDF->Output()
+#3 {main}
+  thrown in /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php on line 267
+[09-Dec-2025 14:43:19 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Exception: FPDF error: Some data has already been output, can't send PDF file in /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php:267
+Stack trace:
+#0 /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php(1058): FPDF->Error()
+#1 /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php(1017): FPDF->_checkoutput()
+#2 /home/mlxysf/wushusportacademy.app.tc/student/generate_invoice_pdf.php(315): FPDF->Output()
+#3 {main}
+  thrown in /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php on line 267
