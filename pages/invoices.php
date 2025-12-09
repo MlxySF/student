@@ -158,7 +158,7 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
 </div>
 <?php endif; ?>
 
-<!-- Pending Verification Invoices (NEW SECTION!) -->
+<!-- Pending Verification Invoices -->
 <?php if (count($pending_invoices) > 0): ?>
 <div class="card mb-4">
     <div class="card-header bg-info text-white">
@@ -167,7 +167,7 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
     </div>
     <div class="card-body">
         <div class="alert alert-info mb-3">
-            <i class="fas fa-hourglass-half"></i> Payment receipt uploaded and awaiting admin verification. You will be notified once verified.
+            <i class="fas fa-hourglass-half"></i> <strong>Payment submitted!</strong> Your payment receipt has been uploaded and is awaiting admin verification. You will be notified once verified.
         </div>
         <div class="table-responsive">
             <table class="table sp-invoices-table">
@@ -178,7 +178,8 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
                         <th>Description</th>
                         <th class="sp-hide-mobile">Class</th>
                         <th>Amount</th>
-                        <th>Status</th>
+                        <th class="sp-hide-mobile">Status</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -199,6 +200,9 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
                                     <?php if ($invoice['class_name']): ?>
                                         <span class="badge bg-info"><?php echo $invoice['class_code']; ?></span>
                                     <?php endif; ?>
+                                    <div class="mt-1">
+                                        <span class="badge bg-info"><i class="fas fa-clock"></i> Pending</span>
+                                    </div>
                                 </div>
                             </td>
                             <td class="sp-hide-mobile">
@@ -211,8 +215,15 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
                             <td>
                                 <strong><?php echo formatCurrency($invoice['amount']); ?></strong>
                             </td>
-                            <td>
-                                <span class="badge bg-info"><i class="fas fa-clock"></i> Pending Verification</span>
+                            <td class="sp-hide-mobile">
+                                <span class="badge bg-info"><i class="fas fa-clock"></i> Awaiting Verification</span>
+                            </td>
+                            <td class="sp-invoice-actions-cell">
+                                <button class="btn btn-sm btn-primary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#viewPendingInvoiceModal<?php echo $invoice['id']; ?>">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -330,6 +341,76 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
           </button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+<?php endforeach; ?>
+
+<!-- View Modals for Pending Invoices -->
+<?php foreach ($pending_invoices as $invoice): ?>
+<div class="modal fade" id="viewPendingInvoiceModal<?php echo $invoice['id']; ?>" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-clock"></i>
+          Invoice Details - Pending Verification
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle"></i> <strong>Payment Status:</strong> Your payment receipt has been submitted and is currently awaiting admin verification. You'll be notified once the payment is verified.
+        </div>
+        <table class="table table-bordered">
+          <tr>
+            <th width="30%">Invoice #</th>
+            <td><?php echo htmlspecialchars($invoice['invoice_number']); ?></td>
+          </tr>
+          <tr>
+            <th>Date</th>
+            <td><?php echo formatDate($invoice['created_at']); ?></td>
+          </tr>
+          <tr>
+            <th>Class</th>
+            <td>
+                <?php if ($invoice['class_name']): ?>
+                    <span class="badge bg-info"><?php echo $invoice['class_code']; ?></span>
+                    <?php echo htmlspecialchars($invoice['class_name']); ?>
+                <?php else: ?>
+                    <span class="text-muted">General (No specific class)</span>
+                <?php endif; ?>
+            </td>
+          </tr>
+          <tr>
+            <th>Description</th>
+            <td><?php echo nl2br(htmlspecialchars($invoice['description'])); ?></td>
+          </tr>
+          <tr>
+            <th>Amount</th>
+            <td><strong><?php echo formatCurrency($invoice['amount']); ?></strong></td>
+          </tr>
+          <tr>
+            <th>Due Date</th>
+            <td><?php echo formatDate($invoice['due_date']); ?></td>
+          </tr>
+          <tr>
+            <th>Status</th>
+            <td><span class="badge bg-info"><i class="fas fa-clock"></i> Pending Verification</span></td>
+          </tr>
+        </table>
+        <div class="alert alert-light border">
+          <h6><i class="fas fa-question-circle"></i> What happens next?</h6>
+          <ol class="mb-0">
+            <li>Admin will review your payment receipt</li>
+            <li>Once verified, this invoice will be marked as "Paid"</li>
+            <li>You'll be able to see the payment confirmation in your dashboard</li>
+          </ol>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
     </div>
   </div>
 </div>
