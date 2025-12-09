@@ -961,15 +961,15 @@ $page = $_GET['page'] ?? 'login';
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Auto-dismiss alerts after 7 seconds
-    setTimeout(() => {
-        document.querySelectorAll('.alert').forEach(alert => {
-            if (alert.classList.contains('invoice-alert')) return; // Don't auto-dismiss invoice alerts
-            
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
-        });
-    }, 7000);
+    // Auto-dismiss ONLY success/error session messages after 7 seconds
+setTimeout(() => {
+    // Only dismiss alerts that are direct children of content-area (session messages)
+    document.querySelectorAll('.content-area > .alert').forEach(alert => {
+        const bsAlert = new bootstrap.Alert(alert);
+        bsAlert.close();
+    });
+}, 7000);
+
 
     // ============================================
     // MOBILE MENU TOGGLE

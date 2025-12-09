@@ -9,11 +9,12 @@ $stmt = $pdo->prepare("
     WHERE i.student_id = ?
     ORDER BY 
         CASE 
-            WHEN i.status = 'unpaid' THEN 1
-            WHEN i.status = 'pending' THEN 2
-            WHEN i.status = 'overdue' THEN 3
+            WHEN i.status = 'overdue' THEN 1
+            WHEN i.status = 'unpaid' THEN 2
+            WHEN i.status = 'pending' THEN 3
             WHEN i.status = 'paid' THEN 4
-            ELSE 5
+            WHEN i.status = 'cancelled' THEN 5
+            ELSE 6
         END,
         i.due_date ASC,
         i.created_at DESC
@@ -22,28 +23,33 @@ $stmt->execute([getStudentId()]);
 $all_invoices = $stmt->fetchAll();
 
 // Separate by status
+$overdue_invoices = array_filter($all_invoices, fn($i) => $i['status'] === 'overdue');
 $unpaid_invoices = array_filter($all_invoices, fn($i) => $i['status'] === 'unpaid');
 $pending_invoices = array_filter($all_invoices, fn($i) => $i['status'] === 'pending');
 $paid_invoices = array_filter($all_invoices, fn($i) => $i['status'] === 'paid');
 $cancelled_invoices = array_filter($all_invoices, fn($i) => $i['status'] === 'cancelled');
-$overdue_invoices = array_filter($all_invoices, fn($i) => $i['status'] === 'overdue');
 
 // Calculate totals
+$overdue_total = array_sum(array_column($overdue_invoices, 'amount'));
 $unpaid_total = array_sum(array_column($unpaid_invoices, 'amount'));
 $pending_total = array_sum(array_column($pending_invoices, 'amount'));
 $paid_total = array_sum(array_column($paid_invoices, 'amount'));
+
+// Combine unpaid and overdue for "action required" count
+$action_required_count = count($unpaid_invoices) + count($overdue_invoices);
+$action_required_total = $unpaid_total + $overdue_total;
 ?>
 
 <div class="row mb-4">
     <div class="col-md-4 mb-3">
         <div class="stat-card">
-            <div class="stat-icon bg-warning">
-                <i class="fas fa-exclamation-circle"></i>
+            <div class="stat-icon bg-danger">
+                <i class="fas fa-exclamation-triangle"></i>
             </div>
             <div class="stat-content">
-                <h3><?php echo count($unpaid_invoices); ?></h3>
-                <p>Unpaid Invoices</p>
-                <small class="text-danger"><strong><?php echo formatCurrency($unpaid_total); ?></strong></small>
+                <h3><?php echo $action_required_count; ?></h3>
+                <p>Action Required</p>
+                <small class="text-danger"><strong><?php echo formatCurrency($action_required_total); ?></strong></small>
             </div>
         </div>
     </div>
@@ -75,6 +81,93 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
     </div>
 </div>
 
+<!-- OVERDUE Invoices (Urgent!) -->
+<?php if (count($overdue_invoices) > 0): ?>
+<div class="card mb-4 border-danger">
+    <div class="card-header bg-danger text-white">
+        <i class="fas fa-exclamation-circle"></i> OVERDUE INVOICES - URGENT!
+        <span class="badge bg-light text-danger float-end"><?php echo count($overdue_invoices); ?></span>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-danger mb-3">
+            <i class="fas fa-skull-crossbones"></i> <strong>URGENT:</strong> These invoices are past their due date. Please pay immediately to avoid late fees or suspension!
+        </div>
+        <div class="table-responsive">
+            <table class="table sp-invoices-table">
+                <thead>
+                    <tr>
+                        <th>Invoice #</th>
+                        <th>Created Date/Time</th>
+                        <th>Description</th>
+                        <th class="sp-hide-mobile">Class</th>
+                        <th>Amount</th>
+                        <th class="sp-hide-mobile">Due Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($overdue_invoices as $invoice): ?>
+                        <tr class="sp-invoice-row table-danger">
+                            <td>
+                                <strong><?php echo htmlspecialchars($invoice['invoice_number']); ?></strong>
+                                <div class="d-md-none text-muted small">
+                                    <?php echo date('d M Y, g:i A', strtotime($invoice['created_at'])); ?>
+                                </div>
+                                <div class="d-md-none">
+                                    <span class="badge bg-danger">OVERDUE</span>
+                                </div>
+                            </td>
+                            <td class="sp-hide-mobile">
+                                <div><?php echo date('d M Y', strtotime($invoice['created_at'])); ?></div>
+                                <small class="text-muted"><?php echo date('g:i A', strtotime($invoice['created_at'])); ?></small>
+                            </td>
+                            <td>
+                                <?php echo htmlspecialchars($invoice['description']); ?>
+                                <div class="d-md-none text-muted small">
+                                    <?php if ($invoice['class_name']): ?>
+                                        <span class="badge bg-info"><?php echo $invoice['class_code']; ?></span>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                            <td class="sp-hide-mobile">
+                                <?php if ($invoice['class_name']): ?>
+                                    <span class="badge bg-info"><?php echo $invoice['class_code']; ?></span>
+                                <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <strong class="text-danger"><?php echo formatCurrency($invoice['amount']); ?></strong>
+                                <div class="d-md-none text-muted small">
+                                    Due: <?php echo date('d M Y', strtotime($invoice['due_date'])); ?>
+                                </div>
+                            </td>
+                            <td class="sp-hide-mobile">
+                                <span class="text-danger"><strong><?php echo date('d M Y', strtotime($invoice['due_date'])); ?></strong></span>
+                            </td>
+                            <td class="sp-invoice-actions-cell">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button class="btn btn-danger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#payInvoiceModal<?php echo $invoice['id']; ?>">
+                                        <i class="fas fa-credit-card"></i> PAY NOW
+                                    </button>
+                                    <button class="btn btn-outline-danger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#viewInvoiceModal<?php echo $invoice['id']; ?>">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Unpaid Invoices -->
 <?php if (count($unpaid_invoices) > 0): ?>
 <div class="card mb-4">
@@ -91,7 +184,7 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
                 <thead>
                     <tr>
                         <th>Invoice #</th>
-                        <th>Date</th>
+                        <th>Created Date/Time</th>
                         <th>Description</th>
                         <th class="sp-hide-mobile">Class</th>
                         <th>Amount</th>
@@ -105,11 +198,12 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
                             <td>
                                 <strong><?php echo htmlspecialchars($invoice['invoice_number']); ?></strong>
                                 <div class="d-md-none text-muted small">
-                                    <?php echo formatDate($invoice['created_at']); ?>
+                                    <?php echo date('d M Y, g:i A', strtotime($invoice['created_at'])); ?>
                                 </div>
                             </td>
                             <td class="sp-hide-mobile">
-                                <?php echo formatDate($invoice['created_at']); ?>
+                                <div><?php echo date('d M Y', strtotime($invoice['created_at'])); ?></div>
+                                <small class="text-muted"><?php echo date('g:i A', strtotime($invoice['created_at'])); ?></small>
                             </td>
                             <td>
                                 <?php echo htmlspecialchars($invoice['description']); ?>
@@ -129,11 +223,11 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
                             <td>
                                 <strong><?php echo formatCurrency($invoice['amount']); ?></strong>
                                 <div class="d-md-none text-muted small">
-                                    Due: <?php echo formatDate($invoice['due_date']); ?>
+                                    Due: <?php echo date('d M Y', strtotime($invoice['due_date'])); ?>
                                 </div>
                             </td>
                             <td class="sp-hide-mobile">
-                                <?php echo formatDate($invoice['due_date']); ?>
+                                <?php echo date('d M Y', strtotime($invoice['due_date'])); ?>
                             </td>
                             <td class="sp-invoice-actions-cell">
                                 <div class="btn-group btn-group-sm" role="group">
@@ -174,7 +268,7 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
                 <thead>
                     <tr>
                         <th>Invoice #</th>
-                        <th>Date</th>
+                        <th>Created Date/Time</th>
                         <th>Description</th>
                         <th class="sp-hide-mobile">Class</th>
                         <th>Amount</th>
@@ -188,11 +282,12 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
                             <td>
                                 <strong><?php echo htmlspecialchars($invoice['invoice_number']); ?></strong>
                                 <div class="d-md-none text-muted small">
-                                    <?php echo formatDate($invoice['created_at']); ?>
+                                    <?php echo date('d M Y, g:i A', strtotime($invoice['created_at'])); ?>
                                 </div>
                             </td>
                             <td class="sp-hide-mobile">
-                                <?php echo formatDate($invoice['created_at']); ?>
+                                <div><?php echo date('d M Y', strtotime($invoice['created_at'])); ?></div>
+                                <small class="text-muted"><?php echo date('g:i A', strtotime($invoice['created_at'])); ?></small>
                             </td>
                             <td>
                                 <?php echo htmlspecialchars($invoice['description']); ?>
@@ -234,28 +329,42 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
 </div>
 <?php endif; ?>
 
-<!-- Payment Modals for Unpaid Invoices -->
-<?php foreach ($unpaid_invoices as $invoice): ?>
+<!-- Payment Modals for Unpaid AND OVERDUE Invoices -->
+<?php 
+$payable_invoices = array_merge($unpaid_invoices, $overdue_invoices);
+foreach ($payable_invoices as $invoice): 
+?>
 <!-- VIEW INVOICE MODAL -->
 <div class="modal fade" id="viewInvoiceModal<?php echo $invoice['id']; ?>" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
-      <div class="modal-header">
+      <div class="modal-header <?php echo $invoice['status'] === 'overdue' ? 'bg-danger text-white' : ''; ?>">
         <h5 class="modal-title">
           <i class="fas fa-file-invoice"></i>
           Invoice Details
+          <?php if ($invoice['status'] === 'overdue'): ?>
+            <span class="badge bg-light text-danger ms-2">OVERDUE</span>
+          <?php endif; ?>
         </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close <?php echo $invoice['status'] === 'overdue' ? 'btn-close-white' : ''; ?>" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
+        <?php if ($invoice['status'] === 'overdue'): ?>
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-triangle"></i> <strong>This invoice is overdue!</strong> Please pay immediately to avoid penalties.
+        </div>
+        <?php endif; ?>
         <table class="table table-bordered">
           <tr>
             <th width="30%">Invoice #</th>
             <td><?php echo htmlspecialchars($invoice['invoice_number']); ?></td>
           </tr>
           <tr>
-            <th>Date</th>
-            <td><?php echo formatDate($invoice['created_at']); ?></td>
+            <th>Created Date & Time</th>
+            <td>
+                <?php echo date('d M Y', strtotime($invoice['created_at'])); ?>
+                <span class="text-muted">at <?php echo date('g:i A', strtotime($invoice['created_at'])); ?></span>
+            </td>
           </tr>
           <tr>
             <th>Class</th>
@@ -278,19 +387,30 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
           </tr>
           <tr>
             <th>Due Date</th>
-            <td><?php echo formatDate($invoice['due_date']); ?></td>
+            <td>
+              <?php echo date('d M Y', strtotime($invoice['due_date'])); ?>
+              <?php if ($invoice['status'] === 'overdue'): ?>
+                <span class="badge bg-danger ms-2">OVERDUE</span>
+              <?php endif; ?>
+            </td>
           </tr>
           <tr>
             <th>Status</th>
-            <td><span class="badge bg-warning">Unpaid</span></td>
+            <td>
+              <?php if ($invoice['status'] === 'overdue'): ?>
+                <span class="badge bg-danger">Overdue</span>
+              <?php else: ?>
+                <span class="badge bg-warning">Unpaid</span>
+              <?php endif; ?>
+            </td>
           </tr>
         </table>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-success" data-bs-dismiss="modal" 
+        <button type="button" class="btn <?php echo $invoice['status'] === 'overdue' ? 'btn-danger' : 'btn-success'; ?>" data-bs-dismiss="modal" 
                 data-bs-toggle="modal" data-bs-target="#payInvoiceModal<?php echo $invoice['id']; ?>">
-          <i class="fas fa-credit-card"></i> Pay Now
+          <i class="fas fa-credit-card"></i> <?php echo $invoice['status'] === 'overdue' ? 'PAY NOW' : 'Pay Now'; ?>
         </button>
       </div>
     </div>
@@ -316,10 +436,13 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
           <input type="hidden" name="invoice_amount" value="<?php echo $invoice['amount']; ?>">
           <input type="hidden" name="invoice_payment_month" value="<?php echo $invoice['payment_month']; ?>">
 
-          <div class="alert alert-info">
+          <div class="alert <?php echo $invoice['status'] === 'overdue' ? 'alert-danger' : 'alert-info'; ?>">
             <strong>Invoice #:</strong> <?php echo htmlspecialchars($invoice['invoice_number']); ?><br>
             <strong>Amount:</strong> <?php echo formatCurrency($invoice['amount']); ?><br>
-            <strong>Due:</strong> <?php echo formatDate($invoice['due_date']); ?>
+            <strong>Due:</strong> <?php echo date('d M Y', strtotime($invoice['due_date'])); ?>
+            <?php if ($invoice['status'] === 'overdue'): ?>
+              <br><span class="badge bg-danger mt-1">OVERDUE</span>
+            <?php endif; ?>
           </div>
 
           <div class="mb-3">
@@ -336,7 +459,7 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-success">
+          <button type="submit" class="btn <?php echo $invoice['status'] === 'overdue' ? 'btn-danger' : 'btn-success'; ?>">
             <i class="fas fa-upload"></i> Submit Payment
           </button>
         </div>
@@ -368,8 +491,11 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
             <td><?php echo htmlspecialchars($invoice['invoice_number']); ?></td>
           </tr>
           <tr>
-            <th>Date</th>
-            <td><?php echo formatDate($invoice['created_at']); ?></td>
+            <th>Created Date & Time</th>
+            <td>
+                <?php echo date('d M Y', strtotime($invoice['created_at'])); ?>
+                <span class="text-muted">at <?php echo date('g:i A', strtotime($invoice['created_at'])); ?></span>
+            </td>
           </tr>
           <tr>
             <th>Class</th>
@@ -392,7 +518,7 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
           </tr>
           <tr>
             <th>Due Date</th>
-            <td><?php echo formatDate($invoice['due_date']); ?></td>
+            <td><?php echo date('d M Y', strtotime($invoice['due_date'])); ?></td>
           </tr>
           <tr>
             <th>Status</th>
@@ -432,7 +558,7 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
                         <th class="sp-hide-mobile">Type</th>
                         <th>Description</th>
                         <th>Amount</th>
-                        <th>Paid Date</th>
+                        <th>Paid Date/Time</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -446,7 +572,14 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
                             </td>
                             <td><?php echo htmlspecialchars(substr($invoice['description'], 0, 50)) . (strlen($invoice['description']) > 50 ? '...' : ''); ?></td>
                             <td><strong><?php echo formatCurrency($invoice['amount']); ?></strong></td>
-                            <td><?php echo $invoice['paid_date'] ? formatDate($invoice['paid_date']) : '-'; ?></td>
+                            <td>
+                                <?php if ($invoice['paid_date']): ?>
+                                    <div><?php echo date('d M Y', strtotime($invoice['paid_date'])); ?></div>
+                                    <small class="text-muted"><?php echo date('g:i A', strtotime($invoice['paid_date'])); ?></small>
+                                <?php else: ?>
+                                    -
+                                <?php endif; ?>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
