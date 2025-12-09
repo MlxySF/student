@@ -160,6 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
     // Determine payment type and get appropriate values
     $invoice_id = !empty($_POST['invoice_id']) ? $_POST['invoice_id'] : null;
+    $is_invoice_payment = !empty($invoice_id);
 
     if ($invoice_id) {
         // Invoice Payment
@@ -178,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         if (!$class_id) {
             $_SESSION['error'] = "Unable to process invoice payment. Please ensure you're enrolled in at least one class.";
-            header('Location: index.php?page=payments');
+            header('Location: index.php?page=invoices');
             exit;
         }
 
@@ -198,7 +199,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         if (!$validation['valid']) {
             $_SESSION['error'] = $validation['error'];
-            header('Location: index.php?page=payments');
+            $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
+            header('Location: index.php?page=' . $redirect_page);
             exit;
         }
 
@@ -207,7 +209,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         if ($receiptData === false) {
             $_SESSION['error'] = "Failed to process receipt file.";
-            header('Location: index.php?page=payments');
+            $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
+            header('Location: index.php?page=' . $redirect_page);
             exit;
         }
 
@@ -252,11 +255,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             if ($invoice_id) {
                 $update = $pdo->prepare("UPDATE invoices SET status = 'pending' WHERE id = ?");
                 $update->execute([$invoice_id]);
-            }
-
-            $_SESSION['success'] = "Payment uploaded successfully! Waiting for admin verification.";
-            if ($invoice_id) {
-                $_SESSION['success'] .= " (Invoice payment submitted)";
+                
+                $_SESSION['success'] = "Payment submitted successfully! Your invoice is now pending verification.";
+                // Redirect to invoices page so student can see the updated status
+                header('Location: index.php?page=invoices');
+                exit;
+            } else {
+                $_SESSION['success'] = "Payment uploaded successfully! Waiting for admin verification.";
+                header('Location: index.php?page=payments');
+                exit;
             }
         } else {
             $_SESSION['error'] = "Failed to save payment record.";
@@ -266,7 +273,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $_SESSION['error'] = "Please select a receipt file.";
     }
 
-    header('Location: index.php?page=payments');
+    // Fallback redirect
+    $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
+    header('Location: index.php?page=' . $redirect_page);
     exit;
 }
 
@@ -702,7 +711,7 @@ $page = $_GET['page'] ?? 'login';
             body.logged-in {
                 padding-top: 60px;
             }
-
+            
             .sidebar {
                 top: 60px;
                 height: calc(100vh - 60px);
