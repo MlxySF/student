@@ -46,10 +46,14 @@ $stmt = $pdo->prepare("
 $stmt->execute([getStudentId()]);
 $all_invoices = $stmt->fetchAll();
 
-// Count unpaid invoices
-$unpaid_invoices = array_filter($all_invoices, fn($inv) => $inv['status'] === 'unpaid');
+// Count unpaid invoices - BOTH 'unpaid' AND 'pending' should be counted as needing attention
+$unpaid_invoices = array_filter($all_invoices, fn($inv) => in_array($inv['status'], ['unpaid', 'pending']));
 $unpaid_count = count($unpaid_invoices);
 $unpaid_total = array_sum(array_column($unpaid_invoices, 'amount'));
+
+// Count truly paid invoices
+$paid_invoices = array_filter($all_invoices, fn($inv) => $inv['status'] === 'paid');
+$paid_count = count($paid_invoices);
 ?>
 
 <div class="row">
@@ -104,7 +108,7 @@ $unpaid_total = array_sum(array_column($unpaid_invoices, 'amount'));
         </div>
     </div>
 
-    <!-- Unpaid Invoices (NEW!) -->
+    <!-- Outstanding Invoices (unpaid OR pending payment) -->
     <div class="col-md-3 mb-4">
         <div class="stat-card">
             <div class="stat-icon bg-danger">
@@ -112,19 +116,23 @@ $unpaid_total = array_sum(array_column($unpaid_invoices, 'amount'));
             </div>
             <div class="stat-content">
                 <h3><?php echo $unpaid_count; ?></h3>
-                <p>Unpaid Invoices</p>
+                <p>Outstanding Invoices</p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Unpaid Invoices Alert (Stays visible - no auto-dismiss!) -->
+<!-- Outstanding Invoices Alert (Stays visible - no auto-dismiss!) -->
 <?php if ($unpaid_count > 0): ?>
 <div class="row">
     <div class="col-12 mb-4">
         <div class="alert alert-warning alert-dismissible fade show invoice-alert" role="alert">
-            <h5 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> You have <?php echo $unpaid_count; ?> unpaid invoice(s)</h5>
-            <p class="mb-0">Total outstanding amount: <strong><?php echo formatCurrency($unpaid_total); ?></strong></p>
+            <h5 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> You have <?php echo $unpaid_count; ?> outstanding invoice(s)</h5>
+            <p class="mb-0">Total amount: <strong><?php echo formatCurrency($unpaid_total); ?></strong></p>
+            <p class="mb-0 mt-2 text-muted small">
+                <i class="fas fa-info-circle"></i> 
+                Includes invoices that are unpaid or awaiting payment verification.
+            </p>
             <p class="mb-0 mt-2">
                 <a href="?page=invoices" class="btn btn-sm btn-warning">
                     <i class="fas fa-eye"></i> View Invoices
@@ -196,14 +204,31 @@ $unpaid_total = array_sum(array_column($unpaid_invoices, 'amount'));
                                 <?php 
                                 $recent_invoices = array_slice($all_invoices, 0, 5);
                                 foreach($recent_invoices as $invoice): 
-                                    $status_class = $invoice['status'] === 'paid' ? 'success' : 
-                                                  ($invoice['status'] === 'cancelled' ? 'secondary' : 'warning');
+                                    // Proper status badge coloring
+                                    if ($invoice['status'] === 'paid') {
+                                        $status_class = 'success';
+                                        $status_text = 'Paid';
+                                    } elseif ($invoice['status'] === 'pending') {
+                                        $status_class = 'info';
+                                        $status_text = 'Pending Verification';
+                                    } elseif ($invoice['status'] === 'cancelled') {
+                                        $status_class = 'secondary';
+                                        $status_text = 'Cancelled';
+                                    } elseif ($invoice['status'] === 'overdue') {
+                                        $status_class = 'danger';
+                                        $status_text = 'Overdue';
+                                    } else {
+                                        $status_class = 'warning';
+                                        $status_text = 'Unpaid';
+                                    }
                                 ?>
                                     <tr>
                                         <td><small><?php echo $invoice['invoice_number']; ?></small></td>
-                                        <td><?php echo htmlspecialchars(substr($invoice['description'], 0, 30)) . '...'; ?></td>
+                                        <td><?php echo htmlspecialchars(substr($invoice['description'], 0, 30)) . (strlen($invoice['description']) > 30 ? '...' : ''); ?></td>
                                         <td><strong><?php echo formatCurrency($invoice['amount']); ?></strong></td>
-                                        <td><span class="badge bg-<?php echo $status_class; ?>"><?php echo ucfirst($invoice['status']); ?></span></td>
+                                        <td>
+                                            <span class="badge bg-<?php echo $status_class; ?>"><?php echo $status_text; ?></span>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
