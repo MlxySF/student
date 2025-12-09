@@ -3,14 +3,14 @@
 $stmt = $pdo->query("SELECT COUNT(*) as total FROM invoices WHERE status = 'unpaid'");
 $unpaid_count = $stmt->fetch()['total'];
 
+$stmt = $pdo->query("SELECT COUNT(*) as total FROM invoices WHERE status = 'pending'");
+$pending_count = $stmt->fetch()['total'];
+
 $stmt = $pdo->query("SELECT COUNT(*) as total FROM invoices WHERE status = 'paid'");
 $paid_count = $stmt->fetch()['total'];
 
-$stmt = $pdo->query("SELECT SUM(amount) as total FROM invoices WHERE status = 'unpaid'");
+$stmt = $pdo->query("SELECT SUM(amount) as total FROM invoices WHERE status IN ('unpaid', 'pending')");
 $outstanding_amount = $stmt->fetch()['total'] ?? 0;
-
-$stmt = $pdo->query("SELECT COUNT(*) as total FROM invoices WHERE invoice_type = 'equipment'");
-$equipment_count = $stmt->fetch()['total'];
 
 // Get all invoices
 $stmt = $pdo->query("
@@ -18,7 +18,15 @@ $stmt = $pdo->query("
     FROM invoices i
     JOIN students s ON i.student_id = s.id
     LEFT JOIN classes c ON i.class_id = c.id
-    ORDER BY i.created_at DESC
+    ORDER BY 
+        CASE 
+            WHEN i.status = 'unpaid' THEN 1
+            WHEN i.status = 'pending' THEN 2
+            WHEN i.status = 'overdue' THEN 3
+            WHEN i.status = 'paid' THEN 4
+            ELSE 5
+        END,
+        i.created_at DESC
 ");
 $all_invoices = $stmt->fetchAll();
 
@@ -125,6 +133,18 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
 
     <div class="col-md-3 mb-3">
         <div class="stat-card">
+            <div class="stat-icon bg-info">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+                <h3><?php echo $pending_count; ?></h3>
+                <p>Pending Verification</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <div class="stat-card">
             <div class="stat-icon bg-success">
                 <i class="fas fa-check-circle"></i>
             </div>
@@ -143,18 +163,6 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
             <div class="stat-content">
                 <h3><?php echo formatCurrency($outstanding_amount); ?></h3>
                 <p>Outstanding Amount</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-3 mb-3">
-        <div class="stat-card">
-            <div class="stat-icon bg-info">
-                <i class="fas fa-tools"></i>
-            </div>
-            <div class="stat-content">
-                <h3><?php echo $equipment_count; ?></h3>
-                <p>Equipment Invoices</p>
             </div>
         </div>
     </div>
@@ -190,7 +198,30 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                         </tr>
                     </thead>
                     <tbody>
-<?php foreach ($all_invoices as $invoice): ?>
+<?php foreach ($all_invoices as $invoice): 
+    // Determine status display
+    if ($invoice['status'] === 'paid') {
+        $status_badge = 'success';
+        $status_text = 'Paid';
+        $status_icon = 'check-circle';
+    } elseif ($invoice['status'] === 'pending') {
+        $status_badge = 'info';
+        $status_text = 'Pending Verification';
+        $status_icon = 'clock';
+    } elseif ($invoice['status'] === 'overdue') {
+        $status_badge = 'danger';
+        $status_text = 'Overdue';
+        $status_icon = 'exclamation-triangle';
+    } elseif ($invoice['status'] === 'cancelled') {
+        $status_badge = 'secondary';
+        $status_text = 'Cancelled';
+        $status_icon = 'ban';
+    } else {
+        $status_badge = 'warning';
+        $status_text = 'Unpaid';
+        $status_icon = 'exclamation-circle';
+    }
+?>
     <tr class="invoice-row">
         <td class="text-nowrap">
             <strong><?php echo htmlspecialchars($invoice['invoice_number']); ?></strong>
@@ -214,7 +245,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
         </td>
 
         <td class="hide-mobile">
-            <span class="badge bg-info"><?php echo ucfirst($invoice['invoice_type']); ?></span>
+            <span class="badge bg-secondary"><?php echo ucfirst($invoice['invoice_type']); ?></span>
         </td>
 
         <td class="hide-mobile">
@@ -236,29 +267,28 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
         </td>
 
         <td>
-            <?php if ($invoice['status'] === 'unpaid'): ?>
-                <span class="badge bg-warning">Unpaid</span>
-            <?php elseif ($invoice['status'] === 'paid'): ?>
-                <span class="badge bg-success">Paid</span>
-            <?php else: ?>
-                <span class="badge bg-secondary">Overdue</span>
-            <?php endif; ?>
+            <span class="badge bg-<?php echo $status_badge; ?>">
+                <i class="fas fa-<?php echo $status_icon; ?>"></i> <?php echo $status_text; ?>
+            </span>
         </td>
 
         <td class="invoice-actions-cell">
             <div class="btn-group btn-group-sm" role="group">
                 <button class="btn btn-info"
                         data-bs-toggle="modal"
-                        data-bs-target="#viewInvoiceModal<?php echo $invoice['id']; ?>">
+                        data-bs-target="#viewInvoiceModal<?php echo $invoice['id']; ?>"
+                        title="View Details">
                     <i class="fas fa-eye"></i>
                 </button>
                 <button class="btn btn-warning"
                         data-bs-toggle="modal"
-                        data-bs-target="#editInvoiceModal<?php echo $invoice['id']; ?>">
+                        data-bs-target="#editInvoiceModal<?php echo $invoice['id']; ?>"
+                        title="Edit Invoice">
                     <i class="fas fa-edit"></i>
                 </button>
                 <button class="btn btn-danger"
-                        onclick="if(confirm('Delete this invoice?')) document.getElementById('deleteInvoiceForm<?php echo $invoice['id']; ?>').submit();">
+                        onclick="if(confirm('Delete this invoice? This action cannot be undone.')) document.getElementById('deleteInvoiceForm<?php echo $invoice['id']; ?>').submit();"
+                        title="Delete Invoice">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -283,7 +313,25 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
 </div>
 
 <!-- View/Edit/Delete Modals (Outside table) -->
-<?php foreach ($all_invoices as $invoice): ?>
+<?php foreach ($all_invoices as $invoice): 
+    // Determine status display for modal
+    if ($invoice['status'] === 'paid') {
+        $modal_status_badge = 'success';
+        $modal_status_text = 'Paid';
+    } elseif ($invoice['status'] === 'pending') {
+        $modal_status_badge = 'info';
+        $modal_status_text = 'Pending Verification';
+    } elseif ($invoice['status'] === 'overdue') {
+        $modal_status_badge = 'danger';
+        $modal_status_text = 'Overdue';
+    } elseif ($invoice['status'] === 'cancelled') {
+        $modal_status_badge = 'secondary';
+        $modal_status_text = 'Cancelled';
+    } else {
+        $modal_status_badge = 'warning';
+        $modal_status_text = 'Unpaid';
+    }
+?>
     <!-- View Invoice Modal -->
     <div class="modal fade" id="viewInvoiceModal<?php echo $invoice['id']; ?>" tabindex="-1">
         <div class="modal-dialog">
@@ -293,6 +341,11 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <?php if ($invoice['status'] === 'pending'): ?>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> <strong>Payment Pending:</strong> Student has uploaded payment receipt. Please verify in the Payments section.
+                        </div>
+                    <?php endif; ?>
                     <table class="table table-bordered">
                         <tr>
                             <th width="40%">Invoice Number</th>
@@ -309,12 +362,12 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                         <?php if ($invoice['class_code']): ?>
                         <tr>
                             <th>Class</th>
-                            <td><span class="badge bg-info"><?php echo htmlspecialchars($invoice['class_code']); ?></span></td>
+                            <td><span class="badge bg-info"><?php echo htmlspecialchars($invoice['class_code']); ?></span> <?php echo htmlspecialchars($invoice['class_name']); ?></td>
                         </tr>
                         <?php endif; ?>
                         <tr>
                             <th>Type</th>
-                            <td><span class="badge bg-info"><?php echo ucfirst($invoice['invoice_type']); ?></span></td>
+                            <td><span class="badge bg-secondary"><?php echo ucfirst($invoice['invoice_type']); ?></span></td>
                         </tr>
                         <tr>
                             <th>Description</th>
@@ -330,23 +383,26 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                         </tr>
                         <tr>
                             <th>Status</th>
-                            <td>
-                                <?php if ($invoice['status'] === 'unpaid'): ?>
-                                    <span class="badge bg-warning">Unpaid</span>
-                                <?php elseif ($invoice['status'] === 'paid'): ?>
-                                    <span class="badge bg-success">Paid</span>
-                                <?php else: ?>
-                                    <span class="badge bg-secondary">Overdue</span>
-                                <?php endif; ?>
-                            </td>
+                            <td><span class="badge bg-<?php echo $modal_status_badge; ?>"><?php echo $modal_status_text; ?></span></td>
                         </tr>
+                        <?php if ($invoice['paid_date']): ?>
+                        <tr>
+                            <th>Paid Date</th>
+                            <td><?php echo formatDateTime($invoice['paid_date']); ?></td>
+                        </tr>
+                        <?php endif; ?>
                         <tr>
                             <th>Created Date</th>
-                            <td><?php echo formatDate($invoice['created_at']); ?></td>
+                            <td><?php echo formatDateTime($invoice['created_at']); ?></td>
                         </tr>
                     </table>
                 </div>
                 <div class="modal-footer">
+                    <?php if ($invoice['status'] === 'pending'): ?>
+                        <a href="?page=payments" class="btn btn-info">
+                            <i class="fas fa-eye"></i> View Payment Receipt
+                        </a>
+                    <?php endif; ?>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -365,6 +421,12 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                     <div class="modal-body">
                         <input type="hidden" name="action" value="edit_invoice">
                         <input type="hidden" name="invoice_id" value="<?php echo $invoice['id']; ?>">
+
+                        <?php if ($invoice['status'] === 'pending'): ?>
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i> This invoice has a pending payment. Changing status manually may cause issues. Verify payment in Payments section instead.
+                            </div>
+                        <?php endif; ?>
 
                         <div class="mb-3">
                             <label class="form-label">Invoice Number</label>
@@ -390,9 +452,12 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                             <label class="form-label">Status *</label>
                             <select name="status" class="form-select" required>
                                 <option value="unpaid" <?php echo $invoice['status'] === 'unpaid' ? 'selected' : ''; ?>>Unpaid</option>
+                                <option value="pending" <?php echo $invoice['status'] === 'pending' ? 'selected' : ''; ?>>Pending Verification</option>
                                 <option value="paid" <?php echo $invoice['status'] === 'paid' ? 'selected' : ''; ?>>Paid</option>
                                 <option value="overdue" <?php echo $invoice['status'] === 'overdue' ? 'selected' : ''; ?>>Overdue</option>
+                                <option value="cancelled" <?php echo $invoice['status'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
                             </select>
+                            <div class="form-text">Note: Use Payments page to properly verify payments.</div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -436,9 +501,10 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                         <label class="form-label">Invoice Type *</label>
                         <select name="invoice_type" class="form-select" id="invoiceType" required>
                             <option value="">Select Type</option>
-                            <option value="monthly">Monthly Tuition</option>
-                            <option value="equipment">Equipment</option>
+                            <option value="monthly_fee">Monthly Fee</option>
                             <option value="registration">Registration</option>
+                            <option value="equipment">Equipment</option>
+                            <option value="event">Event</option>
                             <option value="other">Other</option>
                         </select>
                     </div>
@@ -458,12 +524,12 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
 
                     <div class="mb-3">
                         <label class="form-label">Description *</label>
-                        <textarea name="description" class="form-control" rows="3" required></textarea>
+                        <textarea name="description" class="form-control" rows="3" placeholder="E.g. Monthly tuition for January 2025" required></textarea>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Amount *</label>
-                        <input type="number" name="amount" class="form-control" step="0.01" required>
+                        <label class="form-label">Amount (RM) *</label>
+                        <input type="number" name="amount" class="form-control" step="0.01" placeholder="150.00" required>
                     </div>
 
                     <div class="mb-3">
@@ -472,7 +538,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                     </div>
 
                     <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> Invoice number will be auto-generated
+                        <i class="fas fa-info-circle"></i> Invoice number will be auto-generated. Status will be set to "Unpaid".
                     </div>
                 </div>
                 <div class="modal-footer">
