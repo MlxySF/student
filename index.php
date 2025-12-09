@@ -253,12 +253,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         if ($success) {
             // If this came from an invoice, update invoice status to 'pending' (awaiting verification)
             if ($invoice_id) {
+                // Update invoice to pending
                 $update = $pdo->prepare("UPDATE invoices SET status = 'pending' WHERE id = ?");
                 $update->execute([$invoice_id]);
                 
-                $_SESSION['success'] = "Payment submitted successfully! Your invoice is now pending verification.";
-                // Redirect to invoices page so student can see the updated status
-                header('Location: index.php?page=invoices');
+                // Set success message with more details
+                $_SESSION['success'] = "Payment submitted successfully! Your invoice is now pending verification. You can view it below in the 'Pending Verification' section.";
+                
+                // Redirect with cache busting timestamp
+                header('Location: index.php?page=invoices&t=' . time());
                 exit;
             } else {
                 $_SESSION['success'] = "Payment uploaded successfully! Waiting for admin verification.";
@@ -896,16 +899,18 @@ $page = $_GET['page'] ?? 'login';
         </h3>
 
         <?php if (isset($_SESSION['success'])): ?>
-            <div class="alert alert-success alert-dismissible fade show animate__animated animate__fadeInDown temp-alert">
+            <div class="alert alert-success alert-dismissible fade show animate__animated animate__fadeInDown" role="alert">
+                <i class="fas fa-check-circle"></i>
+                <strong>Success!</strong> <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
             </div>
         <?php endif; ?>
 
         <?php if (isset($_SESSION['error'])): ?>
-            <div class="alert alert-danger alert-dismissible fade show animate__animated animate__fadeInDown temp-alert">
+            <div class="alert alert-danger alert-dismissible fade show animate__animated animate__fadeInDown" role="alert">
+                <i class="fas fa-exclamation-circle"></i>
+                <strong>Error!</strong> <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
             </div>
         <?php endif; ?>
 
@@ -956,16 +961,15 @@ $page = $_GET['page'] ?? 'login';
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Auto-dismiss ONLY temporary alerts
+    // Auto-dismiss alerts after 7 seconds
     setTimeout(() => {
-        document.querySelectorAll('.temp-alert').forEach(alert => {
-            alert.style.transition = 'opacity 0.5s';
-            alert.style.opacity = '0';
-            setTimeout(() => {
-                alert.remove();
-            }, 500);
+        document.querySelectorAll('.alert').forEach(alert => {
+            if (alert.classList.contains('invoice-alert')) return; // Don't auto-dismiss invoice alerts
+            
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
         });
-    }, 5000);
+    }, 7000);
 
     // ============================================
     // MOBILE MENU TOGGLE
