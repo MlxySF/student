@@ -1,4 +1,5 @@
 <?php
+ob_start(); // START OUTPUT BUFFERING - Fix for "headers already sent" error
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -1104,3 +1105,6 @@ $page = $_GET['page'] ?? 'login';
 </script>
 </body>
 </html>
+<?php
+ob_end_flush(); // END OUTPUT BUFFERING - Flush output to browser
+?>
