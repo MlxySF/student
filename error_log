@@ -310,3 +310,21 @@ Stack trace:
 #2 /home/mlxysf/wushusportacademy.app.tc/student/generate_invoice_pdf.php(315): FPDF->Output()
 #3 {main}
   thrown in /home/mlxysf/wushusportacademy.app.tc/student/fpdf.php on line 267
+[09-Dec-2025 15:52:21 Asia/Kuala_Lumpur] PHP Notice:  Undefined index: updated_at in /home/mlxysf/wushusportacademy.app.tc/student/pages/invoices.php on line 290
+[09-Dec-2025 15:52:21 Asia/Kuala_Lumpur] PHP Notice:  Undefined index: updated_at in /home/mlxysf/wushusportacademy.app.tc/student/pages/invoices.php on line 291
+[09-Dec-2025 15:52:21 Asia/Kuala_Lumpur] PHP Notice:  Undefined index: updated_at in /home/mlxysf/wushusportacademy.app.tc/student/pages/invoices.php on line 290
+[09-Dec-2025 15:52:21 Asia/Kuala_Lumpur] PHP Notice:  Undefined index: updated_at in /home/mlxysf/wushusportacademy.app.tc/student/pages/invoices.php on line 291
+[09-Dec-2025 15:52:21 Asia/Kuala_Lumpur] PHP Notice:  Undefined index: updated_at in /home/mlxysf/wushusportacademy.app.tc/student/pages/invoices.php on line 290
+[09-Dec-2025 15:52:21 Asia/Kuala_Lumpur] PHP Notice:  Undefined index: updated_at in /home/mlxysf/wushusportacademy.app.tc/student/pages/invoices.php on line 291
+[09-Dec-2025 16:02:48 Asia/Kuala_Lumpur] PHP Notice:  Undefined index: payment_month in /home/mlxysf/wushusportacademy.app.tc/student/pages/invoices.php on line 445
+[09-Dec-2025 16:07:14 Asia/Kuala_Lumpur] PHP Notice:  Undefined index: payment_month in /home/mlxysf/wushusportacademy.app.tc/student/pages/invoices.php on line 448
+[09-Dec-2025 16:29:57 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Exception: DateTime::__construct(): Failed to parse time string (&lt;br /&gt;) at position 0 (&lt;): Unexpected character in /home/mlxysf/wushusportacademy.app.tc/student/config.php:126
+Stack trace:
+#0 /home/mlxysf/wushusportacademy.app.tc/student/config.php(126): DateTime->__construct()
+#1 /home/mlxysf/wushusportacademy.app.tc/student/pages/payments.php(214): formatMonth()
+#2 /home/mlxysf/wushusportacademy.app.tc/student/index.php(933): include('/home/mlxysf/wu...')
+#3 {main}
+  thrown in /home/mlxysf/wushusportacademy.app.tc/student/config.php on line 126
+[10-Dec-2025 10:56:08 Asia/Kuala_Lumpur] PHP Warning:  require_once(../config.php): failed to open stream: No such file or directory in /home/mlxysf/wushusportacademy.app.tc/student/pages/payments.php on line 6
+[10-Dec-2025 10:56:08 Asia/Kuala_Lumpur] PHP Fatal error:  require_once(): Failed opening required '../config.php' (include_path='.:/opt/remi/php74/root/usr/share/pear:/opt/remi/php74/root/usr/share/php:/usr/share/pear:/usr/share/php') in /home/mlxysf/wushusportacademy.app.tc/student/pages/payments.php on line 6
+[10-Dec-2025 10:56:44 Asia/Kuala_Lumpur] PHP Notice:  Undefined index: action in /home/mlxysf/wushusportacademy.app.tc/student/pages/payments.php on line 7

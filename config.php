@@ -49,10 +49,14 @@ try {
 function formatDate($date) {
     if (empty($date)) return '-';
     
-    // Create DateTime object and ensure GMT+8
-    $dt = new DateTime($date);
-    $dt->setTimezone(new DateTimeZone('Asia/Kuala_Lumpur'));
-    return $dt->format('d M Y');
+    try {
+        // Create DateTime object and ensure GMT+8
+        $dt = new DateTime($date);
+        $dt->setTimezone(new DateTimeZone('Asia/Kuala_Lumpur'));
+        return $dt->format('d M Y');
+    } catch (Exception $e) {
+        return '-';
+    }
 }
 
 /**
@@ -62,10 +66,14 @@ function formatDate($date) {
 function formatDateTime($datetime) {
     if (empty($datetime)) return '-';
     
-    // Create DateTime object and ensure GMT+8
-    $dt = new DateTime($datetime);
-    $dt->setTimezone(new DateTimeZone('Asia/Kuala_Lumpur'));
-    return $dt->format('d M Y, g:i A');
+    try {
+        // Create DateTime object and ensure GMT+8
+        $dt = new DateTime($datetime);
+        $dt->setTimezone(new DateTimeZone('Asia/Kuala_Lumpur'));
+        return $dt->format('d M Y, g:i A');
+    } catch (Exception $e) {
+        return '-';
+    }
 }
 
 /**
@@ -75,10 +83,14 @@ function formatDateTime($datetime) {
 function formatTime($datetime) {
     if (empty($datetime)) return '-';
     
-    // Create DateTime object and ensure GMT+8
-    $dt = new DateTime($datetime);
-    $dt->setTimezone(new DateTimeZone('Asia/Kuala_Lumpur'));
-    return $dt->format('g:i A');
+    try {
+        // Create DateTime object and ensure GMT+8
+        $dt = new DateTime($datetime);
+        $dt->setTimezone(new DateTimeZone('Asia/Kuala_Lumpur'));
+        return $dt->format('g:i A');
+    } catch (Exception $e) {
+        return '-';
+    }
 }
 
 /**
@@ -105,9 +117,13 @@ function getCurrentDate() {
 function toMySQLDateTime($datetime) {
     if (empty($datetime)) return null;
     
-    $dt = new DateTime($datetime);
-    $dt->setTimezone(new DateTimeZone('Asia/Kuala_Lumpur'));
-    return $dt->format('Y-m-d H:i:s');
+    try {
+        $dt = new DateTime($datetime);
+        $dt->setTimezone(new DateTimeZone('Asia/Kuala_Lumpur'));
+        return $dt->format('Y-m-d H:i:s');
+    } catch (Exception $e) {
+        return null;
+    }
 }
 
 /**
@@ -119,13 +135,31 @@ function formatCurrency($amount) {
 
 /**
  * Format month and year (e.g., "December 2025")
+ * Accepts formats like: "2025-12", "2025-12-01", or full datetime
  */
 function formatMonth($date) {
+    if (empty($date) || $date === null) return '-';
+    
+    // Clean up the input - remove HTML tags if any
+    $date = strip_tags($date);
+    $date = trim($date);
+    
+    // Return dash if still empty after cleanup
     if (empty($date)) return '-';
     
-    $dt = new DateTime($date);
-    $dt->setTimezone(new DateTimeZone('Asia/Kuala_Lumpur'));
-    return $dt->format('F Y');
+    try {
+        // If format is "YYYY-MM" (from month input), append "-01" for parsing
+        if (preg_match('/^\d{4}-\d{2}$/', $date)) {
+            $date .= '-01';
+        }
+        
+        $dt = new DateTime($date);
+        $dt->setTimezone(new DateTimeZone('Asia/Kuala_Lumpur'));
+        return $dt->format('F Y');
+    } catch (Exception $e) {
+        // If parsing fails, return the original value or a dash
+        return '-';
+    }
 }
 
 /**

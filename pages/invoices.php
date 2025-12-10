@@ -22,12 +22,12 @@ $stmt = $pdo->prepare("
 $stmt->execute([getStudentId()]);
 $all_invoices = $stmt->fetchAll();
 
-// Separate by status
-$overdue_invoices = array_filter($all_invoices, fn($i) => $i['status'] === 'overdue');
-$unpaid_invoices = array_filter($all_invoices, fn($i) => $i['status'] === 'unpaid');
-$pending_invoices = array_filter($all_invoices, fn($i) => $i['status'] === 'pending');
-$paid_invoices = array_filter($all_invoices, fn($i) => $i['status'] === 'paid');
-$cancelled_invoices = array_filter($all_invoices, fn($i) => $i['status'] === 'cancelled');
+// Separate by status and re-index arrays
+$overdue_invoices = array_values(array_filter($all_invoices, fn($i) => $i['status'] === 'overdue'));
+$unpaid_invoices = array_values(array_filter($all_invoices, fn($i) => $i['status'] === 'unpaid'));
+$pending_invoices = array_values(array_filter($all_invoices, fn($i) => $i['status'] === 'pending'));
+$paid_invoices = array_values(array_filter($all_invoices, fn($i) => $i['status'] === 'paid'));
+$cancelled_invoices = array_values(array_filter($all_invoices, fn($i) => $i['status'] === 'cancelled'));
 
 // Calculate totals
 $overdue_total = array_sum(array_column($overdue_invoices, 'amount'));
@@ -38,6 +38,79 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
 // Combine unpaid and overdue for "action required" count
 $action_required_count = count($unpaid_invoices) + count($overdue_invoices);
 $action_required_total = $unpaid_total + $overdue_total;
+
+// Pagination settings
+$per_page = 5;
+
+// Overdue pagination
+$overdue_page = isset($_GET['overdue_page']) ? max(1, intval($_GET['overdue_page'])) : 1;
+$overdue_total_pages = max(1, ceil(count($overdue_invoices) / $per_page));
+$overdue_offset = ($overdue_page - 1) * $per_page;
+$overdue_invoices_paginated = array_slice($overdue_invoices, $overdue_offset, $per_page);
+
+// Unpaid pagination
+$unpaid_page = isset($_GET['unpaid_page']) ? max(1, intval($_GET['unpaid_page'])) : 1;
+$unpaid_total_pages = max(1, ceil(count($unpaid_invoices) / $per_page));
+$unpaid_offset = ($unpaid_page - 1) * $per_page;
+$unpaid_invoices_paginated = array_slice($unpaid_invoices, $unpaid_offset, $per_page);
+
+// Pending pagination
+$pending_page = isset($_GET['pending_page']) ? max(1, intval($_GET['pending_page'])) : 1;
+$pending_total_pages = max(1, ceil(count($pending_invoices) / $per_page));
+$pending_offset = ($pending_page - 1) * $per_page;
+$pending_invoices_paginated = array_slice($pending_invoices, $pending_offset, $per_page);
+
+// Paid pagination
+$paid_page = isset($_GET['paid_page']) ? max(1, intval($_GET['paid_page'])) : 1;
+$paid_total_pages = max(1, ceil(count($paid_invoices) / $per_page));
+$paid_offset = ($paid_page - 1) * $per_page;
+$paid_invoices_paginated = array_slice($paid_invoices, $paid_offset, $per_page);
+
+// Function to render pagination
+function renderPagination($current_page, $total_pages, $page_param) {
+    if ($total_pages <= 1) return;
+    
+    $range = 2;
+    $start_page = max(1, $current_page - $range);
+    $end_page = min($total_pages, $current_page + $range);
+    
+    echo '<nav aria-label="Invoice pagination" class="mt-4">';
+    echo '<ul class="pagination justify-content-center flex-wrap">';
+    
+    // Previous button
+    echo '<li class="page-item ' . ($current_page <= 1 ? 'disabled' : '') . '">';
+    echo '<a class="page-link" href="?page=invoices&' . $page_param . '=' . ($current_page - 1) . '" aria-label="Previous">';
+    echo '<span aria-hidden="true">&laquo;</span></a></li>';
+    
+    // First page
+    if ($start_page > 1) {
+        echo '<li class="page-item"><a class="page-link" href="?page=invoices&' . $page_param . '=1">1</a></li>';
+        if ($start_page > 2) {
+            echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        }
+    }
+    
+    // Page numbers
+    for ($i = $start_page; $i <= $end_page; $i++) {
+        echo '<li class="page-item ' . ($i == $current_page ? 'active' : '') . '">';
+        echo '<a class="page-link" href="?page=invoices&' . $page_param . '=' . $i . '">' . $i . '</a></li>';
+    }
+    
+    // Last page
+    if ($end_page < $total_pages) {
+        if ($end_page < $total_pages - 1) {
+            echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        }
+        echo '<li class="page-item"><a class="page-link" href="?page=invoices&' . $page_param . '=' . $total_pages . '">' . $total_pages . '</a></li>';
+    }
+    
+    // Next button
+    echo '<li class="page-item ' . ($current_page >= $total_pages ? 'disabled' : '') . '">';
+    echo '<a class="page-link" href="?page=invoices&' . $page_param . '=' . ($current_page + 1) . '" aria-label="Next">';
+    echo '<span aria-hidden="true">&raquo;</span></a></li>';
+    
+    echo '</ul></nav>';
+}
 ?>
 
 <div class="row mb-4">
@@ -106,7 +179,7 @@ $action_required_total = $unpaid_total + $overdue_total;
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($overdue_invoices as $invoice): ?>
+                    <?php foreach ($overdue_invoices_paginated as $invoice): ?>
                         <tr class="sp-invoice-row table-danger">
                             <td>
                                 <strong><?php echo htmlspecialchars($invoice['invoice_number']); ?></strong>
@@ -164,6 +237,7 @@ $action_required_total = $unpaid_total + $overdue_total;
                 </tbody>
             </table>
         </div>
+        <?php renderPagination($overdue_page, $overdue_total_pages, 'overdue_page'); ?>
     </div>
 </div>
 <?php endif; ?>
@@ -193,7 +267,7 @@ $action_required_total = $unpaid_total + $overdue_total;
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($unpaid_invoices as $invoice): ?>
+                    <?php foreach ($unpaid_invoices_paginated as $invoice): ?>
                         <tr class="sp-invoice-row">
                             <td>
                                 <strong><?php echo htmlspecialchars($invoice['invoice_number']); ?></strong>
@@ -248,6 +322,7 @@ $action_required_total = $unpaid_total + $overdue_total;
                 </tbody>
             </table>
         </div>
+        <?php renderPagination($unpaid_page, $unpaid_total_pages, 'unpaid_page'); ?>
     </div>
 </div>
 <?php endif; ?>
@@ -277,7 +352,7 @@ $action_required_total = $unpaid_total + $overdue_total;
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($pending_invoices as $invoice): ?>
+                    <?php foreach ($pending_invoices_paginated as $invoice): ?>
                         <tr class="sp-invoice-row">
                             <td>
                                 <strong><?php echo htmlspecialchars($invoice['invoice_number']); ?></strong>
@@ -325,6 +400,7 @@ $action_required_total = $unpaid_total + $overdue_total;
                 </tbody>
             </table>
         </div>
+        <?php renderPagination($pending_page, $pending_total_pages, 'pending_page'); ?>
     </div>
 </div>
 <?php endif; ?>
@@ -550,33 +626,62 @@ foreach ($payable_invoices as $invoice):
         <span class="badge bg-light text-dark float-end"><?php echo count($paid_invoices); ?></span>
     </div>
     <div class="card-body">
-        <div class="alert alert-success">
+        <div class="alert alert-success mb-3">
             <i class="fas fa-download"></i> <strong>Download Official Invoices:</strong> Click the "Download PDF" button to get your official invoice receipt.
         </div>
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table sp-invoices-table">
                 <thead>
                     <tr>
                         <th>Invoice #</th>
-                        <th class="sp-hide-mobile">Type</th>
+                        <th>Created Date/Time</th>
                         <th>Description</th>
+                        <th class="sp-hide-mobile">Class</th>
                         <th>Amount</th>
-                        <th>Paid Date/Time</th>
-                        <th>Actions</th>
+                        <th class="sp-hide-mobile">Paid Date</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach($paid_invoices as $invoice): ?>
-                        <tr>
-                            <td><strong><?php echo $invoice['invoice_number']; ?></strong></td>
-                            <td class="sp-hide-mobile">
-                                <span class="badge bg-secondary">
-                                    <?php echo ucfirst(str_replace('_', ' ', $invoice['invoice_type'])); ?>
-                                </span>
-                            </td>
-                            <td><?php echo htmlspecialchars(substr($invoice['description'], 0, 50)) . (strlen($invoice['description']) > 50 ? '...' : ''); ?></td>
-                            <td><strong><?php echo formatCurrency($invoice['amount']); ?></strong></td>
+                    <?php foreach ($paid_invoices_paginated as $invoice): ?>
+                        <tr class="sp-invoice-row">
                             <td>
+                                <strong><?php echo htmlspecialchars($invoice['invoice_number']); ?></strong>
+                                <div class="d-md-none text-muted small">
+                                    <?php echo date('d M Y, g:i A', strtotime($invoice['created_at'])); ?>
+                                </div>
+                                <div class="d-md-none">
+                                    <span class="badge bg-success">PAID</span>
+                                </div>
+                            </td>
+                            <td class="sp-hide-mobile">
+                                <div><?php echo date('d M Y', strtotime($invoice['created_at'])); ?></div>
+                                <small class="text-muted"><?php echo date('g:i A', strtotime($invoice['created_at'])); ?></small>
+                            </td>
+                            <td>
+                                <?php echo htmlspecialchars($invoice['description']); ?>
+                                <div class="d-md-none text-muted small">
+                                    <?php if ($invoice['class_name']): ?>
+                                        <span class="badge bg-info"><?php echo $invoice['class_code']; ?></span>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                            <td class="sp-hide-mobile">
+                                <?php if ($invoice['class_name']): ?>
+                                    <span class="badge bg-info"><?php echo $invoice['class_code']; ?></span>
+                                <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <strong><?php echo formatCurrency($invoice['amount']); ?></strong>
+                                <div class="d-md-none text-muted small">
+                                    <?php if ($invoice['paid_date']): ?>
+                                        Paid: <?php echo date('d M Y', strtotime($invoice['paid_date'])); ?>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                            <td class="sp-hide-mobile">
                                 <?php if ($invoice['paid_date']): ?>
                                     <div><?php echo date('d M Y', strtotime($invoice['paid_date'])); ?></div>
                                     <small class="text-muted"><?php echo date('g:i A', strtotime($invoice['paid_date'])); ?></small>
@@ -584,12 +689,12 @@ foreach ($payable_invoices as $invoice):
                                     -
                                 <?php endif; ?>
                             </td>
-                            <td>
+                            <td class="sp-invoice-actions-cell">
                                 <a href="generate_invoice_pdf.php?invoice_id=<?php echo $invoice['id']; ?>" 
                                    class="btn btn-sm btn-success" 
                                    target="_blank"
                                    title="Download official PDF invoice">
-                                    <i class="fas fa-download"></i> Download PDF
+                                    <i class="fas fa-download"></i> <span class="d-none d-md-inline">PDF</span>
                                 </a>
                             </td>
                         </tr>
@@ -597,6 +702,7 @@ foreach ($payable_invoices as $invoice):
                 </tbody>
             </table>
         </div>
+        <?php renderPagination($paid_page, $paid_total_pages, 'paid_page'); ?>
     </div>
 </div>
 <?php endif; ?>
@@ -665,6 +771,20 @@ foreach ($payable_invoices as $invoice):
     .sp-invoice-actions-cell .btn-group .btn {
         padding: 6px 10px;
         font-size: 13px;
+    }
+
+    .sp-invoice-actions-cell .btn {
+        margin-top: 8px;
+    }
+
+    /* Pagination mobile styling */
+    .pagination {
+        font-size: 14px;
+    }
+    
+    .pagination .page-link {
+        padding: 6px 10px;
+        margin: 2px;
     }
 }
 
