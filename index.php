@@ -617,6 +617,29 @@ $page = $_GET['page'] ?? 'login';
             padding: 40px;
         }
 
+        /* Registration Button Styling */
+        .btn-outline-primary {
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            background: transparent;
+            padding: 10px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-outline-primary:hover {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-color: transparent;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.3);
+        }
+
+        .login-card .border-top {
+            border-color: rgba(0,0,0,0.1) !important;
+        }
+
         /* Desktop View */
         @media (min-width: 769px) {
             .header-menu-btn {
@@ -797,10 +820,23 @@ $page = $_GET['page'] ?? 'login';
                     <label class="form-label"><i class="fas fa-lock"></i> Password</label>
                     <input type="password" name="password" class="form-control form-control-lg" required>
                 </div>
-                <button type="submit" class="btn btn-primary btn-lg w-100">
+                <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
                     <i class="fas fa-sign-in-alt"></i> Login
                 </button>
             </form>
+
+            <!-- Registration Link -->
+            <div class="text-center mt-4 pt-3 border-top">
+                <p class="text-muted mb-2">
+                    <i class="fas fa-user-plus"></i> New Student?
+                </p>
+                <a href="pages/register.php" class="btn btn-outline-primary btn-lg w-100">
+                    <i class="fas fa-pen-to-square"></i> Register for 2026 Wushu Training
+                </a>
+                <p class="text-muted mt-2" style="font-size: 12px;">
+                    Complete your registration form and join our academy
+                </p>
+            </div>
         </div>
     </div>
 
@@ -962,14 +998,13 @@ $page = $_GET['page'] ?? 'login';
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // Auto-dismiss ONLY success/error session messages after 7 seconds
-setTimeout(() => {
-    // Only dismiss alerts that are direct children of content-area (session messages)
-    document.querySelectorAll('.content-area > .alert').forEach(alert => {
-        const bsAlert = new bootstrap.Alert(alert);
-        bsAlert.close();
-    });
-}, 7000);
-
+    setTimeout(() => {
+        // Only dismiss alerts that are direct children of content-area (session messages)
+        document.querySelectorAll('.content-area > .alert').forEach(alert => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 7000);
 
     // ============================================
     // MOBILE MENU TOGGLE

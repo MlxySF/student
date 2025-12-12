@@ -329,3 +329,16 @@ Stack trace:
 [10-Dec-2025 10:56:08 Asia/Kuala_Lumpur] PHP Fatal error:  require_once(): Failed opening required '../config.php' (include_path='.:/opt/remi/php74/root/usr/share/pear:/opt/remi/php74/root/usr/share/php:/usr/share/pear:/usr/share/php') in /home/mlxysf/wushusportacademy.app.tc/student/pages/payments.php on line 6
 [10-Dec-2025 10:56:44 Asia/Kuala_Lumpur] PHP Notice:  Undefined index: action in /home/mlxysf/wushusportacademy.app.tc/student/pages/payments.php on line 7
 [10-Dec-2025 23:32:30 Asia/Kuala_Lumpur] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home/mlxysf/wushusportacademy.app.tc/student/admin.php:370) in /home/mlxysf/wushusportacademy.app.tc/student/admin.php on line 892
+[11-Dec-2025 00:49:03 Asia/Kuala_Lumpur] PHP Notice:  Undefined variable: conn in /home/mlxysf/wushusportacademy.app.tc/student/process_registration.php on line 57
+[11-Dec-2025 00:49:03 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to a member function begin_transaction() on null in /home/mlxysf/wushusportacademy.app.tc/student/process_registration.php:57
+Stack trace:
+#0 {main}
+  thrown in /home/mlxysf/wushusportacademy.app.tc/student/process_registration.php on line 57
+[12-Dec-2025 16:59:15 UTC] PHP Warning:  require_once(../includes/db.php): failed to open stream: No such file or directory in /home/mlxysf/wushusportacademy.app.tc/student/process_registration.php on line 11
+[12-Dec-2025 16:59:15 UTC] PHP Fatal error:  require_once(): Failed opening required '../includes/db.php' (include_path='.:/opt/remi/php74/root/usr/share/pear:/opt/remi/php74/root/usr/share/php:/usr/share/pear:/usr/share/php') in /home/mlxysf/wushusportacademy.app.tc/student/process_registration.php on line 11
+[12-Dec-2025 17:04:26 UTC] PHP Warning:  require_once(../includes/db.php): failed to open stream: No such file or directory in /home/mlxysf/wushusportacademy.app.tc/student/process_registration.php on line 40
+[12-Dec-2025 17:04:26 UTC] PHP Fatal error:  require_once(): Failed opening required '../includes/db.php' (include_path='.:/opt/remi/php74/root/usr/share/pear:/opt/remi/php74/root/usr/share/php:/usr/share/pear:/usr/share/php') in /home/mlxysf/wushusportacademy.app.tc/student/process_registration.php on line 40
+[12-Dec-2025 17:12:34 UTC] PHP Warning:  require_once(../includes/db.php): failed to open stream: No such file or directory in /home/mlxysf/wushusportacademy.app.tc/student/process_registration.php on line 20
+[12-Dec-2025 17:12:34 UTC] PHP Fatal error:  require_once(): Failed opening required '../includes/db.php' (include_path='.:/opt/remi/php74/root/usr/share/pear:/opt/remi/php74/root/usr/share/php:/usr/share/pear:/usr/share/php') in /home/mlxysf/wushusportacademy.app.tc/student/process_registration.php on line 20
+[12-Dec-2025 17:15:36 UTC] PHP Warning:  require_once(../includes/db.php): failed to open stream: No such file or directory in /home/mlxysf/wushusportacademy.app.tc/student/process_registration.php on line 14
+[12-Dec-2025 17:15:36 UTC] PHP Fatal error:  require_once(): Failed opening required '../includes/db.php' (include_path='.:/opt/remi/php74/root/usr/share/pear:/opt/remi/php74/root/usr/share/php:/usr/share/pear:/usr/share/php') in /home/mlxysf/wushusportacademy.app.tc/student/process_registration.php on line 14
