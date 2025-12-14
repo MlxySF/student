@@ -1,8 +1,10 @@
 <?php
-// process_registration.php
+// process_registration.php - Using student_status column
 header('Content-Type: application/json');
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/error_log.txt');
 
 try {
     $input = file_get_contents('php://input');
@@ -19,8 +21,8 @@ try {
                  'payment_amount', 'payment_date', 'payment_receipt_base64', 'class_count'];
     
     foreach ($required as $field) {
-        if (!isset($data[$field]) || $data[$field] === '') {
-            throw new Exception("Missing required field: $field");
+        if (!isset($data[$field]) || (is_string($data[$field]) && trim($data[$field]) === '')) {
+            throw new Exception("Missing or empty required field: $field");
         }
     }
 
@@ -48,10 +50,11 @@ try {
     $hashedPassword = password_hash($generatedPassword, PASSWORD_DEFAULT);
 
     // Create student account
-    $studentId = $regNumber; // Use registration number as student ID
-    $fullName = $data['name_en'];
-    $email = $data['email'];
-    $phone = $data['phone'];
+    $studentId = $regNumber;
+    $fullName = trim($data['name_en']);
+    $email = trim($data['email']);
+    $phone = trim($data['phone']);
+    $studentStatus = trim($data['status']); // Student/State Team/Backup Team
 
     // Check if email already exists
     $stmt = $conn->prepare("SELECT id FROM students WHERE email = ?");
@@ -61,40 +64,13 @@ try {
         throw new Exception("Email already registered. Please use a different email.");
     }
 
-    // Insert into students table
+    // Insert into students table - WITH student_status column
     $stmt = $conn->prepare("
-        INSERT INTO students (student_id, full_name, email, phone, password, status, created_at) 
-        VALUES (?, ?, ?, ?, ?, 'active', NOW())
+        INSERT INTO students (student_id, full_name, email, phone, password, student_status, created_at) 
+        VALUES (?, ?, ?, ?, ?, ?, NOW())
     ");
-    $stmt->execute([$studentId, $fullName, $email, $phone, $hashedPassword]);
+    $stmt->execute([$studentId, $fullName, $email, $phone, $hashedPassword, $studentStatus]);
     $studentAccountId = $conn->lastInsertId();
-
-    // Parse schedule to get classes
-    $schedules = explode(', ', $data['schedule']);
-    $classIds = [];
-
-    foreach ($schedules as $schedule) {
-        // Extract class code from schedule (e.g., "WSH-101: Monday 3-5pm" -> "WSH-101")
-        if (preg_match('/([A-Z]+-\d+)/', $schedule, $matches)) {
-            $classCode = $matches[1];
-            
-            // Get class ID
-            $stmt = $conn->prepare("SELECT id FROM classes WHERE class_code = ?");
-            $stmt->execute([$classCode]);
-            $class = $stmt->fetch();
-            
-            if ($class) {
-                $classIds[] = $class['id'];
-                
-                // Enroll student in class
-                $stmt = $conn->prepare("
-                    INSERT INTO enrollments (student_id, class_id, enrollment_date, status) 
-                    VALUES (?, ?, ?, 'active')
-                ");
-                $stmt->execute([$studentAccountId, $class['id'], date('Y-m-d')]);
-            }
-        }
-    }
 
     // Insert into registrations table
     $sql = "INSERT INTO registrations (
@@ -114,26 +90,26 @@ try {
     $stmt = $conn->prepare($sql);
     $stmt->execute([
         ':reg_num' => $regNumber,
-        ':name_cn' => $data['name_cn'] ?? '',
-        ':name_en' => $data['name_en'],
-        ':ic' => $data['ic'],
-        ':age' => $data['age'],
-        ':school' => $data['school'],
-        ':status' => $data['status'],
-        ':phone' => $data['phone'],
-        ':email' => $data['email'],
-        ':level' => $data['level'] ?? '',
-        ':events' => $data['events'],
-        ':schedule' => $data['schedule'],
-        ':parent_name' => $data['parent_name'],
-        ':parent_ic' => $data['parent_ic'],
+        ':name_cn' => isset($data['name_cn']) ? trim($data['name_cn']) : '',
+        ':name_en' => $fullName,
+        ':ic' => trim($data['ic']),
+        ':age' => intval($data['age']),
+        ':school' => trim($data['school']),
+        ':status' => $studentStatus,
+        ':phone' => $phone,
+        ':email' => $email,
+        ':level' => isset($data['level']) ? trim($data['level']) : '',
+        ':events' => trim($data['events']),
+        ':schedule' => trim($data['schedule']),
+        ':parent_name' => trim($data['parent_name']),
+        ':parent_ic' => trim($data['parent_ic']),
         ':form_date' => $data['form_date'],
         ':signature_base64' => $data['signature_base64'],
         ':pdf_base64' => $data['signed_pdf_base64'],
-        ':payment_amount' => $data['payment_amount'],
+        ':payment_amount' => floatval($data['payment_amount']),
         ':payment_date' => $data['payment_date'],
         ':payment_receipt_base64' => $data['payment_receipt_base64'],
-        ':class_count' => $data['class_count'],
+        ':class_count' => intval($data['class_count']),
         ':student_account_id' => $studentAccountId,
         ':password_generated' => $generatedPassword
     ]);
@@ -141,8 +117,7 @@ try {
     // Commit transaction
     $conn->commit();
 
-    // Send email with credentials (optional - you can implement this later)
-    // sendWelcomeEmail($email, $fullName, $studentId, $generatedPassword);
+    error_log("Registration successful: $regNumber for $email with status: $studentStatus");
 
     echo json_encode([
         'success' => true,
@@ -150,25 +125,29 @@ try {
         'student_id' => $studentId,
         'email' => $email,
         'password' => $generatedPassword,
-        'message' => 'Registration successful! Student account created.'
+        'status' => $studentStatus,
+        'message' => 'Registration successful! Your account has been created.'
     ]);
 
 } catch (PDOException $e) {
-    if (isset($conn)) {
+    if (isset($conn) && $conn->inTransaction()) {
         $conn->rollBack();
     }
+    error_log("Database error: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
         'error' => 'Database error: ' . $e->getMessage()
     ]);
 } catch (Exception $e) {
-    if (isset($conn)) {
+    if (isset($conn) && $conn->inTransaction()) {
         $conn->rollBack();
     }
+    error_log("Error: " . $e->getMessage());
     http_response_code(400);
     echo json_encode([
         'success' => false,
         'error' => $e->getMessage()
     ]);
 }
+?>

@@ -1,2 +1,0 @@
-[13-Dec-2025 00:48:14 Asia/Kuala_Lumpur] Registration Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'level' in 'INSERT INTO'
-[13-Dec-2025 00:57:21 Asia/Kuala_Lumpur] Registration Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'level' in 'INSERT INTO'

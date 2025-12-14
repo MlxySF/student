@@ -1,147 +1,290 @@
 <?php
-// Get statistics
-$stmt = $pdo->query("SELECT COUNT(*) as total FROM students");
-$total_students = $stmt->fetch()['total'];
+// admin_pages/dashboard.php - ULTRA-SAFE VERSION WITH ERROR HANDLING
 
-$stmt = $pdo->query("SELECT COUNT(*) as total FROM classes");
-$total_classes = $stmt->fetch()['total'];
+try {
+    // Get total students
+    $totalStudents = $pdo->query("SELECT COUNT(*) FROM students")->fetchColumn();
+} catch (PDOException $e) {
+    $totalStudents = 0;
+    error_log("Error counting students: " . $e->getMessage());
+}
 
-$stmt = $pdo->query("SELECT COUNT(*) as total FROM payments WHERE verification_status = 'pending'");
-$pending_payments = $stmt->fetch()['total'];
+try {
+    // Get students by status - using student_status
+    $stmt = $pdo->query("
+        SELECT student_status, COUNT(*) as count 
+        FROM students 
+        WHERE student_status IS NOT NULL AND student_status != ''
+        GROUP BY student_status
+    ");
+    $studentsByStatus = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+} catch (PDOException $e) {
+    $studentsByStatus = [];
+    error_log("Error getting students by status: " . $e->getMessage());
+}
 
-$stmt = $pdo->query("SELECT COUNT(*) as total FROM payments WHERE verification_status = 'verified' AND MONTH(upload_date) = MONTH(CURRENT_DATE())");
-$verified_this_month = $stmt->fetch()['total'];
+try {
+    // Get total classes - Check if 'status' column exists in classes table
+    $totalClasses = $pdo->query("SELECT COUNT(*) FROM classes")->fetchColumn();
+} catch (PDOException $e) {
+    $totalClasses = 0;
+    error_log("Error counting classes: " . $e->getMessage());
+}
 
-$stmt = $pdo->query("SELECT SUM(amount) as total FROM payments WHERE verification_status = 'verified' AND MONTH(upload_date) = MONTH(CURRENT_DATE())");
-$revenue_this_month = $stmt->fetch()['total'] ?? 0;
+try {
+    // Get pending registrations
+    $pendingRegistrations = $pdo->query("SELECT COUNT(*) FROM registrations WHERE payment_status = 'pending'")->fetchColumn();
+} catch (PDOException $e) {
+    $pendingRegistrations = 0;
+    error_log("Error counting pending registrations: " . $e->getMessage());
+}
 
-// Recent activities
-$stmt = $pdo->query("
-    SELECT s.full_name, s.student_id, p.amount, p.upload_date, p.verification_status, c.class_code
-    FROM payments p
-    JOIN students s ON p.student_id = s.id
-    JOIN classes c ON p.class_id = c.id
-    ORDER BY p.upload_date DESC
-    LIMIT 10
-");
-$recent_payments = $stmt->fetchAll();
+try {
+    // Get pending payments
+    $pendingPayments = $pdo->query("SELECT COUNT(*) FROM payments WHERE verification_status = 'pending'")->fetchColumn();
+} catch (PDOException $e) {
+    $pendingPayments = 0;
+    error_log("Error counting pending payments: " . $e->getMessage());
+}
 
-// Monthly revenue data for chart
-$stmt = $pdo->query("
-    SELECT DATE_FORMAT(upload_date, '%Y-%m') as month, SUM(amount) as total
-    FROM payments
-    WHERE verification_status = 'verified'
-    AND upload_date >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-    GROUP BY month
-    ORDER BY month
-");
-$monthly_revenue = $stmt->fetchAll();
-$months = array_column($monthly_revenue, 'month');
-$revenues = array_column($monthly_revenue, 'total');
+try {
+    // Get unpaid invoices
+    $unpaidInvoices = $pdo->query("SELECT COUNT(*) FROM invoices WHERE status = 'unpaid'")->fetchColumn();
+} catch (PDOException $e) {
+    $unpaidInvoices = 0;
+    error_log("Error counting unpaid invoices: " . $e->getMessage());
+}
+
+try {
+    // Get recent registrations
+    $stmt = $pdo->query("
+        SELECT * FROM registrations 
+        ORDER BY created_at DESC 
+        LIMIT 5
+    ");
+    $recentRegistrations = $stmt->fetchAll();
+} catch (PDOException $e) {
+    $recentRegistrations = [];
+    error_log("Error getting recent registrations: " . $e->getMessage());
+}
+
+try {
+    // Get recent payments needing verification
+    $stmt = $pdo->query("
+        SELECT p.*, s.full_name, s.student_id, c.class_name
+        FROM payments p
+        JOIN students s ON p.student_id = s.id
+        JOIN classes c ON p.class_id = c.id
+        WHERE p.verification_status = 'pending'
+        ORDER BY p.upload_date DESC
+        LIMIT 5
+    ");
+    $recentPayments = $stmt->fetchAll();
+} catch (PDOException $e) {
+    $recentPayments = [];
+    error_log("Error getting recent payments: " . $e->getMessage());
+}
 ?>
 
-<!-- Statistics Cards -->
-<div class="row mb-4">
-    <div class="col-md-3 mb-3">
+<div class="row">
+    <!-- Total Students -->
+    <div class="col-md-6 col-lg-3">
         <div class="stat-card">
             <div class="stat-icon bg-primary">
                 <i class="fas fa-users"></i>
             </div>
             <div class="stat-content">
-                <h3><?php echo $total_students; ?></h3>
+                <h3><?php echo $totalStudents; ?></h3>
                 <p>Total Students</p>
             </div>
         </div>
     </div>
 
-    <div class="col-md-3 mb-3">
+    <!-- Pending Registrations -->
+    <div class="col-md-6 col-lg-3">
         <div class="stat-card">
-            <div class="stat-icon bg-success">
-                <i class="fas fa-chalkboard-teacher"></i>
+            <div class="stat-icon bg-warning">
+                <i class="fas fa-user-plus"></i>
             </div>
             <div class="stat-content">
-                <h3><?php echo $total_classes; ?></h3>
-                <p>Total Classes</p>
+                <h3><?php echo $pendingRegistrations; ?></h3>
+                <p>Pending Registrations</p>
             </div>
         </div>
     </div>
 
-    <div class="col-md-3 mb-3">
+    <!-- Pending Payments -->
+    <div class="col-md-6 col-lg-3">
         <div class="stat-card">
-            <div class="stat-icon bg-warning">
+            <div class="stat-icon bg-danger">
                 <i class="fas fa-clock"></i>
             </div>
             <div class="stat-content">
-                <h3><?php echo $pending_payments; ?></h3>
+                <h3><?php echo $pendingPayments; ?></h3>
                 <p>Pending Payments</p>
             </div>
         </div>
     </div>
 
-    <div class="col-md-3 mb-3">
+    <!-- Active Classes -->
+    <div class="col-md-6 col-lg-3">
         <div class="stat-card">
-            <div class="stat-icon bg-danger">
-                <i class="fas fa-dollar-sign"></i>
+            <div class="stat-icon bg-success">
+                <i class="fas fa-chalkboard-teacher"></i>
             </div>
             <div class="stat-content">
-                <h3><?php echo formatCurrency($revenue_this_month); ?></h3>
-                <p>This Month Revenue</p>
+                <h3><?php echo $totalClasses; ?></h3>
+                <p>Total Classes</p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Recent Activity -->
-<div class="card">
-    <div class="card-header">
-        <i class="fas fa-history"></i> Recent Activity
+<!-- Students by Status -->
+<div class="row mt-4">
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-chart-pie"></i> Students by Status
+            </div>
+            <div class="card-body">
+                <?php if (!empty($studentsByStatus)): ?>
+                    <?php foreach ($studentsByStatus as $status => $count): ?>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <span class="badge <?php 
+                                    echo strpos($status, 'State Team') !== false ? 'badge-state-team' : 
+                                        (strpos($status, 'Backup Team') !== false ? 'badge-backup-team' : 'badge-student'); 
+                                ?>">
+                                    <?php echo htmlspecialchars($status); ?>
+                                </span>
+                            </div>
+                            <strong><?php echo $count; ?> students</strong>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-users fa-2x mb-2"></i>
+                        <p class="mb-0">No students yet</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
     </div>
-    <div class="card-body">
-        <?php if (count($recent_payments) > 0): ?>
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Student</th>
-                            <th>Student ID</th>
-                            <th>Class</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($recent_payments as $payment): ?>
+
+    <!-- Recent Registrations -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-user-plus"></i> Recent Registrations</span>
+                <a href="?page=registrations" class="btn btn-sm btn-light">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
                             <tr>
-                                <td><?php echo formatDate($payment['upload_date']); ?></td>
-                                <td><?php echo htmlspecialchars($payment['full_name']); ?></td>
-                                <td><span class="badge bg-secondary"><?php echo htmlspecialchars($payment['student_id']); ?></span></td>
-                                <td><span class="badge bg-info"><?php echo htmlspecialchars($payment['class_code']); ?></span></td>
-                                <td><strong><?php echo formatCurrency($payment['amount']); ?></strong></td>
-                                <td>
-                                    <?php if ($payment['verification_status'] === 'pending'): ?>
-                                        <span class="badge bg-warning">Pending</span>
-                                    <?php elseif ($payment['verification_status'] === 'verified'): ?>
-                                        <span class="badge bg-success">Verified</span>
-                                    <?php else: ?>
-                                        <span class="badge bg-danger">Rejected</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <a href="?page=payments" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-eye"></i> View
-                                    </a>
-                                </td>
+                                <th>Reg #</th>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Payment</th>
+                                <th>Date</th>
+                                <th>Action</th>
                             </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (!empty($recentRegistrations)): ?>
+                                <?php foreach ($recentRegistrations as $reg): ?>
+                                <tr>
+                                    <td><strong><?php echo htmlspecialchars($reg['registration_number']); ?></strong></td>
+                                    <td><?php echo htmlspecialchars($reg['name_en']); ?></td>
+                                    <td>
+                                        <span class="badge <?php 
+                                            echo strpos($reg['status'], 'State Team') !== false ? 'badge-state-team' : 
+                                                (strpos($reg['status'], 'Backup Team') !== false ? 'badge-backup-team' : 'badge-student'); 
+                                        ?>">
+                                            <?php echo htmlspecialchars($reg['status']); ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-<?php 
+                                            echo $reg['payment_status'] === 'verified' ? 'success' : 
+                                                ($reg['payment_status'] === 'pending' ? 'warning' : 'danger'); 
+                                        ?>">
+                                            <?php echo ucfirst($reg['payment_status']); ?>
+                                        </span>
+                                    </td>
+                                    <td><?php echo date('M j, Y', strtotime($reg['created_at'])); ?></td>
+                                    <td>
+                                        <a href="?page=registrations&view=<?php echo $reg['id']; ?>" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                        No recent registrations
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Payments -->
+<div class="card">
+    <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-credit-card"></i> Payments Needing Verification</span>
+        <a href="?page=payments" class="btn btn-sm btn-light">View All</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Class</th>
+                        <th>Amount</th>
+                        <th>Month</th>
+                        <th>Upload Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (!empty($recentPayments)): ?>
+                        <?php foreach ($recentPayments as $payment): ?>
+                        <tr>
+                            <td><strong><?php echo htmlspecialchars($payment['student_id']); ?></strong></td>
+                            <td><?php echo htmlspecialchars($payment['full_name']); ?></td>
+                            <td><?php echo htmlspecialchars($payment['class_name']); ?></td>
+                            <td><strong>RM <?php echo number_format($payment['amount'], 2); ?></strong></td>
+                            <td><?php echo htmlspecialchars($payment['payment_month']); ?></td>
+                            <td><?php echo date('M j, Y', strtotime($payment['upload_date'])); ?></td>
+                            <td>
+                                <a href="?page=payments&view=<?php echo $payment['id']; ?>" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i> Review
+                                </a>
+                            </td>
+                        </tr>
                         <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        <?php else: ?>
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> No recent payment activity.
-            </div>
-        <?php endif; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="fas fa-check-circle fa-2x mb-2 d-block"></i>
+                                No pending payments
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
