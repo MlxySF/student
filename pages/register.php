@@ -1,7 +1,6 @@
 <?php
 // student/pages/register.php
 // Public Student Registration Form
-// No session required
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -66,17 +65,29 @@
         .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
-        #pdf-template {
-            position: absolute !important;
-            left: -99999px !important;
-            top: -99999px !important;
-            width: 794px;
-            padding: 40px;
-            background: #ffffff;
-            visibility: hidden;
-            opacity: 0;
+        /* Signature Box */
+        .sig-box {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 0.75rem;
+            background: #fff;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #sig-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #cbd5e1;
+            font-size: 24px;
+            font-weight: 700;
             pointer-events: none;
-            z-index: -9999;
+            user-select: none;
         }
         
         @keyframes spin {
@@ -84,6 +95,17 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Status Radio Styling */
+        input[type="radio"][name="status"] {
+            display: none;
+        }
+
+        .status-option {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        /* Custom Checkbox */
         .custom-checkbox {
             display: flex;
             align-items: flex-start;
@@ -113,7 +135,7 @@
         }
 
         .custom-checkbox input[type="checkbox"]:hover {
-            border-color: #7c3aed;
+            border-color: #fbbf24;
         }
 
         .custom-checkbox input[type="checkbox"]:checked {
@@ -138,6 +160,7 @@
             line-height: 1.5;
         }
 
+        /* School Box Styles */
         .school-box {
             border: 2px solid #e2e8f0;
             border-radius: 12px;
@@ -238,55 +261,18 @@
             max-height: 1000px;
         }
 
-        /* Signature Box */
-        .signature-box {
-            position: relative;
-            width: 100%;
-            height: 200px;
-            border: 2px dashed #cbd5e1;
-            border-radius: 12px;
-            background: white;
-        }
-
-        #signature-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            cursor: crosshair;
-            width: 100%;
-            height: 100%;
-        }
-
-        #sig-placeholder {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #cbd5e1;
-            font-size: 24px;
-            font-weight: 700;
+        /* PDF Templates */
+        #pdf-template-page1, #pdf-template-page2 {
+            position: fixed !important;
+            left: -99999px !important;
+            top: -99999px !important;
+            width: 794px;
+            padding: 40px;
+            background: #ffffff;
+            visibility: hidden;
+            opacity: 0;
             pointer-events: none;
-            user-select: none;
-        }
-
-        .clear-sig-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            z-index: 20;
-            background: #fee2e2;
-            color: #dc2626;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
-            border: none;
-            cursor: pointer;
-        }
-
-        .clear-sig-btn:hover {
-            background: #fecaca;
+            z-index: -9999;
         }
     </style>
 </head>
@@ -315,45 +301,45 @@
     <!-- Form Body -->
     <div style="padding: 32px; background: #f8fafc; max-height: 70vh; overflow-y: auto;" class="custom-scroll">
         <form id="regForm" onsubmit="return false;">
-            
+
             <!-- STEP 1: Basic Info -->
             <div id="step-1" class="step-content active">
-                <h2 style="font-size: 20px; font-weight: bold; color: #1e293b; margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-user-graduate" style="color: #fbbf24;"></i> 基本资料 Student Details
+                <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                    <i class="fa-solid fa-user-graduate text-amber-500"></i> 基本资料 Student Details
                 </h2>
-                <div style="display: flex; flex-direction: column; gap: 24px;">
+                <div class="space-y-6">
                     <!-- Name Row -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                        <div>
-                            <label style="display: block; font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 8px;">Chinese Name 中文名</label>
-                            <input type="text" id="name-cn" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #cbd5e1; outline: none;" placeholder="张三">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Chinese Name 中文名</label>
+                            <input type="text" id="name-cn" class="w-full p-3 rounded-xl border border-slate-300 focus:border-amber-500 outline-none" placeholder="张三">
                         </div>
-                        <div>
-                            <label style="display: block; font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 8px;">English Name 英文名 *</label>
-                            <input type="text" id="name-en" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #cbd5e1; outline: none;" placeholder="Tan Ah Meng" required>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase">English Name 英文名 *</label>
+                            <input type="text" id="name-en" class="w-full p-3 rounded-xl border border-slate-300 focus:border-amber-500 outline-none" placeholder="Tan Ah Meng" required>
                         </div>
                     </div>
 
                     <!-- IC and Age Row -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                        <div>
-                            <label style="display: block; font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 8px;">IC Number 身份证号码 *</label>
-                            <input type="text" id="ic" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #cbd5e1; outline: none;" placeholder="000000-00-0000" maxlength="14" required>
-                            <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Format: 000000-00-0000</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase">IC Number 身份证号码 *</label>
+                            <input type="text" id="ic" class="w-full p-3 rounded-xl border border-slate-300 focus:border-amber-500 outline-none" placeholder="000000-00-0000" maxlength="14" required>
+                            <p class="text-xs text-slate-400">Format: 000000-00-0000</p>
                         </div>
-                        <div>
-                            <label style="display: block; font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 8px;">Age 年龄 (2026)</label>
-                            <input type="number" id="age" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #cbd5e1; background: #f1f5f9; color: #64748b; outline: none;" placeholder="Auto-calculated" readonly>
-                            <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">
-                                <i class="fas fa-info-circle"></i> Calculated from IC
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Age 年龄 (2026)</label>
+                            <input type="number" id="age" class="w-full p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-500 cursor-not-allowed outline-none" placeholder="Auto-calculated" readonly>
+                            <p class="text-xs text-slate-400">
+                                <i class="fas fa-info-circle mr-1"></i>Calculated from IC
                             </p>
                         </div>
                     </div>
 
                     <!-- School Row -->
-                    <div>
-                        <label style="display: block; font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 8px;">School 学校 *</label>
-                        <select id="school" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #cbd5e1; background: white; outline: none;" required>
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase">School 学校 *</label>
+                        <select id="school" class="w-full p-3 rounded-xl border border-slate-300 focus:border-amber-500 outline-none bg-white" required>
                             <option value="">Select School...</option>
                             <option value="SJK(C) PUAY CHAI 2">SJK(C) PUAY CHAI 2 (培才二校)</option>
                             <option value="SJK(C) Chee Wen">SJK(C) Chee Wen</option>
@@ -361,50 +347,52 @@
                             <option value="SJK(C) Sin Ming">SJK(C) Sin Ming</option>
                             <option value="Others">Others (其他)</option>
                         </select>
-                        <input type="text" id="school-other" style="display: none; width: 100%; margin-top: 8px; padding: 12px; border-radius: 12px; border: 1px solid #cbd5e1; outline: none;" placeholder="Please specify school name">
+                        <input type="text" id="school-other" class="hidden w-full mt-2 p-3 rounded-xl border border-slate-300 focus:border-amber-500 outline-none" placeholder="Please specify school name">
                     </div>
                 </div>
             </div>
 
             <!-- STEP 2: Contact -->
             <div id="step-2" class="step-content">
-                <h2 style="font-size: 20px; font-weight: bold; color: #1e293b; margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-address-card" style="color: #fbbf24;"></i> 联系方式 Contact Info
+                <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                    <i class="fa-solid fa-address-card text-amber-500"></i> 联系方式 Contact Info
                 </h2>
-                <div style="display: flex; flex-direction: column; gap: 20px;">
-                    <div>
-                        <label style="display: block; font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 8px;">Phone Number 电话号码 *</label>
-                        <div style="position: relative;">
-                            <i class="fa-solid fa-phone" style="position: absolute; left: 16px; top: 16px; color: #94a3b8;"></i>
-                            <input type="tel" id="phone" style="width: 100%; padding: 12px 12px 12px 40px; border-radius: 12px; border: 1px solid #cbd5e1; outline: none;" placeholder="012-345 6789" maxlength="13" required>
+                <div class="space-y-5">
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Phone Number 电话号码 *</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-phone absolute left-4 top-4 text-slate-400"></i>
+                            <input type="tel" id="phone" class="w-full pl-10 p-3 rounded-xl border border-slate-300 focus:border-amber-500 outline-none" placeholder="012-345 6789" maxlength="13" required>
                         </div>
-                        <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Format: 012-345 6789</p>
+                        <p class="text-xs text-slate-400">Format: 012-345 6789 or 011-2345 6789</p>
                     </div>
-                    <div>
-                        <label style="display: block; font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 8px;">Parent's Email 家长邮箱 *</label>
-                        <div style="position: relative;">
-                            <i class="fa-solid fa-envelope" style="position: absolute; left: 16px; top: 16px; color: #94a3b8;"></i>
-                            <input type="email" id="email" style="width: 100%; padding: 12px 12px 12px 40px; border-radius: 12px; border: 1px solid #cbd5e1; outline: none;" placeholder="parent@example.com" required>
+
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Parent's Email 家长邮箱 *</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-envelope absolute left-4 top-4 text-slate-400"></i>
+                            <input type="email" id="email" class="w-full pl-10 p-3 rounded-xl border border-slate-300 focus:border-amber-500 outline-none" placeholder="parent@example.com" required>
                         </div>
                     </div>
-                    <div>
-                        <label style="display: block; font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 8px;">Student Status 身份 *</label>
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-                            <label style="cursor: pointer;">
-                                <input type="radio" name="status" value="Student 学生" style="display: none;" class="status-radio" checked>
-                                <div class="status-option" style="padding: 12px; text-align: center; border-radius: 12px; border: 1px solid #e2e8f0; background: white; transition: all 0.2s;">
+
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Student Status 身份 *</label>
+                        <div class="grid grid-cols-3 gap-3">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="status" value="Student 学生" class="status-radio" checked>
+                                <div class="status-option p-3 text-center rounded-xl border border-slate-200 bg-white">
                                     Student<br>学生
                                 </div>
                             </label>
-                            <label style="cursor: pointer;">
-                                <input type="radio" name="status" value="State Team 州队" style="display: none;" class="status-radio">
-                                <div class="status-option" style="padding: 12px; text-align: center; border-radius: 12px; border: 1px solid #e2e8f0; background: white; transition: all 0.2s;">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="status" value="State Team 州队" class="status-radio">
+                                <div class="status-option p-3 text-center rounded-xl border border-slate-200 bg-white">
                                     State Team<br>州队
                                 </div>
                             </label>
-                            <label style="cursor: pointer;">
-                                <input type="radio" name="status" value="Backup Team 后备队" style="display: none;" class="status-radio">
-                                <div class="status-option" style="padding: 12px; text-align: center; border-radius: 12px; border: 1px solid #e2e8f0; background: white; transition: all 0.2s;">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="status" value="Backup Team 后备队" class="status-radio">
+                                <div class="status-option p-3 text-center rounded-xl border border-slate-200 bg-white">
                                     Backup Team<br>后备队
                                 </div>
                             </label>
@@ -412,267 +400,267 @@
                     </div>
                 </div>
             </div>
-            
-                        <!-- STEP 3: Events -->
+
+            <!-- STEP 3: Events -->
             <div id="step-3" class="step-content">
-                <h2 style="font-size: 20px; font-weight: bold; color: #1e293b; margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-trophy" style="color: #fbbf24;"></i> 项目选择 Event Selection
+                <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                    <i class="fa-solid fa-trophy text-amber-500"></i> 项目选择 Event Selection
                 </h2>
                 
-                <p style="font-size: 14px; color: #64748b; margin-bottom: 16px;">Select events for each level (You can select multiple events across different levels)</p>
+                <p class="text-sm text-slate-600 mb-4">Select events for each level (You can select multiple events across different levels)</p>
 
-                <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="space-y-4">
                     <!-- Basic Level -->
-                    <div style="border-left: 4px solid #475569; background: #f8fafc; border-radius: 0 12px 12px 0; padding: 16px;">
-                        <h3 style="font-weight: bold; color: #1e293b; margin-bottom: 12px;">基础 Basic</h3>
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="基础-长拳" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">长拳</span>
+                    <div class="border-l-4 border-slate-700 bg-slate-50 rounded-r-xl p-4">
+                        <h3 class="font-bold text-slate-800 mb-3">基础 Basic</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="基础-长拳" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">长拳</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="基础-南拳" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">南拳</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="基础-南拳" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">南拳</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="基础-太极拳" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">太极拳</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="基础-太极拳" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">太极拳</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="基础-剑" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">剑</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="基础-剑" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">剑</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="基础-枪" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">枪</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="基础-枪" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">枪</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="基础-刀" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">刀</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="基础-刀" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">刀</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="基础-棍" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">棍</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="基础-棍" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">棍</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="基础-南刀" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">南刀</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="基础-南刀" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">南刀</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="基础-南棍" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">南棍</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="基础-南棍" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">南棍</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="基础-太极剑" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">太极剑</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="基础-太极剑" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">太极剑</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="基础-太极扇" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">太极扇</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="基础-太极扇" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">太极扇</span>
                             </label>
                         </div>
                     </div>
 
                     <!-- Junior Level -->
-                    <div style="border-left: 4px solid #2563eb; background: #eff6ff; border-radius: 0 12px 12px 0; padding: 16px;">
-                        <h3 style="font-weight: bold; color: #1e40af; margin-bottom: 12px;">初级 Junior</h3>
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="初级-长拳" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">长拳</span>
+                    <div class="border-l-4 border-blue-600 bg-blue-50 rounded-r-xl p-4">
+                        <h3 class="font-bold text-blue-800 mb-3">初级 Junior</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="初级-长拳" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">长拳</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="初级-南拳" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">南拳</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="初级-南拳" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">南拳</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="初级-太极拳" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">太极拳</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="初级-太极拳" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">太极拳</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="初级-剑" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">剑</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="初级-剑" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">剑</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="初级-枪" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">枪</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="初级-枪" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">枪</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="初级-刀" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">刀</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="初级-刀" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">刀</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="初级-棍" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">棍</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="初级-棍" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">棍</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="初级-南刀" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">南刀</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="初级-南刀" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">南刀</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="初级-南棍" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">南棍</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="初级-南棍" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">南棍</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="初级-太极剑" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">太极剑</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="初级-太极剑" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">太极剑</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="初级-太极扇" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">太极扇</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="初级-太极扇" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">太极扇</span>
                             </label>
                         </div>
                     </div>
 
                     <!-- Group B -->
-                    <div style="border-left: 4px solid #16a34a; background: #f0fdf4; border-radius: 0 12px 12px 0; padding: 16px;">
-                        <h3 style="font-weight: bold; color: #15803d; margin-bottom: 12px;">B组 Group B</h3>
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="B组-长拳" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">长拳</span>
+                    <div class="border-l-4 border-green-600 bg-green-50 rounded-r-xl p-4">
+                        <h3 class="font-bold text-green-800 mb-3">B组 Group B</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="B组-长拳" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">长拳</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="B组-南拳" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">南拳</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="B组-南拳" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">南拳</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="B组-太极拳" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">太极拳</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="B组-太极拳" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">太极拳</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="B组-剑" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">剑</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="B组-剑" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">剑</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="B组-枪" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">枪</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="B组-枪" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">枪</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="B组-刀" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">刀</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="B组-刀" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">刀</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="B组-棍" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">棍</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="B组-棍" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">棍</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="B组-南刀" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">南刀</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="B组-南刀" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">南刀</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="B组-南棍" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">南棍</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="B组-南棍" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">南棍</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="B组-太极剑" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">太极剑</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="B组-太极剑" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">太极剑</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="B组-太极扇" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">太极扇</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="B组-太极扇" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">太极扇</span>
                             </label>
                         </div>
                     </div>
 
                     <!-- Group A -->
-                    <div style="border-left: 4px solid #9333ea; background: #faf5ff; border-radius: 0 12px 12px 0; padding: 16px;">
-                        <h3 style="font-weight: bold; color: #7e22ce; margin-bottom: 12px;">A组 Group A</h3>
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="A组-长拳" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">长拳</span>
+                    <div class="border-l-4 border-purple-600 bg-purple-50 rounded-r-xl p-4">
+                        <h3 class="font-bold text-purple-800 mb-3">A组 Group A</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="A组-长拳" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">长拳</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="A组-南拳" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">南拳</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="A组-南拳" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">南拳</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="A组-太极拳" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">太极拳</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="A组-太极拳" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">太极拳</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="A组-剑" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">剑</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="A组-剑" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">剑</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="A组-枪" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">枪</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="A组-枪" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">枪</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="A组-刀" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">刀</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="A组-刀" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">刀</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="A组-棍" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">棍</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="A组-棍" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">棍</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="A组-南刀" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">南刀</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="A组-南刀" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">南刀</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="A组-南棍" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">南棍</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="A组-南棍" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">南棍</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="A组-太极剑" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">太极剑</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="A组-太极剑" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">太极剑</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="A组-太极扇" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">太极扇</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="A组-太极扇" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">太极扇</span>
                             </label>
                         </div>
                     </div>
 
                     <!-- Optional Level -->
-                    <div style="border-left: 4px solid #f59e0b; background: #fffbeb; border-radius: 0 12px 12px 0; padding: 16px;">
-                        <h3 style="font-weight: bold; color: #d97706; margin-bottom: 12px;">自选 Optional</h3>
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="自选-长拳" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">长拳</span>
+                    <div class="border-l-4 border-amber-600 bg-amber-50 rounded-r-xl p-4">
+                        <h3 class="font-bold text-amber-800 mb-3">自选 Optional</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="自选-长拳" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">长拳</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="自选-南拳" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">南拳</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="自选-南拳" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">南拳</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="自选-太极拳" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">太极拳</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="自选-太极拳" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">太极拳</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="自选-剑" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">剑</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="自选-剑" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">剑</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="自选-枪" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">枪</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="自选-枪" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">枪</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="自选-刀" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">刀</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="自选-刀" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">刀</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="自选-棍" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">棍</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="自选-棍" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">棍</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="自选-南刀" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">南刀</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="自选-南刀" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">南刀</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="自选-南棍" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">南棍</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="自选-南棍" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">南棍</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="自选-太极剑" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">太极剑</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="自选-太极剑" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">太极剑</span>
                             </label>
-                            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="evt" value="自选-太极扇" style="width: 16px; height: 16px;">
-                                <span style="font-size: 14px;">太极扇</span>
+                            <label class="cursor-pointer flex items-center gap-2">
+                                <input type="checkbox" name="evt" value="自选-太极扇" class="w-4 h-4 text-amber-500 rounded">
+                                <span class="text-sm">太极扇</span>
                             </label>
                         </div>
                     </div>
@@ -681,24 +669,28 @@
 
             <!-- STEP 4: Schedule -->
             <div id="step-4" class="step-content">
-                <h2 style="font-size: 20px; font-weight: bold; color: #1e293b; margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-regular fa-calendar-check" style="color: #fbbf24;"></i> 训练时间 Training Schedule
+                <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                    <i class="fa-regular fa-calendar-check text-amber-500"></i> 训练时间 Training Schedule
                 </h2>
 
                 <!-- Fee Info -->
-                <div style="background: #fffbeb; color: #78350f; padding: 16px; border-radius: 12px; font-size: 12px; margin-bottom: 32px; border: 1px solid #fde68a;">
-                    <p style="font-weight: bold; margin-bottom: 4px;"><i class="fas fa-info-circle"></i> 注明 (Remark)：州队运动员需至少选择 两堂课。</p>
+                <div class="bg-amber-50 text-amber-900 p-4 rounded-xl text-xs mb-8 border border-amber-100">
+                    <p class="font-bold mb-1"><i class="fas fa-info-circle"></i> 注明 (Remark)：州队运动员需至少选择 两堂课。</p>
                     <p>• 选择 一堂课：收费 <strong>RM 120</strong></p>
                     <p>• 选择 二堂课：收费 <strong>RM 200</strong></p>
                     <p>• 选择 三堂课：收费 <strong>RM 280</strong></p>
                     <p>• 选择 四堂课：收费 <strong>RM 320</strong></p>
-                    <p style="font-weight: bold; margin-top: 8px;">State team athletes must choose at least two classes.</p>
+                    <p class="font-bold mt-1"><br>State team athletes must choose at least two classes.</p>
+                    <p>• If only one class is chosen: <strong>RM 120</strong></p>
+                    <p>• If a second class is chosen: <strong>RM 200</strong></p>
+                    <p>• If a third class is chosen: <strong>RM 280</strong></p>
+                    <p>• If a forth class is chosen: <strong>RM 320</strong></p>
                 </div>
 
-                <div>
+                <div class="space-y-4">
                     <!-- SCHOOL 1: Wushu Sport Academy -->
-                    <div class="school-box">
-                        <div class="school-header" onclick="toggleSchoolBox(this.parentElement)">
+                    <div class="school-box" onclick="toggleSchoolBox(this)">
+                        <div class="school-header">
                             <div class="school-info">
                                 <img src="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png" alt="WSA Logo" class="school-logo">
                                 <div class="school-text">
@@ -706,7 +698,7 @@
                                         <i class="fas fa-map-marker-alt" style="color: #fbbf24;"></i>
                                         Wushu Sport Academy 武术体育学院
                                     </h3>
-                                    <p><i class="fas fa-location-dot" style="color: #94a3b8;"></i> No. 2, Jalan BP 5/6, Bandar Bukit Puchong</p>
+                                    <p><i class="fas fa-location-dot" style="color: #94a3b8;"></i> No. 2, Jalan BP 5/6, Bandar Bukit Puchong, 47120 Puchong, Selangor</p>
                                 </div>
                             </div>
                             <div class="school-toggle">
@@ -715,48 +707,48 @@
                         </div>
                         <div class="school-schedules">
                             <div class="school-schedules-inner">
-                                <div style="display: flex; flex-direction: column; gap: 12px;">
-                                    <label class="custom-checkbox" style="border: 2px solid #e2e8f0; border-radius: 12px;">
+                                <div class="space-y-3">
+                                    <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all">
                                         <input type="checkbox" name="sch" value="Wushu Sport Academy: Sun 10am-12pm">
                                         <div class="custom-checkbox-label">
-                                            <div style="font-size: 14px; font-weight: bold; color: #1e293b; margin-bottom: 4px;">
-                                                <i class="far fa-calendar" style="color: #fbbf24;"></i> Sunday 星期日 · 10:00 AM - 12:00 PM
+                                            <div class="text-sm font-bold text-slate-800 mb-1">
+                                                <i class="far fa-calendar mr-2 text-amber-500"></i>Sunday 星期日 · 10:00 AM - 12:00 PM
                                             </div>
-                                            <div style="font-size: 12px; color: #64748b;">
-                                                <span style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-weight: 600;">只限于州队/后备队 Only for State/Backup Team</span>
+                                            <div class="text-xs text-slate-600">
+                                                <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">只限于州队/后备队 Only for State/Backup Team</span>
                                             </div>
-                                            <div class="disabled-msg" style="font-size: 10px; color: #dc2626; font-weight: bold; display: none; margin-top: 4px;">
-                                                <i class="fas fa-ban"></i> Not available for Normal Students 普通学生不允许参加
+                                            <div class="text-[10px] text-red-500 font-bold hidden disabled-msg mt-1">
+                                                <i class="fas fa-ban mr-1"></i>Not available for Normal Students 普通学生不允许参加
                                             </div>
                                         </div>
                                     </label>
 
-                                    <label class="custom-checkbox" style="border: 2px solid #e2e8f0; border-radius: 12px;">
+                                    <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all">
                                         <input type="checkbox" name="sch" value="Wushu Sport Academy: Sun 12pm-2pm">
                                         <div class="custom-checkbox-label">
-                                            <div style="font-size: 14px; font-weight: bold; color: #1e293b;">
-                                                <i class="far fa-calendar" style="color: #fbbf24;"></i> Sunday 星期日 · 12:00 PM - 2:00 PM
+                                            <div class="text-sm font-bold text-slate-800">
+                                                <i class="far fa-calendar mr-2 text-amber-500"></i>Sunday 星期日 · 12:00 PM - 2:00 PM
                                             </div>
                                         </div>
                                     </label>
 
-                                    <label class="custom-checkbox" style="border: 2px solid #e2e8f0; border-radius: 12px;">
+                                    <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all">
                                         <input type="checkbox" name="sch" value="Wushu Sport Academy: Wed 8pm-10pm">
                                         <div class="custom-checkbox-label">
-                                            <div style="font-size: 14px; font-weight: bold; color: #1e293b; margin-bottom: 4px;">
-                                                <i class="far fa-calendar" style="color: #fbbf24;"></i> Wednesday 星期三 · 8:00 PM - 10:00 PM
+                                            <div class="text-sm font-bold text-slate-800 mb-1">
+                                                <i class="far fa-calendar mr-2 text-amber-500"></i>Wednesday 星期三 · 8:00 PM - 10:00 PM
                                             </div>
-                                            <div style="font-size: 12px; color: #64748b;">全部组别 All Groups (A/B/C/D, 太极 Tai Chi, 传统 Traditional)</div>
+                                            <div class="text-xs text-slate-500">全部组别 All Groups (A/B/C/D, 太极 Tai Chi, 传统 Traditional)</div>
                                         </div>
                                     </label>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- SCHOOL 2: SJK(C) Puay Chai 2 -->
-                    <div class="school-box">
-                        <div class="school-header" onclick="toggleSchoolBox(this.parentElement)">
+                    <div class="school-box" onclick="toggleSchoolBox(this)">
+                        <div class="school-header">
                             <div class="school-info">
                                 <img src="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/PC2+Logo.png" alt="PC2 Logo" class="school-logo">
                                 <div class="school-text">
@@ -764,7 +756,7 @@
                                         <i class="fas fa-map-marker-alt" style="color: #fbbf24;"></i>
                                         SJK(C) Puay Chai 2 培才二校
                                     </h3>
-                                    <p><i class="fas fa-location-dot" style="color: #94a3b8;"></i> Jln BU 3/1, Bandar Utama, Petaling Jaya</p>
+                                    <p><i class="fas fa-location-dot" style="color: #94a3b8;"></i> Jln BU 3/1, Bandar Utama, 47800 Petaling Jaya, Selangor</p>
                                 </div>
                             </div>
                             <div class="school-toggle">
@@ -773,19 +765,19 @@
                         </div>
                         <div class="school-schedules">
                             <div class="school-schedules-inner">
-                                <div style="display: flex; flex-direction: column; gap: 12px;">
-                                    <label class="custom-checkbox" style="border: 2px solid #e2e8f0; border-radius: 12px;">
+                                <div class="space-y-3">
+                                    <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all">
                                         <input type="checkbox" name="sch" value="SJK(C) Puay Chai 2: Tue 8pm-10pm">
                                         <div class="custom-checkbox-label">
-                                            <div style="font-size: 14px; font-weight: bold; color: #1e293b; margin-bottom: 4px;">
-                                                <i class="far fa-calendar" style="color: #fbbf24;"></i> Tuesday 星期二 · 8:00 PM - 10:00 PM
+                                            <div class="text-sm font-bold text-slate-800 mb-1">
+                                                <i class="far fa-calendar mr-2 text-amber-500"></i>Tuesday 星期二 · 8:00 PM - 10:00 PM
                                             </div>
-                                            <div style="font-size: 12px; color: #64748b;">
-                                                <span style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-weight: 600;">只限于州队/后备队 Only for State/Backup Team</span>
-                                                <span style="color: #94a3b8; margin-left: 4px;">(D/C/B/A 套路 Routine)</span>
+                                            <div class="text-xs text-slate-600">
+                                                <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">只限于州队/后备队 Only for State/Backup Team</span>
+                                                <span class="text-slate-400 ml-1">(D/C/B/A 套路 Routine)</span>
                                             </div>
-                                            <div class="disabled-msg" style="font-size: 10px; color: #dc2626; font-weight: bold; display: none; margin-top: 4px;">
-                                                <i class="fas fa-ban"></i> Not available for Normal Students 普通学生不允许参加
+                                            <div class="text-[10px] text-red-500 font-bold hidden disabled-msg mt-1">
+                                                <i class="fas fa-ban mr-1"></i>Not available for Normal Students 普通学生不允许参加
                                             </div>
                                         </div>
                                     </label>
@@ -795,8 +787,8 @@
                     </div>
 
                     <!-- SCHOOL 3: Stadium Chinwoo -->
-                    <div class="school-box">
-                        <div class="school-header" onclick="toggleSchoolBox(this.parentElement)">
+                    <div class="school-box" onclick="toggleSchoolBox(this)">
+                        <div class="school-header">
                             <div class="school-info">
                                 <div class="school-logo" style="background: linear-gradient(135deg, #1e293b 0%, #475569 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">精</div>
                                 <div class="school-text">
@@ -804,7 +796,7 @@
                                         <i class="fas fa-map-marker-alt" style="color: #fbbf24;"></i>
                                         Stadium Chinwoo 精武体育馆
                                     </h3>
-                                    <p><i class="fas fa-location-dot" style="color: #94a3b8;"></i> Jalan Hang Jebat, Kuala Lumpur</p>
+                                    <p><i class="fas fa-location-dot" style="color: #94a3b8;"></i> Jalan Hang Jebat, 50150 Kuala Lumpur</p>
                                 </div>
                             </div>
                             <div class="school-toggle">
@@ -813,18 +805,18 @@
                         </div>
                         <div class="school-schedules">
                             <div class="school-schedules-inner">
-                                <div style="display: flex; flex-direction: column; gap: 12px;">
-                                    <label class="custom-checkbox" style="border: 2px solid #e2e8f0; border-radius: 12px;">
+                                <div class="space-y-3">
+                                    <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all">
                                         <input type="checkbox" name="sch" value="Stadium Chinwoo: Sun 2pm-4pm">
                                         <div class="custom-checkbox-label">
-                                            <div style="font-size: 14px; font-weight: bold; color: #1e293b; margin-bottom: 4px;">
-                                                <i class="far fa-calendar" style="color: #fbbf24;"></i> Sunday 星期日 · 2:00 PM - 4:00 PM
+                                            <div class="text-sm font-bold text-slate-800 mb-1">
+                                                <i class="far fa-calendar mr-2 text-amber-500"></i>Sunday 星期日 · 2:00 PM - 4:00 PM
                                             </div>
-                                            <div style="font-size: 12px; color: #64748b;">
-                                                <span style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-weight: 600;">只限于州队/后备队 Only for State/Backup Team</span>
+                                            <div class="text-xs text-slate-600">
+                                                <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">只限于州队/后备队 Only for State/Backup Team</span>
                                             </div>
-                                            <div class="disabled-msg" style="font-size: 10px; color: #dc2626; font-weight: bold; display: none; margin-top: 4px;">
-                                                <i class="fas fa-ban"></i> Not available for Normal Students 普通学生不允许参加
+                                            <div class="text-[10px] text-red-500 font-bold hidden disabled-msg mt-1">
+                                                <i class="fas fa-ban mr-1"></i>Not available for Normal Students 普通学生不允许参加
                                             </div>
                                         </div>
                                     </label>
@@ -837,395 +829,554 @@
 
             <!-- STEP 5: Terms & Signature -->
             <div id="step-5" class="step-content">
-                <h2 style="font-size: 20px; font-weight: bold; color: #1e293b; margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-file-signature" style="color: #fbbf24;"></i> 条款与协议 Agreement
+                <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                    <i class="fa-solid fa-file-signature text-amber-500"></i> 条款与协议 Agreement
                 </h2>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                    <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 0 8px 8px 0;">
-                        <h4 style="font-weight: bold; color: #1e40af; font-size: 14px; margin-bottom: 4px;">学费缴付 · Fee Payment</h4>
-                        <p style="font-size: 12px; color: #1e40af; line-height: 1.5;">
-                            学费需在每月10号之前缴付。Fees must be paid before the 10th of every month.
-                        </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                        <h4 class="font-bold text-blue-700 text-sm mb-1">学费缴付 · Fee Payment</h4>
+                        <p class="text-xs text-blue-800 leading-relaxed">学费需在每月10号之前缴付，并将收据发送至教练与行政。</p>
+                        <p class="text-xs text-blue-700 leading-relaxed mt-1">Fees must be paid before the 10th of every month, and the receipt must be sent to the coach and admin.</p>
                     </div>
-                    <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; border-radius: 0 8px 8px 0;">
-                        <h4 style="font-weight: bold; color: #991b1b; font-size: 14px; margin-bottom: 4px;">运动员守则 · Code of Conduct</h4>
-                        <p style="font-size: 12px; color: #991b1b; line-height: 1.5;">
-                            严守纪律，必须守时。Athletes must be disciplined and punctual.
-                        </p>
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+                        <h4 class="font-bold text-red-700 text-sm mb-1">运动员守则 · Code of Conduct</h4>
+                        <p class="text-xs text-red-800 leading-relaxed">严守纪律，必须守时，不允许在训练期间嬉戏；违者可能被取消资格。</p>
+                        <p class="text-xs text-red-700 leading-relaxed mt-1">Athletes must be disciplined and punctual and are not allowed to play during training; violations may result in disqualification.</p>
                     </div>
                 </div>
 
-                <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; height: 240px; overflow-y: auto; margin-bottom: 24px; font-size: 12px; line-height: 1.6;" class="custom-scroll">
-                    <div style="text-align: center; margin-bottom: 16px;">
-                        <h4 style="font-weight: bold; color: #1e293b; font-size: 14px;">
-                            📋 TERMS & CONDITIONS 条款与条件
-                        </h4>
+                <div class="bg-white border border-slate-200 rounded-xl p-4 md:p-5 h-64 md:h-56 overflow-y-auto custom-scroll mb-6 text-xs leading-relaxed">
+                    <div class="flex items-center justify-center mb-4">
+                        <h4 class="font-bold text-slate-800 text-sm">📋 TERMS & CONDITIONS 条款与条件</h4>
                     </div>
-
-                    <div style="margin-bottom: 12px;">
-                        <strong>1.</strong> 本人（学员/家长/监护人）确认上述资料属实。I confirm that all information provided is true and correct.
-                    </div>
-                    <div style="margin-bottom: 12px;">
-                        <strong>2.</strong> 本人明白武术是一项剧烈运动。I understand that Wushu is a high-intensity sport.
-                    </div>
-                    <div style="margin-bottom: 12px;">
-                        <strong>3.</strong> 学院有权调整训练时间或地点。The Academy reserves the right to adjust training times or venues.
-                    </div>
-                    <div style="margin-bottom: 12px;">
-                        <strong>4.</strong> 学费一经缴付，概不退还。Fees paid are strictly non-refundable.
-                    </div>
-                    <div style="margin-bottom: 12px;">
-                        <strong>5.</strong> 本人同意遵守学院及教练的所有指示。I agree to follow all instructions set by the Academy and coaches.
-                    </div>
-                    <div style="margin-bottom: 12px;">
-                        <strong>6.</strong> 只限于本院通知取消课程，将会另行安排补课。Replacement classes are only provided when the Academy cancels a session.
-                    </div>
-                    <div style="margin-bottom: 12px;">
-                        <strong>7.</strong> 如学员无法出席训练，必须向行政与教练申请请假。Leave must be applied for with admin and coach.
-                    </div>
-                    <div style="margin-bottom: 12px;">
-                        <strong>8.</strong> 州队必须出席所有训练。State-team athletes must attend all training.
-                    </div>
-                    <div style="margin-bottom: 12px;">
-                        <strong>9.</strong> 如因受伤或生病，请勿勉强出席训练。Students with injuries should not attend training.
-                    </div>
-                    <div style="margin-bottom: 12px;">
-                        <strong>10.</strong> 本院不负责学员及家长的任何贵重财物。The Academy is not responsible for any valuables.
-                    </div>
-                </div>
-
-                <!-- Signature Section -->
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;">
-                    <h4 style="font-weight: bold; color: #475569; margin-bottom: 16px; font-size: 14px; text-transform: uppercase;">Legal Declaration</h4>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                        <div>
-                            <label style="display: block; font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 4px;">Parent Name *</label>
-                            <input type="text" id="parent-name" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: white;" required>
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 4px;">Parent IC No. *</label>
-                            <input type="text" id="parent-ic" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: white;" placeholder="000000-00-0000" maxlength="14" required>
-                        </div>
-                        <div style="grid-column: 1 / -1;">
-                            <label style="display: block; font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 4px;">Effective Date</label>
-                            <input type="text" id="today-date" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; background: #f1f5f9; color: #64748b; border-radius: 8px; font-size: 14px;" readonly>
-                        </div>
-                    </div>
-
-                    <label style="display: block; font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 8px;">Parent's Signature (Sign Below) *</label>
                     
-                    <div class="signature-box">
-                        <canvas id="signature-canvas"></canvas>
+                    <ol class="space-y-4">
+                        <li class="flex items-start gap-2 md:gap-3">
+                            <div class="mt-0.5 h-5 w-5 md:h-6 md:w-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] md:text-[11px] font-bold flex-shrink-0">1</div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] md:text-[12px] text-slate-800 leading-relaxed">本人（学员/家长/监护人）确认上述资料属实。</p>
+                                <p class="text-[11px] md:text-[12px] text-slate-600 leading-relaxed">I, the student/parent/guardian, confirm that all information provided above is true and correct.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-2 md:gap-3">
+                            <div class="mt-0.5 h-5 w-5 md:h-6 md:w-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] md:text-[11px] font-bold flex-shrink-0">2</div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] md:text-[12px] text-slate-800 leading-relaxed">本人明白武术是一项剧烈运动，并愿意自行承担训练期间可能发生的意外风险。</p>
+                                <p class="text-[11px] md:text-[12px] text-slate-600 leading-relaxed">I understand that Wushu is a high‑intensity sport and agree to bear any risk of injury during training.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-2 md:gap-3">
+                            <div class="mt-0.5 h-5 w-5 md:h-6 md:w-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] md:text-[11px] font-bold flex-shrink-0">3</div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] md:text-[12px] text-slate-800 leading-relaxed">学院有权在必要时调整训练时间或地点，并将提前通知。</p>
+                                <p class="text-[11px] md:text-[12px] text-slate-600 leading-relaxed">The Academy reserves the right to adjust training times or venues when necessary and will notify in advance.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-2 md:gap-3">
+                            <div class="mt-0.5 h-5 w-5 md:h-6 md:w-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] md:text-[11px] font-bold flex-shrink-0">4</div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] md:text-[12px] text-slate-800 leading-relaxed">学费一经缴付，概不退还（Non‑refundable）。</p>
+                                <p class="text-[11px] md:text-[12px] text-slate-600 leading-relaxed">Fees paid are strictly non‑refundable under all circumstances.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-2 md:gap-3">
+                            <div class="mt-0.5 h-5 w-5 md:h-6 md:w-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] md:text-[11px] font-bold flex-shrink-0">5</div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] md:text-[12px] text-slate-800 leading-relaxed">本人同意遵守学院及教练的所有指示与安排。</p>
+                                <p class="text-[11px] md:text-[12px] text-slate-600 leading-relaxed">I agree to follow all instructions, rules, and arrangements set by the Academy and coaches.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-2 md:gap-3">
+                            <div class="mt-0.5 h-5 w-5 md:h-6 md:w-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] md:text-[11px] font-bold flex-shrink-0">6</div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] md:text-[12px] text-slate-800 leading-relaxed">只限于本院通知取消课程，将会另行安排补课，家长不允许自行取消课程。</p>
+                                <p class="text-[11px] md:text-[12px] text-slate-600 leading-relaxed">Replacement classes are only provided when the Academy cancels a session; parents may not cancel classes on their own.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-2 md:gap-3">
+                            <div class="mt-0.5 h-5 w-5 md:h-6 md:w-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] md:text-[11px] font-bold flex-shrink-0">7</div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] md:text-[12px] text-slate-800 leading-relaxed">如学员因病或其他原因无法出席训练，必须向行政与教练申请请假；未经许可的缺席将被记录。</p>
+                                <p class="text-[11px] md:text-[12px] text-slate-600 leading-relaxed">If the student cannot attend due to sickness or other reasons, leave must be applied for with admin and coach; unapproved absences will be recorded.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-2 md:gap-3">
+                            <div class="mt-0.5 h-5 w-5 md:h-6 md:w-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] md:text-[11px] font-bold flex-shrink-0">8</div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] md:text-[12px] text-slate-800 leading-relaxed">州队及后备队必须出席所有训练，保持良好态度，接受严格训练与训导。</p>
+                                <p class="text-[11px] md:text-[12px] text-slate-600 leading-relaxed">State‑team and reserve athletes must attend all training, maintain good attitude, and accept strict training and discipline.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-2 md:gap-3">
+                            <div class="mt-0.5 h-5 w-5 md:h-6 md:w-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] md:text-[11px] font-bold flex-shrink-0">9</div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] md:text-[12px] text-slate-800 leading-relaxed">如因脚受伤、扭伤或生病，请勿勉强出席训练，后果自负。</p>
+                                <p class="text-[11px] md:text-[12px] text-slate-600 leading-relaxed">Students with injuries or illness should not attend training; any consequences are at their own risk.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-2 md:gap-3">
+                            <div class="mt-0.5 h-5 w-5 md:h-6 md:w-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] md:text-[11px] font-bold flex-shrink-0">10</div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] md:text-[12px] text-slate-800 leading-relaxed">本院不负责学员及家长的任何贵重财物。</p>
+                                <p class="text-[11px] md:text-[12px] text-slate-600 leading-relaxed">The Academy is not responsible for any valuables belonging to students or parents.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-2 md:gap-3">
+                            <div class="mt-0.5 h-5 w-5 md:h-6 md:w-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] md:text-[11px] font-bold flex-shrink-0">11</div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] md:text-[12px] text-slate-800 leading-relaxed">不允许打架、吵架、态度恶劣或不配合训练，否则将被取消州队及学员资格。</p>
+                                <p class="text-[11px] md:text-[12px] text-slate-600 leading-relaxed">Fighting, quarrelling, poor attitude, or refusing to cooperate with training may result in removal from the state team and the Academy.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-2 md:gap-3">
+                            <div class="mt-0.5 h-5 w-5 md:h-6 md:w-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] md:text-[11px] font-bold flex-shrink-0">12</div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] md:text-[12px] text-slate-800 leading-relaxed">训练期间不允许吃食物，只能在休息时间喝水。</p>
+                                <p class="text-[11px] md:text-[12px] text-slate-600 leading-relaxed">Eating is not allowed during training; only drinking water during breaks is permitted.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-2 md:gap-3">
+                            <div class="mt-0.5 h-5 w-5 md:h-6 md:w-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] md:text-[11px] font-bold flex-shrink-0">13</div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] md:text-[12px] text-slate-800 leading-relaxed">家长不允许干涉教练所安排的专业训练计划及纪律管理。</p>
+                                <p class="text-[11px] md:text-[12px] text-slate-600 leading-relaxed">Parents are not allowed to interfere with professional training plans or discipline set by the coaches.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-2 md:gap-3">
+                            <div class="mt-0.5 h-5 w-5 md:h-6 md:w-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] md:text-[11px] font-bold flex-shrink-0">14</div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] md:text-[12px] text-slate-800 leading-relaxed">家长必须准时载送孩子往返训练地点，并自行负责交通安全。</p>
+                                <p class="text-[11px] md:text-[12px] text-slate-600 leading-relaxed">Parents must send and pick up their children on time and are fully responsible for transport safety.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-2 md:gap-3">
+                            <div class="mt-0.5 h-5 w-5 md:h-6 md:w-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] md:text-[11px] font-bold flex-shrink-0">15</div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] md:text-[12px] text-slate-800 leading-relaxed">训练过程中，学员可能被录影或拍照作为宣传用途，如家长不允许，须以书面通知本院。</p>
+                                <p class="text-[11px] md:text-[12px] text-slate-600 leading-relaxed">Training sessions may be recorded or photographed for publicity; parents who do not consent must inform the Academy in writing.</p>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 mt-6">
+                    <h4 class="font-bold text-slate-700 mb-4 text-sm uppercase">Legal Declaration</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="text-xs font-bold text-slate-500">Parent Name *</label>
+                            <input type="text" id="parent-name" class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white" required>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-500">Parent IC No. *</label>
+                            <input type="text" id="parent-ic" class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white" placeholder="000000-00-0000" maxlength="14" required>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="text-xs font-bold text-slate-500">Effective Date</label>
+                            <input type="text" id="today-date" class="w-full p-2 border border-slate-200 bg-slate-100 text-slate-500 rounded-lg text-sm" readonly>
+                        </div>
+                    </div>
+
+                    <label class="text-xs font-bold text-slate-500 mb-2 block">Parent's Signature (Sign Below) *</label>
+                    <div id="sig-wrapper" class="sig-box">
                         <div id="sig-placeholder">SIGN HERE</div>
-                        <button type="button" onclick="clearSignature(); return false;" class="clear-sig-btn">
-                            <i class="fa-solid fa-eraser"></i> Clear
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- STEP 6: Success -->
-            <div id="step-6" class="step-content">
-                <div style="text-align: center; padding: 48px 0;">
-                    <div style="margin-bottom: 24px;">
-                        <div style="width: 96px; height: 96px; background: #dcfce7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
-                            <i class="fas fa-check-circle" style="color: #16a34a; font-size: 48px;"></i>
+                        <div class="absolute top-2 right-2 z-10">
+                            <button type="button" onclick="clearSig()" class="bg-red-100 text-red-600 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 cursor-pointer border-none">
+                                <i class="fa-solid fa-eraser"></i> Clear
+                            </button>
                         </div>
-                        <h2 style="font-size: 28px; font-weight: bold; color: #1e293b; margin-bottom: 8px;">Registration Successful!</h2>
-                        <p style="color: #64748b; font-size: 18px; margin-bottom: 4px;">报名成功！</p>
-                        <p style="color: #94a3b8; font-size: 14px;" id="reg-number-display"></p>
-                    </div>
-                    
-                    <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 24px; border-radius: 0 12px 12px 0; margin-bottom: 32px; max-width: 600px; margin-left: auto; margin-right: auto; text-align: left;">
-                        <h3 style="font-weight: bold; color: #1e40af; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                            <i class="fas fa-info-circle"></i>
-                            What's Next? 接下来做什么？
-                        </h3>
-                        <ul style="font-size: 14px; color: #1e40af; line-height: 1.8; padding-left: 20px;">
-                            <li>Your registration has been submitted 您的报名已提交</li>
-                            <li>Admin will review and create your account 管理员将审核并创建账户</li>
-                            <li>Pay fees before the 10th of every month 请在每月10号前缴费</li>
-                            <li>Send payment receipt to coach and admin 将收据发给教练和行政</li>
-                        </ul>
-                    </div>
-
-                    <div style="display: flex; justify-content: center; gap: 16px;">
-                        <button type="button" onclick="downloadPDF()" style="background: #16a34a; color: white; padding: 16px 32px; border-radius: 12px; font-weight: bold; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); border: none; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: transform 0.2s;">
-                            <i class="fas fa-download" style="font-size: 20px;"></i>
-                            <div style="text-align: left;">
-                                <div>Download Agreement</div>
-                                <div style="font-size: 14px; font-weight: normal;">下载协议</div>
-                            </div>
-                        </button>
-                        <button type="button" onclick="submitAnother()" style="background: #9333ea; color: white; padding: 16px 32px; border-radius: 12px; font-weight: bold; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3); border: none; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: transform 0.2s;">
-                            <i class="fas fa-plus-circle" style="font-size: 20px;"></i>
-                            <div style="text-align: left;">
-                                <div>Submit Another</div>
-                                <div style="font-size: 14px; font-weight: normal;">提交另一份</div>
-                            </div>
-                        </button>
                     </div>
                 </div>
             </div>
+            
+            <!-- STEP 6: Payment -->
+<div id="step-6" class="step-content">
+    <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+        <i class="fa-solid fa-credit-card text-amber-500"></i> 学费缴付 Fee Payment
+    </h2>
+
+    <!-- Fee Calculation -->
+    <div class="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-400 rounded-xl p-6 mb-6">
+        <h3 class="font-bold text-amber-900 text-lg mb-4 flex items-center gap-2">
+            <i class="fas fa-calculator"></i> 应付学费 Total Fees
+        </h3>
+        <div class="bg-white rounded-lg p-4 mb-4">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-slate-600 text-sm">已选择课程数量 Selected Classes:</span>
+                <span class="font-bold text-slate-800" id="payment-class-count">0</span>
+            </div>
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-slate-600 text-sm">学员身份 Student Status:</span>
+                <span class="font-semibold text-slate-800" id="payment-status">-</span>
+            </div>
+            <div class="border-t-2 border-amber-200 pt-3 mt-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-lg font-bold text-slate-800">应付总额 Total Amount:</span>
+                    <span class="text-3xl font-bold text-amber-600" id="payment-total">RM 0</span>
+                </div>
+            </div>
+        </div>
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-3 text-xs text-blue-800">
+            <p class="font-semibold mb-1"><i class="fas fa-info-circle"></i> 收费标准 Fee Structure:</p>
+            <p>• 1 堂课 (1 class): RM 120</p>
+            <p>• 2 堂课 (2 classes): RM 200</p>
+            <p>• 3 堂课 (3 classes): RM 280</p>
+            <p>• 4 堂课或以上 (4+ classes): RM 320</p>
+        </div>
+    </div>
+
+    <!-- Bank Details -->
+    <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6">
+        <h3 class="font-bold text-slate-800 text-base mb-4 flex items-center gap-2">
+            <i class="fas fa-building-columns text-blue-600"></i> 银行详情 Bank Details
+        </h3>
+        <div class="space-y-3 text-sm">
+            <div class="flex items-start gap-3 bg-white p-3 rounded-lg">
+                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-bank text-blue-600 text-sm"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-xs text-slate-500 mb-1">Bank Name 银行名称</p>
+                    <p class="font-bold text-slate-800">Maybank</p>
+                </div>
+            </div>
+            <div class="flex items-start gap-3 bg-white p-3 rounded-lg">
+                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-user text-green-600 text-sm"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-xs text-slate-500 mb-1">Account Name 户口名称</p>
+                    <p class="font-bold text-slate-800">Wushu Sport Academy</p>
+                </div>
+            </div>
+            <div class="flex items-start gap-3 bg-white p-3 rounded-lg">
+                <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-hashtag text-amber-600 text-sm"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-xs text-slate-500 mb-1">Account Number 户口号码</p>
+                    <p class="font-bold text-slate-800 text-lg">5621 2345 6789</p>
+                    <button onclick="copyAccountNumber()" class="text-xs text-blue-600 hover:text-blue-800 mt-1 flex items-center gap-1">
+                        <i class="fas fa-copy"></i> Copy 复制
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Receipt -->
+    <div class="bg-white border-2 border-slate-200 rounded-xl p-5">
+        <h3 class="font-bold text-slate-800 text-base mb-4 flex items-center gap-2">
+            <i class="fas fa-receipt text-purple-600"></i> 上传收据 Upload Payment Receipt *
+        </h3>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-slate-700 mb-2">
+                付款日期 Payment Date *
+            </label>
+            <input type="date" id="payment-date" class="w-full p-3 border border-slate-300 rounded-lg text-sm" required>
+        </div>
+
+        <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-amber-400 transition-all cursor-pointer" id="upload-area">
+            <input type="file" id="receipt-upload" accept="image/*,.pdf" class="hidden" onchange="handleReceiptUpload(event)">
+            <div id="upload-prompt">
+                <i class="fas fa-cloud-upload-alt text-4xl text-slate-400 mb-3"></i>
+                <p class="text-sm font-semibold text-slate-700 mb-1">点击上传收据 Click to Upload Receipt</p>
+                <p class="text-xs text-slate-500">支持 JPG, PNG, PDF (最大 5MB)</p>
+                <button type="button" onclick="document.getElementById('receipt-upload').click()" class="mt-3 bg-slate-800 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-slate-700">
+                    选择文件 Choose File
+                </button>
+            </div>
+            <div id="upload-preview" class="hidden">
+                <img id="preview-image" src="" class="max-w-full max-h-64 mx-auto mb-3 rounded-lg border border-slate-200">
+                <p id="preview-filename" class="text-sm font-semibold text-slate-800 mb-2"></p>
+                <button type="button" onclick="removeReceipt()" class="text-xs text-red-600 hover:text-red-800 font-semibold">
+                    <i class="fas fa-trash"></i> 删除 Remove
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mt-4 text-xs text-yellow-800">
+            <p class="font-semibold mb-1"><i class="fas fa-exclamation-triangle"></i> 重要提示 Important Note:</p>
+            <p>请确保收据清晰可见，包含付款金额、日期及银行信息。</p>
+            <p class="mt-1">Please ensure the receipt is clear and shows payment amount, date, and bank details.</p>
+        </div>
+    </div>
+</div>
+
+<!-- STEP 7: Success (previously Step 6) -->
+<div id="step-7" class="step-content">
+    <!-- Keep existing success page content -->
+    <div style="text-align: center; padding: 48px 0;">
+        <div style="margin-bottom: 24px;">
+            <div style="width: 96px; height: 96px; background: #dcfce7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                <i class="fas fa-check-circle" style="color: #16a34a; font-size: 48px;"></i>
+            </div>
+            <h2 style="font-size: 28px; font-weight: bold; color: #1e293b; margin-bottom: 8px;">Registration Successful!</h2>
+            <p style="color: #64748b; font-size: 18px; margin-bottom: 4px;">报名成功！</p>
+            <p style="color: #94a3b8; font-size: 14px;" id="reg-number-display"></p>
+        </div>
+        
+        <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 24px; border-radius: 0 12px 12px 0; margin-bottom: 32px; max-width: 600px; margin-left: auto; margin-right: auto; text-align: left;">
+            <h3 style="font-weight: bold; color: #1e40af; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-info-circle"></i>
+                What's Next? 接下来做什么？
+            </h3>
+            <ul style="font-size: 14px; color: #1e40af; line-height: 1.8; padding-left: 20px;">
+                <li>Your registration and payment have been submitted 您的报名及付款已提交</li>
+                <li>Admin will review your payment receipt 管理员将审核您的付款收据</li>
+                <li>You will receive account credentials via email 您将通过电子邮件收到账户凭证</li>
+                <li>Login to student portal to track your progress 登录学生门户跟踪您的进度</li>
+            </ul>
+        </div>
+
+        <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+            <button type="button" onclick="downloadPDF()" style="background: #16a34a; color: white; padding: 16px 32px; border-radius: 12px; font-weight: bold; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); border: none; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: transform 0.2s;">
+                <i class="fas fa-download" style="font-size: 20px;"></i>
+                <div style="text-align: left;">
+                    <div>Download Agreement</div>
+                    <div style="font-size: 12px; font-weight: normal;">下载协议PDF</div>
+                </div>
+            </button>
+            <button type="button" onclick="submitAnother()" style="background: linear-gradient(to right, #7c3aed, #6d28d9); color: white; padding: 16px 32px; border-radius: 12px; font-weight: bold; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3); border: none; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: transform 0.2s;">
+                <i class="fas fa-plus-circle" style="font-size: 20px;"></i>
+                <div style="text-align: left;">
+                    <div>Submit Another</div>
+                    <div style="font-size: 12px; font-weight: normal;">提交另一份报名</div>
+                </div>
+            </button>
+        </div>
+    </div>
+</div>
 
         </form>
     </div>
 
-    <!-- Footer Buttons -->
+    <!-- Footer buttons -->
     <div style="padding: 24px; background: white; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
         <button id="btn-prev" onclick="changeStep(-1)" style="padding: 10px 24px; border-radius: 12px; font-weight: 600; color: #64748b; background: transparent; border: none; cursor: pointer; transition: background 0.2s;" disabled>
-            Back
+            ← Back
         </button>
-        <button id="btn-next" onclick="changeStep(1)" style="background: #1e293b; color: white; padding: 10px 32px; border-radius: 12px; font-weight: 600; box-shadow: 0 4px 12px rgba(30, 41, 59, 0.3); border: none; cursor: pointer;">
+        <button id="btn-next" onclick="changeStep(1)" style="background: #1e293b; color: white; padding: 10px 32px; border-radius: 12px; font-weight: 600; box-shadow: 0 4px 12px rgba(30, 41, 59, 0.3); border: none; cursor: pointer; transition: all 0.2s;">
             Next Step <i class="fa-solid fa-arrow-right"></i>
         </button>
     </div>
 </div>
 
-<!-- HIDDEN PDF TEMPLATE - EXACT MATCH -->
-<!-- HIDDEN PDF TEMPLATE - EXACT A4 FORMAT WITH LETTERHEAD -->
-<div id="pdf-template" style="width: 210mm; margin: 0 auto;">
+<!-- HIDDEN PDF TEMPLATE - PAGE 1 -->
+<div id="pdf-template-page1" style="width: 794px; padding: 34px 40px 24px 40px; background: #ffffff; position: fixed; top: -10000px; left: -10000px; visibility: hidden; pointer-events: none; color: #111827; font-family: 'Noto Sans SC', sans-serif;">
     
-    <!-- PAGE 1 -->
-    <div class="pdf-page" style="width: 210mm; height: 297mm; padding: 15mm; margin-bottom: 20px; background: white; font-family: Arial, sans-serif; position: relative;">
-        
-        <!-- Letterhead Image -->
-        <div style="text-align: center; margin-bottom: 20px;">
-            <img src="/assets/WSP Letter.png" style="max-width: 100%; height: auto; max-height: 80px;">
-        </div>
+    <img src="/assets/WSP Letter.png" style="width: 100%; margin-bottom: 12px;" alt="Letterhead">
+    
+    <h1 style="text-align: center; font-size: 24px; font-weight: 800; margin-top: 6px; margin-bottom: 4px; line-height: 1.2;">OFFICIAL WUSHU REGISTRATION 2026</h1>
+    <p style="text-align: center; font-size: 12px; color: #6b7280; margin-bottom: 22px;">Legal Binding Document · This form confirms participation in Wushu Sports Academy programmes.</p>
 
-        <!-- Title -->
-        <h1 style="text-align: center; font-size: 18px; font-weight: 800; margin: 15px 0 3px 0; color: #000; letter-spacing: 1px;">OFFICIAL WUSHU REGISTRATION 2026</h1>
-        <p style="text-align: center; font-size: 11px; color: #666; margin: 0 0 8px 0;">Legal Binding Document • This form confirms participation in Wushu Sports Academy programmes.</p>
-
-        <!-- Student Details Section -->
-        <div style="margin-bottom: 15px;">
-            <div style="background: #e8e8e8; padding: 6px 10px; font-weight: 700; font-size: 11px; margin-bottom: 0px; border-bottom: 2px solid #333;">STUDENT DETAILS / 学员资料</div>
-            <table style="width: 100%; border-collapse: collapse; border: 1px solid #999; font-size: 11px;">
-                <tr style="background: #f5f5f5;">
-                    <td style="padding: 8px 10px; border-right: 1px solid #999; border-bottom: 1px solid #999; width: 35%; font-weight: 600;">Name 姓名:</td>
-                    <td style="padding: 8px 10px; border-bottom: 1px solid #999;" id="pdf-name"></td>
-                </tr>
-                <tr style="background: #f5f5f5;">
-                    <td style="padding: 8px 10px; border-right: 1px solid #999; border-bottom: 1px solid #999; font-weight: 600;">IC No 身份证:</td>
-                    <td style="padding: 8px 10px; border-bottom: 1px solid #999;" id="pdf-ic"></td>
-                </tr>
-                <tr style="background: #f5f5f5;">
-                    <td style="padding: 8px 10px; border-right: 1px solid #999; border-bottom: 1px solid #999; font-weight: 600;">Age 年龄:</td>
-                    <td style="padding: 8px 10px; border-bottom: 1px solid #999;" id="pdf-age"></td>
-                </tr>
-                <tr style="background: #f5f5f5;">
-                    <td style="padding: 8px 10px; border-right: 1px solid #999; border-bottom: 1px solid #999; font-weight: 600;">School 学校:</td>
-                    <td style="padding: 8px 10px; border-bottom: 1px solid #999;" id="pdf-school"></td>
-                </tr>
-                <tr style="background: #f5f5f5;">
-                    <td style="padding: 8px 10px; border-right: 1px solid #999; border-bottom: 1px solid #999; font-weight: 600;">Status 身份:</td>
-                    <td style="padding: 8px 10px; border-bottom: 1px solid #999;" id="pdf-status"></td>
-                </tr>
-            </table>
-        </div>
-
-        <!-- Contact & Events Section -->
-        <div style="margin-bottom: 15px;">
-            <div style="background: #e8e8e8; padding: 6px 10px; font-weight: 700; font-size: 11px; margin-bottom: 0px; border-bottom: 2px solid #333;">CONTACT & EVENTS / 联系与项目</div>
-            <table style="width: 100%; border-collapse: collapse; border: 1px solid #999; font-size: 11px;">
-                <tr style="background: #f5f5f5;">
-                    <td style="padding: 8px 10px; border-right: 1px solid #999; border-bottom: 1px solid #999; width: 35%; font-weight: 600;">Phone 电话:</td>
-                    <td style="padding: 8px 10px; border-bottom: 1px solid #999;" id="pdf-phone"></td>
-                </tr>
-                <tr style="background: #f5f5f5;">
-                    <td style="padding: 8px 10px; border-right: 1px solid #999; border-bottom: 1px solid #999; font-weight: 600;">Email 邮箱:</td>
-                    <td style="padding: 8px 10px; border-bottom: 1px solid #999;" id="pdf-email"></td>
-                </tr>
-                <tr style="background: #f5f5f5;">
-                    <td style="padding: 8px 10px; border-right: 1px solid #999; border-bottom: 1px solid #999; font-weight: 600;">Level 等级:</td>
-                    <td style="padding: 8px 10px; border-bottom: 1px solid #999;" id="pdf-level"></td>
-                </tr>
-                <tr style="background: #f5f5f5;">
-                    <td style="padding: 8px 10px; border-right: 1px solid #999; border-bottom: 1px solid #999; font-weight: 600;">Events 项目:</td>
-                    <td style="padding: 8px 10px; border-bottom: 1px solid #999;" id="pdf-events"></td>
-                </tr>
-                <tr style="background: #f5f5f5;">
-                    <td style="padding: 8px 10px; border-right: 1px solid #999; border-bottom: 1px solid #999; font-weight: 600;">Schedule 时间:</td>
-                    <td style="padding: 8px 10px; border-bottom: 1px solid #999;" id="pdf-schedule"></td>
-                </tr>
-            </table>
-        </div>
-
-        <!-- Declaration & Signature Section -->
-        <div style="margin-bottom: 15px;">
-            <div style="background: #e8e8e8; padding: 6px 10px; font-weight: 700; font-size: 11px; margin-bottom: 8px; border-bottom: 2px solid #333;">DECLARATION & SIGNATURE / 声明与签名</div>
-            
-            <p style="font-size: 10px; line-height: 1.5; margin: 8px 0; color: #333;">
-                I hereby confirm that all information provided is accurate. I have read and agreed to the <strong>Terms & Conditions</strong>, <strong>Fee Policy</strong>, and <strong>Athlete Code of Conduct</strong>. I understand that Wushu is a high-intensity sport and agree to bear the risks involved.
-            </p>
-
-            <!-- Signature Box -->
-            <div style="border: 2px solid #333; padding: 12px; width: 280px; height: 120px; margin: 10px 0; background: #fafafa; display: flex; align-items: center; justify-content: center;">
-                <img id="pdf-sig-img" style="max-width: 100%; max-height: 100%; object-fit: contain;">
-            </div>
-
-            <table style="width: 100%; font-size: 11px; line-height: 1.8;">
-                <tr>
-                    <td style="padding: 4px 0;"><strong>Parent / Guardian Name:</strong></td>
-                    <td style="padding: 4px 0;" id="pdf-parent-name"></td>
-                </tr>
-                <tr>
-                    <td style="padding: 4px 0;"><strong>Parent / Guardian IC No.:</strong></td>
-                    <td style="padding: 4px 0;" id="pdf-parent-ic"></td>
-                </tr>
-                <tr>
-                    <td style="padding: 4px 0;"><strong>Date:</strong></td>
-                    <td style="padding: 4px 0;" id="pdf-date"></td>
-                </tr>
-            </table>
-        </div>
-
-        <!-- Notes Section -->
-        <div style="background: #fffacd; border: 2px solid #ffd700; padding: 10px; border-radius: 3px; margin-top: 10px; font-size: 9.5px; line-height: 1.5; color: #333;">
-            <p style="margin: 0;"><strong>NOTES / 备注:</strong> Fees are non-refundable and must be paid by the 10th of every month. Strict discipline and punctuality are required at all times. The Academy reserves the right to adjust training schedules and venues when necessary. 学费概不退还,并须在每月10号前缴清。学员必须严守纪律与守时;学院保留在有需要时调整训练时间及地点的权利。</p>
+    <div style="margin-bottom: 20px;">
+        <div style="background: #e5e7eb; padding: 7px 12px; font-weight: 700; font-size: 13px; text-transform: uppercase;">STUDENT INFORMATION 学员资料</div>
+        <div style="border: 1px solid #e5e7eb; border-top: none; padding: 10px 12px; font-size: 12.5px; line-height: 1.6;">
+            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">Full Name 姓名:</span><span style="font-weight: 500; color: #111827;" id="pdf-name"></span></div>
+            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">IC Number 身份证:</span><span style="font-weight: 500; color: #111827;" id="pdf-ic"></span></div>
+            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">Age (2026) 年龄:</span><span style="font-weight: 500; color: #111827;" id="pdf-age"></span></div>
+            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">School 学校:</span><span style="font-weight: 500; color: #111827;" id="pdf-school"></span></div>
+            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">Status 身份:</span><span style="font-weight: 500; color: #111827;" id="pdf-status"></span></div>
         </div>
     </div>
 
-    <!-- PAGE 2 -->
-    <div class="pdf-page" style="width: 210mm; height: 297mm; padding: 15mm; background: white; font-family: Arial, sans-serif;">
-        
-        <!-- Letterhead Image -->
-        <div style="text-align: center; margin-bottom: 20px;">
-            <img src="/assets/WSP Letter.png" style="max-width: 100%; height: auto; max-height: 80px;">
+    <div style="margin-bottom: 20px;">
+        <div style="background: #e5e7eb; padding: 7px 12px; font-weight: 700; font-size: 13px; text-transform: uppercase;">CONTACT 联系方式</div>
+        <div style="border: 1px solid #e5e7eb; border-top: none; padding: 10px 12px; font-size: 12.5px; line-height: 1.6;">
+            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">Phone 电话:</span><span style="font-weight: 500; color: #111827;" id="pdf-phone"></span></div>
+            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">Email 邮箱:</span><span style="font-weight: 500; color: #111827;" id="pdf-email"></span></div>
         </div>
+    </div>
 
-        <!-- Title -->
-        <h1 style="text-align: center; font-size: 18px; font-weight: 800; margin: 15px 0 2px 0; color: #000;">TERMS & CONDITIONS</h1>
-        <p style="text-align: center; font-size: 11px; color: #666; margin: 0 0 15px 0;">条款与条件 · Agreed and Signed by Parent/Guardian</p>
-
-        <p style="font-size: 10px; margin-bottom: 12px; color: #333; line-height: 1.4; font-weight: 600;">The parent/guardian has read, understood, and agreed to the following terms:</p>
-
-        <!-- Terms List -->
-        <div style="font-size: 9.5px; line-height: 1.7; color: #333;">
-            <table style="width: 100%; margin-bottom: 12px; border-collapse: collapse;">
-                <tr>
-                    <td style="vertical-align: top; width: 25px; padding-right: 8px; font-weight: 700; background: #000; color: white; text-align: center; border-radius: 50%; height: 24px; line-height: 24px;">1</td>
-                    <td style="padding-bottom: 10px; padding-left: 8px;">
-                        <strong>本人(学员/家长/监护人)确认上述资料属实。</strong><br>
-                        <em>I, the student/parent/guardian, confirm that all information provided above is true and correct.</em>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="vertical-align: top; font-weight: 700; background: #000; color: white; text-align: center; border-radius: 50%; height: 24px; line-height: 24px;">2</td>
-                    <td style="padding-bottom: 10px; padding-left: 8px;">
-                        <strong>本人明白武术是一项剧烈运动,并愿意自行承担训练期间可能发生的意外风险。</strong><br>
-                        <em>I understand that Wushu is a high-intensity sport and agree to bear any risk of injury during training.</em>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="vertical-align: top; font-weight: 700; background: #000; color: white; text-align: center; border-radius: 50%; height: 24px; line-height: 24px;">3</td>
-                    <td style="padding-bottom: 10px; padding-left: 8px;">
-                        <strong>学院有权在必要时调整训练时间或地点,并将提前通知。</strong><br>
-                        <em>The Academy reserves the right to adjust training times or venues when necessary and will notify in advance.</em>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="vertical-align: top; font-weight: 700; background: #000; color: white; text-align: center; border-radius: 50%; height: 24px; line-height: 24px;">4</td>
-                    <td style="padding-bottom: 10px; padding-left: 8px;">
-                        <strong>学费一经缴付,概不退还 (Non-refundable)。</strong><br>
-                        <em>Fees paid are strictly non-refundable under all circumstances.</em>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="vertical-align: top; font-weight: 700; background: #000; color: white; text-align: center; border-radius: 50%; height: 24px; line-height: 24px;">5</td>
-                    <td style="padding-bottom: 10px; padding-left: 8px;">
-                        <strong>本人同意遵守学院及教练的所有指示与安排。</strong><br>
-                        <em>I agree to follow all instructions, rules, and arrangements set by the Academy and coaches.</em>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="vertical-align: top; font-weight: 700; background: #000; color: white; text-align: center; border-radius: 50%; height: 24px; line-height: 24px;">6</td>
-                    <td style="padding-bottom: 10px; padding-left: 8px;">
-                        <strong>只限于本院通知取消课程,将会另行安排补课,家长不允许自行取消课程。</strong><br>
-                        <em>Replacement classes are only provided when the Academy cancels a session; parents may not cancel classes on their own.</em>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="vertical-align: top; font-weight: 700; background: #000; color: white; text-align: center; border-radius: 50%; height: 24px; line-height: 24px;">7</td>
-                    <td style="padding-bottom: 10px; padding-left: 8px;">
-                        <strong>如学员因病或其他原因无法出席训练,必须向行政与教练申请请假;未经许可的缺席将被记录。</strong><br>
-                        <em>If the student cannot attend due to sickness or other reasons, leave must be applied for with admin and coach; unapproved absences will be recorded.</em>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="vertical-align: top; font-weight: 700; background: #000; color: white; text-align: center; border-radius: 50%; height: 24px; line-height: 24px;">8</td>
-                    <td style="padding-bottom: 10px; padding-left: 8px;">
-                        <strong>州队及后备队必须出席所有训练,保持良好态度,接受严格训练与训导。</strong><br>
-                        <em>State-team and reserve athletes must attend all training, maintain good attitude, and accept strict training and discipline.</em>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="vertical-align: top; font-weight: 700; background: #000; color: white; text-align: center; border-radius: 50%; height: 24px; line-height: 24px;">9</td>
-                    <td style="padding-bottom: 10px; padding-left: 8px;">
-                        <strong>如因脚受伤、扭伤或生病,请勿勉强出席训练,后果自负。</strong><br>
-                        <em>Students with injuries or illness should not attend training; any consequences are at their own risk.</em>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="vertical-align: top; font-weight: 700; background: #000; color: white; text-align: center; border-radius: 50%; height: 24px; line-height: 24px;">10</td>
-                    <td style="padding-bottom: 10px; padding-left: 8px;">
-                        <strong>本院不负责学员及家长的任何贵重财物。</strong><br>
-                        <em>The Academy is not responsible for any valuables belonging to students or parents.</em>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="vertical-align: top; font-weight: 700; background: #000; color: white; text-align: center; border-radius: 50%; height: 24px; line-height: 24px;">11</td>
-                    <td style="padding-bottom: 10px; padding-left: 8px;">
-                        <strong>不允许打架、吵架、态度恶劣或不配合训练,否则将被取消州队及学员资格。</strong><br>
-                        <em>Fighting, quarrelling, poor attitude, or refusing to cooperate with training may result in removal from the state team and the Academy.</em>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="vertical-align: top; font-weight: 700; background: #000; color: white; text-align: center; border-radius: 50%; height: 24px; line-height: 24px;">12</td>
-                    <td style="padding-bottom: 10px; padding-left: 8px;">
-                        <strong>训练期间不允许大吃大喝,只能在休息时间喝水。</strong><br>
-                        <em>Eating is not allowed during training; only drinking water during breaks is permitted.</em>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="vertical-align: top; font-weight: 700; background: #000; color: white; text-align: center; border-radius: 50%; height: 24px; line-height: 24px;">13</td>
-                    <td style="padding-bottom: 10px; padding-left: 8px;">
-                        <strong>家长不允许干涉教练所设的专业训练计划及纪律管理。</strong><br>
-                        <em>Parents are not allowed to interfere with professional training plans or discipline set by the coaches.</em>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="vertical-align: top; font-weight: 700; background: #000; color: white; text-align: center; border-radius: 50%; height: 24px; line-height: 24px;">14</td>
-                    <td style="padding-bottom: 10px; padding-left: 8px;">
-                        <strong>家长必须准时接送学生,并自行负责交通安全。</strong><br>
-                        <em>Parents must send and pick up their children on time and are fully responsible for transport safety.</em>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="vertical-align: top; font-weight: 700; background: #000; color: white; text-align: center; border-radius: 50%; height: 24px; line-height: 24px;">15</td>
-                    <td style="padding-bottom: 10px; padding-left: 8px;">
-                        <strong>训练过程中,学员可能被录影或拍照作宣传用途,如家长不同意,须以书面通知本院。</strong><br>
-                        <em>Training sessions may be recorded or photographed for publicity; parents who do not consent must inform the Academy in writing.</em>
-                    </td>
-                </tr>
-            </table>
+    <div style="margin-bottom: 20px;">
+        <div style="background: #e5e7eb; padding: 7px 12px; font-weight: 700; font-size: 13px; text-transform: uppercase;">TRAINING DETAILS 训练详情</div>
+        <div style="border: 1px solid #e5e7eb; border-top: none; padding: 10px 12px; font-size: 12.5px; line-height: 1.6;">
+            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">Level 级别:</span><span style="font-weight: 500; color: #111827;" id="pdf-level"></span></div>
+            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">Events 项目:</span><span style="font-weight: 500; color: #111827;" id="pdf-events"></span></div>
+            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">Schedule 时间:</span><span style="font-weight: 500; color: #111827;" id="pdf-schedule"></span></div>
         </div>
+    </div>
 
-        <!-- Legal Acknowledgement -->
-        <div style="border: 2px solid #333; padding: 12px; margin-top: 15px; border-radius: 4px;">
-            <h3 style="margin: 0 0 8px 0; font-size: 11px; font-weight: 700;">LEGAL ACKNOWLEDGEMENT / 法律声明</h3>
-            <p style="font-size: 9.5px; line-height: 1.5; margin: 0 0 8px 0; color: #333;">
-                By signing this document, the parent/guardian acknowledges that they have read, understood, and agreed to all 15 terms and conditions listed above.
-            </p>
-            <p style="font-size: 9.5px; line-height: 1.5; margin: 0; color: #333;">
-                家长/监护人签署此文件,即表示已阅读、理解并同意上述所有15项条款与条件。
-            </p>
-            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd;">
-                <p style="font-size: 10px; margin: 4px 0;"><strong>Signed by:</strong> <span id="pdf-sign-name"></span> (<span id="pdf-sign-ic"></span>)</p>
-                <p style="font-size: 10px; margin: 4px 0;"><strong>Date:</strong> <span id="pdf-sign-date"></span></p>
-            </div>
+    <div style="border: 2px solid #374151; padding: 14px; border-radius: 6px; background: #f9fafb;">
+        <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 700; color: #111827;">PARENT / GUARDIAN DECLARATION 家长/监护人声明</h3>
+        <p style="font-size: 12px; line-height: 1.55; margin: 0 0 9px 0; color: #374151;">
+            I hereby confirm that all information provided is accurate. I have read and agree to all terms and conditions outlined by Wushu Sports Academy.
+        </p>
+        <p style="font-size: 12px; line-height: 1.55; margin: 0 0 13px 0; color: #374151;">
+            本人确认以上所有资料属实。本人已阅读并同意武术体育学院的所有条款与条件。
+        </p>
+        <div style="margin-top: 11px; padding-top: 11px; border-top: 1px solid #d1d5db;">
+            <p style="font-size: 12px; margin: 4px 0; color: #111827;"><strong>Parent Name 家长姓名:</strong> <span id="pdf-parent-name"></span></p>
+            <p style="font-size: 12px; margin: 4px 0; color: #111827;"><strong>Parent IC 家长身份证:</strong> <span id="pdf-parent-ic"></span></p>
+            <p style="font-size: 12px; margin: 4px 0; color: #111827;"><strong>Date 日期:</strong> <span id="pdf-date"></span></p>
+            <p style="font-size: 12px; margin: 10px 0 4px 0; color: #111827;"><strong>Signature 签名:</strong></p>
+            <img id="pdf-sig-img" src="" style="max-width: 220px; max-height: 95px; border: 1px solid #d1d5db; padding: 4px; background: white; display: block;">
+        </div>
+    </div>
+</div>
+
+
+<!-- HIDDEN PDF TEMPLATE - PAGE 2 -->
+<div id="pdf-template-page2" style="width: 794px; padding: 34px 40px 22px 40px; background: #ffffff; position: fixed; top: -10000px; left: -10000px; visibility: hidden; pointer-events: none; color: #111827; font-family: 'Noto Sans SC', sans-serif;">
+    
+    <img src="/assets/WSP Letter.png" style="width: 100%; margin-bottom: 12px;" alt="Letterhead">
+    
+    <h1 style="text-align: center; font-size: 24px; font-weight: 800; margin-top: 6px; margin-bottom: 4px; line-height: 1.2;">TERMS & CONDITIONS</h1>
+    <p style="text-align: center; font-size: 12px; color: #6b7280; margin-bottom: 18px;">条款与条件 · Agreed and Signed by Parent/Guardian</p>
+
+    <p style="font-size: 12px; margin-bottom: 12px; color: #111827; line-height: 1.4; font-weight: 600;">The parent/guardian has read, understood, and agreed to the following terms:</p>
+
+    <table style="width: 100%; margin-bottom: 14px; border-collapse: collapse; font-size: 11px; line-height: 1.5;">
+        <tr>
+            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
+                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">1</div>
+            </td>
+            <td style="padding-bottom: 6.5px; line-height: 1.5;">
+                <strong style="color: #111827; font-size: 11px;">本人（学员/家长/监护人）确认上述资料属实。</strong><br>
+                <span style="color: #6b7280; font-size: 10.5px;">I, the student/parent/guardian, confirm that all information provided above is true and correct.</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
+                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">2</div>
+            </td>
+            <td style="padding-bottom: 6.5px; line-height: 1.5;">
+                <strong style="color: #111827; font-size: 11px;">本人明白武术是一项剧烈运动，并愿意自行承担训练期间可能发生的意外风险。</strong><br>
+                <span style="color: #6b7280; font-size: 10.5px;">I understand that Wushu is a high‑intensity sport and agree to bear any risk of injury during training.</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
+                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">3</div>
+            </td>
+            <td style="padding-bottom: 6.5px; line-height: 1.5;">
+                <strong style="color: #111827; font-size: 11px;">学院有权在必要时调整训练时间或地点，并将提前通知。</strong><br>
+                <span style="color: #6b7280; font-size: 10.5px;">The Academy reserves the right to adjust training times or venues when necessary and will notify in advance.</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
+                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">4</div>
+            </td>
+            <td style="padding-bottom: 6.5px; line-height: 1.5;">
+                <strong style="color: #111827; font-size: 11px;">学费一经缴付，概不退还（Non‑refundable）。</strong><br>
+                <span style="color: #6b7280; font-size: 10.5px;">Fees paid are strictly non‑refundable under all circumstances.</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
+                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">5</div>
+            </td>
+            <td style="padding-bottom: 6.5px; line-height: 1.5;">
+                <strong style="color: #111827; font-size: 11px;">本人同意遵守学院及教练的所有指示与安排。</strong><br>
+                <span style="color: #6b7280; font-size: 10.5px;">I agree to follow all instructions, rules, and arrangements set by the Academy and coaches.</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
+                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">6</div>
+            </td>
+            <td style="padding-bottom: 6.5px; line-height: 1.5;">
+                <strong style="color: #111827; font-size: 11px;">只限于本院通知取消课程，将会另行安排补课，家长不允许自行取消课程。</strong><br>
+                <span style="color: #6b7280; font-size: 10.5px;">Replacement classes are only provided when the Academy cancels a session; parents may not cancel classes on their own.</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
+                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">7</div>
+            </td>
+            <td style="padding-bottom: 6.5px; line-height: 1.5;">
+                <strong style="color: #111827; font-size: 11px;">如学员因病或其他原因无法出席训练，必须向行政与教练申请请假；未经许可的缺席将被记录。</strong><br>
+                <span style="color: #6b7280; font-size: 10.5px;">If the student cannot attend due to sickness or other reasons, leave must be applied for with admin and coach; unapproved absences will be recorded.</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
+                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">8</div>
+            </td>
+            <td style="padding-bottom: 6.5px; line-height: 1.5;">
+                <strong style="color: #111827; font-size: 11px;">州队及后备队必须出席所有训练，保持良好态度，接受严格训练与训导。</strong><br>
+                <span style="color: #6b7280; font-size: 10.5px;">State‑team and reserve athletes must attend all training, maintain good attitude, and accept strict training and discipline.</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
+                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">9</div>
+            </td>
+            <td style="padding-bottom: 6.5px; line-height: 1.5;">
+                <strong style="color: #111827; font-size: 11px;">如因脚受伤、扭伤或生病，请勿勉强出席训练，后果自负。</strong><br>
+                <span style="color: #6b7280; font-size: 10.5px;">Students with injuries or illness should not attend training; any consequences are at their own risk.</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
+                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">10</div>
+            </td>
+            <td style="padding-bottom: 6.5px; line-height: 1.5;">
+                <strong style="color: #111827; font-size: 11px;">本院不负责学员及家长的任何贵重财物。</strong><br>
+                <span style="color: #6b7280; font-size: 10.5px;">The Academy is not responsible for any valuables belonging to students or parents.</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
+                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">11</div>
+            </td>
+            <td style="padding-bottom: 6.5px; line-height: 1.5;">
+                <strong style="color: #111827; font-size: 11px;">不允许打架、吵架、态度恶劣或不配合训练，否则将被取消州队及学员资格。</strong><br>
+                <span style="color: #6b7280; font-size: 10.5px;">Fighting, quarrelling, poor attitude, or refusing to cooperate with training may result in removal from the state team and the Academy.</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
+                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">12</div>
+            </td>
+            <td style="padding-bottom: 6.5px; line-height: 1.5;">
+                <strong style="color: #111827; font-size: 11px;">训练期间不允许吃食物，只能在休息时间喝水。</strong><br>
+                <span style="color: #6b7280; font-size: 10.5px;">Eating is not allowed during training; only drinking water during breaks is permitted.</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
+                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">13</div>
+            </td>
+            <td style="padding-bottom: 6.5px; line-height: 1.5;">
+                <strong style="color: #111827; font-size: 11px;">家长不允许干涉教练所安排的专业训练计划及纪律管理。</strong><br>
+                <span style="color: #6b7280; font-size: 10.5px;">Parents are not allowed to interfere with professional training plans or discipline set by the coaches.</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
+                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">14</div>
+            </td>
+            <td style="padding-bottom: 6.5px; line-height: 1.5;">
+                <strong style="color: #111827; font-size: 11px;">家长必须准时载送孩子往返训练地点，并自行负责交通安全。</strong><br>
+                <span style="color: #6b7280; font-size: 10.5px;">Parents must send and pick up their children on time and are fully responsible for transport safety.</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
+                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">15</div>
+            </td>
+            <td style="padding-bottom: 6.5px; line-height: 1.5;">
+                <strong style="color: #111827; font-size: 11px;">训练过程中，学员可能被录影或拍照作为宣传用途，如家长不允许，须以书面通知本院。</strong><br>
+                <span style="color: #6b7280; font-size: 10.5px;">Training sessions may be recorded or photographed for publicity; parents who do not consent must inform the Academy in writing.</span>
+            </td>
+        </tr>
+    </table>
+
+    <div style="border: 2px solid #374151; padding: 14px; margin-top: 16px; border-radius: 6px; background: #f9fafb;">
+        <h3 style="margin: 0 0 10px 0; font-size: 13.5px; font-weight: 700; color: #111827;">LEGAL ACKNOWLEDGEMENT / 法律声明</h3>
+        <p style="font-size: 11px; line-height: 1.5; margin: 0 0 9px 0; color: #374151;">
+            By signing this document, the parent/guardian acknowledges that they have read, understood, and agreed to all 15 terms and conditions listed above.
+        </p>
+        <p style="font-size: 11px; line-height: 1.5; margin: 0 0 12px 0; color: #374151;">
+            家长/监护人签署此文件，即表示已阅读、理解并同意上述所有15项条款与条件。
+        </p>
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #d1d5db;">
+            <p style="font-size: 11.5px; margin: 4px 0; color: #111827;"><strong>Signed by:</strong> <span id="pdf-parent-name-2"></span> (<span id="pdf-parent-ic-2"></span>)</p>
+            <p style="font-size: 11.5px; margin: 4px 0; color: #111827;"><strong>Date:</strong> <span id="pdf-date-2"></span></p>
         </div>
     </div>
 </div>
@@ -1234,11 +1385,11 @@
 
 
 <!-- LOADING OVERLAY -->
-<div id="pdf-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center;">
+<div id="loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center;">
     <div style="text-align: center; color: white;">
         <div style="width: 60px; height: 60px; border: 5px solid rgba(255,255,255,0.3); border-top: 5px solid white; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
         <h3 style="font-size: 20px; margin: 0;">Processing Registration...</h3>
-        <p style="margin-top: 10px; font-size: 14px; opacity: 0.8;">Please wait</p>
+        <p style="margin-top: 10px; font-size: 14px; opacity: 0.8;">正在处理报名 · Please wait</p>
     </div>
 </div>
 
@@ -1246,14 +1397,13 @@
     // ========================================
     // GLOBAL VARIABLES
     // ========================================
-    let sigCanvas, sigCtx, sigPlaceholder;
-    let isDrawingSig = false;
+    let canvas, ctx;
+    let isDrawing = false;
+    let lastX = 0, lastY = 0;
     let hasSigned = false;
-    let signatureInitialized = false;
     
     let currentStep = 1;
     const totalSteps = 6;
-    const pdfOverlay = document.getElementById('pdf-overlay');
     let registrationData = null;
 
     // ========================================
@@ -1266,117 +1416,144 @@
         document.getElementById('parent-ic').addEventListener('input', formatIC);
         document.getElementById('phone').addEventListener('input', formatPhone);
         
-        // Status radio change
-        const statusRadios = document.getElementsByName('status');
-        statusRadios.forEach(radio => {
-            radio.addEventListener('change', function() {
-                updateScheduleAvailability();
-                updateStatusRadioStyle();
-            });
-        });
-
         // School select change
         document.getElementById('school').addEventListener('change', toggleOtherSchool);
         
-        updateScheduleAvailability();
+        // Status radio styling
+        const statusRadios = document.querySelectorAll('.status-radio');
+        statusRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                updateStatusRadioStyle();
+                updateScheduleAvailability();
+            });
+        });
+        
         updateStatusRadioStyle();
+        updateScheduleAvailability();
     });
 
     // ========================================
-    // SIGNATURE FUNCTIONS - LAZY INIT
+    // STATUS RADIO STYLING
     // ========================================
-    function initSignature() {
-        if (signatureInitialized) {
-            console.log('Signature already initialized');
+    function updateStatusRadioStyle() {
+        const radios = document.querySelectorAll('.status-radio');
+        radios.forEach(radio => {
+            const option = radio.nextElementSibling;
+            if (radio.checked) {
+                option.style.background = '#1e293b';
+                option.style.color = 'white';
+                option.style.borderColor = '#1e293b';
+                option.style.fontWeight = 'bold';
+            } else {
+                option.style.background = 'white';
+                option.style.color = '#475569';
+                option.style.borderColor = '#e2e8f0';
+                option.style.fontWeight = 'normal';
+            }
+        });
+    }
+
+    // ========================================
+    // SIGNATURE FUNCTIONS
+    // ========================================
+    function initSignaturePad() {
+        if (canvas) return; // Already initialized
+        
+        const wrapper = document.getElementById('sig-wrapper');
+        if (!wrapper) {
+            console.error('sig-wrapper not found');
             return;
         }
 
-        sigCanvas = document.getElementById('signature-canvas');
-        sigCtx = sigCanvas.getContext('2d');
-        sigPlaceholder = document.getElementById('sig-placeholder');
+        canvas = document.createElement('canvas');
+        canvas.id = 'sigCanvas';
+        canvas.style.display = 'block';
+        canvas.style.cursor = 'crosshair';
+        canvas.style.position = 'absolute';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        wrapper.appendChild(canvas);
 
-        if (!sigCanvas || !sigCtx) {
-            console.error('Signature canvas not found!');
-            return;
-        }
+        ctx = canvas.getContext('2d');
+        resizeCanvas();
 
-        const parent = sigCanvas.parentElement;
-        sigCanvas.width = parent.offsetWidth;
-        sigCanvas.height = parent.offsetHeight;
-        
-        sigCtx.strokeStyle = '#000000';
-        sigCtx.lineWidth = 3;
-        sigCtx.lineCap = 'round';
-        sigCtx.lineJoin = 'round';
-        
         // Mouse events
-        sigCanvas.addEventListener('mousedown', handleMouseDown);
-        sigCanvas.addEventListener('mousemove', handleMouseMove);
-        sigCanvas.addEventListener('mouseup', handleMouseUp);
-        sigCanvas.addEventListener('mouseleave', handleMouseUp);
-        
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            startDraw(e.clientX - rect.left, e.clientY - rect.top);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            moveDraw(e.clientX - rect.left, e.clientY - rect.top);
+        });
+
+        canvas.addEventListener('mouseup', stopDraw);
+        canvas.addEventListener('mouseleave', stopDraw);
+
         // Touch events
-        sigCanvas.addEventListener('touchstart', handleTouchStart);
-        sigCanvas.addEventListener('touchmove', handleTouchMove);
-        sigCanvas.addEventListener('touchend', handleTouchEnd);
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const t = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            startDraw(t.clientX - rect.left, t.clientY - rect.top);
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const t = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            moveDraw(t.clientX - rect.left, t.clientY - rect.top);
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', stopDraw);
         
-        signatureInitialized = true;
-        console.log('✅ Signature canvas initialized:', sigCanvas.width, 'x', sigCanvas.height);
+        console.log('✅ Signature pad initialized');
     }
 
-    function handleMouseDown(e) {
-        isDrawingSig = true;
-        const rect = sigCanvas.getBoundingClientRect();
-        sigCtx.beginPath();
-        sigCtx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
-        hasSigned = true;
-        sigPlaceholder.style.display = 'none';
-    }
-
-    function handleMouseMove(e) {
-        if (!isDrawingSig) return;
-        const rect = sigCanvas.getBoundingClientRect();
-        sigCtx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-        sigCtx.stroke();
-    }
-
-    function handleMouseUp() {
-        isDrawingSig = false;
-    }
-
-    function handleTouchStart(e) {
-        e.preventDefault();
-        isDrawingSig = true;
-        const rect = sigCanvas.getBoundingClientRect();
-        const touch = e.touches[0];
-        sigCtx.beginPath();
-        sigCtx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
-        hasSigned = true;
-        sigPlaceholder.style.display = 'none';
-    }
-
-    function handleTouchMove(e) {
-        if (!isDrawingSig) return;
-        e.preventDefault();
-        const rect = sigCanvas.getBoundingClientRect();
-        const touch = e.touches[0];
-        sigCtx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
-        sigCtx.stroke();
-    }
-
-    function handleTouchEnd(e) {
-        e.preventDefault();
-        isDrawingSig = false;
-    }
-
-    function clearSignature() {
-        if (!sigCanvas || !sigCtx) return;
-        sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
-        hasSigned = false;
-        if (sigPlaceholder) {
-            sigPlaceholder.style.display = 'flex';
+    function resizeCanvas() {
+        if (!canvas) return;
+        const wrapper = document.getElementById('sig-wrapper');
+        const rect = wrapper.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#000';
         }
     }
+
+    function startDraw(x, y) {
+        isDrawing = true;
+        hasSigned = true;
+        document.getElementById('sig-placeholder').style.display = 'none';
+        lastX = x;
+        lastY = y;
+    }
+
+    function moveDraw(x, y) {
+        if (!isDrawing) return;
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        lastX = x;
+        lastY = y;
+    }
+
+    function stopDraw() {
+        isDrawing = false;
+    }
+
+    function clearSig() {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hasSigned = false;
+        document.getElementById('sig-placeholder').style.display = 'flex';
+    }
+
+    window.addEventListener('resize', resizeCanvas);
 
     // ========================================
     // FORMAT FUNCTIONS
@@ -1430,6 +1607,7 @@
             
             if (age < 4 || age > 100) {
                 ageInput.value = '';
+                showError('Invalid birth year from IC. Age must be between 4-100 in 2026.');
             } else {
                 ageInput.value = age;
             }
@@ -1438,15 +1616,28 @@
         }
     }
 
+    function showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mt-2';
+        errorDiv.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>${message}`;
+        
+        const ageInput = document.getElementById('age');
+        const existingError = ageInput.parentElement.querySelector('.bg-red-50');
+        if (existingError) existingError.remove();
+        
+        ageInput.parentElement.appendChild(errorDiv);
+        setTimeout(() => errorDiv.remove(), 4000);
+    }
+
     function toggleOtherSchool() {
         const schoolSelect = document.getElementById('school');
         const otherInput = document.getElementById('school-other');
         
         if (schoolSelect.value === 'Others') {
-            otherInput.style.display = 'block';
+            otherInput.classList.remove('hidden');
             otherInput.required = true;
         } else {
-            otherInput.style.display = 'none';
+            otherInput.classList.add('hidden');
             otherInput.required = false;
             otherInput.value = '';
         }
@@ -1454,27 +1645,6 @@
 
     function toggleSchoolBox(element) {
         element.classList.toggle('active');
-    }
-
-    // ========================================
-    // STATUS RADIO STYLE UPDATE
-    // ========================================
-    function updateStatusRadioStyle() {
-        const radios = document.querySelectorAll('.status-radio');
-        radios.forEach(radio => {
-            const option = radio.nextElementSibling;
-            if (radio.checked) {
-                option.style.background = '#7c3aed';
-                option.style.color = 'white';
-                option.style.borderColor = '#7c3aed';
-                option.style.fontWeight = 'bold';
-            } else {
-                option.style.background = 'white';
-                option.style.color = '#475569';
-                option.style.borderColor = '#e2e8f0';
-                option.style.fontWeight = 'normal';
-            }
-        });
     }
 
     // ========================================
@@ -1513,7 +1683,7 @@
                         container.style.cursor = 'not-allowed';
                         container.style.background = '#f1f5f9';
                     }
-                    if (errorMsg) errorMsg.style.display = 'block';
+                    if (errorMsg) errorMsg.classList.remove('hidden');
                 } else {
                     checkbox.disabled = false;
                     if (container) {
@@ -1521,7 +1691,7 @@
                         container.style.cursor = 'pointer';
                         container.style.background = 'white';
                     }
-                    if (errorMsg) errorMsg.style.display = 'none';
+                    if (errorMsg) errorMsg.classList.add('hidden');
                 }
             }
         });
@@ -1531,35 +1701,140 @@
     // STEP NAVIGATION
     // ========================================
     function changeStep(dir) {
-        if (dir === 1 && !validateStep(currentStep)) {
-            return;
-        }
-        
-        if (dir === 1 && currentStep === 5) {
-            submitForm();
-            return;
-        }
-
-        document.getElementById(`step-${currentStep}`).classList.remove('active');
-        currentStep += dir;
-        document.getElementById(`step-${currentStep}`).classList.add('active');
-
-        // Initialize signature when reaching step 5
-        if (currentStep === 5) {
-            setTimeout(initSignature, 100);
-        }
-
-        document.getElementById('btn-prev').disabled = (currentStep === 1);
-        document.getElementById('btn-next').style.display = (currentStep === 6) ? 'none' : 'block';
-
-        const stepCounter = document.getElementById('step-counter');
-        stepCounter.innerHTML = `0${currentStep}<span style="color: #475569; font-size: 14px;">/0${totalSteps}</span>`;
-
-        const progressBar = document.getElementById('progress-bar');
-        progressBar.style.width = `${(currentStep / totalSteps) * 100}%`;
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Validate before moving forward
+    if (dir === 1 && !validateStep(currentStep)) {
+        return;
     }
+    
+    // If on Step 5 and clicking Next, submit form and move to payment
+    if (dir === 1 && currentStep === 5) {
+        submitAndGeneratePDF();
+        return;
+    }
+
+    // If on Step 6 (payment) and clicking Next, submit payment
+    if (dir === 1 && currentStep === 6) {
+        submitPayment();
+        return;
+    }
+
+    // Normal step navigation
+    document.getElementById(`step-${currentStep}`).classList.remove('active');
+    currentStep += dir;
+    document.getElementById(`step-${currentStep}`).classList.add('active');
+
+    // Initialize signature when reaching step 5
+    if (currentStep === 5) {
+        setTimeout(initSignaturePad, 100);
+    }
+
+    // Update payment display when reaching step 6
+    if (currentStep === 6) {
+        updatePaymentDisplay();
+        document.getElementById('payment-date').value = new Date().toISOString().split('T')[0];
+    }
+
+    // Update UI
+    document.getElementById('btn-prev').disabled = (currentStep === 1);
+    
+    if (currentStep === 7) {
+        document.getElementById('btn-next').style.display = 'none';
+    } else {
+        document.getElementById('btn-next').style.display = 'block';
+    }
+
+    const stepCounter = document.getElementById('step-counter');
+    const totalSteps = 7; // Updated to 7
+    stepCounter.innerHTML = `0${currentStep}<span style="color: #475569; font-size: 14px;">/0${totalSteps}</span>`;
+
+    const progressBar = document.getElementById('progress-bar');
+    progressBar.style.width = `${(currentStep / totalSteps) * 100}%`;
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function submitPayment() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.style.display = 'flex';
+
+    try {
+        const { classCount, totalFee } = calculateFees();
+        const paymentDate = document.getElementById('payment-date').value;
+
+        // Prepare final payload
+        const payload = {
+            name_cn: registrationData.nameCn || '',
+            name_en: registrationData.nameEn,
+            ic: registrationData.ic,
+            age: registrationData.age,
+            school: registrationData.school,
+            status: registrationData.status,
+            phone: registrationData.phone,
+            email: registrationData.email,
+            level: registrationData.level || '', // Include level with fallback
+            events: registrationData.events,
+            schedule: registrationData.schedule,
+            parent_name: registrationData.parent,
+            parent_ic: registrationData.parentIC,
+            form_date: registrationData.date,
+            signature_base64: registrationData.signature,
+            signed_pdf_base64: registrationData.pdfBase64,
+            payment_amount: totalFee,
+            payment_date: paymentDate,
+            payment_receipt_base64: receiptBase64,
+            class_count: classCount
+        };
+
+        console.log('Payload:', payload); // Debug log
+
+        const response = await fetch('../process_registration.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (overlay) overlay.style.display = 'none';
+
+        if (result.success) {
+            document.getElementById('reg-number-display').innerText = 
+                `Registration Number: ${result.registration_number}`;
+            
+            // Move to Step 7 (Success)
+            document.getElementById(`step-${currentStep}`).classList.remove('active');
+            currentStep = 7;
+            document.getElementById(`step-${currentStep}`).classList.add('active');
+            
+            const stepCounter = document.getElementById('step-counter');
+            stepCounter.innerHTML = `0${currentStep}<span style="color: #475569; font-size: 14px;">/07</span>`;
+            
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = '100%';
+            
+            document.getElementById('btn-prev').disabled = true;
+            document.getElementById('btn-next').style.display = 'none';
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Registration Successful!',
+                html: `Your registration number is:<br><strong>${result.registration_number}</strong>`,
+                confirmButtonText: 'OK'
+            });
+        } else {
+            Swal.fire('Error', result.error || 'Registration failed', 'error');
+        }
+
+    } catch (error) {
+        if (overlay) overlay.style.display = 'none';
+        console.error('Error:', error);
+        Swal.fire('Error', 'An error occurred during submission: ' + error.message, 'error');
+    }
+}
+
+
 
     // ========================================
     // VALIDATION
@@ -1640,7 +1915,25 @@
                 Swal.fire('Error', 'Please sign the agreement', 'error');
                 return false;
             }
+            if (!canvas) {
+                Swal.fire('Error', 'Signature canvas not initialized', 'error');
+                return false;
+            }
         }
+        if (step === 6) {
+    const paymentDate = document.getElementById('payment-date').value;
+    
+    if (!paymentDate) {
+        Swal.fire('Error', 'Please select payment date', 'error');
+        return false;
+    }
+    
+    if (!receiptBase64) {
+        Swal.fire('Error', 'Please upload payment receipt', 'error');
+        return false;
+    }
+}
+
 
         return true;
     }
@@ -1648,128 +1941,176 @@
     // ========================================
     // FORM SUBMISSION
     // ========================================
-    async function submitForm() {
-        pdfOverlay.style.display = 'flex';
+    async function submitAndGeneratePDF() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.style.display = 'flex';
 
-        try {
-            const nameCn = document.getElementById('name-cn').value.trim();
-            const nameEn = document.getElementById('name-en').value.trim();
-            const ic = document.getElementById('ic').value;
-            const age = document.getElementById('age').value;
-            const school = document.getElementById('school').value === 'Others' 
-                ? document.getElementById('school-other').value.trim() 
-                : document.getElementById('school').value;
-
-            const statusRadios = document.getElementsByName('status');
-            let status = '';
-            for (const radio of statusRadios) {
-                if (radio.checked) {
-                    status = radio.value;
-                    break;
-                }
+    try {
+        // Collect all form data
+        const nameEn = document.getElementById('name-en').value;
+        const nameCn = document.getElementById('name-cn').value || ''; // Fixed: provide default empty string
+        const ic = document.getElementById('ic').value;
+        const age = document.getElementById('age').value;
+        const school = document.getElementById('school').value === 'Others' 
+            ? document.getElementById('school-other').value 
+            : document.getElementById('school').value;
+        
+        const statusRadios = document.getElementsByName('status');
+        let status = '';
+        for (const radio of statusRadios) {
+            if (radio.checked) {
+                status = radio.value;
+                break;
             }
-
-            const phone = document.getElementById('phone').value;
-            const email = document.getElementById('email').value;
-
-            const events = Array.from(document.querySelectorAll('input[name="evt"]:checked'))
-                .map(el => el.value)
-                .join(', ');
-
-            const schedules = Array.from(document.querySelectorAll('input[name="sch"]:checked'))
-                .map(el => el.value)
-                .join(', ');
-
-            const parentName = document.getElementById('parent-name').value;
-            const parentIC = document.getElementById('parent-ic').value;
-            const formDate = document.getElementById('today-date').value;
-
-            const signatureBase64 = sigCanvas.toDataURL('image/png');
-
-            const displayName = nameCn ? `${nameEn} (${nameCn})` : nameEn;
-
-            // Determine level from events
-            let level = '';
-            const levelPrefixes = ['基础', '初级', 'B组', 'A组', '自选'];
-            for (const prefix of levelPrefixes) {
-                if (events.includes(prefix)) {
-                    if (level) level += ', ';
-                    level += prefix;
-                }
-            }
-            if (!level) level = 'Not specified';
-
-            // Store for PDF re-download
-            registrationData = {
-                nameCn, nameEn, namePlain: nameEn, displayName, ic, age, school, status,
-                phone, email, level, events, schedule: schedules,
-                parent: parentName, parentIC, date: formDate, signature: signatureBase64
-            };
-
-            // Generate PDF
-            const pdfBase64 = await generatePDFFile();
-
-            // Submit to server
-            const payload = {
-                name_cn: nameCn,
-                name_en: nameEn,
-                ic,
-                age,
-                school,
-                status,
-                phone,
-                email,
-                level,
-                events,
-                schedule: schedules,
-                parent_name: parentName,
-                parent_ic: parentIC,
-                form_date: formDate,
-                signature_base64: signatureBase64,
-                signed_pdf_base64: pdfBase64
-            };
-
-            const response = await fetch('../process_registration.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            const result = await response.json();
-
-            pdfOverlay.style.display = 'none';
-
-            if (result.success) {
-                document.getElementById('reg-number-display').innerText = 
-                    `Registration Number: ${result.registration_number}`;
-                changeStep(1);
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Registration Successful!',
-                    html: `Your registration number is:<br><strong>${result.registration_number}</strong>`,
-                    confirmButtonText: 'OK'
-                });
-            } else {
-                Swal.fire('Error', result.error || 'Registration failed', 'error');
-            }
-
-        } catch (error) {
-            pdfOverlay.style.display = 'none';
-            console.error('Error:', error);
-            Swal.fire('Error', 'An error occurred during submission', 'error');
         }
+
+        const phone = document.getElementById('phone').value;
+        const email = document.getElementById('email').value;
+
+        // Get level (radio or input)
+        const levelRadios = document.getElementsByName('lvl');
+        let level = '';
+        for (const radio of levelRadios) {
+            if (radio.checked) {
+                level = radio.value === 'Other' 
+                    ? document.getElementById('level-other').value 
+                    : radio.value;
+                break;
+            }
+        }
+
+        // Get events
+        const eventsCheckboxes = document.querySelectorAll('input[name="evt"]:checked');
+        const eventsArray = Array.from(eventsCheckboxes).map(cb => cb.value);
+        const events = eventsArray.join(', ');
+
+        // Get schedules
+        const scheduleCheckboxes = document.querySelectorAll('input[name="sch"]:checked');
+        const schedulesArray = Array.from(scheduleCheckboxes).map(cb => cb.value);
+        const schedules = schedulesArray.join(', ');
+
+        const parentName = document.getElementById('parent-name').value;
+        const parentIC = document.getElementById('parent-ic').value;
+        const formDate = document.getElementById('today-date').value;
+
+        // Get signature
+        if (!hasSigned) {
+            if (overlay) overlay.style.display = 'none';
+            Swal.fire('Error', 'Please provide a signature', 'error');
+            return;
+        }
+
+        const signatureBase64 = canvas.toDataURL('image/png');
+
+        // Determine display name
+        const displayName = nameCn ? `${nameEn} (${nameCn})` : nameEn;
+        const namePlain = nameEn;
+
+        // Generate PDF
+        const pdfBase64 = await generatePDFFile();
+
+        // Store data temporarily (don't submit yet, wait for payment)
+        registrationData = {
+            nameCn: nameCn,
+            nameEn: nameEn,
+            namePlain: namePlain,
+            displayName: displayName,
+            ic: ic,
+            age: age,
+            school: school,
+            status: status,
+            phone: phone,
+            email: email,
+            level: level,
+            events: events,
+            schedule: schedules,
+            parent: parentName,
+            parentIC: parentIC,
+            date: formDate,
+            signature: signatureBase64,
+            pdfBase64: pdfBase64
+        };
+
+        if (overlay) overlay.style.display = 'none';
+
+        // Move to Step 6 (Payment)
+        document.getElementById(`step-${currentStep}`).classList.remove('active');
+        currentStep = 6;
+        document.getElementById(`step-${currentStep}`).classList.add('active');
+        
+        const stepCounter = document.getElementById('step-counter');
+        stepCounter.innerHTML = `0${currentStep}<span style="color: #475569; font-size: 14px;">/07</span>`;
+        
+        const progressBar = document.getElementById('progress-bar');
+        progressBar.style.width = `${(currentStep / 7) * 100}%`;
+        
+        document.getElementById('btn-prev').disabled = false;
+        
+        // Update payment display
+        updatePaymentDisplay();
+        document.getElementById('payment-date').value = new Date().toISOString().split('T')[0];
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } catch (error) {
+        if (overlay) overlay.style.display = 'none';
+        console.error('Error:', error);
+        Swal.fire('Error', 'An error occurred during PDF generation: ' + error.message, 'error');
     }
+}
+
+
 
     // ========================================
     // PDF GENERATION
     // ========================================
     async function generatePDFFile() {
-    if (!registrationData) return null;
+    // Use the data from form inputs
+    const displayName = (document.getElementById('name-cn').value ? 
+        `${document.getElementById('name-en').value} (${document.getElementById('name-cn').value})` : 
+        document.getElementById('name-en').value);
+    
+    const ic = document.getElementById('ic').value;
+    const age = document.getElementById('age').value;
+    const school = document.getElementById('school').value === 'Others' ? 
+        document.getElementById('school-other').value : 
+        document.getElementById('school').value;
+    
+    const statusRadios = document.getElementsByName('status');
+    let status = '';
+    for (const radio of statusRadios) {
+        if (radio.checked) {
+            status = radio.value;
+            break;
+        }
+    }
+    
+    const phone = document.getElementById('phone').value;
+    const email = document.getElementById('email').value;
+    
+    const levelRadios = document.getElementsByName('lvl');
+    let level = '';
+    for (const radio of levelRadios) {
+        if (radio.checked) {
+            level = radio.value === 'Other' ? 
+                document.getElementById('level-other').value : 
+                radio.value;
+            break;
+        }
+    }
+    
+    const eventsCheckboxes = document.querySelectorAll('input[name="evt"]:checked');
+    const events = Array.from(eventsCheckboxes).map(cb => cb.value).join(', ');
+    
+    const scheduleCheckboxes = document.querySelectorAll('input[name="sch"]:checked');
+    const schedule = Array.from(scheduleCheckboxes).map(cb => cb.value).join(', ');
+    
+    const parent = document.getElementById('parent-name').value;
+    const parentIC = document.getElementById('parent-ic').value;
+    const date = document.getElementById('today-date').value;
+    const signature = canvas.toDataURL('image/png');
 
-    const { displayName, ic, age, school, status, phone, email, level, events, schedule, parent, parentIC, date, signature } = registrationData;
-
-    // Fill PDF data for PAGE 1
+    // Fill PDF Page 1 data
     document.getElementById('pdf-name').innerText = displayName;
     document.getElementById('pdf-ic').innerText = ic;
     document.getElementById('pdf-age').innerText = age;
@@ -1785,7 +2126,7 @@
     document.getElementById('pdf-date').innerText = date;
     document.getElementById('pdf-sig-img').src = signature;
 
-    // Fill PDF data for PAGE 2
+    // Fill PDF Page 2 data
     document.getElementById('pdf-parent-name-2').innerText = parent;
     document.getElementById('pdf-parent-ic-2').innerText = parentIC;
     document.getElementById('pdf-date-2').innerText = date;
@@ -1793,47 +2134,75 @@
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF('p', 'mm', 'a4');
 
-    const pdfTemplate = document.getElementById('pdf-template');
-    pdfTemplate.style.visibility = 'visible';
-    pdfTemplate.style.display = 'block';
-
-    const pages = pdfTemplate.querySelectorAll('.pdf-page');
+    // Render Page 1
+    const page1 = document.getElementById('pdf-template-page1');
     
-    for (let i = 0; i < pages.length; i++) {
-        const page = pages[i];
-        
-        // Make only this page visible
-        pages.forEach(p => p.style.display = 'none');
-        page.style.display = 'block';
-        
-        const canvas = await html2canvas(page, {
-            scale: 2,
-            useCORS: true,
-            width: 794,
-            height: 1123,
-            logging: false,
-            backgroundColor: '#ffffff'
-        });
+    page1.style.visibility = 'visible';
+    page1.style.opacity = '1';
+    page1.style.position = 'absolute';
+    page1.style.left = '0';
+    page1.style.top = '0';
+    page1.style.zIndex = '9999';
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const pdfWidth = 210;
-        const pdfHeight = 297; // A4 height
+    await new Promise(resolve => setTimeout(resolve, 200));
 
-        if (i > 0) {
-            pdf.addPage();
-        }
-        
-        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-    }
+    const canvas1 = await html2canvas(page1, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        width: 794,
+        height: 1123,
+        logging: false,
+        backgroundColor: '#ffffff'
+    });
 
-    // Reset visibility
-    pages.forEach(p => p.style.display = 'block');
-    pdfTemplate.style.visibility = 'hidden';
-    pdfTemplate.style.display = 'none';
+    const imgData1 = canvas1.toDataURL('image/jpeg', 0.95);
+    pdf.addImage(imgData1, 'JPEG', 0, 0, 210, 297);
 
-    // Download PDF
-    pdf.save(`${registrationData.namePlain || 'Registration'}_Signed_Agreement.pdf`);
+    page1.style.visibility = 'hidden';
+    page1.style.opacity = '0';
+    page1.style.position = 'fixed';
+    page1.style.left = '-99999px';
+    page1.style.top = '-99999px';
+    page1.style.zIndex = '-9999';
+
+    // Render Page 2
+    const page2 = document.getElementById('pdf-template-page2');
     
+    page2.style.visibility = 'visible';
+    page2.style.opacity = '1';
+    page2.style.position = 'absolute';
+    page2.style.left = '0';
+    page2.style.top = '0';
+    page2.style.zIndex = '9999';
+
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    const canvas2 = await html2canvas(page2, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        width: 794,
+        height: 1123,
+        logging: false,
+        backgroundColor: '#ffffff'
+    });
+
+    const imgData2 = canvas2.toDataURL('image/jpeg', 0.95);
+    pdf.addPage();
+    pdf.addImage(imgData2, 'JPEG', 0, 0, 210, 297);
+
+    page2.style.visibility = 'hidden';
+    page2.style.opacity = '0';
+    page2.style.position = 'fixed';
+    page2.style.left = '-99999px';
+    page2.style.top = '-99999px';
+    page2.style.zIndex = '-9999';
+
+    // **AUTO DOWNLOAD PDF** ✅
+    const nameForFile = document.getElementById('name-en').value.replace(/\s+/g, '_');
+    pdf.save(`${nameForFile}_Signed_Agreement.pdf`);
+
     // Return base64 for database
     return pdf.output('datauristring').split(',')[1];
 }
@@ -1849,6 +2218,97 @@
     function submitAnother() {
         location.reload();
     }
+    // ========================================
+// PAYMENT FUNCTIONS
+// ========================================
+let receiptBase64 = null;
+
+function calculateFees() {
+    const schedules = document.querySelectorAll('input[name="sch"]:checked');
+    const classCount = schedules.length;
+    
+    let totalFee = 0;
+    if (classCount === 1) totalFee = 120;
+    else if (classCount === 2) totalFee = 200;
+    else if (classCount === 3) totalFee = 280;
+    else if (classCount >= 4) totalFee = 320;
+    
+    return { classCount, totalFee };
+}
+
+function updatePaymentDisplay() {
+    const { classCount, totalFee } = calculateFees();
+    
+    document.getElementById('payment-class-count').innerText = classCount;
+    document.getElementById('payment-total').innerText = `RM ${totalFee}`;
+    
+    const statusRadios = document.getElementsByName('status');
+    let status = '';
+    for (const radio of statusRadios) {
+        if (radio.checked) {
+            status = radio.value;
+            break;
+        }
+    }
+    document.getElementById('payment-status').innerText = status;
+}
+
+function copyAccountNumber() {
+    const accountNumber = '5621 2345 6789';
+    navigator.clipboard.writeText(accountNumber).then(() => {
+        Swal.fire({
+            icon: 'success',
+            title: 'Copied!',
+            text: 'Account number copied to clipboard',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    });
+}
+
+function handleReceiptUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+        Swal.fire('Error', 'File size must be less than 5MB', 'error');
+        return;
+    }
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+    if (!validTypes.includes(file.type)) {
+        Swal.fire('Error', 'Only JPG, PNG, and PDF files are allowed', 'error');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        receiptBase64 = e.target.result;
+        
+        document.getElementById('upload-prompt').classList.add('hidden');
+        document.getElementById('upload-preview').classList.remove('hidden');
+        
+        if (file.type === 'application/pdf') {
+            document.getElementById('preview-image').style.display = 'none';
+        } else {
+            document.getElementById('preview-image').src = receiptBase64;
+            document.getElementById('preview-image').style.display = 'block';
+        }
+        
+        document.getElementById('preview-filename').innerText = file.name;
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeReceipt() {
+    receiptBase64 = null;
+    document.getElementById('receipt-upload').value = '';
+    document.getElementById('upload-prompt').classList.remove('hidden');
+    document.getElementById('upload-preview').classList.add('hidden');
+}
+
 </script>
 
 </body>

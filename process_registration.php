@@ -1,99 +1,174 @@
 <?php
-// student/process_registration.php
-error_reporting(0); // Hide errors from output
+// process_registration.php
+header('Content-Type: application/json');
+error_reporting(E_ALL);
 ini_set('display_errors', 0);
 
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST');
-header('Access-Control-Allow-Headers: Content-Type');
-
 try {
-    // Database connection
-    require_once __DIR__ . '/../includes/db.php';
-
-    // Get JSON input
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
 
     if (!$data) {
-        echo json_encode(['success' => false, 'error' => 'Invalid JSON data']);
-        exit;
+        throw new Exception('Invalid JSON data received');
     }
-
-    // Extract data
-    $name_cn = $data['name_cn'] ?? '';
-    $name_en = $data['name_en'] ?? '';
-    $ic = $data['ic'] ?? '';
-    $age = $data['age'] ?? 0;
-    $school = $data['school'] ?? '';
-    $status = $data['status'] ?? '';
-    $phone = $data['phone'] ?? '';
-    $email = $data['email'] ?? '';
-    $level = $data['level'] ?? '';
-    $events = $data['events'] ?? '';
-    $schedule = $data['schedule'] ?? '';
-    $parent_name = $data['parent_name'] ?? '';
-    $parent_ic = $data['parent_ic'] ?? '';
-    $form_date = $data['form_date'] ?? '';
-    $signature_base64 = $data['signature_base64'] ?? '';
-    $signed_pdf_base64 = $data['signed_pdf_base64'] ?? '';
 
     // Validate required fields
-    if (empty($name_en) || empty($ic) || empty($email)) {
-        echo json_encode(['success' => false, 'error' => 'Missing required fields']);
-        exit;
+    $required = ['name_en', 'ic', 'age', 'school', 'status', 'phone', 'email', 
+                 'events', 'schedule', 'parent_name', 'parent_ic', 
+                 'form_date', 'signature_base64', 'signed_pdf_base64',
+                 'payment_amount', 'payment_date', 'payment_receipt_base64', 'class_count'];
+    
+    foreach ($required as $field) {
+        if (!isset($data[$field]) || $data[$field] === '') {
+            throw new Exception("Missing required field: $field");
+        }
     }
 
-    // Generate registration number
-    $stmt = $conn->prepare("SELECT COUNT(*) as total FROM registrations WHERE YEAR(created_at) = 2026");
-    $stmt->execute();
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    $count = $result['total'] + 1;
-    $registration_number = 'REG2026' . str_pad($count, 3, '0', STR_PAD_LEFT);
+    // Database connection
+    $host = 'localhost';
+    $dbname = 'mlxysf_student_portal';
+    $username = 'mlxysf_student_portal';
+    $password = 'YAjv86kdSAPpw';
 
-    // Insert into database
+    $conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // Start transaction
+    $conn->beginTransaction();
+
+    // Generate registration number
+    $year = date('Y');
+    $stmt = $conn->query("SELECT COUNT(*) FROM registrations WHERE YEAR(created_at) = $year");
+    $count = $stmt->fetchColumn();
+    $regNumber = 'WSA' . $year . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+
+    // Generate random password (8 characters)
+    $generatedPassword = substr(str_shuffle('ABCDEFGHJKLMNPQRSTUVWXYZ23456789'), 0, 4) . 
+                        substr(str_shuffle('abcdefghjkmnpqrstuvwxyz'), 0, 4);
+    $hashedPassword = password_hash($generatedPassword, PASSWORD_DEFAULT);
+
+    // Create student account
+    $studentId = $regNumber; // Use registration number as student ID
+    $fullName = $data['name_en'];
+    $email = $data['email'];
+    $phone = $data['phone'];
+
+    // Check if email already exists
+    $stmt = $conn->prepare("SELECT id FROM students WHERE email = ?");
+    $stmt->execute([$email]);
+    
+    if ($stmt->fetch()) {
+        throw new Exception("Email already registered. Please use a different email.");
+    }
+
+    // Insert into students table
+    $stmt = $conn->prepare("
+        INSERT INTO students (student_id, full_name, email, phone, password, status, created_at) 
+        VALUES (?, ?, ?, ?, ?, 'active', NOW())
+    ");
+    $stmt->execute([$studentId, $fullName, $email, $phone, $hashedPassword]);
+    $studentAccountId = $conn->lastInsertId();
+
+    // Parse schedule to get classes
+    $schedules = explode(', ', $data['schedule']);
+    $classIds = [];
+
+    foreach ($schedules as $schedule) {
+        // Extract class code from schedule (e.g., "WSH-101: Monday 3-5pm" -> "WSH-101")
+        if (preg_match('/([A-Z]+-\d+)/', $schedule, $matches)) {
+            $classCode = $matches[1];
+            
+            // Get class ID
+            $stmt = $conn->prepare("SELECT id FROM classes WHERE class_code = ?");
+            $stmt->execute([$classCode]);
+            $class = $stmt->fetch();
+            
+            if ($class) {
+                $classIds[] = $class['id'];
+                
+                // Enroll student in class
+                $stmt = $conn->prepare("
+                    INSERT INTO enrollments (student_id, class_id, enrollment_date, status) 
+                    VALUES (?, ?, ?, 'active')
+                ");
+                $stmt->execute([$studentAccountId, $class['id'], date('Y-m-d')]);
+            }
+        }
+    }
+
+    // Insert into registrations table
     $sql = "INSERT INTO registrations (
         registration_number, name_cn, name_en, ic, age, school, status,
         phone, email, level, events, schedule, parent_name, parent_ic,
-        form_date, signature_base64, signed_pdf_base64, created_at
+        form_date, signature_base64, pdf_base64, 
+        payment_amount, payment_date, payment_receipt_base64, payment_status, class_count,
+        student_account_id, account_created, password_generated, created_at
     ) VALUES (
         :reg_num, :name_cn, :name_en, :ic, :age, :school, :status,
         :phone, :email, :level, :events, :schedule, :parent_name, :parent_ic,
-        :form_date, :signature, :pdf, NOW()
+        :form_date, :signature_base64, :pdf_base64,
+        :payment_amount, :payment_date, :payment_receipt_base64, 'pending', :class_count,
+        :student_account_id, 'yes', :password_generated, NOW()
     )";
 
     $stmt = $conn->prepare($sql);
     $stmt->execute([
-        ':reg_num' => $registration_number,
-        ':name_cn' => $name_cn,
-        ':name_en' => $name_en,
-        ':ic' => $ic,
-        ':age' => $age,
-        ':school' => $school,
-        ':status' => $status,
-        ':phone' => $phone,
-        ':email' => $email,
-        ':level' => $level,
-        ':events' => $events,
-        ':schedule' => $schedule,
-        ':parent_name' => $parent_name,
-        ':parent_ic' => $parent_ic,
-        ':form_date' => $form_date,
-        ':signature' => $signature_base64,
-        ':pdf' => $signed_pdf_base64
+        ':reg_num' => $regNumber,
+        ':name_cn' => $data['name_cn'] ?? '',
+        ':name_en' => $data['name_en'],
+        ':ic' => $data['ic'],
+        ':age' => $data['age'],
+        ':school' => $data['school'],
+        ':status' => $data['status'],
+        ':phone' => $data['phone'],
+        ':email' => $data['email'],
+        ':level' => $data['level'] ?? '',
+        ':events' => $data['events'],
+        ':schedule' => $data['schedule'],
+        ':parent_name' => $data['parent_name'],
+        ':parent_ic' => $data['parent_ic'],
+        ':form_date' => $data['form_date'],
+        ':signature_base64' => $data['signature_base64'],
+        ':pdf_base64' => $data['signed_pdf_base64'],
+        ':payment_amount' => $data['payment_amount'],
+        ':payment_date' => $data['payment_date'],
+        ':payment_receipt_base64' => $data['payment_receipt_base64'],
+        ':class_count' => $data['class_count'],
+        ':student_account_id' => $studentAccountId,
+        ':password_generated' => $generatedPassword
     ]);
+
+    // Commit transaction
+    $conn->commit();
+
+    // Send email with credentials (optional - you can implement this later)
+    // sendWelcomeEmail($email, $fullName, $studentId, $generatedPassword);
 
     echo json_encode([
         'success' => true,
-        'registration_number' => $registration_number,
-        'message' => 'Registration submitted successfully'
+        'registration_number' => $regNumber,
+        'student_id' => $studentId,
+        'email' => $email,
+        'password' => $generatedPassword,
+        'message' => 'Registration successful! Student account created.'
     ]);
 
-} catch (Exception $e) {
+} catch (PDOException $e) {
+    if (isset($conn)) {
+        $conn->rollBack();
+    }
+    http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Server error: ' . $e->getMessage()
+        'error' => 'Database error: ' . $e->getMessage()
+    ]);
+} catch (Exception $e) {
+    if (isset($conn)) {
+        $conn->rollBack();
+    }
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage()
     ]);
 }
-?>
