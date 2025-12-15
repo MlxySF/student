@@ -69,10 +69,17 @@ $action = $_POST['action'] ?? '';
 if ($action === 'verify_registration') {
     $regId = $_POST['registration_id'];
     try {
-        // Update registration status to verified (no verified_by or verified_date columns)
+        // Update registration status to verified
         $stmt = $pdo->prepare("UPDATE registrations SET payment_status = 'verified' WHERE id = ?");
         $stmt->execute([$regId]);
-        $_SESSION['success'] = "Registration payment verified successfully!";
+        
+        // Check if any row was actually updated
+        $rowCount = $stmt->rowCount();
+        if ($rowCount > 0) {
+            $_SESSION['success'] = "Registration payment verified successfully!";
+        } else {
+            $_SESSION['error'] = "Registration not found or already verified (ID: $regId, Rows affected: $rowCount)";
+        }
     } catch (PDOException $e) {
         $_SESSION['error'] = "Failed to verify registration: " . $e->getMessage();
     }
@@ -85,7 +92,13 @@ if ($action === 'reject_registration') {
     try {
         $stmt = $pdo->prepare("UPDATE registrations SET payment_status = 'rejected' WHERE id = ?");
         $stmt->execute([$regId]);
-        $_SESSION['success'] = "Registration payment rejected.";
+        
+        $rowCount = $stmt->rowCount();
+        if ($rowCount > 0) {
+            $_SESSION['success'] = "Registration payment rejected.";
+        } else {
+            $_SESSION['error'] = "Registration not found (ID: $regId)";
+        }
     } catch (PDOException $e) {
         $_SESSION['error'] = "Failed to reject registration: " . $e->getMessage();
     }
