@@ -55,12 +55,33 @@ $registrations = $stmt->fetchAll();
                         </td>
                         <td><strong>RM <?php echo number_format($reg['payment_amount'], 2); ?></strong></td>
                         <td>
-                            <span class="badge bg-<?php 
-                                echo $reg['payment_status'] === 'verified' ? 'success' : 
-                                    ($reg['payment_status'] === 'pending' ? 'warning' : 'danger'); 
-                            ?>">
-                                <?php echo ucfirst($reg['payment_status']); ?>
+                            <?php 
+                            // Determine badge color and status text
+                            $statusValue = $reg['payment_status'] ?? 'unknown';
+                            $badgeColor = 'secondary';
+                            $statusText = ucfirst($statusValue);
+                            
+                            if ($statusValue === 'verified') {
+                                $badgeColor = 'success';
+                                $statusText = 'Verified';
+                            } elseif ($statusValue === 'pending') {
+                                $badgeColor = 'warning';
+                                $statusText = 'Pending';
+                            } elseif ($statusValue === 'rejected') {
+                                $badgeColor = 'danger';
+                                $statusText = 'Rejected';
+                            } else {
+                                // Show raw value for debugging if status is unexpected
+                                $statusText = !empty($statusValue) ? ucfirst($statusValue) : 'No Status';
+                            }
+                            ?>
+                            <span class="badge bg-<?php echo $badgeColor; ?>">
+                                <?php echo htmlspecialchars($statusText); ?>
                             </span>
+                            <!-- Debug info (remove after fixing) -->
+                            <small class="text-muted d-block" style="font-size: 10px;">
+                                (<?php echo htmlspecialchars($statusValue); ?>)
+                            </small>
                         </td>
                         <td><?php echo date('M j, Y', strtotime($reg['created_at'])); ?></td>
                         <td>
@@ -228,11 +249,24 @@ $registrations = $stmt->fetchAll();
                                     <tr>
                                         <th>Status:</th>
                                         <td>
-                                            <span class="badge bg-<?php 
-                                                echo $reg['payment_status'] === 'verified' ? 'success' : 
-                                                    ($reg['payment_status'] === 'pending' ? 'warning' : 'danger'); 
-                                            ?>">
-                                                <?php echo ucfirst($reg['payment_status']); ?>
+                                            <?php 
+                                            $statusValue = $reg['payment_status'] ?? 'unknown';
+                                            $badgeColor = 'secondary';
+                                            $statusText = ucfirst($statusValue);
+                                            
+                                            if ($statusValue === 'verified') {
+                                                $badgeColor = 'success';
+                                                $statusText = 'Verified';
+                                            } elseif ($statusValue === 'pending') {
+                                                $badgeColor = 'warning';
+                                                $statusText = 'Pending';
+                                            } elseif ($statusValue === 'rejected') {
+                                                $badgeColor = 'danger';
+                                                $statusText = 'Rejected';
+                                            }
+                                            ?>
+                                            <span class="badge bg-<?php echo $badgeColor; ?>">
+                                                <?php echo htmlspecialchars($statusText); ?>
                                             </span>
                                         </td>
                                     </tr>
