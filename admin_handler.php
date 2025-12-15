@@ -86,20 +86,27 @@ if ($action === 'create_student') {
 
 if ($action === 'edit_student') {
     $id = $_POST['student_id'];
-    $full_name = $_POST['full_name'];
-    $email = $_POST['email'];
-    $phone = $_POST['phone'];
+    $full_name = trim($_POST['full_name']);
+    $email = trim($_POST['email']);
+    $phone = trim($_POST['phone']);
+    $student_status = $_POST['student_status'] ?? 'Student';
 
-    $stmt = $pdo->prepare("UPDATE students SET full_name = ?, email = ?, phone = ? WHERE id = ?");
-    $stmt->execute([$full_name, $email, $phone, $id]);
+    // Check if email is already used by another student
+    $stmt = $pdo->prepare("SELECT id FROM students WHERE email = ? AND id != ?");
+    $stmt->execute([$email, $id]);
 
-    if (!empty($_POST['password'])) {
-        $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-        $stmt = $pdo->prepare("UPDATE students SET password = ? WHERE id = ?");
-        $stmt->execute([$password, $id]);
+    if ($stmt->fetch()) {
+        $_SESSION['error'] = "Email is already used by another student.";
+    } else {
+        try {
+            $stmt = $pdo->prepare("UPDATE students SET full_name = ?, email = ?, phone = ?, student_status = ? WHERE id = ?");
+            $stmt->execute([$full_name, $email, $phone, $student_status, $id]);
+            $_SESSION['success'] = "Student updated successfully!";
+        } catch (PDOException $e) {
+            $_SESSION['error'] = "Failed to update student: " . $e->getMessage();
+        }
     }
 
-    $_SESSION['success'] = "Student updated!";
     header('Location: admin.php?page=students');
     exit;
 }
