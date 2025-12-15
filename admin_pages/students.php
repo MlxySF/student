@@ -216,6 +216,10 @@ function viewStudent(id) {
     const student = studentsData.find(s => s.id == id);
     if (!student) return;
 
+    // Show modal first
+    const modal = new bootstrap.Modal(document.getElementById('viewStudentModal'));
+    modal.show();
+
     // Fetch enrollments for this student
     fetch(`admin_handler.php?action=get_student_details&student_id=${id}`)
         .then(response => response.json())
@@ -265,10 +269,11 @@ function viewStudent(id) {
                 data.enrollments.forEach(enrollment => {
                     html += `
                         <div class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <strong>${enrollment.class_name}</strong><br>
-                                    <small class="text-muted">${enrollment.day} ${enrollment.time}</small>
+                                    <small class="text-muted">Code: ${enrollment.class_code}</small><br>
+                                    <small class="text-muted">Fee: RM ${parseFloat(enrollment.monthly_fee).toFixed(2)}/month</small>
                                 </div>
                                 <span class="badge ${enrollment.status === 'active' ? 'bg-success' : 'bg-secondary'}">
                                     ${enrollment.status}
@@ -291,11 +296,8 @@ function viewStudent(id) {
         })
         .catch(error => {
             console.error('Error:', error);
-            document.getElementById('viewStudentContent').innerHTML = '<div class="alert alert-danger">Failed to load student details</div>';
+            document.getElementById('viewStudentContent').innerHTML = '<div class="alert alert-danger">Failed to load student details. Please check the console for more information.</div>';
         });
-
-    const modal = new bootstrap.Modal(document.getElementById('viewStudentModal'));
-    modal.show();
 }
 
 function editStudent(id) {
