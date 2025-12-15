@@ -1,5 +1,5 @@
 <?php
-// admin_pages/registrations.php - View registrations only (no POST handling)
+// admin_pages/registrations.php - View registrations with proper status colors
 
 // Get all registrations
 $stmt = $pdo->query("
@@ -56,32 +56,28 @@ $registrations = $stmt->fetchAll();
                         <td><strong>RM <?php echo number_format($reg['payment_amount'], 2); ?></strong></td>
                         <td>
                             <?php 
-                            // Determine badge color and status text
-                            $statusValue = $reg['payment_status'] ?? 'unknown';
+                            $statusValue = $reg['payment_status'] ?? '';
                             $badgeColor = 'secondary';
-                            $statusText = ucfirst($statusValue);
+                            $statusText = 'No Status';
                             
-                            if ($statusValue === 'verified') {
+                            // Map status values to display
+                            if ($statusValue === 'approved') {
                                 $badgeColor = 'success';
-                                $statusText = 'Verified';
+                                $statusText = 'Approved';
                             } elseif ($statusValue === 'pending') {
                                 $badgeColor = 'warning';
                                 $statusText = 'Pending';
                             } elseif ($statusValue === 'rejected') {
                                 $badgeColor = 'danger';
                                 $statusText = 'Rejected';
-                            } else {
-                                // Show raw value for debugging if status is unexpected
-                                $statusText = !empty($statusValue) ? ucfirst($statusValue) : 'No Status';
+                            } elseif (!empty($statusValue)) {
+                                // Show any other value as-is
+                                $statusText = ucfirst($statusValue);
                             }
                             ?>
                             <span class="badge bg-<?php echo $badgeColor; ?>">
                                 <?php echo htmlspecialchars($statusText); ?>
                             </span>
-                            <!-- Debug info (remove after fixing) -->
-                            <small class="text-muted d-block" style="font-size: 10px;">
-                                (<?php echo htmlspecialchars($statusValue); ?>)
-                            </small>
                         </td>
                         <td><?php echo date('M j, Y', strtotime($reg['created_at'])); ?></td>
                         <td>
@@ -250,19 +246,21 @@ $registrations = $stmt->fetchAll();
                                         <th>Status:</th>
                                         <td>
                                             <?php 
-                                            $statusValue = $reg['payment_status'] ?? 'unknown';
+                                            $statusValue = $reg['payment_status'] ?? '';
                                             $badgeColor = 'secondary';
-                                            $statusText = ucfirst($statusValue);
+                                            $statusText = 'No Status';
                                             
-                                            if ($statusValue === 'verified') {
+                                            if ($statusValue === 'approved') {
                                                 $badgeColor = 'success';
-                                                $statusText = 'Verified';
+                                                $statusText = 'Approved';
                                             } elseif ($statusValue === 'pending') {
                                                 $badgeColor = 'warning';
                                                 $statusText = 'Pending';
                                             } elseif ($statusValue === 'rejected') {
                                                 $badgeColor = 'danger';
                                                 $statusText = 'Rejected';
+                                            } elseif (!empty($statusValue)) {
+                                                $statusText = ucfirst($statusValue);
                                             }
                                             ?>
                                             <span class="badge bg-<?php echo $badgeColor; ?>">
@@ -319,7 +317,7 @@ $registrations = $stmt->fetchAll();
                     <input type="hidden" name="action" value="verify_registration">
                     <input type="hidden" name="registration_id" value="<?php echo $reg['id']; ?>">
                     <button type="submit" class="btn btn-success">
-                        <i class="fas fa-check-circle"></i> Verify Payment
+                        <i class="fas fa-check-circle"></i> Approve Payment
                     </button>
                 </form>
                 <form method="POST" action="admin_handler.php" class="d-inline">
