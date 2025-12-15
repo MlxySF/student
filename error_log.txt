@@ -1,0 +1,5 @@
+[14-Dec-2025 19:06:39 UTC] Registration successful: WSA2025-0002 for mlxysf+01@gmail.com with status: Student 学生
+[14-Dec-2025 19:15:46 UTC] Registration successful: WSA2025-0003 for mlxysf+02@gmail.com with status: Student 学生. Email sent: Yes
+[15-Dec-2025 02:01:02 UTC] ❌ Error: Email already registered. Please use a different email address.
+[15-Dec-2025 02:03:35 UTC] Email sent successfully to: mlxysf+03@gmail.com
+[15-Dec-2025 02:03:35 UTC] ✅ Registration successful: WSA2025-0004 for mlxysf+03@gmail.com (Status: Student 学生) | Email sent: Yes
