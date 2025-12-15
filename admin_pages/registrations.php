@@ -1,24 +1,5 @@
 <?php
-// admin_pages/registrations.php - Fixed View Modal Issue
-
-// Handle payment verification
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    if ($_POST['action'] === 'verify_payment') {
-        $regId = $_POST['registration_id'];
-        $stmt = $pdo->prepare("UPDATE registrations SET payment_status = 'verified', verified_by = ?, verified_date = NOW() WHERE id = ?");
-        $stmt->execute([$_SESSION['admin_id'], $regId]);
-        $_SESSION['success'] = "Payment verified successfully!";
-        header('Location: ?page=registrations');
-        exit;
-    } elseif ($_POST['action'] === 'reject_payment') {
-        $regId = $_POST['registration_id'];
-        $stmt = $pdo->prepare("UPDATE registrations SET payment_status = 'rejected' WHERE id = ?");
-        $stmt->execute([$regId]);
-        $_SESSION['success'] = "Payment rejected.";
-        header('Location: ?page=registrations');
-        exit;
-    }
-}
+// admin_pages/registrations.php - View registrations only (no POST handling)
 
 // Get all registrations
 $stmt = $pdo->query("
@@ -300,15 +281,15 @@ $registrations = $stmt->fetchAll();
             </div>
             <div class="modal-footer">
                 <?php if ($reg['payment_status'] === 'pending'): ?>
-                <form method="POST" class="d-inline">
-                    <input type="hidden" name="action" value="verify_payment">
+                <form method="POST" action="admin_handler.php" class="d-inline">
+                    <input type="hidden" name="action" value="verify_registration">
                     <input type="hidden" name="registration_id" value="<?php echo $reg['id']; ?>">
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-check-circle"></i> Verify Payment
                     </button>
                 </form>
-                <form method="POST" class="d-inline">
-                    <input type="hidden" name="action" value="reject_payment">
+                <form method="POST" action="admin_handler.php" class="d-inline">
+                    <input type="hidden" name="action" value="reject_registration">
                     <input type="hidden" name="registration_id" value="<?php echo $reg['id']; ?>">
                     <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to reject this payment?')">
                         <i class="fas fa-times-circle"></i> Reject Payment
