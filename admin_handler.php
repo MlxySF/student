@@ -2,6 +2,41 @@
 session_start();
 require_once 'config.php';
 
+// Handle GET requests for data fetching
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
+    header('Content-Type: application/json');
+    
+    $action = $_GET['action'];
+    
+    if ($action === 'get_student_details') {
+        $student_id = $_GET['student_id'] ?? 0;
+        
+        // Get student enrollments with class details
+        $stmt = $pdo->prepare("
+            SELECT 
+                e.id,
+                e.student_id,
+                e.class_id,
+                e.enrollment_date,
+                e.status,
+                c.class_name,
+                c.class_code,
+                c.day,
+                c.time,
+                c.monthly_fee
+            FROM enrollments e
+            JOIN classes c ON e.class_id = c.id
+            WHERE e.student_id = ?
+            ORDER BY e.enrollment_date DESC
+        ");
+        $stmt->execute([$student_id]);
+        $enrollments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        echo json_encode(['enrollments' => $enrollments]);
+        exit;
+    }
+}
+
 redirectIfNotAdminLoggedIn();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
