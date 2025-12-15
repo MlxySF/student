@@ -1,34 +1,5 @@
 <?php
-// admin_pages/students.php - With functional view and edit modals
-
-// Handle Edit Student
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'edit_student') {
-    $student_id = $_POST['student_id'];
-    $full_name = trim($_POST['full_name']);
-    $email = trim($_POST['email']);
-    $phone = trim($_POST['phone']);
-    $student_status = $_POST['student_status'];
-
-    // Check if email is already used by another student
-    $stmt = $pdo->prepare("SELECT id FROM students WHERE email = ? AND id != ?");
-    $stmt->execute([$email, $student_id]);
-
-    if ($stmt->fetch()) {
-        $_SESSION['error'] = "Email is already used by another student.";
-    } else {
-        $stmt = $pdo->prepare("UPDATE students SET full_name = ?, email = ?, phone = ?, student_status = ? WHERE id = ?");
-        $success = $stmt->execute([$full_name, $email, $phone, $student_status, $student_id]);
-
-        if ($success) {
-            $_SESSION['success'] = "Student updated successfully!";
-        } else {
-            $_SESSION['error'] = "Failed to update student.";
-        }
-    }
-
-    header('Location: admin.php?page=students');
-    exit;
-}
+// admin_pages/students.php - View and edit students (form handlers removed)
 
 // Handle status filter
 $statusFilter = $_GET['status_filter'] ?? '';
@@ -168,7 +139,7 @@ $statusList = $pdo->query("SELECT DISTINCT student_status FROM students ORDER BY
 <div class="modal fade" id="editStudentModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="" id="editStudentForm">
+            <form method="POST" action="admin_handler.php" id="editStudentForm">
                 <input type="hidden" name="action" value="edit_student">
                 <input type="hidden" name="student_id" id="edit_student_id">
                 
