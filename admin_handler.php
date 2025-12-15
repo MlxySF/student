@@ -64,6 +64,35 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $action = $_POST['action'] ?? '';
 
+// ============ REGISTRATION APPROVAL ============
+
+if ($action === 'verify_registration') {
+    $regId = $_POST['registration_id'];
+    try {
+        // Update registration status to verified (no verified_by or verified_date columns)
+        $stmt = $pdo->prepare("UPDATE registrations SET payment_status = 'verified' WHERE id = ?");
+        $stmt->execute([$regId]);
+        $_SESSION['success'] = "Registration payment verified successfully!";
+    } catch (PDOException $e) {
+        $_SESSION['error'] = "Failed to verify registration: " . $e->getMessage();
+    }
+    header('Location: admin.php?page=registrations');
+    exit;
+}
+
+if ($action === 'reject_registration') {
+    $regId = $_POST['registration_id'];
+    try {
+        $stmt = $pdo->prepare("UPDATE registrations SET payment_status = 'rejected' WHERE id = ?");
+        $stmt->execute([$regId]);
+        $_SESSION['success'] = "Registration payment rejected.";
+    } catch (PDOException $e) {
+        $_SESSION['error'] = "Failed to reject registration: " . $e->getMessage();
+    }
+    header('Location: admin.php?page=registrations');
+    exit;
+}
+
 // ============ STUDENT MANAGEMENT ============
 
 if ($action === 'create_student') {
