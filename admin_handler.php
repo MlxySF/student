@@ -7,7 +7,7 @@ function isAdminLoggedIn() {
     return isset($_SESSION['admin_id']);
 }
 
-// Handle GET requests for data fetching (no auth required for these)
+// Handle GET requests for data fetching
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
     header('Content-Type: application/json');
     
@@ -22,28 +22,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
         
         $student_id = $_GET['student_id'] ?? 0;
         
-        // Get student enrollments with class details
-        $stmt = $pdo->prepare("
-            SELECT 
-                e.id,
-                e.student_id,
-                e.class_id,
-                e.enrollment_date,
-                e.status,
-                c.class_name,
-                c.class_code,
-                c.day,
-                c.time,
-                c.monthly_fee
-            FROM enrollments e
-            JOIN classes c ON e.class_id = c.id
-            WHERE e.student_id = ?
-            ORDER BY e.enrollment_date DESC
-        ");
-        $stmt->execute([$student_id]);
-        $enrollments = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        echo json_encode(['enrollments' => $enrollments]);
+        try {
+            // Get student enrollments with class details (removed day and time columns)
+            $stmt = $pdo->prepare("
+                SELECT 
+                    e.id,
+                    e.student_id,
+                    e.class_id,
+                    e.enrollment_date,
+                    e.status,
+                    c.class_name,
+                    c.class_code,
+                    c.monthly_fee,
+                    c.description
+                FROM enrollments e
+                JOIN classes c ON e.class_id = c.id
+                WHERE e.student_id = ?
+                ORDER BY e.enrollment_date DESC
+            ");
+            $stmt->execute([$student_id]);
+            $enrollments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            echo json_encode(['enrollments' => $enrollments]);
+        } catch (PDOException $e) {
+            echo json_encode(['error' => 'Database error', 'message' => $e->getMessage()]);
+        }
         exit;
     }
 }
