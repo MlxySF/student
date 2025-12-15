@@ -88,6 +88,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $student = $stmt->fetch();
 
     if ($student && password_verify($password, $student['password'])) {
+        // Check registration approval status
+        $regStmt = $pdo->prepare("SELECT payment_status FROM registrations WHERE email = ? ORDER BY created_at DESC LIMIT 1");
+        $regStmt->execute([$email]);
+        $registration = $regStmt->fetch();
+        
+        if ($registration) {
+            $paymentStatus = $registration['payment_status'];
+            
+            // Block if rejected
+            if ($paymentStatus === 'rejected') {
+                $_SESSION['error'] = "Your registration has been rejected. Please contact the academy for more information.";
+                header('Location: index.php?page=login');
+                exit;
+            }
+            
+            // Block if still pending
+            if ($paymentStatus === 'pending' || empty($paymentStatus)) {
+                $_SESSION['error'] = "Your registration is still pending approval. Please wait for admin verification.";
+                header('Location: index.php?page=login');
+                exit;
+            }
+            
+            // Only allow login if approved
+            if ($paymentStatus !== 'approved') {
+                $_SESSION['error'] = "Your registration status is: " . ($paymentStatus ?? 'unknown') . ". Please contact the academy.";
+                header('Location: index.php?page=login');
+                exit;
+            }
+        }
+        
+        // Registration is approved or no registration found (legacy students) - allow login
         $_SESSION['student_id'] = $student['id'];
         $_SESSION['student_name'] = $student['full_name'];
         header('Location: index.php?page=dashboard');
