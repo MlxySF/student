@@ -77,35 +77,166 @@ $page = $_GET['page'] ?? 'login';
             background: #f8fafc;
         }
 
+        /* ============================================
+           FIXED HEADER DESIGN (MATCHING STUDENT PORTAL)
+           ============================================ */
+
+        /* Fixed Top Header */
+        .top-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        /* Left Side - Logo & Menu */
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Hamburger Menu Button */
+        .header-menu-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .header-menu-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+
+        /* School Logo */
+        .school-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            text-decoration: none;
+        }
+
+        .school-logo img {
+            height: 45px;
+            width: auto;
+            border-radius: 8px;
+        }
+
+        .school-logo .logo-placeholder {
+            width: 45px;
+            height: 45px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .school-logo .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .school-logo .logo-title {
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .school-logo .logo-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        /* Right Side - User Info */
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+        }
+
+        .header-user-avatar {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .header-user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-user-name {
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .header-user-role {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+
+        /* Sidebar Overlay */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 70px);
+            background: rgba(0,0,0,0.5);
+            z-index: 998;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
         /* Sidebar */
         .admin-sidebar {
             position: fixed;
             left: 0;
-            top: 0;
+            top: 70px;
             width: 280px;
-            height: 100vh;
+            height: calc(100vh - 70px);
             background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
             overflow-y: auto;
-            z-index: 1000;
-            transition: left 0.3s;
-        }
-
-        .admin-sidebar .logo {
-            padding: 30px 20px;
-            text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .admin-sidebar .logo h3 {
-            color: white;
-            margin: 0;
-            font-weight: 700;
-        }
-
-        .admin-sidebar .logo p {
-            color: rgba(255,255,255,0.6);
-            font-size: 12px;
-            margin: 5px 0 0 0;
+            z-index: 999;
+            transition: left 0.3s ease;
+            padding: 20px 0;
         }
 
         .admin-sidebar .nav-link {
@@ -132,43 +263,15 @@ $page = $_GET['page'] ?? 'login';
             text-align: center;
         }
 
+        /* Adjust body for fixed header */
+        body.logged-in {
+            padding-top: 70px;
+        }
+
         /* Main Content */
         .admin-content {
             margin-left: 280px;
-            min-height: 100vh;
-        }
-
-        /* Top Header */
-        .admin-header {
-            background: white;
-            padding: 15px 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .admin-header h4 {
-            margin: 0;
-            color: #1e293b;
-        }
-
-        .admin-user {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .admin-user-avatar {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 700;
+            min-height: calc(100vh - 70px);
         }
 
         /* Content Area */
@@ -257,8 +360,35 @@ $page = $_GET['page'] ?? 'login';
             width: 100%;
         }
 
-        /* Mobile Responsive */
+        /* Desktop View */
+        @media (min-width: 769px) {
+            .header-menu-btn {
+                display: none;
+            }
+
+            .admin-sidebar {
+                left: 0;
+            }
+
+            .sidebar-overlay {
+                display: none !important;
+            }
+        }
+
+        /* Mobile View */
         @media (max-width: 768px) {
+            .top-header {
+                padding: 0 15px;
+            }
+
+            .school-logo .logo-text {
+                display: none;
+            }
+
+            .header-user-info {
+                display: none;
+            }
+
             .admin-sidebar {
                 left: -280px;
             }
@@ -271,19 +401,79 @@ $page = $_GET['page'] ?? 'login';
                 margin-left: 0;
             }
 
-            .mobile-menu-btn {
-                display: block;
+            .content-area {
+                padding: 20px 15px;
+            }
+
+            .stat-card {
+                margin-bottom: 15px;
+            }
+
+            .stat-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+                margin-right: 15px;
+            }
+
+            .stat-content h3 {
+                font-size: 24px;
+            }
+
+            .stat-content p {
+                font-size: 12px;
             }
         }
 
-        .mobile-menu-btn {
-            display: none;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 8px;
-            cursor: pointer;
+        @media (max-width: 480px) {
+            .top-header {
+                height: 60px;
+            }
+
+            body.logged-in {
+                padding-top: 60px;
+            }
+            
+            .admin-sidebar {
+                top: 60px;
+                height: calc(100vh - 60px);
+            }
+
+            .sidebar-overlay {
+                top: 60px;
+                height: calc(100vh - 60px);
+            }
+
+            .school-logo img,
+            .school-logo .logo-placeholder {
+                height: 38px;
+                width: 38px;
+            }
+
+            .header-menu-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+
+            .header-user-avatar {
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+            }
+
+            .content-area {
+                padding: 15px 10px;
+                min-height: calc(100vh - 60px);
+            }
+
+            h3.mb-4 {
+                font-size: 18px;
+            }
+
+            .stat-content h3 {
+                font-size: 20px;
+            }
         }
 
         /* Status Badge Colors */
@@ -303,7 +493,7 @@ $page = $_GET['page'] ?? 'login';
         }
     </style>
 </head>
-<body>
+<body<?php echo ($page !== 'login') ? ' class="logged-in"' : ''; ?>>
 
 <?php if ($page === 'login'): ?>
     <!-- Login Page -->
@@ -341,15 +531,52 @@ $page = $_GET['page'] ?? 'login';
 <?php else: ?>
     <?php redirectIfNotAdmin(); ?>
 
-    <!-- Sidebar -->
-    <div class="admin-sidebar" id="adminSidebar">
-        <div class="logo">
-            <i class="fas fa-graduation-cap fa-3x text-white mb-3"></i>
-            <h3>Wushu Academy</h3>
-            <p>Admin Portal</p>
+    <!-- Fixed Top Header -->
+    <div class="top-header">
+        <!-- Left Side: Menu + Logo -->
+        <div class="header-left">
+            <!-- Hamburger Menu Button -->
+            <button class="header-menu-btn" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <!-- School Logo -->
+            <a href="?page=dashboard" class="school-logo">
+                <!-- Option 1: If you have a logo image, use this: -->
+                <!-- <img src="assets/logo.png" alt="School Logo"> -->
+
+                <!-- Option 2: Placeholder icon (current) -->
+                <div class="logo-placeholder">
+                    <i class="fas fa-shield-halved"></i>
+                </div>
+
+                <div class="logo-text">
+                    <span class="logo-title">Wushu Academy</span>
+                    <span class="logo-subtitle">Admin Portal</span>
+                </div>
+            </a>
         </div>
 
-        <nav class="nav flex-column mt-3">
+        <!-- Right Side: User Info -->
+        <div class="header-right">
+            <div class="header-user">
+                <div class="header-user-avatar">
+                    <?php echo strtoupper(substr($_SESSION['admin_name'], 0, 1)); ?>
+                </div>
+                <div class="header-user-info">
+                    <span class="header-user-name"><?php echo $_SESSION['admin_name']; ?></span>
+                    <span class="header-user-role"><?php echo ucfirst($_SESSION['admin_role']); ?></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <div class="admin-sidebar" id="adminSidebar">
+        <nav class="nav flex-column">
             <a class="nav-link <?php echo $page === 'dashboard' ? 'active' : ''; ?>" href="?page=dashboard">
                 <i class="fas fa-home"></i>
                 <span>Dashboard</span>
@@ -388,39 +615,20 @@ $page = $_GET['page'] ?? 'login';
 
     <!-- Main Content -->
     <div class="admin-content">
-        <!-- Top Header -->
-        <div class="admin-header">
-            <div class="d-flex align-items-center gap-3">
-                <button class="mobile-menu-btn" id="mobileMenuBtn">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h4>
-                    <i class="fas fa-<?php 
-                        echo $page === 'dashboard' ? 'home' : 
-                            ($page === 'registrations' ? 'user-plus' :
-                            ($page === 'students' ? 'users' : 
-                            ($page === 'classes' ? 'chalkboard-teacher' : 
-                            ($page === 'invoices' ? 'file-invoice-dollar' : 
-                            ($page === 'payments' ? 'credit-card' : 'calendar-check'))))); 
-                    ?>"></i>
-                    <?php echo ucfirst($page); ?>
-                </h4>
-            </div>
-
-            <div class="admin-user">
-                <div class="admin-user-avatar">
-                    <?php echo strtoupper(substr($_SESSION['admin_name'], 0, 1)); ?>
-                </div>
-                <div>
-                    <strong><?php echo $_SESSION['admin_name']; ?></strong>
-                    <br>
-                    <small class="text-muted"><?php echo ucfirst($_SESSION['admin_role']); ?></small>
-                </div>
-            </div>
-        </div>
-
         <!-- Content Area -->
         <div class="content-area">
+            <h3 class="mb-4">
+                <i class="fas fa-<?php 
+                    echo $page === 'dashboard' ? 'home' : 
+                        ($page === 'registrations' ? 'user-plus' :
+                        ($page === 'students' ? 'users' : 
+                        ($page === 'classes' ? 'chalkboard-teacher' : 
+                        ($page === 'invoices' ? 'file-invoice-dollar' : 
+                        ($page === 'payments' ? 'credit-card' : 'calendar-check'))))); 
+                ?>"></i>
+                <?php echo ucfirst($page); ?>
+            </h3>
+
             <?php if (isset($_SESSION['success'])): ?>
                 <div class="alert alert-success alert-dismissible fade show">
                     <i class="fas fa-check-circle"></i>
@@ -493,9 +701,53 @@ $page = $_GET['page'] ?? 'login';
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-    // Mobile menu toggle
-    document.getElementById('mobileMenuBtn')?.addEventListener('click', function() {
-        document.getElementById('adminSidebar').classList.toggle('active');
+    // ============================================
+    // MOBILE MENU TOGGLE
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('adminSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        if (!menuToggle || !sidebar || !overlay) return;
+
+        // Toggle sidebar
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+
+            // Change icon
+            const icon = menuToggle.querySelector('i');
+            if (sidebar.classList.contains('active')) {
+                icon.className = 'fas fa-times';
+            } else {
+                icon.className = 'fas fa-bars';
+            }
+        }
+
+        // Event listeners
+        menuToggle.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
+
+        // Close sidebar when clicking a link (mobile only)
+        const navLinks = document.querySelectorAll('.admin-sidebar .nav-link');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    setTimeout(toggleSidebar, 200);
+                }
+            });
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                const icon = menuToggle.querySelector('i');
+                if (icon) icon.className = 'fas fa-bars';
+            }
+        });
     });
 
     // Auto-dismiss alerts
