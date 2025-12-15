@@ -69,19 +69,33 @@ $action = $_POST['action'] ?? '';
 if ($action === 'verify_registration') {
     $regId = $_POST['registration_id'];
     try {
-        // Update registration status to verified
-        $stmt = $pdo->prepare("UPDATE registrations SET payment_status = 'verified' WHERE id = ?");
-        $stmt->execute([$regId]);
+        // First, let's check if the record exists and what its current status is
+        $checkStmt = $pdo->prepare("SELECT id, registration_number, payment_status FROM registrations WHERE id = ?");
+        $checkStmt->execute([$regId]);
+        $registration = $checkStmt->fetch();
         
-        // Check if any row was actually updated
-        $rowCount = $stmt->rowCount();
-        if ($rowCount > 0) {
-            $_SESSION['success'] = "Registration payment verified successfully!";
+        if (!$registration) {
+            $_SESSION['error'] = "Registration not found (ID: $regId)";
         } else {
-            $_SESSION['error'] = "Registration not found or already verified (ID: $regId, Rows affected: $rowCount)";
+            // Update registration status to 'approved'
+            $stmt = $pdo->prepare("UPDATE registrations SET payment_status = ? WHERE id = ?");
+            $result = $stmt->execute(['approved', $regId]);
+            $rowCount = $stmt->rowCount();
+            
+            // Verify the update worked
+            $verifyStmt = $pdo->prepare("SELECT payment_status FROM registrations WHERE id = ?");
+            $verifyStmt->execute([$regId]);
+            $updated = $verifyStmt->fetch();
+            
+            if ($updated && $updated['payment_status'] === 'approved') {
+                $_SESSION['success'] = "Registration {$registration['registration_number']} approved successfully!";
+            } else {
+                $currentStatus = $updated['payment_status'] ?? 'NULL';
+                $_SESSION['error'] = "Update executed but status is still: {$currentStatus}. Rows affected: {$rowCount}. This might be a database issue.";
+            }
         }
     } catch (PDOException $e) {
-        $_SESSION['error'] = "Failed to verify registration: " . $e->getMessage();
+        $_SESSION['error'] = "Database error: " . $e->getMessage();
     }
     header('Location: admin.php?page=registrations');
     exit;
@@ -90,17 +104,30 @@ if ($action === 'verify_registration') {
 if ($action === 'reject_registration') {
     $regId = $_POST['registration_id'];
     try {
-        $stmt = $pdo->prepare("UPDATE registrations SET payment_status = 'rejected' WHERE id = ?");
-        $stmt->execute([$regId]);
+        $checkStmt = $pdo->prepare("SELECT id, registration_number FROM registrations WHERE id = ?");
+        $checkStmt->execute([$regId]);
+        $registration = $checkStmt->fetch();
         
-        $rowCount = $stmt->rowCount();
-        if ($rowCount > 0) {
-            $_SESSION['success'] = "Registration payment rejected.";
-        } else {
+        if (!$registration) {
             $_SESSION['error'] = "Registration not found (ID: $regId)";
+        } else {
+            $stmt = $pdo->prepare("UPDATE registrations SET payment_status = ? WHERE id = ?");
+            $result = $stmt->execute(['rejected', $regId]);
+            
+            // Verify the update
+            $verifyStmt = $pdo->prepare("SELECT payment_status FROM registrations WHERE id = ?");
+            $verifyStmt->execute([$regId]);
+            $updated = $verifyStmt->fetch();
+            
+            if ($updated && $updated['payment_status'] === 'rejected') {
+                $_SESSION['success'] = "Registration {$registration['registration_number']} rejected.";
+            } else {
+                $currentStatus = $updated['payment_status'] ?? 'NULL';
+                $_SESSION['error'] = "Update executed but status is still: {$currentStatus}";
+            }
         }
     } catch (PDOException $e) {
-        $_SESSION['error'] = "Failed to reject registration: " . $e->getMessage();
+        $_SESSION['error'] = "Database error: " . $e->getMessage();
     }
     header('Location: admin.php?page=registrations');
     exit;
