@@ -2,13 +2,24 @@
 session_start();
 require_once 'config.php';
 
-// Handle GET requests for data fetching
+// Check if admin is logged in
+function isAdminLoggedIn() {
+    return isset($_SESSION['admin_id']);
+}
+
+// Handle GET requests for data fetching (no auth required for these)
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
     header('Content-Type: application/json');
     
     $action = $_GET['action'];
     
     if ($action === 'get_student_details') {
+        // Check admin login for GET requests too
+        if (!isAdminLoggedIn()) {
+            echo json_encode(['error' => 'Unauthorized']);
+            exit;
+        }
+        
         $student_id = $_GET['student_id'] ?? 0;
         
         // Get student enrollments with class details
@@ -37,7 +48,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
     }
 }
 
-redirectIfNotAdminLoggedIn();
+// Check admin login for POST requests
+if (!isAdminLoggedIn()) {
+    header('Location: admin.php?page=login');
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: admin.php');
