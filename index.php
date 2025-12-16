@@ -194,11 +194,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $is_invoice_payment = !empty($invoice_id);
 
     if ($invoice_id) {
-        // Invoice Payment
+        // Invoice Payment - no auto-generated notes needed since it's linked via invoice_id
         $class_id = !empty($_POST['invoice_class_id']) ? $_POST['invoice_class_id'] : null;
         $amount = $_POST['invoice_amount'];
         $payment_month = !empty($_POST['invoice_payment_month']) ? $_POST['invoice_payment_month'] : date('M Y');
-        $notes = $_POST['notes'] ?? '';
+        $notes = ''; // Leave notes empty for invoice payments
 
         // If no class_id from invoice, get first enrolled class
         if (!$class_id) {
@@ -215,7 +215,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         }
 
     } else {
-        // Class Payment
+        // Class Payment - use student-provided notes
         $class_id = $_POST['class_id'];
         $amount = $_POST['amount'];
         $payment_month = $_POST['payment_month'];
@@ -265,9 +265,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
 
-        $note_prefix = $invoice_id ? "Invoice Payment - Invoice ID: $invoice_id. " : "";
-        $full_notes = $note_prefix . $notes;
-
         $success = $stmt->execute([
             getStudentId(), 
             $class_id, 
@@ -277,8 +274,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $receiptData['data'],         // Base64 encoded receipt
             $receiptData['mime'],         // MIME type (image/jpeg, application/pdf, etc)
             $receiptData['size'],         // Original file size in bytes
-            $full_notes,
-            $invoice_id                   // Link to invoice
+            $notes,                       // Empty for invoice payments, user notes for class payments
+            $invoice_id                   // Link to invoice (NULL for class payments)
         ]);
 
         if ($success) {
