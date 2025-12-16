@@ -289,7 +289,8 @@ if ($action === 'create_invoice') {
 if ($action === 'generate_monthly_invoices') {
     try {
         $currentMonth = date('M Y');
-        $dueDate = date('Y-m-t');
+        // Due date is always the 10th of the current month
+        $dueDate = date('Y-m-10');
         
         $enrollments = $pdo->query("
             SELECT 

@@ -308,7 +308,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
 
                     <div class="mb-3">
                         <label class="form-label">Due Date:</label>
-                        <p class="fw-bold"><?php echo date('F t, Y'); ?> (Last day of month)</p>
+                        <p class="fw-bold"><?php echo date('F 10, Y'); ?> (10th of the month)</p>
                     </div>
 
                     <div class="alert alert-warning">
@@ -318,6 +318,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                             <li>Students already invoiced this month will be skipped</li>
                             <li>This action cannot be undone</li>
                             <li>All invoices will be marked as "Unpaid"</li>
+                            <li>Due date will be set to the 10th of this month</li>
                         </ul>
                     </div>
                 </div>
@@ -338,7 +339,7 @@ function confirmGenerate() {
         'GENERATE MONTHLY INVOICES?\n\n' +
         'This will create invoices for ALL students with active enrollments.\n\n' +
         'Month: <?php echo date("F Y"); ?>\n' +
-        'Due Date: <?php echo date("F t, Y"); ?>\n\n' +
+        'Due Date: <?php echo date("F 10, Y"); ?> (10th of the month)\n\n' +
         'Click OK to proceed or Cancel to abort.'
     );
 }
