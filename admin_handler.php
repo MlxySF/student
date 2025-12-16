@@ -194,16 +194,29 @@ if ($action === 'enroll_student') {
     $class_id = $_POST['class_id'];
 
     try {
-        // Check if already enrolled
-        $checkStmt = $pdo->prepare("SELECT id FROM enrollments WHERE student_id = ? AND class_id = ? AND status = 'active'");
-        $checkStmt->execute([$student_id, $class_id]);
+        // First check if already actively enrolled
+        $checkActive = $pdo->prepare("SELECT id FROM enrollments WHERE student_id = ? AND class_id = ? AND status = 'active'");
+        $checkActive->execute([$student_id, $class_id]);
         
-        if ($checkStmt->fetch()) {
+        if ($checkActive->fetch()) {
             $_SESSION['error'] = "Student is already enrolled in this class.";
         } else {
-            $stmt = $pdo->prepare("INSERT INTO enrollments (student_id, class_id, enrollment_date, status) VALUES (?, ?, NOW(), 'active')");
-            $stmt->execute([$student_id, $class_id]);
-            $_SESSION['success'] = "Student enrolled successfully!";
+            // Check if there's an inactive enrollment to reactivate
+            $checkInactive = $pdo->prepare("SELECT id FROM enrollments WHERE student_id = ? AND class_id = ? AND status = 'inactive'");
+            $checkInactive->execute([$student_id, $class_id]);
+            $inactiveEnrollment = $checkInactive->fetch();
+            
+            if ($inactiveEnrollment) {
+                // Reactivate existing enrollment
+                $stmt = $pdo->prepare("UPDATE enrollments SET status = 'active', enrollment_date = NOW() WHERE id = ?");
+                $stmt->execute([$inactiveEnrollment['id']]);
+                $_SESSION['success'] = "Student re-enrolled successfully!";
+            } else {
+                // Create new enrollment
+                $stmt = $pdo->prepare("INSERT INTO enrollments (student_id, class_id, enrollment_date, status) VALUES (?, ?, NOW(), 'active')");
+                $stmt->execute([$student_id, $class_id]);
+                $_SESSION['success'] = "Student enrolled successfully!";
+            }
         }
     } catch(PDOException $e) {
         $_SESSION['error'] = "Enrollment failed: " . $e->getMessage();
