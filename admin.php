@@ -77,17 +77,6 @@ $page = $_GET['page'] ?? 'login';
             background: #f8fafc;
         }
 
-        /* Alert Auto-Dismiss Animation */
-        .alert {
-            position: relative;
-            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-        }
-
-        .alert.fade-out {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-
         /* Fixed Top Header */
         .top-header {
             position: fixed;
@@ -712,19 +701,6 @@ $page = $_GET['page'] ?? 'login';
                 const icon = menuToggle.querySelector('i');
                 if (icon) icon.className = 'fas fa-bars';
             }
-        });
-    });
-
-    // Auto-dismiss alerts after 8 seconds with fade animation
-    document.addEventListener('DOMContentLoaded', function() {
-        const alerts = document.querySelectorAll('.alert');
-        alerts.forEach(alert => {
-            setTimeout(() => {
-                alert.classList.add('fade-out');
-                setTimeout(() => {
-                    alert.remove();
-                }, 500);
-            }, 8000); // 8 seconds
         });
     });
 
