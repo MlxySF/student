@@ -137,6 +137,9 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
     <tr>
         <td class="text-nowrap"><strong><?php echo htmlspecialchars($invoice['invoice_number']); ?></strong>
             <div class="d-md-none text-muted small"><?php echo formatDate($invoice['created_at']); ?></div>
+            <?php if ($invoice['invoice_type'] === 'monthly_fee' && !empty($invoice['payment_month'])): ?>
+                <div class="d-md-none"><span class="badge bg-primary"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($invoice['payment_month']); ?></span></div>
+            <?php endif; ?>
             <?php if ($has_payment): ?>
                 <div class="d-md-none"><span class="badge bg-info"><i class="fas fa-receipt"></i> Payment Uploaded</span></div>
             <?php endif; ?>
@@ -145,7 +148,11 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
         <td><div><?php echo htmlspecialchars($invoice['full_name']); ?></div>
             <div class="d-md-none text-muted small"><?php echo htmlspecialchars($invoice['student_id']); ?> • <?php echo ucfirst($invoice['invoice_type']); ?></div></td>
         <td class="hide-mobile"><span class="badge bg-secondary"><?php echo ucfirst($invoice['invoice_type']); ?></span></td>
-        <td class="hide-mobile"><?php $desc = htmlspecialchars($invoice['description']); echo (strlen($desc) > 50 ? substr($desc, 0, 50) . '…' : $desc); ?></td>
+        <td class="hide-mobile"><?php 
+            $desc = htmlspecialchars($invoice['description']); 
+            echo (strlen($desc) > 50 ? substr($desc, 0, 50) . '…' : $desc); 
+            if ($invoice['invoice_type'] === 'monthly_fee' && !empty($invoice['payment_month'])): 
+        ?><br><span class="badge bg-primary mt-1"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($invoice['payment_month']); ?></span><?php endif; ?></td>
         <td><strong><?php echo formatCurrency($invoice['amount']); ?></strong>
             <div class="d-md-none text-muted small">Due: <?php echo formatDate($invoice['due_date']); ?></div></td>
         <td class="hide-mobile"><?php echo formatDate($invoice['due_date']); ?></td>
@@ -194,6 +201,9 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                 <tr><th>Class</th><td><span class="badge bg-info"><?php echo htmlspecialchars($invoice['class_code']); ?></span> <?php echo htmlspecialchars($invoice['class_name']); ?></td></tr>
                 <?php endif; ?>
                 <tr><th>Type</th><td><span class="badge bg-secondary"><?php echo ucfirst($invoice['invoice_type']); ?></span></td></tr>
+                <?php if ($invoice['invoice_type'] === 'monthly_fee' && !empty($invoice['payment_month'])): ?>
+                <tr><th>Payment Month</th><td><span class="badge bg-primary"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($invoice['payment_month']); ?></span></td></tr>
+                <?php endif; ?>
                 <tr><th>Description</th><td><?php echo nl2br(htmlspecialchars($invoice['description'])); ?></td></tr>
                 <tr><th>Amount</th><td><strong><?php echo formatCurrency($invoice['amount']); ?></strong></td></tr>
                 <tr><th>Due Date</th><td><?php echo formatDate($invoice['due_date']); ?></td></tr>
