@@ -77,9 +77,16 @@ $page = $_GET['page'] ?? 'login';
             background: #f8fafc;
         }
 
-        /* ============================================
-           FIXED HEADER DESIGN (MATCHING STUDENT PORTAL)
-           ============================================ */
+        /* Alert Auto-Dismiss Animation */
+        .alert {
+            position: relative;
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+        }
+
+        .alert.fade-out {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
 
         /* Fixed Top Header */
         .top-header {
@@ -97,14 +104,12 @@ $page = $_GET['page'] ?? 'login';
             padding: 0 20px;
         }
 
-        /* Left Side - Logo & Menu */
         .header-left {
             display: flex;
             align-items: center;
             gap: 15px;
         }
 
-        /* Hamburger Menu Button */
         .header-menu-btn {
             background: rgba(255,255,255,0.2);
             border: none;
@@ -125,7 +130,6 @@ $page = $_GET['page'] ?? 'login';
             transform: scale(1.05);
         }
 
-        /* School Logo */
         .school-logo {
             display: flex;
             align-items: center;
@@ -167,7 +171,6 @@ $page = $_GET['page'] ?? 'login';
             opacity: 0.9;
         }
 
-        /* Right Side - User Info */
         .header-right {
             display: flex;
             align-items: center;
@@ -209,7 +212,6 @@ $page = $_GET['page'] ?? 'login';
             opacity: 0.9;
         }
 
-        /* Sidebar Overlay */
         .sidebar-overlay {
             display: none;
             position: fixed;
@@ -225,7 +227,6 @@ $page = $_GET['page'] ?? 'login';
             display: block;
         }
 
-        /* Sidebar */
         .admin-sidebar {
             position: fixed;
             left: 0;
@@ -263,23 +264,19 @@ $page = $_GET['page'] ?? 'login';
             text-align: center;
         }
 
-        /* Adjust body for fixed header */
         body.logged-in {
             padding-top: 70px;
         }
 
-        /* Main Content */
         .admin-content {
             margin-left: 280px;
             min-height: calc(100vh - 70px);
         }
 
-        /* Content Area */
         .content-area {
             padding: 30px;
         }
 
-        /* Cards */
         .stat-card {
             background: white;
             border-radius: 15px;
@@ -326,7 +323,6 @@ $page = $_GET['page'] ?? 'login';
             font-size: 14px;
         }
 
-        /* Table Styling */
         .table {
             background: white;
         }
@@ -335,14 +331,12 @@ $page = $_GET['page'] ?? 'login';
             background: #f8fafc;
         }
 
-        /* Badge Styling */
         .badge {
             padding: 6px 12px;
             font-weight: 600;
             font-size: 11px;
         }
 
-        /* Login Page */
         .login-container {
             min-height: 100vh;
             display: flex;
@@ -360,7 +354,6 @@ $page = $_GET['page'] ?? 'login';
             width: 100%;
         }
 
-        /* Desktop View */
         @media (min-width: 769px) {
             .header-menu-btn {
                 display: none;
@@ -375,7 +368,6 @@ $page = $_GET['page'] ?? 'login';
             }
         }
 
-        /* Mobile View */
         @media (max-width: 768px) {
             .top-header {
                 padding: 0 15px;
@@ -476,7 +468,6 @@ $page = $_GET['page'] ?? 'login';
             }
         }
 
-        /* Status Badge Colors */
         .badge-student {
             background: linear-gradient(135deg, #6366f1, #4f46e5);
             color: white;
@@ -496,7 +487,6 @@ $page = $_GET['page'] ?? 'login';
 <body<?php echo ($page !== 'login') ? ' class="logged-in"' : ''; ?>>
 
 <?php if ($page === 'login'): ?>
-    <!-- Login Page -->
     <div class="login-container">
         <div class="login-card">
             <div class="text-center mb-4">
@@ -531,25 +521,16 @@ $page = $_GET['page'] ?? 'login';
 <?php else: ?>
     <?php redirectIfNotAdmin(); ?>
 
-    <!-- Fixed Top Header -->
     <div class="top-header">
-        <!-- Left Side: Menu + Logo -->
         <div class="header-left">
-            <!-- Hamburger Menu Button -->
             <button class="header-menu-btn" id="menuToggle">
                 <i class="fas fa-bars"></i>
             </button>
 
-            <!-- School Logo -->
             <a href="?page=dashboard" class="school-logo">
-                <!-- Option 1: If you have a logo image, use this: -->
-                <!-- <img src="assets/logo.png" alt="School Logo"> -->
-
-                <!-- Option 2: Placeholder icon (current) -->
                 <div class="logo-placeholder">
                     <i class="fas fa-shield-halved"></i>
                 </div>
-
                 <div class="logo-text">
                     <span class="logo-title">Wushu Academy</span>
                     <span class="logo-subtitle">Admin Portal</span>
@@ -557,7 +538,6 @@ $page = $_GET['page'] ?? 'login';
             </a>
         </div>
 
-        <!-- Right Side: User Info -->
         <div class="header-right">
             <div class="header-user">
                 <div class="header-user-avatar">
@@ -571,10 +551,8 @@ $page = $_GET['page'] ?? 'login';
         </div>
     </div>
 
-    <!-- Sidebar Overlay -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <!-- Sidebar -->
     <div class="admin-sidebar" id="adminSidebar">
         <nav class="nav flex-column">
             <a class="nav-link <?php echo $page === 'dashboard' ? 'active' : ''; ?>" href="?page=dashboard">
@@ -613,9 +591,7 @@ $page = $_GET['page'] ?? 'login';
         </nav>
     </div>
 
-    <!-- Main Content -->
     <div class="admin-content">
-        <!-- Content Area -->
         <div class="content-area">
             <h3 class="mb-4">
                 <i class="fas fa-<?php 
@@ -646,7 +622,6 @@ $page = $_GET['page'] ?? 'login';
             <?php endif; ?>
 
             <?php
-            // Include page content
             $pages_dir = 'admin_pages/';
             switch($page) {
                 case 'dashboard':
@@ -694,16 +669,12 @@ $page = $_GET['page'] ?? 'login';
     </div>
 <?php endif; ?>
 
-<!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-    // ============================================
-    // MOBILE MENU TOGGLE
-    // ============================================
     document.addEventListener('DOMContentLoaded', function() {
         const menuToggle = document.getElementById('menuToggle');
         const sidebar = document.getElementById('adminSidebar');
@@ -711,12 +682,9 @@ $page = $_GET['page'] ?? 'login';
 
         if (!menuToggle || !sidebar || !overlay) return;
 
-        // Toggle sidebar
         function toggleSidebar() {
             sidebar.classList.toggle('active');
             overlay.classList.toggle('active');
-
-            // Change icon
             const icon = menuToggle.querySelector('i');
             if (sidebar.classList.contains('active')) {
                 icon.className = 'fas fa-times';
@@ -725,11 +693,9 @@ $page = $_GET['page'] ?? 'login';
             }
         }
 
-        // Event listeners
         menuToggle.addEventListener('click', toggleSidebar);
         overlay.addEventListener('click', toggleSidebar);
 
-        // Close sidebar when clicking a link (mobile only)
         const navLinks = document.querySelectorAll('.admin-sidebar .nav-link');
         navLinks.forEach(link => {
             link.addEventListener('click', function() {
@@ -739,7 +705,6 @@ $page = $_GET['page'] ?? 'login';
             });
         });
 
-        // Handle window resize
         window.addEventListener('resize', function() {
             if (window.innerWidth > 768) {
                 sidebar.classList.remove('active');
@@ -750,12 +715,19 @@ $page = $_GET['page'] ?? 'login';
         });
     });
 
-    // Auto-dismiss alerts
-    setTimeout(() => {
-        $('.alert').fadeOut();
-    }, 5000);
+    // Auto-dismiss alerts after 8 seconds with fade animation
+    document.addEventListener('DOMContentLoaded', function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            setTimeout(() => {
+                alert.classList.add('fade-out');
+                setTimeout(() => {
+                    alert.remove();
+                }, 500);
+            }, 8000); // 8 seconds
+        });
+    });
 
-    // Initialize DataTables
     $(document).ready(function() {
         $('.data-table').DataTable({
             pageLength: 25,
