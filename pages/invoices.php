@@ -1,50 +1,67 @@
 <?php
-// Student Invoices & Payments Page - Unified view
+// Student Invoices & Payments Page - Unified view with required filters
 
-// Month filter
+// Get filter parameters
+$filter_type = isset($_GET['filter_type']) ? $_GET['filter_type'] : '';
 $filter_month = isset($_GET['filter_month']) ? $_GET['filter_month'] : '';
 
-// Get all invoices with payment information for this student
-$sql = "
-    SELECT i.*, 
-           c.class_code, c.class_name,
-           p.id as payment_id, p.verification_status, p.upload_date,
-           p.receipt_data, p.receipt_mime_type, p.admin_notes
-    FROM invoices i
-    LEFT JOIN classes c ON i.class_id = c.id
-    LEFT JOIN payments p ON i.id = p.invoice_id
-    WHERE i.student_id = ?";
+// Check if any filter is selected
+$has_filter = !empty($filter_type) || !empty($filter_month);
 
-if ($filter_month) {
-    $sql .= " AND i.payment_month = ?";
+// Initialize arrays
+$all_invoices = [];
+$available_months = [];
+
+// Only fetch data if filters are selected
+if ($has_filter) {
+    // Build SQL query
+    $sql = "
+        SELECT i.*, 
+               c.class_code, c.class_name,
+               p.id as payment_id, p.verification_status, p.upload_date,
+               p.receipt_data, p.receipt_mime_type, p.admin_notes
+        FROM invoices i
+        LEFT JOIN classes c ON i.class_id = c.id
+        LEFT JOIN payments p ON i.id = p.invoice_id
+        WHERE i.student_id = ?";
+
+    $params = [getStudentId()];
+
+    // Add type filter
+    if ($filter_type) {
+        $sql .= " AND i.invoice_type = ?";
+        $params[] = $filter_type;
+    }
+
+    // Add month filter
+    if ($filter_month) {
+        $sql .= " AND DATE_FORMAT(i.due_date, '%Y-%m') = ?";
+        $params[] = $filter_month;
+    }
+
+    $sql .= "
+        ORDER BY 
+            CASE 
+                WHEN i.status = 'overdue' THEN 1
+                WHEN i.status = 'unpaid' THEN 2
+                WHEN i.status = 'pending' THEN 3
+                WHEN i.status = 'paid' THEN 4
+                WHEN i.status = 'cancelled' THEN 5
+                ELSE 6
+            END,
+            i.due_date ASC,
+            i.created_at DESC
+    ";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $all_invoices = $stmt->fetchAll();
 }
 
-$sql .= "
-    ORDER BY 
-        CASE 
-            WHEN i.status = 'overdue' THEN 1
-            WHEN i.status = 'unpaid' THEN 2
-            WHEN i.status = 'pending' THEN 3
-            WHEN i.status = 'paid' THEN 4
-            WHEN i.status = 'cancelled' THEN 5
-            ELSE 6
-        END,
-        i.due_date ASC,
-        i.created_at DESC
-";
-
-$stmt = $pdo->prepare($sql);
-if ($filter_month) {
-    $stmt->execute([getStudentId(), $filter_month]);
-} else {
-    $stmt->execute([getStudentId()]);
-}
-$all_invoices = $stmt->fetchAll();
-
-// Get unique months for filter dropdown
-$months_stmt = $pdo->prepare("SELECT DISTINCT payment_month FROM invoices WHERE student_id = ? AND payment_month IS NOT NULL AND payment_month != '' ORDER BY payment_month DESC");
-$months_stmt->execute([getStudentId()]);
-$available_months = $months_stmt->fetchAll(PDO::FETCH_COLUMN);
+// Get available invoice types for this student
+$types_stmt = $pdo->prepare("SELECT DISTINCT invoice_type FROM invoices WHERE student_id = ? ORDER BY invoice_type");
+$types_stmt->execute([getStudentId()]);
+$available_types = $types_stmt->fetchAll(PDO::FETCH_COLUMN);
 
 // Separate by status
 $overdue_invoices = array_values(array_filter($all_invoices, fn($i) => $i['status'] === 'overdue'));
@@ -83,7 +100,7 @@ $pending_paginated = paginateInvoices($pending_invoices, 'pending_page');
 $paid_paginated = paginateInvoices($paid_invoices, 'paid_page');
 
 function renderPagination($data) {
-    global $filter_month;
+    global $filter_type, $filter_month;
     if ($data['total_pages'] <= 1) return;
     $current_page = $data['page'];
     $total_pages = $data['total_pages'];
@@ -92,25 +109,25 @@ function renderPagination($data) {
     $start_page = max(1, $current_page - $range);
     $end_page = min($total_pages, $current_page + $range);
     
-    $filter_param = $filter_month ? '&filter_month=' . urlencode($filter_month) : '';
+    $filter_params = '&filter_type=' . urlencode($filter_type) . '&filter_month=' . urlencode($filter_month);
     
     echo '<nav aria-label="Invoice pagination" class="mt-4"><ul class="pagination justify-content-center flex-wrap">';
     echo '<li class="page-item ' . ($current_page <= 1 ? 'disabled' : '') . '">';
-    echo '<a class="page-link" href="?page=invoices' . $filter_param . '&' . $param . '=' . ($current_page - 1) . '">&laquo;</a></li>';
+    echo '<a class="page-link" href="?page=invoices' . $filter_params . '&' . $param . '=' . ($current_page - 1) . '">&laquo;</a></li>';
     if ($start_page > 1) {
-        echo '<li class="page-item"><a class="page-link" href="?page=invoices' . $filter_param . '&' . $param . '=1">1</a></li>';
+        echo '<li class="page-item"><a class="page-link" href="?page=invoices' . $filter_params . '&' . $param . '=1">1</a></li>';
         if ($start_page > 2) echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
     }
     for ($i = $start_page; $i <= $end_page; $i++) {
         echo '<li class="page-item ' . ($i == $current_page ? 'active' : '') . '">';
-        echo '<a class="page-link" href="?page=invoices' . $filter_param . '&' . $param . '=' . $i . '">' . $i . '</a></li>';
+        echo '<a class="page-link" href="?page=invoices' . $filter_params . '&' . $param . '=' . $i . '">' . $i . '</a></li>';
     }
     if ($end_page < $total_pages) {
         if ($end_page < $total_pages - 1) echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
-        echo '<li class="page-item"><a class="page-link" href="?page=invoices' . $filter_param . '&' . $param . '=' . $total_pages . '">' . $total_pages . '</a></li>';
+        echo '<li class="page-item"><a class="page-link" href="?page=invoices' . $filter_params . '&' . $param . '=' . $total_pages . '">' . $total_pages . '</a></li>';
     }
     echo '<li class="page-item ' . ($current_page >= $total_pages ? 'disabled' : '') . '">';
-    echo '<a class="page-link" href="?page=invoices' . $filter_param . '&' . $param . '=' . ($current_page + 1) . '">&raquo;</a></li>';
+    echo '<a class="page-link" href="?page=invoices' . $filter_params . '&' . $param . '=' . ($current_page + 1) . '">&raquo;</a></li>';
     echo '</ul></nav>';
 }
 ?>
@@ -148,230 +165,291 @@ function renderPagination($data) {
 .receipt-pdf { width: 100%; height: 500px; border: 2px solid #e2e8f0; border-radius: 8px; }
 </style>
 
-<!-- Month Filter -->
-<?php if (count($available_months) > 0): ?>
-<div class="card mb-4">
+<!-- Filter Form -->
+<div class="card mb-4 border-primary">
+    <div class="card-header bg-primary text-white">
+        <i class="fas fa-filter"></i> Search & Filter Invoices
+    </div>
     <div class="card-body">
         <form method="GET" action="" class="row g-3 align-items-end">
             <input type="hidden" name="page" value="invoices">
+            
             <div class="col-md-4">
-                <label class="form-label"><i class="fas fa-filter"></i> Filter by Payment Month</label>
-                <select name="filter_month" class="form-select" onchange="this.form.submit()">
-                    <option value="">All Months</option>
-                    <?php foreach ($available_months as $month): ?>
-                        <option value="<?php echo htmlspecialchars($month); ?>" <?php echo $filter_month === $month ? 'selected' : ''; ?>>
-                            <?php echo htmlspecialchars($month); ?>
+                <label class="form-label"><i class="fas fa-tag"></i> Invoice Type</label>
+                <select name="filter_type" class="form-select">
+                    <option value="">All Types</option>
+                    <?php 
+                    $type_options = [
+                        'monthly_fee' => 'Monthly Fee',
+                        'registration' => 'Registration',
+                        'equipment' => 'Equipment',
+                        'event' => 'Event',
+                        'other' => 'Other'
+                    ];
+                    foreach ($type_options as $value => $label): 
+                        if (in_array($value, $available_types) || empty($filter_type)):
+                    ?>
+                        <option value="<?php echo $value; ?>" <?php echo $filter_type === $value ? 'selected' : ''; ?>>
+                            <?php echo $label; ?>
                         </option>
-                    <?php endforeach; ?>
+                    <?php 
+                        endif;
+                    endforeach; 
+                    ?>
                 </select>
             </div>
-            <?php if ($filter_month): ?>
-            <div class="col-md-auto">
-                <a href="?page=invoices" class="btn btn-secondary"><i class="fas fa-times"></i> Clear Filter</a>
+            
+            <div class="col-md-4">
+                <label class="form-label"><i class="fas fa-calendar"></i> Month & Year</label>
+                <input type="month" name="filter_month" class="form-control" value="<?php echo htmlspecialchars($filter_month); ?>">
             </div>
-            <?php endif; ?>
+            
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Search Invoices
+                </button>
+            </div>
         </form>
-        <?php if ($filter_month): ?>
-            <div class="alert alert-info mt-3 mb-0">
-                <i class="fas fa-info-circle"></i> Showing invoices for <strong><?php echo htmlspecialchars($filter_month); ?></strong>
+        
+        <?php if ($has_filter): ?>
+            <div class="mt-3">
+                <div class="alert alert-info d-flex justify-content-between align-items-center mb-0">
+                    <div>
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Active Filters:</strong>
+                        <?php if ($filter_type): ?>
+                            <span class="badge bg-primary ms-2"><?php echo ucfirst(str_replace('_', ' ', $filter_type)); ?></span>
+                        <?php endif; ?>
+                        <?php if ($filter_month): ?>
+                            <span class="badge bg-primary ms-2"><?php echo date('F Y', strtotime($filter_month . '-01')); ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <a href="?page=invoices" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-times"></i> Clear All Filters
+                    </a>
+                </div>
             </div>
         <?php endif; ?>
     </div>
 </div>
-<?php endif; ?>
 
-<div class="row mb-4">
-    <div class="col-md-4 mb-3">
-        <div class="stat-card">
-            <div class="stat-icon bg-danger"><i class="fas fa-exclamation-triangle"></i></div>
-            <div class="stat-content"><h3><?php echo $action_required_count; ?></h3><p>Action Required</p>
-                <small class="text-danger"><strong><?php echo formatCurrency($action_required_total); ?></strong></small></div>
+<?php if (!$has_filter): ?>
+    <!-- Initial State - No Filter Selected -->
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-filter fa-4x text-primary mb-4"></i>
+            <h4>Search Your Invoices</h4>
+            <p class="text-muted mb-4">Please select an invoice type or month above to view your invoices.</p>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="alert alert-info text-start">
+                        <strong><i class="fas fa-lightbulb"></i> Quick Tips:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Select <strong>Invoice Type</strong> to see all invoices of that category</li>
+                            <li>Select <strong>Month & Year</strong> to see invoices for a specific period</li>
+                            <li>Use both filters together for more specific results</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="col-md-4 mb-3">
-        <div class="stat-card">
-            <div class="stat-icon bg-info"><i class="fas fa-clock"></i></div>
-            <div class="stat-content"><h3><?php echo count($pending_invoices); ?></h3><p>Pending Verification</p>
-                <small class="text-info"><strong><?php echo formatCurrency($pending_total); ?></strong></small></div>
+<?php else: ?>
+    <!-- Show Statistics when filtered -->
+    <?php if (count($all_invoices) > 0): ?>
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-danger"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div class="stat-content"><h3><?php echo $action_required_count; ?></h3><p>Action Required</p>
+                        <small class="text-danger"><strong><?php echo formatCurrency($action_required_total); ?></strong></small></div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-info"><i class="fas fa-clock"></i></div>
+                    <div class="stat-content"><h3><?php echo count($pending_invoices); ?></h3><p>Pending Verification</p>
+                        <small class="text-info"><strong><?php echo formatCurrency($pending_total); ?></strong></small></div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-success"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-content"><h3><?php echo count($paid_invoices); ?></h3><p>Paid Invoices</p>
+                        <small class="text-success"><strong><?php echo formatCurrency($paid_total); ?></strong></small></div>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="col-md-4 mb-3">
-        <div class="stat-card">
-            <div class="stat-icon bg-success"><i class="fas fa-check-circle"></i></div>
-            <div class="stat-content"><h3><?php echo count($paid_invoices); ?></h3><p>Paid Invoices</p>
-                <small class="text-success"><strong><?php echo formatCurrency($paid_total); ?></strong></small></div>
-        </div>
-    </div>
-</div>
 
-<?php if (count($overdue_invoices) > 0): ?>
-<div class="card mb-4 border-danger">
-    <div class="card-header bg-danger text-white"><i class="fas fa-exclamation-circle"></i> OVERDUE INVOICES - URGENT!
-        <span class="badge bg-light text-danger float-end"><?php echo count($overdue_invoices); ?></span></div>
-    <div class="card-body">
-        <div class="alert alert-danger mb-3"><i class="fas fa-skull-crossbones"></i> <strong>URGENT:</strong> These invoices are past their due date. Please pay immediately!</div>
-        <div class="table-responsive">
-            <table class="table sp-invoices-table">
-                <thead><tr><th>Invoice #</th><th>Date</th><th>Description</th><th class="sp-hide-mobile">Class</th><th>Amount</th><th class="sp-hide-mobile">Due Date</th><th>Action</th></tr></thead>
-                <tbody>
-                    <?php foreach ($overdue_paginated['items'] as $inv): ?>
-                        <tr class="sp-invoice-row table-danger">
-                            <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
-                                <div class="d-md-none text-muted small"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></div>
-                                <div class="d-md-none"><span class="badge bg-danger">OVERDUE</span></div>
-                                <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
-                                    <div class="d-md-none"><span class="badge bg-primary"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span></div>
-                                <?php endif; ?>
-                            </td>
-                            <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></td>
-                            <td><?php echo htmlspecialchars($inv['description']); ?>
-                                <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
-                                    <br><span class="badge bg-primary mt-1"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span>
-                                <?php endif; ?>
-                            </td>
-                            <td class="sp-hide-mobile"><?php echo $inv['class_code'] ? '<span class="badge bg-info">' . $inv['class_code'] . '</span>' : '-'; ?></td>
-                            <td><strong class="text-danger"><?php echo formatCurrency($inv['amount']); ?></strong>
-                                <div class="d-md-none text-muted small">Due: <?php echo date('d M Y', strtotime($inv['due_date'])); ?></div></td>
-                            <td class="sp-hide-mobile"><span class="text-danger"><strong><?php echo date('d M Y', strtotime($inv['due_date'])); ?></strong></span></td>
-                            <td class="sp-invoice-actions-cell">
-                                <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#invoiceModal<?php echo $inv['id']; ?>"><i class="fas fa-eye"></i> View & Pay</button>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+        <?php if (count($overdue_invoices) > 0): ?>
+        <div class="card mb-4 border-danger">
+            <div class="card-header bg-danger text-white"><i class="fas fa-exclamation-circle"></i> OVERDUE INVOICES - URGENT!
+                <span class="badge bg-light text-danger float-end"><?php echo count($overdue_invoices); ?></span></div>
+            <div class="card-body">
+                <div class="alert alert-danger mb-3"><i class="fas fa-skull-crossbones"></i> <strong>URGENT:</strong> These invoices are past their due date. Please pay immediately!</div>
+                <div class="table-responsive">
+                    <table class="table sp-invoices-table">
+                        <thead><tr><th>Invoice #</th><th>Date</th><th>Description</th><th class="sp-hide-mobile">Class</th><th>Amount</th><th class="sp-hide-mobile">Due Date</th><th>Action</th></tr></thead>
+                        <tbody>
+                            <?php foreach ($overdue_paginated['items'] as $inv): ?>
+                                <tr class="sp-invoice-row table-danger">
+                                    <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
+                                        <div class="d-md-none text-muted small"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></div>
+                                        <div class="d-md-none"><span class="badge bg-danger">OVERDUE</span></div>
+                                        <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+                                            <div class="d-md-none"><span class="badge bg-primary"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></td>
+                                    <td><?php echo htmlspecialchars($inv['description']); ?>
+                                        <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+                                            <br><span class="badge bg-primary mt-1"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="sp-hide-mobile"><?php echo $inv['class_code'] ? '<span class="badge bg-info">' . $inv['class_code'] . '</span>' : '-'; ?></td>
+                                    <td><strong class="text-danger"><?php echo formatCurrency($inv['amount']); ?></strong>
+                                        <div class="d-md-none text-muted small">Due: <?php echo date('d M Y', strtotime($inv['due_date'])); ?></div></td>
+                                    <td class="sp-hide-mobile"><span class="text-danger"><strong><?php echo date('d M Y', strtotime($inv['due_date'])); ?></strong></span></td>
+                                    <td class="sp-invoice-actions-cell">
+                                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#invoiceModal<?php echo $inv['id']; ?>"><i class="fas fa-eye"></i> View & Pay</button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php renderPagination($overdue_paginated); ?>
+            </div>
         </div>
-        <?php renderPagination($overdue_paginated); ?>
-    </div>
-</div>
-<?php endif; ?>
+        <?php endif; ?>
 
-<?php if (count($unpaid_invoices) > 0): ?>
-<div class="card mb-4">
-    <div class="card-header bg-warning text-dark"><i class="fas fa-exclamation-triangle"></i> Unpaid Invoices
-        <span class="badge bg-dark float-end"><?php echo count($unpaid_invoices); ?></span></div>
-    <div class="card-body">
-        <div class="alert alert-warning mb-3"><i class="fas fa-info-circle"></i> These invoices need payment. Upload your receipt to complete payment.</div>
-        <div class="table-responsive">
-            <table class="table sp-invoices-table">
-                <thead><tr><th>Invoice #</th><th>Date</th><th>Description</th><th class="sp-hide-mobile">Class</th><th>Amount</th><th class="sp-hide-mobile">Due Date</th><th>Action</th></tr></thead>
-                <tbody>
-                    <?php foreach ($unpaid_paginated['items'] as $inv): ?>
-                        <tr class="sp-invoice-row">
-                            <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
-                                <div class="d-md-none text-muted small"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></div>
-                                <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
-                                    <div class="d-md-none"><span class="badge bg-primary"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span></div>
-                                <?php endif; ?>
-                            </td>
-                            <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></td>
-                            <td><?php echo htmlspecialchars($inv['description']); ?>
-                                <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
-                                    <br><span class="badge bg-primary mt-1"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span>
-                                <?php endif; ?>
-                            </td>
-                            <td class="sp-hide-mobile"><?php echo $inv['class_code'] ? '<span class="badge bg-info">' . $inv['class_code'] . '</span>' : '-'; ?></td>
-                            <td><strong><?php echo formatCurrency($inv['amount']); ?></strong>
-                                <div class="d-md-none text-muted small">Due: <?php echo date('d M Y', strtotime($inv['due_date'])); ?></div></td>
-                            <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['due_date'])); ?></td>
-                            <td class="sp-invoice-actions-cell">
-                                <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#invoiceModal<?php echo $inv['id']; ?>"><i class="fas fa-upload"></i> Pay</button>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+        <?php if (count($unpaid_invoices) > 0): ?>
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark"><i class="fas fa-exclamation-triangle"></i> Unpaid Invoices
+                <span class="badge bg-dark float-end"><?php echo count($unpaid_invoices); ?></span></div>
+            <div class="card-body">
+                <div class="alert alert-warning mb-3"><i class="fas fa-info-circle"></i> These invoices need payment. Upload your receipt to complete payment.</div>
+                <div class="table-responsive">
+                    <table class="table sp-invoices-table">
+                        <thead><tr><th>Invoice #</th><th>Date</th><th>Description</th><th class="sp-hide-mobile">Class</th><th>Amount</th><th class="sp-hide-mobile">Due Date</th><th>Action</th></tr></thead>
+                        <tbody>
+                            <?php foreach ($unpaid_paginated['items'] as $inv): ?>
+                                <tr class="sp-invoice-row">
+                                    <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
+                                        <div class="d-md-none text-muted small"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></div>
+                                        <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+                                            <div class="d-md-none"><span class="badge bg-primary"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></td>
+                                    <td><?php echo htmlspecialchars($inv['description']); ?>
+                                        <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+                                            <br><span class="badge bg-primary mt-1"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="sp-hide-mobile"><?php echo $inv['class_code'] ? '<span class="badge bg-info">' . $inv['class_code'] . '</span>' : '-'; ?></td>
+                                    <td><strong><?php echo formatCurrency($inv['amount']); ?></strong>
+                                        <div class="d-md-none text-muted small">Due: <?php echo date('d M Y', strtotime($inv['due_date'])); ?></div></td>
+                                    <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['due_date'])); ?></td>
+                                    <td class="sp-invoice-actions-cell">
+                                        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#invoiceModal<?php echo $inv['id']; ?>"><i class="fas fa-upload"></i> Pay</button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php renderPagination($unpaid_paginated); ?>
+            </div>
         </div>
-        <?php renderPagination($unpaid_paginated); ?>
-    </div>
-</div>
-<?php endif; ?>
+        <?php endif; ?>
 
-<?php if (count($pending_invoices) > 0): ?>
-<div class="card mb-4">
-    <div class="card-header bg-info text-white"><i class="fas fa-clock"></i> Pending Verification
-        <span class="badge bg-light text-dark float-end"><?php echo count($pending_invoices); ?></span></div>
-    <div class="card-body">
-        <div class="alert alert-info mb-3"><i class="fas fa-hourglass-half"></i> Payment receipts submitted. Awaiting admin verification.</div>
-        <div class="table-responsive">
-            <table class="table sp-invoices-table">
-                <thead><tr><th>Invoice #</th><th>Date</th><th>Description</th><th class="sp-hide-mobile">Class</th><th>Amount</th><th class="sp-hide-mobile">Receipt Uploaded</th><th>Action</th></tr></thead>
-                <tbody>
-                    <?php foreach ($pending_paginated['items'] as $inv): ?>
-                        <tr class="sp-invoice-row">
-                            <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
-                                <div class="d-md-none"><span class="badge bg-info"><i class="fas fa-clock"></i> Pending</span></div>
-                                <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
-                                    <div class="d-md-none"><span class="badge bg-primary"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span></div>
-                                <?php endif; ?>
-                            </td>
-                            <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></td>
-                            <td><?php echo htmlspecialchars($inv['description']); ?>
-                                <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
-                                    <br><span class="badge bg-primary mt-1"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span>
-                                <?php endif; ?>
-                            </td>
-                            <td class="sp-hide-mobile"><?php echo $inv['class_code'] ? '<span class="badge bg-info">' . $inv['class_code'] . '</span>' : '-'; ?></td>
-                            <td><strong><?php echo formatCurrency($inv['amount']); ?></strong></td>
-                            <td class="sp-hide-mobile"><?php echo $inv['upload_date'] ? date('d M Y', strtotime($inv['upload_date'])) : '-'; ?></td>
-                            <td class="sp-invoice-actions-cell">
-                                <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#invoiceModal<?php echo $inv['id']; ?>"><i class="fas fa-eye"></i> View</button>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+        <?php if (count($pending_invoices) > 0): ?>
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white"><i class="fas fa-clock"></i> Pending Verification
+                <span class="badge bg-light text-dark float-end"><?php echo count($pending_invoices); ?></span></div>
+            <div class="card-body">
+                <div class="alert alert-info mb-3"><i class="fas fa-hourglass-half"></i> Payment receipts submitted. Awaiting admin verification.</div>
+                <div class="table-responsive">
+                    <table class="table sp-invoices-table">
+                        <thead><tr><th>Invoice #</th><th>Date</th><th>Description</th><th class="sp-hide-mobile">Class</th><th>Amount</th><th class="sp-hide-mobile">Receipt Uploaded</th><th>Action</th></tr></thead>
+                        <tbody>
+                            <?php foreach ($pending_paginated['items'] as $inv): ?>
+                                <tr class="sp-invoice-row">
+                                    <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
+                                        <div class="d-md-none"><span class="badge bg-info"><i class="fas fa-clock"></i> Pending</span></div>
+                                        <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+                                            <div class="d-md-none"><span class="badge bg-primary"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></td>
+                                    <td><?php echo htmlspecialchars($inv['description']); ?>
+                                        <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+                                            <br><span class="badge bg-primary mt-1"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="sp-hide-mobile"><?php echo $inv['class_code'] ? '<span class="badge bg-info">' . $inv['class_code'] . '</span>' : '-'; ?></td>
+                                    <td><strong><?php echo formatCurrency($inv['amount']); ?></strong></td>
+                                    <td class="sp-hide-mobile"><?php echo $inv['upload_date'] ? date('d M Y', strtotime($inv['upload_date'])) : '-'; ?></td>
+                                    <td class="sp-invoice-actions-cell">
+                                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#invoiceModal<?php echo $inv['id']; ?>"><i class="fas fa-eye"></i> View</button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php renderPagination($pending_paginated); ?>
+            </div>
         </div>
-        <?php renderPagination($pending_paginated); ?>
-    </div>
-</div>
-<?php endif; ?>
+        <?php endif; ?>
 
-<?php if (count($paid_invoices) > 0): ?>
-<div class="card mb-4">
-    <div class="card-header bg-success text-white"><i class="fas fa-check-circle"></i> Paid Invoices
-        <span class="badge bg-light text-dark float-end"><?php echo count($paid_invoices); ?></span></div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table sp-invoices-table">
-                <thead><tr><th>Invoice #</th><th>Date</th><th>Description</th><th class="sp-hide-mobile">Class</th><th>Amount</th><th class="sp-hide-mobile">Paid Date</th><th>Action</th></tr></thead>
-                <tbody>
-                    <?php foreach ($paid_paginated['items'] as $inv): ?>
-                        <tr class="sp-invoice-row">
-                            <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
-                                <div class="d-md-none"><span class="badge bg-success">PAID</span></div>
-                                <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
-                                    <div class="d-md-none"><span class="badge bg-primary"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span></div>
-                                <?php endif; ?>
-                            </td>
-                            <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></td>
-                            <td><?php echo htmlspecialchars($inv['description']); ?>
-                                <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
-                                    <br><span class="badge bg-primary mt-1"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span>
-                                <?php endif; ?>
-                            </td>
-                            <td class="sp-hide-mobile"><?php echo $inv['class_code'] ? '<span class="badge bg-info">' . $inv['class_code'] . '</span>' : '-'; ?></td>
-                            <td><strong><?php echo formatCurrency($inv['amount']); ?></strong></td>
-                            <td class="sp-hide-mobile"><?php echo $inv['paid_date'] ? date('d M Y', strtotime($inv['paid_date'])) : '-'; ?></td>
-                            <td class="sp-invoice-actions-cell">
-                                <a href="generate_invoice_pdf.php?invoice_id=<?php echo $inv['id']; ?>" class="btn btn-sm btn-success" target="_blank"><i class="fas fa-download"></i> PDF</a>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+        <?php if (count($paid_invoices) > 0): ?>
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white"><i class="fas fa-check-circle"></i> Paid Invoices
+                <span class="badge bg-light text-dark float-end"><?php echo count($paid_invoices); ?></span></div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table sp-invoices-table">
+                        <thead><tr><th>Invoice #</th><th>Date</th><th>Description</th><th class="sp-hide-mobile">Class</th><th>Amount</th><th class="sp-hide-mobile">Paid Date</th><th>Action</th></tr></thead>
+                        <tbody>
+                            <?php foreach ($paid_paginated['items'] as $inv): ?>
+                                <tr class="sp-invoice-row">
+                                    <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
+                                        <div class="d-md-none"><span class="badge bg-success">PAID</span></div>
+                                        <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+                                            <div class="d-md-none"><span class="badge bg-primary"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></td>
+                                    <td><?php echo htmlspecialchars($inv['description']); ?>
+                                        <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+                                            <br><span class="badge bg-primary mt-1"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="sp-hide-mobile"><?php echo $inv['class_code'] ? '<span class="badge bg-info">' . $inv['class_code'] . '</span>' : '-'; ?></td>
+                                    <td><strong><?php echo formatCurrency($inv['amount']); ?></strong></td>
+                                    <td class="sp-hide-mobile"><?php echo $inv['paid_date'] ? date('d M Y', strtotime($inv['paid_date'])) : '-'; ?></td>
+                                    <td class="sp-invoice-actions-cell">
+                                        <a href="generate_invoice_pdf.php?invoice_id=<?php echo $inv['id']; ?>" class="btn btn-sm btn-success" target="_blank"><i class="fas fa-download"></i> PDF</a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php renderPagination($paid_paginated); ?>
+            </div>
         </div>
-        <?php renderPagination($paid_paginated); ?>
-    </div>
-</div>
-<?php endif; ?>
-
-<?php if (count($all_invoices) === 0): ?>
-<div class="card"><div class="card-body text-center py-5">
-    <i class="fas fa-file-invoice fa-4x text-muted mb-3"></i>
-    <h5>No Invoices Found</h5>
-    <p class="text-muted"><?php echo $filter_month ? "No invoices found for " . htmlspecialchars($filter_month) . "." : "You don't have any invoices at the moment."; ?></p>
-</div></div>
+        <?php endif; ?>
+    <?php else: ?>
+        <div class="card"><div class="card-body text-center py-5">
+            <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+            <h5>No Invoices Found</h5>
+            <p class="text-muted">No invoices match your selected filters. Try adjusting your search criteria.</p>
+            <a href="?page=invoices" class="btn btn-primary"><i class="fas fa-redo"></i> Clear Filters</a>
+        </div></div>
+    <?php endif; ?>
 <?php endif; ?>
 
 <?php foreach ($all_invoices as $inv): ?>
