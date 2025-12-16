@@ -1,5 +1,5 @@
 <?php
-// admin_pages/students.php - View and edit students (form handlers removed)
+// admin_pages/students.php - View and edit students with enrollment management
 
 // Handle status filter
 $statusFilter = $_GET['status_filter'] ?? '';
@@ -97,7 +97,7 @@ $allClasses = $pdo->query("SELECT * FROM classes ORDER BY class_name")->fetchAll
                         <td><?php echo date('M j, Y', strtotime($student['created_at'])); ?></td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <button class="btn btn-primary" onclick="viewStudent(<?php echo $student['id']; ?>)" title="View Details">
+                                <button class="btn btn-primary" onclick="viewStudent(<?php echo $student['id']; ?>)" title="View & Manage Enrollments">
                                     <i class="fas fa-eye"></i>
                                 </button>
                                 <button class="btn btn-success" onclick="enrollStudent(<?php echo $student['id']; ?>)" title="Enroll in Class">
@@ -127,7 +127,7 @@ $allClasses = $pdo->query("SELECT * FROM classes ORDER BY class_name")->fetchAll
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title"><i class="fas fa-eye"></i> Student Details</h5>
+                <h5 class="modal-title"><i class="fas fa-eye"></i> Student Details & Enrollments</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="viewStudentContent">
@@ -248,8 +248,8 @@ function viewStudent(id) {
             let html = `
                 <div class="row">
                     <div class="col-md-6">
-                        <h6 class="text-muted mb-3">Personal Information</h6>
-                        <table class="table table-bordered">
+                        <h6 class="text-muted mb-3"><i class="fas fa-user"></i> Personal Information</h6>
+                        <table class="table table-bordered table-sm">
                             <tr>
                                 <th width="40%">Student ID:</th>
                                 <td><strong>${student.student_id}</strong></td>
@@ -282,33 +282,35 @@ function viewStudent(id) {
                         </table>
                     </div>
                     <div class="col-md-6">
-                        <h6 class="text-muted mb-3">Enrolled Classes</h6>
-                        <div class="list-group">
+                        <h6 class="text-muted mb-3"><i class="fas fa-chalkboard-teacher"></i> Enrolled Classes</h6>
             `;
 
             if (data.enrollments && data.enrollments.length > 0) {
+                html += '<div class="list-group">';
                 data.enrollments.forEach(enrollment => {
                     html += `
                         <div class="list-group-item">
                             <div class="d-flex justify-content-between align-items-start">
-                                <div>
+                                <div class="flex-grow-1">
                                     <strong>${enrollment.class_name}</strong><br>
-                                    <small class="text-muted">Code: ${enrollment.class_code}</small><br>
-                                    <small class="text-muted">Fee: RM ${parseFloat(enrollment.monthly_fee).toFixed(2)}/month</small>
+                                    <small class="text-muted">
+                                        <i class="fas fa-code"></i> ${enrollment.class_code} | 
+                                        <i class="fas fa-dollar-sign"></i> RM ${parseFloat(enrollment.monthly_fee).toFixed(2)}/month
+                                    </small>
                                 </div>
-                                <span class="badge ${enrollment.status === 'active' ? 'bg-success' : 'bg-secondary'}">
-                                    ${enrollment.status}
-                                </span>
+                                <button class="btn btn-danger btn-sm" onclick="unenrollStudent(${id}, ${enrollment.id}, '${enrollment.class_name}')" title="Remove from class">
+                                    <i class="fas fa-times"></i>
+                                </button>
                             </div>
                         </div>
                     `;
                 });
+                html += '</div>';
             } else {
-                html += '<div class="alert alert-info">No active enrollments</div>';
+                html += '<div class="alert alert-info"><i class="fas fa-info-circle"></i> No active enrollments</div>';
             }
 
             html += `
-                        </div>
                         <div class="mt-3">
                             <button class="btn btn-success btn-sm w-100" onclick="bootstrap.Modal.getInstance(document.getElementById('viewStudentModal')).hide(); enrollStudent(${id});">
                                 <i class="fas fa-plus"></i> Enroll in New Class
@@ -324,6 +326,32 @@ function viewStudent(id) {
             console.error('Error:', error);
             document.getElementById('viewStudentContent').innerHTML = '<div class="alert alert-danger">Failed to load student details.</div>';
         });
+}
+
+function unenrollStudent(studentId, enrollmentId, className) {
+    if (!confirm(`Remove student from "${className}"?\n\nThis will set the enrollment status to inactive.`)) {
+        return;
+    }
+
+    // Create a hidden form and submit
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'admin_handler.php';
+
+    const actionInput = document.createElement('input');
+    actionInput.type = 'hidden';
+    actionInput.name = 'action';
+    actionInput.value = 'unenroll_student';
+
+    const enrollmentIdInput = document.createElement('input');
+    enrollmentIdInput.type = 'hidden';
+    enrollmentIdInput.name = 'enrollment_id';
+    enrollmentIdInput.value = enrollmentId;
+
+    form.appendChild(actionInput);
+    form.appendChild(enrollmentIdInput);
+    document.body.appendChild(form);
+    form.submit();
 }
 
 function enrollStudent(id) {
