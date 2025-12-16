@@ -564,10 +564,6 @@ $page = $_GET['page'] ?? 'login';
                 <i class="fas fa-file-invoice-dollar"></i>
                 <span>Invoices</span>
             </a>
-            <a class="nav-link <?php echo $page === 'payments' ? 'active' : ''; ?>" href="?page=payments">
-                <i class="fas fa-credit-card"></i>
-                <span>Payments</span>
-            </a>
             <a class="nav-link <?php echo $page === 'attendance' ? 'active' : ''; ?>" href="?page=attendance">
                 <i class="fas fa-calendar-check"></i>
                 <span>Attendance</span>
@@ -588,8 +584,7 @@ $page = $_GET['page'] ?? 'login';
                         ($page === 'registrations' ? 'user-plus' :
                         ($page === 'students' ? 'users' : 
                         ($page === 'classes' ? 'chalkboard-teacher' : 
-                        ($page === 'invoices' ? 'file-invoice-dollar' : 
-                        ($page === 'payments' ? 'credit-card' : 'calendar-check'))))); 
+                        ($page === 'invoices' ? 'file-invoice-dollar' : 'calendar-check')))); 
                 ?>"></i>
                 <?php echo ucfirst($page); ?>
             </h3>
