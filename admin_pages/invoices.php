@@ -12,12 +12,17 @@ $paid_count = $stmt->fetch()['total'];
 $stmt = $pdo->query("SELECT SUM(amount) as total FROM invoices WHERE status IN ('unpaid', 'pending')");
 $outstanding_amount = $stmt->fetch()['total'] ?? 0;
 
-// Get all invoices
+// Get all invoices with payment information
 $stmt = $pdo->query("
-    SELECT i.*, s.student_id, s.full_name, s.email, c.class_code, c.class_name
+    SELECT i.*, 
+           s.student_id, s.full_name, s.email, 
+           c.class_code, c.class_name,
+           p.id as payment_id, p.verification_status, p.receipt_data, p.receipt_mime_type, 
+           p.upload_date, p.admin_notes
     FROM invoices i
     JOIN students s ON i.student_id = s.id
     LEFT JOIN classes c ON i.class_id = c.id
+    LEFT JOIN payments p ON i.id = p.invoice_id
     ORDER BY 
         CASE 
             WHEN i.status = 'unpaid' THEN 1
@@ -68,6 +73,8 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
     .table-responsive .table tbody tr { display: table-row !important; }
     .table-responsive .table tbody tr td { display: table-cell !important; }
 }
+.receipt-image { max-width: 100%; height: auto; border-radius: 8px; border: 2px solid #e2e8f0; }
+.receipt-pdf { width: 100%; height: 500px; border: 2px solid #e2e8f0; border-radius: 8px; }
 </style>
 
 <div class="row mb-4">
@@ -107,7 +114,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
 </div>
 
 <div class="card">
-    <div class="card-header"><i class="fas fa-file-invoice-dollar"></i> All Invoices (<?php echo count($all_invoices); ?>)</div>
+    <div class="card-header"><i class="fas fa-file-invoice-dollar"></i> All Invoices & Payments (<?php echo count($all_invoices); ?>)</div>
     <div class="card-body">
         <?php if (count($all_invoices) > 0): ?>
             <div class="table-responsive">
@@ -125,10 +132,15 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
     $status_badge = $invoice['status'] === 'paid' ? 'success' : ($invoice['status'] === 'pending' ? 'info' : ($invoice['status'] === 'overdue' ? 'danger' : ($invoice['status'] === 'cancelled' ? 'secondary' : 'warning')));
     $status_text = $invoice['status'] === 'paid' ? 'Paid' : ($invoice['status'] === 'pending' ? 'Pending Verification' : ($invoice['status'] === 'overdue' ? 'Overdue' : ($invoice['status'] === 'cancelled' ? 'Cancelled' : 'Unpaid')));
     $status_icon = $invoice['status'] === 'paid' ? 'check-circle' : ($invoice['status'] === 'pending' ? 'clock' : ($invoice['status'] === 'overdue' ? 'exclamation-triangle' : ($invoice['status'] === 'cancelled' ? 'ban' : 'exclamation-circle')));
+    $has_payment = !empty($invoice['payment_id']);
 ?>
     <tr>
         <td class="text-nowrap"><strong><?php echo htmlspecialchars($invoice['invoice_number']); ?></strong>
-            <div class="d-md-none text-muted small"><?php echo formatDate($invoice['created_at']); ?></div></td>
+            <div class="d-md-none text-muted small"><?php echo formatDate($invoice['created_at']); ?></div>
+            <?php if ($has_payment): ?>
+                <div class="d-md-none"><span class="badge bg-info"><i class="fas fa-receipt"></i> Payment Uploaded</span></div>
+            <?php endif; ?>
+        </td>
         <td class="hide-mobile"><?php echo formatDate($invoice['created_at']); ?></td>
         <td><div><?php echo htmlspecialchars($invoice['full_name']); ?></div>
             <div class="d-md-none text-muted small"><?php echo htmlspecialchars($invoice['student_id']); ?> • <?php echo ucfirst($invoice['invoice_type']); ?></div></td>
@@ -137,7 +149,12 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
         <td><strong><?php echo formatCurrency($invoice['amount']); ?></strong>
             <div class="d-md-none text-muted small">Due: <?php echo formatDate($invoice['due_date']); ?></div></td>
         <td class="hide-mobile"><?php echo formatDate($invoice['due_date']); ?></td>
-        <td><span class="badge bg-<?php echo $status_badge; ?>"><i class="fas fa-<?php echo $status_icon; ?>"></i> <?php echo $status_text; ?></span></td>
+        <td>
+            <span class="badge bg-<?php echo $status_badge; ?>"><i class="fas fa-<?php echo $status_icon; ?>"></i> <?php echo $status_text; ?></span>
+            <?php if ($has_payment): ?>
+                <br><span class="badge bg-info mt-1"><i class="fas fa-receipt"></i> Receipt</span>
+            <?php endif; ?>
+        </td>
         <td class="invoice-actions-cell">
             <div class="btn-group btn-group-sm">
                 <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#viewInvoiceModal<?php echo $invoice['id']; ?>"><i class="fas fa-eye"></i></button>
@@ -164,12 +181,13 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
 
 <?php foreach ($all_invoices as $invoice): ?>
 <div class="modal fade" id="viewInvoiceModal<?php echo $invoice['id']; ?>" tabindex="-1">
-    <div class="modal-dialog"><div class="modal-content">
-        <div class="modal-header"><h5 class="modal-title"><i class="fas fa-file-invoice"></i> Invoice Details</h5>
+    <div class="modal-dialog modal-lg"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title"><i class="fas fa-file-invoice"></i> Invoice & Payment Details</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
+            <h6 class="mb-3"><i class="fas fa-file-invoice"></i> Invoice Information</h6>
             <table class="table table-bordered">
-                <tr><th width="40%">Invoice Number</th><td><?php echo htmlspecialchars($invoice['invoice_number']); ?></td></tr>
+                <tr><th width="30%">Invoice Number</th><td><?php echo htmlspecialchars($invoice['invoice_number']); ?></td></tr>
                 <tr><th>Student</th><td><?php echo htmlspecialchars($invoice['full_name']); ?></td></tr>
                 <tr><th>Student ID</th><td><span class="badge bg-secondary"><?php echo htmlspecialchars($invoice['student_id']); ?></span></td></tr>
                 <?php if ($invoice['class_code']): ?>
@@ -185,6 +203,66 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                 <?php endif; ?>
                 <tr><th>Created Date</th><td><?php echo formatDateTime($invoice['created_at']); ?></td></tr>
             </table>
+
+            <?php if (!empty($invoice['payment_id'])): ?>
+                <hr class="my-4">
+                <h6 class="mb-3"><i class="fas fa-receipt"></i> Payment Information</h6>
+                <table class="table table-bordered">
+                    <tr><th width="30%">Upload Date</th><td><?php echo formatDateTime($invoice['upload_date']); ?></td></tr>
+                    <tr><th>Verification Status</th><td>
+                        <?php if ($invoice['verification_status'] === 'verified'): ?>
+                            <span class="badge bg-success"><i class="fas fa-check-circle"></i> Verified</span>
+                        <?php elseif ($invoice['verification_status'] === 'rejected'): ?>
+                            <span class="badge bg-danger"><i class="fas fa-times-circle"></i> Rejected</span>
+                        <?php else: ?>
+                            <span class="badge bg-warning"><i class="fas fa-clock"></i> Pending</span>
+                        <?php endif; ?>
+                    </td></tr>
+                    <?php if (!empty($invoice['admin_notes'])): ?>
+                    <tr><th>Admin Notes</th><td><?php echo nl2br(htmlspecialchars($invoice['admin_notes'])); ?></td></tr>
+                    <?php endif; ?>
+                </table>
+
+                <h6 class="mb-3">Payment Receipt</h6>
+                <?php if (!empty($invoice['receipt_data']) && !empty($invoice['receipt_mime_type'])): ?>
+                    <?php if ($invoice['receipt_mime_type'] === 'application/pdf'): ?>
+                        <embed src="data:<?php echo $invoice['receipt_mime_type']; ?>;base64,<?php echo $invoice['receipt_data']; ?>" 
+                               type="<?php echo $invoice['receipt_mime_type']; ?>" class="receipt-pdf">
+                    <?php else: ?>
+                        <img src="data:<?php echo $invoice['receipt_mime_type']; ?>;base64,<?php echo $invoice['receipt_data']; ?>" 
+                             alt="Receipt" class="receipt-image">
+                    <?php endif; ?>
+                <?php else: ?>
+                    <div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> No receipt image available.</div>
+                <?php endif; ?>
+
+                <?php if ($invoice['verification_status'] === 'pending'): ?>
+                    <hr class="my-4">
+                    <h6 class="mb-3">Verify Payment</h6>
+                    <form method="POST" action="admin_handler.php">
+                        <input type="hidden" name="action" value="verify_payment">
+                        <input type="hidden" name="payment_id" value="<?php echo $invoice['payment_id']; ?>">
+                        <input type="hidden" name="invoice_id" value="<?php echo $invoice['id']; ?>">
+                        <div class="mb-3">
+                            <label class="form-label">Verification Status *</label>
+                            <select name="verification_status" class="form-select" required>
+                                <option value="">Select Status</option>
+                                <option value="verified">✓ Verified - Approve & Mark Invoice as Paid</option>
+                                <option value="rejected">✗ Rejected - Decline Payment</option>
+                            </select>
+                        </div>
+                        <div class="alert alert-info"><i class="fas fa-info-circle"></i> Approving will automatically mark invoice as PAID.</div>
+                        <div class="mb-3">
+                            <label class="form-label">Admin Notes (Optional)</label>
+                            <textarea name="admin_notes" class="form-control" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Verify Payment</button>
+                    </form>
+                <?php endif; ?>
+            <?php else: ?>
+                <hr class="my-4">
+                <div class="alert alert-secondary"><i class="fas fa-info-circle"></i> <strong>No payment uploaded yet.</strong> Student hasn't submitted payment receipt for this invoice.</div>
+            <?php endif; ?>
         </div>
         <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div>
     </div></div>
