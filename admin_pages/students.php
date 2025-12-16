@@ -21,6 +21,9 @@ $students = $stmt->fetchAll();
 
 // Get all unique statuses for filter
 $statusList = $pdo->query("SELECT DISTINCT student_status FROM students ORDER BY student_status")->fetchAll(PDO::FETCH_COLUMN);
+
+// Get all classes for enrollment dropdown
+$allClasses = $pdo->query("SELECT * FROM classes ORDER BY class_name")->fetchAll();
 ?>
 
 <div class="card">
@@ -94,10 +97,13 @@ $statusList = $pdo->query("SELECT DISTINCT student_status FROM students ORDER BY
                         <td><?php echo date('M j, Y', strtotime($student['created_at'])); ?></td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <button class="btn btn-primary" onclick="viewStudent(<?php echo $student['id']; ?>)">
+                                <button class="btn btn-primary" onclick="viewStudent(<?php echo $student['id']; ?>)" title="View Details">
                                     <i class="fas fa-eye"></i>
                                 </button>
-                                <button class="btn btn-warning" onclick="editStudent(<?php echo $student['id']; ?>)">
+                                <button class="btn btn-success" onclick="enrollStudent(<?php echo $student['id']; ?>)" title="Enroll in Class">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button class="btn btn-warning" onclick="editStudent(<?php echo $student['id']; ?>)" title="Edit Student">
                                     <i class="fas fa-edit"></i>
                                 </button>
                             </div>
@@ -135,6 +141,50 @@ $statusList = $pdo->query("SELECT DISTINCT student_status FROM students ORDER BY
     </div>
 </div>
 
+<!-- Enroll Student Modal -->
+<div class="modal fade" id="enrollStudentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="admin_handler.php" id="enrollStudentForm">
+                <input type="hidden" name="action" value="enroll_student">
+                <input type="hidden" name="student_id" id="enroll_student_id">
+                
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="fas fa-plus"></i> Enroll Student in Class</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <strong><i class="fas fa-user"></i> <span id="enroll_student_name"></span></strong>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Select Class *</label>
+                        <select class="form-select" name="class_id" id="enroll_class_id" required>
+                            <option value="">Choose a class...</option>
+                            <?php foreach ($allClasses as $class): ?>
+                                <option value="<?php echo $class['id']; ?>">
+                                    <?php echo htmlspecialchars($class['class_name']); ?> 
+                                    (<?php echo htmlspecialchars($class['class_code']); ?>) - 
+                                    RM <?php echo number_format($class['monthly_fee'], 2); ?>/month
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="alert alert-warning">
+                        <small><i class="fas fa-exclamation-triangle"></i> The student will be enrolled immediately. Make sure to create corresponding invoices for monthly payments.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check"></i> Enroll Student
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Edit Student Modal -->
 <div class="modal fade" id="editStudentModal" tabindex="-1">
     <div class="modal-dialog">
@@ -163,9 +213,9 @@ $statusList = $pdo->query("SELECT DISTINCT student_status FROM students ORDER BY
                     <div class="mb-3">
                         <label class="form-label">Status</label>
                         <select class="form-select" name="student_status" id="edit_student_status" required>
-                            <option value="Student">Student</option>
-                            <option value="State Team">State Team</option>
-                            <option value="Backup Team">Backup Team</option>
+                            <option value="Normal Student">Normal Student</option>
+                            <option value="State Team 州队">State Team 州队</option>
+                            <option value="Backup Team 后备队">Backup Team 后备队</option>
                         </select>
                     </div>
                 </div>
@@ -259,6 +309,11 @@ function viewStudent(id) {
 
             html += `
                         </div>
+                        <div class="mt-3">
+                            <button class="btn btn-success btn-sm w-100" onclick="bootstrap.Modal.getInstance(document.getElementById('viewStudentModal')).hide(); enrollStudent(${id});">
+                                <i class="fas fa-plus"></i> Enroll in New Class
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -267,8 +322,20 @@ function viewStudent(id) {
         })
         .catch(error => {
             console.error('Error:', error);
-            document.getElementById('viewStudentContent').innerHTML = '<div class="alert alert-danger">Failed to load student details. Please check the console for more information.</div>';
+            document.getElementById('viewStudentContent').innerHTML = '<div class="alert alert-danger">Failed to load student details.</div>';
         });
+}
+
+function enrollStudent(id) {
+    const student = studentsData.find(s => s.id == id);
+    if (!student) return;
+
+    document.getElementById('enroll_student_id').value = student.id;
+    document.getElementById('enroll_student_name').textContent = student.full_name;
+    document.getElementById('enroll_class_id').value = '';
+
+    const modal = new bootstrap.Modal(document.getElementById('enrollStudentModal'));
+    modal.show();
 }
 
 function editStudent(id) {
