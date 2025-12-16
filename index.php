@@ -197,7 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         // Invoice Payment
         $class_id = !empty($_POST['invoice_class_id']) ? $_POST['invoice_class_id'] : null;
         $amount = $_POST['invoice_amount'];
-        $payment_month = $_POST['invoice_payment_month'];
+        $payment_month = !empty($_POST['invoice_payment_month']) ? $_POST['invoice_payment_month'] : date('M Y');
         $notes = $_POST['notes'] ?? '';
 
         // If no class_id from invoice, get first enrolled class
