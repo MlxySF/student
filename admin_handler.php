@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
                     c.description
                 FROM enrollments e
                 JOIN classes c ON e.class_id = c.id
-                WHERE e.student_id = ?
+                WHERE e.student_id = ? AND e.status = 'active'
                 ORDER BY e.enrollment_date DESC
             ");
             $stmt->execute([$student_id]);
@@ -194,11 +194,39 @@ if ($action === 'enroll_student') {
     $class_id = $_POST['class_id'];
 
     try {
-        $stmt = $pdo->prepare("INSERT INTO enrollments (student_id, class_id, enrollment_date, status) VALUES (?, ?, NOW(), 'active')");
-        $stmt->execute([$student_id, $class_id]);
-        $_SESSION['success'] = "Student enrolled!";
+        // Check if already enrolled
+        $checkStmt = $pdo->prepare("SELECT id FROM enrollments WHERE student_id = ? AND class_id = ? AND status = 'active'");
+        $checkStmt->execute([$student_id, $class_id]);
+        
+        if ($checkStmt->fetch()) {
+            $_SESSION['error'] = "Student is already enrolled in this class.";
+        } else {
+            $stmt = $pdo->prepare("INSERT INTO enrollments (student_id, class_id, enrollment_date, status) VALUES (?, ?, NOW(), 'active')");
+            $stmt->execute([$student_id, $class_id]);
+            $_SESSION['success'] = "Student enrolled successfully!";
+        }
     } catch(PDOException $e) {
-        $_SESSION['error'] = "Already enrolled or error occurred.";
+        $_SESSION['error'] = "Enrollment failed: " . $e->getMessage();
+    }
+    header('Location: admin.php?page=students');
+    exit;
+}
+
+if ($action === 'unenroll_student') {
+    $enrollment_id = $_POST['enrollment_id'];
+
+    try {
+        // Update enrollment status to inactive instead of deleting
+        $stmt = $pdo->prepare("UPDATE enrollments SET status = 'inactive' WHERE id = ?");
+        $stmt->execute([$enrollment_id]);
+        
+        if ($stmt->rowCount() > 0) {
+            $_SESSION['success'] = "Student unenrolled successfully!";
+        } else {
+            $_SESSION['error'] = "Enrollment not found or already inactive.";
+        }
+    } catch(PDOException $e) {
+        $_SESSION['error'] = "Unenrollment failed: " . $e->getMessage();
     }
     header('Location: admin.php?page=students');
     exit;
