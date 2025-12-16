@@ -1,8 +1,11 @@
 <?php
 // Student Invoices & Payments Page - Unified view
 
+// Month filter
+$filter_month = isset($_GET['filter_month']) ? $_GET['filter_month'] : '';
+
 // Get all invoices with payment information for this student
-$stmt = $pdo->prepare("
+$sql = "
     SELECT i.*, 
            c.class_code, c.class_name,
            p.id as payment_id, p.verification_status, p.upload_date,
@@ -10,7 +13,13 @@ $stmt = $pdo->prepare("
     FROM invoices i
     LEFT JOIN classes c ON i.class_id = c.id
     LEFT JOIN payments p ON i.id = p.invoice_id
-    WHERE i.student_id = ?
+    WHERE i.student_id = ?";
+
+if ($filter_month) {
+    $sql .= " AND i.payment_month = ?";
+}
+
+$sql .= "
     ORDER BY 
         CASE 
             WHEN i.status = 'overdue' THEN 1
@@ -22,9 +31,20 @@ $stmt = $pdo->prepare("
         END,
         i.due_date ASC,
         i.created_at DESC
-");
-$stmt->execute([getStudentId()]);
+";
+
+$stmt = $pdo->prepare($sql);
+if ($filter_month) {
+    $stmt->execute([getStudentId(), $filter_month]);
+} else {
+    $stmt->execute([getStudentId()]);
+}
 $all_invoices = $stmt->fetchAll();
+
+// Get unique months for filter dropdown
+$months_stmt = $pdo->prepare("SELECT DISTINCT payment_month FROM invoices WHERE student_id = ? AND payment_month IS NOT NULL AND payment_month != '' ORDER BY payment_month DESC");
+$months_stmt->execute([getStudentId()]);
+$available_months = $months_stmt->fetchAll(PDO::FETCH_COLUMN);
 
 // Separate by status
 $overdue_invoices = array_values(array_filter($all_invoices, fn($i) => $i['status'] === 'overdue'));
@@ -63,6 +83,7 @@ $pending_paginated = paginateInvoices($pending_invoices, 'pending_page');
 $paid_paginated = paginateInvoices($paid_invoices, 'paid_page');
 
 function renderPagination($data) {
+    global $filter_month;
     if ($data['total_pages'] <= 1) return;
     $current_page = $data['page'];
     $total_pages = $data['total_pages'];
@@ -71,23 +92,25 @@ function renderPagination($data) {
     $start_page = max(1, $current_page - $range);
     $end_page = min($total_pages, $current_page + $range);
     
+    $filter_param = $filter_month ? '&filter_month=' . urlencode($filter_month) : '';
+    
     echo '<nav aria-label="Invoice pagination" class="mt-4"><ul class="pagination justify-content-center flex-wrap">';
     echo '<li class="page-item ' . ($current_page <= 1 ? 'disabled' : '') . '">';
-    echo '<a class="page-link" href="?page=invoices&' . $param . '=' . ($current_page - 1) . '">&laquo;</a></li>';
+    echo '<a class="page-link" href="?page=invoices' . $filter_param . '&' . $param . '=' . ($current_page - 1) . '">&laquo;</a></li>';
     if ($start_page > 1) {
-        echo '<li class="page-item"><a class="page-link" href="?page=invoices&' . $param . '=1">1</a></li>';
+        echo '<li class="page-item"><a class="page-link" href="?page=invoices' . $filter_param . '&' . $param . '=1">1</a></li>';
         if ($start_page > 2) echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
     }
     for ($i = $start_page; $i <= $end_page; $i++) {
         echo '<li class="page-item ' . ($i == $current_page ? 'active' : '') . '">';
-        echo '<a class="page-link" href="?page=invoices&' . $param . '=' . $i . '">' . $i . '</a></li>';
+        echo '<a class="page-link" href="?page=invoices' . $filter_param . '&' . $param . '=' . $i . '">' . $i . '</a></li>';
     }
     if ($end_page < $total_pages) {
         if ($end_page < $total_pages - 1) echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
-        echo '<li class="page-item"><a class="page-link" href="?page=invoices&' . $param . '=' . $total_pages . '">' . $total_pages . '</a></li>';
+        echo '<li class="page-item"><a class="page-link" href="?page=invoices' . $filter_param . '&' . $param . '=' . $total_pages . '">' . $total_pages . '</a></li>';
     }
     echo '<li class="page-item ' . ($current_page >= $total_pages ? 'disabled' : '') . '">';
-    echo '<a class="page-link" href="?page=invoices&' . $param . '=' . ($current_page + 1) . '">&raquo;</a></li>';
+    echo '<a class="page-link" href="?page=invoices' . $filter_param . '&' . $param . '=' . ($current_page + 1) . '">&raquo;</a></li>';
     echo '</ul></nav>';
 }
 ?>
@@ -124,6 +147,38 @@ function renderPagination($data) {
 .receipt-image { max-width: 100%; height: auto; border-radius: 8px; border: 2px solid #e2e8f0; }
 .receipt-pdf { width: 100%; height: 500px; border: 2px solid #e2e8f0; border-radius: 8px; }
 </style>
+
+<!-- Month Filter -->
+<?php if (count($available_months) > 0): ?>
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="" class="row g-3 align-items-end">
+            <input type="hidden" name="page" value="invoices">
+            <div class="col-md-4">
+                <label class="form-label"><i class="fas fa-filter"></i> Filter by Payment Month</label>
+                <select name="filter_month" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Months</option>
+                    <?php foreach ($available_months as $month): ?>
+                        <option value="<?php echo htmlspecialchars($month); ?>" <?php echo $filter_month === $month ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($month); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <?php if ($filter_month): ?>
+            <div class="col-md-auto">
+                <a href="?page=invoices" class="btn btn-secondary"><i class="fas fa-times"></i> Clear Filter</a>
+            </div>
+            <?php endif; ?>
+        </form>
+        <?php if ($filter_month): ?>
+            <div class="alert alert-info mt-3 mb-0">
+                <i class="fas fa-info-circle"></i> Showing invoices for <strong><?php echo htmlspecialchars($filter_month); ?></strong>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+<?php endif; ?>
 
 <div class="row mb-4">
     <div class="col-md-4 mb-3">
@@ -314,8 +369,8 @@ function renderPagination($data) {
 <?php if (count($all_invoices) === 0): ?>
 <div class="card"><div class="card-body text-center py-5">
     <i class="fas fa-file-invoice fa-4x text-muted mb-3"></i>
-    <h5>No Invoices Yet</h5>
-    <p class="text-muted">You don't have any invoices at the moment.</p>
+    <h5>No Invoices Found</h5>
+    <p class="text-muted"><?php echo $filter_month ? "No invoices found for " . htmlspecialchars($filter_month) . "." : "You don't have any invoices at the moment."; ?></p>
 </div></div>
 <?php endif; ?>
 
