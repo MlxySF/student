@@ -163,9 +163,17 @@ function renderPagination($data) {
                         <tr class="sp-invoice-row table-danger">
                             <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
                                 <div class="d-md-none text-muted small"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></div>
-                                <div class="d-md-none"><span class="badge bg-danger">OVERDUE</span></div></td>
+                                <div class="d-md-none"><span class="badge bg-danger">OVERDUE</span></div>
+                                <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+                                    <div class="d-md-none"><span class="badge bg-primary"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span></div>
+                                <?php endif; ?>
+                            </td>
                             <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></td>
-                            <td><?php echo htmlspecialchars($inv['description']); ?></td>
+                            <td><?php echo htmlspecialchars($inv['description']); ?>
+                                <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+                                    <br><span class="badge bg-primary mt-1"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span>
+                                <?php endif; ?>
+                            </td>
                             <td class="sp-hide-mobile"><?php echo $inv['class_code'] ? '<span class="badge bg-info">' . $inv['class_code'] . '</span>' : '-'; ?></td>
                             <td><strong class="text-danger"><?php echo formatCurrency($inv['amount']); ?></strong>
                                 <div class="d-md-none text-muted small">Due: <?php echo date('d M Y', strtotime($inv['due_date'])); ?></div></td>
@@ -196,9 +204,17 @@ function renderPagination($data) {
                     <?php foreach ($unpaid_paginated['items'] as $inv): ?>
                         <tr class="sp-invoice-row">
                             <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
-                                <div class="d-md-none text-muted small"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></div></td>
+                                <div class="d-md-none text-muted small"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></div>
+                                <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+                                    <div class="d-md-none"><span class="badge bg-primary"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span></div>
+                                <?php endif; ?>
+                            </td>
                             <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></td>
-                            <td><?php echo htmlspecialchars($inv['description']); ?></td>
+                            <td><?php echo htmlspecialchars($inv['description']); ?>
+                                <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+                                    <br><span class="badge bg-primary mt-1"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span>
+                                <?php endif; ?>
+                            </td>
                             <td class="sp-hide-mobile"><?php echo $inv['class_code'] ? '<span class="badge bg-info">' . $inv['class_code'] . '</span>' : '-'; ?></td>
                             <td><strong><?php echo formatCurrency($inv['amount']); ?></strong>
                                 <div class="d-md-none text-muted small">Due: <?php echo date('d M Y', strtotime($inv['due_date'])); ?></div></td>
@@ -229,9 +245,17 @@ function renderPagination($data) {
                     <?php foreach ($pending_paginated['items'] as $inv): ?>
                         <tr class="sp-invoice-row">
                             <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
-                                <div class="d-md-none"><span class="badge bg-info"><i class="fas fa-clock"></i> Pending</span></div></td>
+                                <div class="d-md-none"><span class="badge bg-info"><i class="fas fa-clock"></i> Pending</span></div>
+                                <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+                                    <div class="d-md-none"><span class="badge bg-primary"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span></div>
+                                <?php endif; ?>
+                            </td>
                             <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></td>
-                            <td><?php echo htmlspecialchars($inv['description']); ?></td>
+                            <td><?php echo htmlspecialchars($inv['description']); ?>
+                                <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+                                    <br><span class="badge bg-primary mt-1"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span>
+                                <?php endif; ?>
+                            </td>
                             <td class="sp-hide-mobile"><?php echo $inv['class_code'] ? '<span class="badge bg-info">' . $inv['class_code'] . '</span>' : '-'; ?></td>
                             <td><strong><?php echo formatCurrency($inv['amount']); ?></strong></td>
                             <td class="sp-hide-mobile"><?php echo $inv['upload_date'] ? date('d M Y', strtotime($inv['upload_date'])) : '-'; ?></td>
@@ -260,9 +284,17 @@ function renderPagination($data) {
                     <?php foreach ($paid_paginated['items'] as $inv): ?>
                         <tr class="sp-invoice-row">
                             <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
-                                <div class="d-md-none"><span class="badge bg-success">PAID</span></div></td>
+                                <div class="d-md-none"><span class="badge bg-success">PAID</span></div>
+                                <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+                                    <div class="d-md-none"><span class="badge bg-primary"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span></div>
+                                <?php endif; ?>
+                            </td>
                             <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></td>
-                            <td><?php echo htmlspecialchars($inv['description']); ?></td>
+                            <td><?php echo htmlspecialchars($inv['description']); ?>
+                                <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+                                    <br><span class="badge bg-primary mt-1"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span>
+                                <?php endif; ?>
+                            </td>
                             <td class="sp-hide-mobile"><?php echo $inv['class_code'] ? '<span class="badge bg-info">' . $inv['class_code'] . '</span>' : '-'; ?></td>
                             <td><strong><?php echo formatCurrency($inv['amount']); ?></strong></td>
                             <td class="sp-hide-mobile"><?php echo $inv['paid_date'] ? date('d M Y', strtotime($inv['paid_date'])) : '-'; ?></td>
@@ -303,6 +335,9 @@ function renderPagination($data) {
       <table class="table table-bordered mb-4">
         <tr><th width="30%">Invoice #</th><td><?php echo htmlspecialchars($inv['invoice_number']); ?></td></tr>
         <tr><th>Description</th><td><?php echo nl2br(htmlspecialchars($inv['description'])); ?></td></tr>
+        <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+        <tr><th>Payment Month</th><td><span class="badge bg-primary"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span></td></tr>
+        <?php endif; ?>
         <tr><th>Amount</th><td><strong><?php echo formatCurrency($inv['amount']); ?></strong></td></tr>
         <tr><th>Due Date</th><td><?php echo date('d M Y', strtotime($inv['due_date'])); ?></td></tr>
         <?php if ($inv['class_name']): ?>
