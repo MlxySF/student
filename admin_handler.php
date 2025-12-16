@@ -14,7 +14,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
     $action = $_GET['action'];
     
     if ($action === 'get_student_details') {
-        // Check admin login for GET requests too
         if (!isAdminLoggedIn()) {
             echo json_encode(['error' => 'Unauthorized']);
             exit;
@@ -23,18 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
         $student_id = $_GET['student_id'] ?? 0;
         
         try {
-            // Get student enrollments with class details (removed day and time columns)
             $stmt = $pdo->prepare("
                 SELECT 
-                    e.id,
-                    e.student_id,
-                    e.class_id,
-                    e.enrollment_date,
-                    e.status,
-                    c.class_name,
-                    c.class_code,
-                    c.monthly_fee,
-                    c.description
+                    e.id, e.student_id, e.class_id, e.enrollment_date, e.status,
+                    c.class_name, c.class_code, c.monthly_fee, c.description
                 FROM enrollments e
                 JOIN classes c ON e.class_id = c.id
                 WHERE e.student_id = ? AND e.status = 'active'
@@ -69,7 +60,6 @@ $action = $_POST['action'] ?? '';
 if ($action === 'verify_registration') {
     $regId = $_POST['registration_id'];
     try {
-        // First, let's check if the record exists and what its current status is
         $checkStmt = $pdo->prepare("SELECT id, registration_number, payment_status FROM registrations WHERE id = ?");
         $checkStmt->execute([$regId]);
         $registration = $checkStmt->fetch();
@@ -77,12 +67,10 @@ if ($action === 'verify_registration') {
         if (!$registration) {
             $_SESSION['error'] = "Registration not found (ID: $regId)";
         } else {
-            // Update registration status to 'approved'
             $stmt = $pdo->prepare("UPDATE registrations SET payment_status = ? WHERE id = ?");
             $result = $stmt->execute(['approved', $regId]);
             $rowCount = $stmt->rowCount();
             
-            // Verify the update worked
             $verifyStmt = $pdo->prepare("SELECT payment_status FROM registrations WHERE id = ?");
             $verifyStmt->execute([$regId]);
             $updated = $verifyStmt->fetch();
@@ -91,7 +79,7 @@ if ($action === 'verify_registration') {
                 $_SESSION['success'] = "Registration {$registration['registration_number']} approved successfully!";
             } else {
                 $currentStatus = $updated['payment_status'] ?? 'NULL';
-                $_SESSION['error'] = "Update executed but status is still: {$currentStatus}. Rows affected: {$rowCount}. This might be a database issue.";
+                $_SESSION['error'] = "Update executed but status is still: {$currentStatus}. Rows affected: {$rowCount}.";
             }
         }
     } catch (PDOException $e) {
@@ -114,7 +102,6 @@ if ($action === 'reject_registration') {
             $stmt = $pdo->prepare("UPDATE registrations SET payment_status = ? WHERE id = ?");
             $result = $stmt->execute(['rejected', $regId]);
             
-            // Verify the update
             $verifyStmt = $pdo->prepare("SELECT payment_status FROM registrations WHERE id = ?");
             $verifyStmt->execute([$regId]);
             $updated = $verifyStmt->fetch();
@@ -160,7 +147,6 @@ if ($action === 'edit_student') {
     $phone = trim($_POST['phone']);
     $student_status = $_POST['student_status'] ?? 'Student';
 
-    // Check if email is already used by another student
     $stmt = $pdo->prepare("SELECT id FROM students WHERE email = ? AND id != ?");
     $stmt->execute([$email, $id]);
 
@@ -194,25 +180,21 @@ if ($action === 'enroll_student') {
     $class_id = $_POST['class_id'];
 
     try {
-        // First check if already actively enrolled
         $checkActive = $pdo->prepare("SELECT id FROM enrollments WHERE student_id = ? AND class_id = ? AND status = 'active'");
         $checkActive->execute([$student_id, $class_id]);
         
         if ($checkActive->fetch()) {
             $_SESSION['error'] = "Student is already enrolled in this class.";
         } else {
-            // Check if there's an inactive enrollment to reactivate
             $checkInactive = $pdo->prepare("SELECT id FROM enrollments WHERE student_id = ? AND class_id = ? AND status = 'inactive'");
             $checkInactive->execute([$student_id, $class_id]);
             $inactiveEnrollment = $checkInactive->fetch();
             
             if ($inactiveEnrollment) {
-                // Reactivate existing enrollment
                 $stmt = $pdo->prepare("UPDATE enrollments SET status = 'active', enrollment_date = NOW() WHERE id = ?");
                 $stmt->execute([$inactiveEnrollment['id']]);
                 $_SESSION['success'] = "Student re-enrolled successfully!";
             } else {
-                // Create new enrollment
                 $stmt = $pdo->prepare("INSERT INTO enrollments (student_id, class_id, enrollment_date, status) VALUES (?, ?, NOW(), 'active')");
                 $stmt->execute([$student_id, $class_id]);
                 $_SESSION['success'] = "Student enrolled successfully!";
@@ -229,7 +211,6 @@ if ($action === 'unenroll_student') {
     $enrollment_id = $_POST['enrollment_id'];
 
     try {
-        // Update enrollment status to inactive instead of deleting
         $stmt = $pdo->prepare("UPDATE enrollments SET status = 'inactive' WHERE id = ?");
         $stmt->execute([$enrollment_id]);
         
@@ -301,6 +282,70 @@ if ($action === 'create_invoice') {
     $stmt = $pdo->prepare("INSERT INTO invoices (invoice_number, student_id, class_id, invoice_type, description, amount, due_date, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'unpaid', NOW())");
     $stmt->execute([$invoice_number, $student_id, $class_id, $invoice_type, $description, $amount, $due_date]);
     $_SESSION['success'] = "Invoice created! #$invoice_number";
+    header('Location: admin.php?page=invoices');
+    exit;
+}
+
+if ($action === 'generate_monthly_invoices') {
+    try {
+        $currentMonth = date('M Y');
+        $dueDate = date('Y-m-t');
+        
+        $enrollments = $pdo->query("
+            SELECT 
+                e.student_id, e.class_id,
+                s.full_name,
+                c.class_name, c.class_code, c.monthly_fee
+            FROM enrollments e
+            JOIN students s ON e.student_id = s.id
+            JOIN classes c ON e.class_id = c.id
+            WHERE e.status = 'active'
+        ")->fetchAll();
+        
+        $created = 0;
+        $skipped = 0;
+        
+        foreach ($enrollments as $enroll) {
+            $check = $pdo->prepare("
+                SELECT id FROM invoices 
+                WHERE student_id = ? AND class_id = ?
+                AND description LIKE ?
+                AND MONTH(created_at) = MONTH(NOW())
+                AND YEAR(created_at) = YEAR(NOW())
+            ");
+            $check->execute([$enroll['student_id'], $enroll['class_id'], "%$currentMonth%"]);
+            
+            if ($check->fetch()) {
+                $skipped++;
+                continue;
+            }
+            
+            $invoiceNumber = 'INV-' . date('Ym') . '-' . rand(1000, 9999);
+            $description = "Monthly Fee: {$enroll['class_name']} ({$enroll['class_code']}) - $currentMonth";
+            
+            $pdo->prepare("
+                INSERT INTO invoices (
+                    invoice_number, student_id, class_id, invoice_type,
+                    description, amount, due_date, status, created_at
+                ) VALUES (?, ?, ?, 'monthly', ?, ?, ?, 'unpaid', NOW())
+            ")->execute([
+                $invoiceNumber,
+                $enroll['student_id'],
+                $enroll['class_id'],
+                $description,
+                $enroll['monthly_fee'],
+                $dueDate
+            ]);
+            
+            $created++;
+        }
+        
+        $_SESSION['success'] = "Monthly invoices generated! Created: $created, Skipped: $skipped";
+        
+    } catch (Exception $e) {
+        $_SESSION['error'] = "Failed to generate invoices: " . $e->getMessage();
+    }
+    
     header('Location: admin.php?page=invoices');
     exit;
 }
