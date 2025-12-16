@@ -333,4 +333,3 @@ if ($action === 'mark_attendance') {
 // Default redirect
 header('Location: admin.php');
 exit;
-?>
