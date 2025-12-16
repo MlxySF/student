@@ -1,19 +1,50 @@
 <?php
+// Month filter
+$filter_month = isset($_GET['filter_month']) ? $_GET['filter_month'] : '';
+
 // Get invoice statistics
-$stmt = $pdo->query("SELECT COUNT(*) as total FROM invoices WHERE status = 'unpaid'");
+$sql_unpaid = "SELECT COUNT(*) as total FROM invoices WHERE status = 'unpaid'";
+if ($filter_month) $sql_unpaid .= " AND payment_month = ?";
+$stmt = $pdo->prepare($sql_unpaid);
+if ($filter_month) {
+    $stmt->execute([$filter_month]);
+} else {
+    $stmt->execute();
+}
 $unpaid_count = $stmt->fetch()['total'];
 
-$stmt = $pdo->query("SELECT COUNT(*) as total FROM invoices WHERE status = 'pending'");
+$sql_pending = "SELECT COUNT(*) as total FROM invoices WHERE status = 'pending'";
+if ($filter_month) $sql_pending .= " AND payment_month = ?";
+$stmt = $pdo->prepare($sql_pending);
+if ($filter_month) {
+    $stmt->execute([$filter_month]);
+} else {
+    $stmt->execute();
+}
 $pending_count = $stmt->fetch()['total'];
 
-$stmt = $pdo->query("SELECT COUNT(*) as total FROM invoices WHERE status = 'paid'");
+$sql_paid = "SELECT COUNT(*) as total FROM invoices WHERE status = 'paid'";
+if ($filter_month) $sql_paid .= " AND payment_month = ?";
+$stmt = $pdo->prepare($sql_paid);
+if ($filter_month) {
+    $stmt->execute([$filter_month]);
+} else {
+    $stmt->execute();
+}
 $paid_count = $stmt->fetch()['total'];
 
-$stmt = $pdo->query("SELECT SUM(amount) as total FROM invoices WHERE status IN ('unpaid', 'pending')");
+$sql_outstanding = "SELECT SUM(amount) as total FROM invoices WHERE status IN ('unpaid', 'pending')";
+if ($filter_month) $sql_outstanding .= " AND payment_month = ?";
+$stmt = $pdo->prepare($sql_outstanding);
+if ($filter_month) {
+    $stmt->execute([$filter_month]);
+} else {
+    $stmt->execute();
+}
 $outstanding_amount = $stmt->fetch()['total'] ?? 0;
 
 // Get all invoices with payment information
-$stmt = $pdo->query("
+$sql = "
     SELECT i.*, 
            s.student_id, s.full_name, s.email, 
            c.class_code, c.class_name,
@@ -22,7 +53,13 @@ $stmt = $pdo->query("
     FROM invoices i
     JOIN students s ON i.student_id = s.id
     LEFT JOIN classes c ON i.class_id = c.id
-    LEFT JOIN payments p ON i.id = p.invoice_id
+    LEFT JOIN payments p ON i.id = p.invoice_id";
+
+if ($filter_month) {
+    $sql .= " WHERE i.payment_month = ?";
+}
+
+$sql .= "
     ORDER BY 
         CASE 
             WHEN i.status = 'unpaid' THEN 1
@@ -32,8 +69,19 @@ $stmt = $pdo->query("
             ELSE 5
         END,
         i.created_at DESC
-");
+";
+
+$stmt = $pdo->prepare($sql);
+if ($filter_month) {
+    $stmt->execute([$filter_month]);
+} else {
+    $stmt->execute();
+}
 $all_invoices = $stmt->fetchAll();
+
+// Get unique months for filter dropdown
+$months_stmt = $pdo->query("SELECT DISTINCT payment_month FROM invoices WHERE payment_month IS NOT NULL AND payment_month != '' ORDER BY payment_month DESC");
+$available_months = $months_stmt->fetchAll(PDO::FETCH_COLUMN);
 
 // Get students and classes for creating invoices
 $all_students = $pdo->query("SELECT id, student_id, full_name, email FROM students ORDER BY full_name")->fetchAll();
@@ -76,6 +124,38 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
 .receipt-image { max-width: 100%; height: auto; border-radius: 8px; border: 2px solid #e2e8f0; }
 .receipt-pdf { width: 100%; height: 500px; border: 2px solid #e2e8f0; border-radius: 8px; }
 </style>
+
+<!-- Month Filter -->
+<?php if (count($available_months) > 0): ?>
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="" class="row g-3 align-items-end">
+            <input type="hidden" name="page" value="invoices">
+            <div class="col-md-4">
+                <label class="form-label"><i class="fas fa-filter"></i> Filter by Payment Month</label>
+                <select name="filter_month" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Months</option>
+                    <?php foreach ($available_months as $month): ?>
+                        <option value="<?php echo htmlspecialchars($month); ?>" <?php echo $filter_month === $month ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($month); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <?php if ($filter_month): ?>
+            <div class="col-md-auto">
+                <a href="?page=invoices" class="btn btn-secondary"><i class="fas fa-times"></i> Clear Filter</a>
+            </div>
+            <?php endif; ?>
+        </form>
+        <?php if ($filter_month): ?>
+            <div class="alert alert-info mt-3 mb-0">
+                <i class="fas fa-info-circle"></i> Showing invoices for <strong><?php echo htmlspecialchars($filter_month); ?></strong>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+<?php endif; ?>
 
 <div class="row mb-4">
     <div class="col-md-3 mb-3">
@@ -181,7 +261,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                 </table>
             </div>
         <?php else: ?>
-            <div class="alert alert-info"><i class="fas fa-info-circle"></i> No invoices found.</div>
+            <div class="alert alert-info"><i class="fas fa-info-circle"></i> <?php echo $filter_month ? "No invoices found for " . htmlspecialchars($filter_month) . "." : "No invoices found."; ?></div>
         <?php endif; ?>
     </div>
 </div>
