@@ -1,11 +1,15 @@
 <?php
-// Student Invoices Page - View all invoices and pay
+// Student Invoices & Payments Page - Unified view
 
-// Get all invoices for this student
+// Get all invoices with payment information for this student
 $stmt = $pdo->prepare("
-    SELECT i.*, c.class_code, c.class_name
+    SELECT i.*, 
+           c.class_code, c.class_name,
+           p.id as payment_id, p.verification_status, p.upload_date,
+           p.receipt_data, p.receipt_mime_type, p.admin_notes
     FROM invoices i
     LEFT JOIN classes c ON i.class_id = c.id
+    LEFT JOIN payments p ON i.id = p.invoice_id
     WHERE i.student_id = ?
     ORDER BY 
         CASE 
@@ -22,12 +26,11 @@ $stmt = $pdo->prepare("
 $stmt->execute([getStudentId()]);
 $all_invoices = $stmt->fetchAll();
 
-// Separate by status and re-index arrays
+// Separate by status
 $overdue_invoices = array_values(array_filter($all_invoices, fn($i) => $i['status'] === 'overdue'));
 $unpaid_invoices = array_values(array_filter($all_invoices, fn($i) => $i['status'] === 'unpaid'));
 $pending_invoices = array_values(array_filter($all_invoices, fn($i) => $i['status'] === 'pending'));
 $paid_invoices = array_values(array_filter($all_invoices, fn($i) => $i['status'] === 'paid'));
-$cancelled_invoices = array_values(array_filter($all_invoices, fn($i) => $i['status'] === 'cancelled'));
 
 // Calculate totals
 $overdue_total = array_sum(array_column($overdue_invoices, 'amount'));
@@ -35,779 +38,323 @@ $unpaid_total = array_sum(array_column($unpaid_invoices, 'amount'));
 $pending_total = array_sum(array_column($pending_invoices, 'amount'));
 $paid_total = array_sum(array_column($paid_invoices, 'amount'));
 
-// Combine unpaid and overdue for "action required" count
 $action_required_count = count($unpaid_invoices) + count($overdue_invoices);
 $action_required_total = $unpaid_total + $overdue_total;
 
-// Pagination settings
+// Pagination
 $per_page = 5;
 
-// Overdue pagination
-$overdue_page = isset($_GET['overdue_page']) ? max(1, intval($_GET['overdue_page'])) : 1;
-$overdue_total_pages = max(1, ceil(count($overdue_invoices) / $per_page));
-$overdue_offset = ($overdue_page - 1) * $per_page;
-$overdue_invoices_paginated = array_slice($overdue_invoices, $overdue_offset, $per_page);
+function paginateInvoices($invoices, $param) {
+    global $per_page;
+    $page = isset($_GET[$param]) ? max(1, intval($_GET[$param])) : 1;
+    $total_pages = max(1, ceil(count($invoices) / $per_page));
+    $offset = ($page - 1) * $per_page;
+    return [
+        'items' => array_slice($invoices, $offset, $per_page),
+        'page' => $page,
+        'total_pages' => $total_pages,
+        'param' => $param
+    ];
+}
 
-// Unpaid pagination
-$unpaid_page = isset($_GET['unpaid_page']) ? max(1, intval($_GET['unpaid_page'])) : 1;
-$unpaid_total_pages = max(1, ceil(count($unpaid_invoices) / $per_page));
-$unpaid_offset = ($unpaid_page - 1) * $per_page;
-$unpaid_invoices_paginated = array_slice($unpaid_invoices, $unpaid_offset, $per_page);
+$overdue_paginated = paginateInvoices($overdue_invoices, 'overdue_page');
+$unpaid_paginated = paginateInvoices($unpaid_invoices, 'unpaid_page');
+$pending_paginated = paginateInvoices($pending_invoices, 'pending_page');
+$paid_paginated = paginateInvoices($paid_invoices, 'paid_page');
 
-// Pending pagination
-$pending_page = isset($_GET['pending_page']) ? max(1, intval($_GET['pending_page'])) : 1;
-$pending_total_pages = max(1, ceil(count($pending_invoices) / $per_page));
-$pending_offset = ($pending_page - 1) * $per_page;
-$pending_invoices_paginated = array_slice($pending_invoices, $pending_offset, $per_page);
-
-// Paid pagination
-$paid_page = isset($_GET['paid_page']) ? max(1, intval($_GET['paid_page'])) : 1;
-$paid_total_pages = max(1, ceil(count($paid_invoices) / $per_page));
-$paid_offset = ($paid_page - 1) * $per_page;
-$paid_invoices_paginated = array_slice($paid_invoices, $paid_offset, $per_page);
-
-// Function to render pagination
-function renderPagination($current_page, $total_pages, $page_param) {
-    if ($total_pages <= 1) return;
-    
+function renderPagination($data) {
+    if ($data['total_pages'] <= 1) return;
+    $current_page = $data['page'];
+    $total_pages = $data['total_pages'];
+    $param = $data['param'];
     $range = 2;
     $start_page = max(1, $current_page - $range);
     $end_page = min($total_pages, $current_page + $range);
     
-    echo '<nav aria-label="Invoice pagination" class="mt-4">';
-    echo '<ul class="pagination justify-content-center flex-wrap">';
-    
-    // Previous button
+    echo '<nav aria-label="Invoice pagination" class="mt-4"><ul class="pagination justify-content-center flex-wrap">';
     echo '<li class="page-item ' . ($current_page <= 1 ? 'disabled' : '') . '">';
-    echo '<a class="page-link" href="?page=invoices&' . $page_param . '=' . ($current_page - 1) . '" aria-label="Previous">';
-    echo '<span aria-hidden="true">&laquo;</span></a></li>';
-    
-    // First page
+    echo '<a class="page-link" href="?page=invoices&' . $param . '=' . ($current_page - 1) . '">&laquo;</a></li>';
     if ($start_page > 1) {
-        echo '<li class="page-item"><a class="page-link" href="?page=invoices&' . $page_param . '=1">1</a></li>';
-        if ($start_page > 2) {
-            echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
-        }
+        echo '<li class="page-item"><a class="page-link" href="?page=invoices&' . $param . '=1">1</a></li>';
+        if ($start_page > 2) echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
     }
-    
-    // Page numbers
     for ($i = $start_page; $i <= $end_page; $i++) {
         echo '<li class="page-item ' . ($i == $current_page ? 'active' : '') . '">';
-        echo '<a class="page-link" href="?page=invoices&' . $page_param . '=' . $i . '">' . $i . '</a></li>';
+        echo '<a class="page-link" href="?page=invoices&' . $param . '=' . $i . '">' . $i . '</a></li>';
     }
-    
-    // Last page
     if ($end_page < $total_pages) {
-        if ($end_page < $total_pages - 1) {
-            echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
-        }
-        echo '<li class="page-item"><a class="page-link" href="?page=invoices&' . $page_param . '=' . $total_pages . '">' . $total_pages . '</a></li>';
+        if ($end_page < $total_pages - 1) echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        echo '<li class="page-item"><a class="page-link" href="?page=invoices&' . $param . '=' . $total_pages . '">' . $total_pages . '</a></li>';
     }
-    
-    // Next button
     echo '<li class="page-item ' . ($current_page >= $total_pages ? 'disabled' : '') . '">';
-    echo '<a class="page-link" href="?page=invoices&' . $page_param . '=' . ($current_page + 1) . '" aria-label="Next">';
-    echo '<span aria-hidden="true">&raquo;</span></a></li>';
-    
+    echo '<a class="page-link" href="?page=invoices&' . $param . '=' . ($current_page + 1) . '">&raquo;</a></li>';
     echo '</ul></nav>';
 }
 ?>
 
-<div class="row mb-4">
-    <div class="col-md-4 mb-3">
-        <div class="stat-card">
-            <div class="stat-icon bg-danger">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <div class="stat-content">
-                <h3><?php echo $action_required_count; ?></h3>
-                <p>Action Required</p>
-                <small class="text-danger"><strong><?php echo formatCurrency($action_required_total); ?></strong></small>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4 mb-3">
-        <div class="stat-card">
-            <div class="stat-icon bg-info">
-                <i class="fas fa-clock"></i>
-            </div>
-            <div class="stat-content">
-                <h3><?php echo count($pending_invoices); ?></h3>
-                <p>Pending Verification</p>
-                <small class="text-info"><strong><?php echo formatCurrency($pending_total); ?></strong></small>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4 mb-3">
-        <div class="stat-card">
-            <div class="stat-icon bg-success">
-                <i class="fas fa-check-circle"></i>
-            </div>
-            <div class="stat-content">
-                <h3><?php echo count($paid_invoices); ?></h3>
-                <p>Paid Invoices</p>
-                <small class="text-success"><strong><?php echo formatCurrency($paid_total); ?></strong></small>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- OVERDUE Invoices (Urgent!) -->
-<?php if (count($overdue_invoices) > 0): ?>
-<div class="card mb-4 border-danger">
-    <div class="card-header bg-danger text-white">
-        <i class="fas fa-exclamation-circle"></i> OVERDUE INVOICES - URGENT!
-        <span class="badge bg-light text-danger float-end"><?php echo count($overdue_invoices); ?></span>
-    </div>
-    <div class="card-body">
-        <div class="alert alert-danger mb-3">
-            <i class="fas fa-skull-crossbones"></i> <strong>URGENT:</strong> These invoices are past their due date. Please pay immediately to avoid late fees or suspension!
-        </div>
-        <div class="table-responsive">
-            <table class="table sp-invoices-table">
-                <thead>
-                    <tr>
-                        <th>Invoice #</th>
-                        <th>Created Date/Time</th>
-                        <th>Description</th>
-                        <th class="sp-hide-mobile">Class</th>
-                        <th>Amount</th>
-                        <th class="sp-hide-mobile">Due Date</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($overdue_invoices_paginated as $invoice): ?>
-                        <tr class="sp-invoice-row table-danger">
-                            <td>
-                                <strong><?php echo htmlspecialchars($invoice['invoice_number']); ?></strong>
-                                <div class="d-md-none text-muted small">
-                                    <?php echo date('d M Y, g:i A', strtotime($invoice['created_at'])); ?>
-                                </div>
-                                <div class="d-md-none">
-                                    <span class="badge bg-danger">OVERDUE</span>
-                                </div>
-                            </td>
-                            <td class="sp-hide-mobile">
-                                <div><?php echo date('d M Y', strtotime($invoice['created_at'])); ?></div>
-                                <small class="text-muted"><?php echo date('g:i A', strtotime($invoice['created_at'])); ?></small>
-                            </td>
-                            <td>
-                                <?php echo htmlspecialchars($invoice['description']); ?>
-                                <div class="d-md-none text-muted small">
-                                    <?php if ($invoice['class_name']): ?>
-                                        <span class="badge bg-info"><?php echo $invoice['class_code']; ?></span>
-                                    <?php endif; ?>
-                                </div>
-                            </td>
-                            <td class="sp-hide-mobile">
-                                <?php if ($invoice['class_name']): ?>
-                                    <span class="badge bg-info"><?php echo $invoice['class_code']; ?></span>
-                                <?php else: ?>
-                                    <span class="text-muted">-</span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <strong class="text-danger"><?php echo formatCurrency($invoice['amount']); ?></strong>
-                                <div class="d-md-none text-muted small">
-                                    Due: <?php echo date('d M Y', strtotime($invoice['due_date'])); ?>
-                                </div>
-                            </td>
-                            <td class="sp-hide-mobile">
-                                <span class="text-danger"><strong><?php echo date('d M Y', strtotime($invoice['due_date'])); ?></strong></span>
-                            </td>
-                            <td class="sp-invoice-actions-cell">
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <button class="btn btn-danger"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#payInvoiceModal<?php echo $invoice['id']; ?>">
-                                        <i class="fas fa-credit-card"></i> PAY NOW
-                                    </button>
-                                    <button class="btn btn-outline-danger"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#viewInvoiceModal<?php echo $invoice['id']; ?>">
-                                        <i class="fas fa-eye"></i> View
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-        <?php renderPagination($overdue_page, $overdue_total_pages, 'overdue_page'); ?>
-    </div>
-</div>
-<?php endif; ?>
-
-<!-- Unpaid Invoices -->
-<?php if (count($unpaid_invoices) > 0): ?>
-<div class="card mb-4">
-    <div class="card-header bg-warning text-dark">
-        <i class="fas fa-exclamation-triangle"></i> Unpaid Invoices - Action Required
-        <span class="badge bg-dark float-end"><?php echo count($unpaid_invoices); ?></span>
-    </div>
-    <div class="card-body">
-        <div class="alert alert-warning mb-3">
-            <i class="fas fa-info-circle"></i> These invoices need to be paid. Click "Pay" to upload your payment receipt.
-        </div>
-        <div class="table-responsive">
-            <table class="table sp-invoices-table">
-                <thead>
-                    <tr>
-                        <th>Invoice #</th>
-                        <th>Created Date/Time</th>
-                        <th>Description</th>
-                        <th class="sp-hide-mobile">Class</th>
-                        <th>Amount</th>
-                        <th class="sp-hide-mobile">Due Date</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($unpaid_invoices_paginated as $invoice): ?>
-                        <tr class="sp-invoice-row">
-                            <td>
-                                <strong><?php echo htmlspecialchars($invoice['invoice_number']); ?></strong>
-                                <div class="d-md-none text-muted small">
-                                    <?php echo date('d M Y, g:i A', strtotime($invoice['created_at'])); ?>
-                                </div>
-                            </td>
-                            <td class="sp-hide-mobile">
-                                <div><?php echo date('d M Y', strtotime($invoice['created_at'])); ?></div>
-                                <small class="text-muted"><?php echo date('g:i A', strtotime($invoice['created_at'])); ?></small>
-                            </td>
-                            <td>
-                                <?php echo htmlspecialchars($invoice['description']); ?>
-                                <div class="d-md-none text-muted small">
-                                    <?php if ($invoice['class_name']): ?>
-                                        <span class="badge bg-info"><?php echo $invoice['class_code']; ?></span>
-                                    <?php endif; ?>
-                                </div>
-                            </td>
-                            <td class="sp-hide-mobile">
-                                <?php if ($invoice['class_name']): ?>
-                                    <span class="badge bg-info"><?php echo $invoice['class_code']; ?></span>
-                                <?php else: ?>
-                                    <span class="text-muted">-</span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <strong><?php echo formatCurrency($invoice['amount']); ?></strong>
-                                <div class="d-md-none text-muted small">
-                                    Due: <?php echo date('d M Y', strtotime($invoice['due_date'])); ?>
-                                </div>
-                            </td>
-                            <td class="sp-hide-mobile">
-                                <?php echo date('d M Y', strtotime($invoice['due_date'])); ?>
-                            </td>
-                            <td class="sp-invoice-actions-cell">
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <button class="btn btn-success"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#payInvoiceModal<?php echo $invoice['id']; ?>">
-                                        <i class="fas fa-credit-card"></i> Pay
-                                    </button>
-                                    <button class="btn btn-outline-primary"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#viewInvoiceModal<?php echo $invoice['id']; ?>">
-                                        <i class="fas fa-eye"></i> View
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-        <?php renderPagination($unpaid_page, $unpaid_total_pages, 'unpaid_page'); ?>
-    </div>
-</div>
-<?php endif; ?>
-
-<!-- Pending Verification Invoices -->
-<?php if (count($pending_invoices) > 0): ?>
-<div class="card mb-4">
-    <div class="card-header bg-info text-white">
-        <i class="fas fa-clock"></i> Pending Payment Verification
-        <span class="badge bg-light text-dark float-end"><?php echo count($pending_invoices); ?></span>
-    </div>
-    <div class="card-body">
-        <div class="alert alert-info mb-3">
-            <i class="fas fa-hourglass-half"></i> <strong>Payment submitted!</strong> Your payment receipt has been uploaded and is awaiting admin verification. You will be notified once verified.
-        </div>
-        <div class="table-responsive">
-            <table class="table sp-invoices-table">
-                <thead>
-                    <tr>
-                        <th>Invoice #</th>
-                        <th>Created Date/Time</th>
-                        <th>Description</th>
-                        <th class="sp-hide-mobile">Class</th>
-                        <th>Amount</th>
-                        <th class="sp-hide-mobile">Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($pending_invoices_paginated as $invoice): ?>
-                        <tr class="sp-invoice-row">
-                            <td>
-                                <strong><?php echo htmlspecialchars($invoice['invoice_number']); ?></strong>
-                                <div class="d-md-none text-muted small">
-                                    <?php echo date('d M Y, g:i A', strtotime($invoice['created_at'])); ?>
-                                </div>
-                            </td>
-                            <td class="sp-hide-mobile">
-                                <div><?php echo date('d M Y', strtotime($invoice['created_at'])); ?></div>
-                                <small class="text-muted"><?php echo date('g:i A', strtotime($invoice['created_at'])); ?></small>
-                            </td>
-                            <td>
-                                <?php echo htmlspecialchars($invoice['description']); ?>
-                                <div class="d-md-none">
-                                    <?php if ($invoice['class_name']): ?>
-                                        <span class="badge bg-info"><?php echo $invoice['class_code']; ?></span>
-                                    <?php endif; ?>
-                                    <div class="mt-1">
-                                        <span class="badge bg-info"><i class="fas fa-clock"></i> Pending</span>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="sp-hide-mobile">
-                                <?php if ($invoice['class_name']): ?>
-                                    <span class="badge bg-info"><?php echo $invoice['class_code']; ?></span>
-                                <?php else: ?>
-                                    <span class="text-muted">-</span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <strong><?php echo formatCurrency($invoice['amount']); ?></strong>
-                            </td>
-                            <td class="sp-hide-mobile">
-                                <span class="badge bg-info"><i class="fas fa-clock"></i> Awaiting Verification</span>
-                            </td>
-                            <td class="sp-invoice-actions-cell">
-                                <button class="btn btn-sm btn-primary"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#viewPendingInvoiceModal<?php echo $invoice['id']; ?>">
-                                    <i class="fas fa-eye"></i> View
-                                </button>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-        <?php renderPagination($pending_page, $pending_total_pages, 'pending_page'); ?>
-    </div>
-</div>
-<?php endif; ?>
-
-<!-- Payment Modals for Unpaid AND OVERDUE Invoices -->
-<?php 
-$payable_invoices = array_merge($unpaid_invoices, $overdue_invoices);
-foreach ($payable_invoices as $invoice): 
-?>
-<!-- VIEW INVOICE MODAL -->
-<div class="modal fade" id="viewInvoiceModal<?php echo $invoice['id']; ?>" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content">
-      <div class="modal-header <?php echo $invoice['status'] === 'overdue' ? 'bg-danger text-white' : ''; ?>">
-        <h5 class="modal-title">
-          <i class="fas fa-file-invoice"></i>
-          Invoice Details
-          <?php if ($invoice['status'] === 'overdue'): ?>
-            <span class="badge bg-light text-danger ms-2">OVERDUE</span>
-          <?php endif; ?>
-        </h5>
-        <button type="button" class="btn-close <?php echo $invoice['status'] === 'overdue' ? 'btn-close-white' : ''; ?>" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <?php if ($invoice['status'] === 'overdue'): ?>
-        <div class="alert alert-danger">
-          <i class="fas fa-exclamation-triangle"></i> <strong>This invoice is overdue!</strong> Please pay immediately to avoid penalties.
-        </div>
-        <?php endif; ?>
-        <table class="table table-bordered">
-          <tr>
-            <th width="30%">Invoice #</th>
-            <td><?php echo htmlspecialchars($invoice['invoice_number']); ?></td>
-          </tr>
-          <tr>
-            <th>Created Date & Time</th>
-            <td>
-                <?php echo date('d M Y', strtotime($invoice['created_at'])); ?>
-                <span class="text-muted">at <?php echo date('g:i A', strtotime($invoice['created_at'])); ?></span>
-            </td>
-          </tr>
-          <tr>
-            <th>Class</th>
-            <td>
-                <?php if ($invoice['class_name']): ?>
-                    <span class="badge bg-info"><?php echo $invoice['class_code']; ?></span>
-                    <?php echo htmlspecialchars($invoice['class_name']); ?>
-                <?php else: ?>
-                    <span class="text-muted">General (No specific class)</span>
-                <?php endif; ?>
-            </td>
-          </tr>
-          <tr>
-            <th>Description</th>
-            <td><?php echo nl2br(htmlspecialchars($invoice['description'])); ?></td>
-          </tr>
-          <tr>
-            <th>Amount</th>
-            <td><strong class="text-danger"><?php echo formatCurrency($invoice['amount']); ?></strong></td>
-          </tr>
-          <tr>
-            <th>Due Date</th>
-            <td>
-              <?php echo date('d M Y', strtotime($invoice['due_date'])); ?>
-              <?php if ($invoice['status'] === 'overdue'): ?>
-                <span class="badge bg-danger ms-2">OVERDUE</span>
-              <?php endif; ?>
-            </td>
-          </tr>
-          <tr>
-            <th>Status</th>
-            <td>
-              <?php if ($invoice['status'] === 'overdue'): ?>
-                <span class="badge bg-danger">Overdue</span>
-              <?php else: ?>
-                <span class="badge bg-warning">Unpaid</span>
-              <?php endif; ?>
-            </td>
-          </tr>
-        </table>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn <?php echo $invoice['status'] === 'overdue' ? 'btn-danger' : 'btn-success'; ?>" data-bs-dismiss="modal" 
-                data-bs-toggle="modal" data-bs-target="#payInvoiceModal<?php echo $invoice['id']; ?>">
-          <i class="fas fa-credit-card"></i> <?php echo $invoice['status'] === 'overdue' ? 'PAY NOW' : 'Pay Now'; ?>
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- PAY INVOICE MODAL -->
-<div class="modal fade" id="payInvoiceModal<?php echo $invoice['id']; ?>" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">
-          <i class="fas fa-credit-card"></i>
-          Pay Invoice
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <form method="POST" action="index.php?page=payments" enctype="multipart/form-data">
-        <div class="modal-body">
-          <input type="hidden" name="action" value="upload_payment">
-          <input type="hidden" name="invoice_id" value="<?php echo $invoice['id']; ?>">
-          <input type="hidden" name="invoice_class_id" value="<?php echo $invoice['class_id']; ?>">
-          <input type="hidden" name="invoice_amount" value="<?php echo $invoice['amount']; ?>">
-          <input type="hidden" name="invoice_payment_month" value="<?php echo $invoice['payment_month']; ?>">
-
-          <div class="alert <?php echo $invoice['status'] === 'overdue' ? 'alert-danger' : 'alert-info'; ?>">
-            <strong>Invoice #:</strong> <?php echo htmlspecialchars($invoice['invoice_number']); ?><br>
-            <strong>Amount:</strong> <?php echo formatCurrency($invoice['amount']); ?><br>
-            <strong>Due:</strong> <?php echo date('d M Y', strtotime($invoice['due_date'])); ?>
-            <?php if ($invoice['status'] === 'overdue'): ?>
-              <br><span class="badge bg-danger mt-1">OVERDUE</span>
-            <?php endif; ?>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Upload Receipt (Image/PDF) *</label>
-            <input type="file" name="receipt" class="form-control" accept="image/*,.pdf" required>
-            <div class="form-text">Maximum size: 5MB | Accepted: JPG, PNG, PDF</div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Notes (Optional)</label>
-            <textarea name="notes" class="form-control" rows="3" 
-                      placeholder="Add any additional notes about your payment..."></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn <?php echo $invoice['status'] === 'overdue' ? 'btn-danger' : 'btn-success'; ?>">
-            <i class="fas fa-upload"></i> Submit Payment
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-<?php endforeach; ?>
-
-<!-- View Modals for Pending Invoices -->
-<?php foreach ($pending_invoices as $invoice): ?>
-<div class="modal fade" id="viewPendingInvoiceModal<?php echo $invoice['id']; ?>" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content">
-      <div class="modal-header bg-info text-white">
-        <h5 class="modal-title">
-          <i class="fas fa-clock"></i>
-          Invoice Details - Pending Verification
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div class="alert alert-info">
-          <i class="fas fa-info-circle"></i> <strong>Payment Status:</strong> Your payment receipt has been submitted and is currently awaiting admin verification. You'll be notified once the payment is verified.
-        </div>
-        <table class="table table-bordered">
-          <tr>
-            <th width="30%">Invoice #</th>
-            <td><?php echo htmlspecialchars($invoice['invoice_number']); ?></td>
-          </tr>
-          <tr>
-            <th>Created Date & Time</th>
-            <td>
-                <?php echo date('d M Y', strtotime($invoice['created_at'])); ?>
-                <span class="text-muted">at <?php echo date('g:i A', strtotime($invoice['created_at'])); ?></span>
-            </td>
-          </tr>
-          <tr>
-            <th>Class</th>
-            <td>
-                <?php if ($invoice['class_name']): ?>
-                    <span class="badge bg-info"><?php echo $invoice['class_code']; ?></span>
-                    <?php echo htmlspecialchars($invoice['class_name']); ?>
-                <?php else: ?>
-                    <span class="text-muted">General (No specific class)</span>
-                <?php endif; ?>
-            </td>
-          </tr>
-          <tr>
-            <th>Description</th>
-            <td><?php echo nl2br(htmlspecialchars($invoice['description'])); ?></td>
-          </tr>
-          <tr>
-            <th>Amount</th>
-            <td><strong><?php echo formatCurrency($invoice['amount']); ?></strong></td>
-          </tr>
-          <tr>
-            <th>Due Date</th>
-            <td><?php echo date('d M Y', strtotime($invoice['due_date'])); ?></td>
-          </tr>
-          <tr>
-            <th>Status</th>
-            <td><span class="badge bg-info"><i class="fas fa-clock"></i> Pending Verification</span></td>
-          </tr>
-        </table>
-        <div class="alert alert-light border">
-          <h6><i class="fas fa-question-circle"></i> What happens next?</h6>
-          <ol class="mb-0">
-            <li>Admin will review your payment receipt</li>
-            <li>Once verified, this invoice will be marked as "Paid"</li>
-            <li>You'll be able to see the payment confirmation in your dashboard</li>
-          </ol>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
-<?php endforeach; ?>
-
-<!-- Paid Invoices -->
-<?php if (count($paid_invoices) > 0): ?>
-<div class="card mb-4">
-    <div class="card-header bg-success text-white">
-        <i class="fas fa-check-circle"></i> Paid Invoices
-        <span class="badge bg-light text-dark float-end"><?php echo count($paid_invoices); ?></span>
-    </div>
-    <div class="card-body">
-        <div class="alert alert-success mb-3">
-            <i class="fas fa-download"></i> <strong>Download Official Invoices:</strong> Click the "Download PDF" button to get your official invoice receipt.
-        </div>
-        <div class="table-responsive">
-            <table class="table sp-invoices-table">
-                <thead>
-                    <tr>
-                        <th>Invoice #</th>
-                        <th>Created Date/Time</th>
-                        <th>Description</th>
-                        <th class="sp-hide-mobile">Class</th>
-                        <th>Amount</th>
-                        <th class="sp-hide-mobile">Paid Date</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($paid_invoices_paginated as $invoice): ?>
-                        <tr class="sp-invoice-row">
-                            <td>
-                                <strong><?php echo htmlspecialchars($invoice['invoice_number']); ?></strong>
-                                <div class="d-md-none text-muted small">
-                                    <?php echo date('d M Y, g:i A', strtotime($invoice['created_at'])); ?>
-                                </div>
-                                <div class="d-md-none">
-                                    <span class="badge bg-success">PAID</span>
-                                </div>
-                            </td>
-                            <td class="sp-hide-mobile">
-                                <div><?php echo date('d M Y', strtotime($invoice['created_at'])); ?></div>
-                                <small class="text-muted"><?php echo date('g:i A', strtotime($invoice['created_at'])); ?></small>
-                            </td>
-                            <td>
-                                <?php echo htmlspecialchars($invoice['description']); ?>
-                                <div class="d-md-none text-muted small">
-                                    <?php if ($invoice['class_name']): ?>
-                                        <span class="badge bg-info"><?php echo $invoice['class_code']; ?></span>
-                                    <?php endif; ?>
-                                </div>
-                            </td>
-                            <td class="sp-hide-mobile">
-                                <?php if ($invoice['class_name']): ?>
-                                    <span class="badge bg-info"><?php echo $invoice['class_code']; ?></span>
-                                <?php else: ?>
-                                    <span class="text-muted">-</span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <strong><?php echo formatCurrency($invoice['amount']); ?></strong>
-                                <div class="d-md-none text-muted small">
-                                    <?php if ($invoice['paid_date']): ?>
-                                        Paid: <?php echo date('d M Y', strtotime($invoice['paid_date'])); ?>
-                                    <?php endif; ?>
-                                </div>
-                            </td>
-                            <td class="sp-hide-mobile">
-                                <?php if ($invoice['paid_date']): ?>
-                                    <div><?php echo date('d M Y', strtotime($invoice['paid_date'])); ?></div>
-                                    <small class="text-muted"><?php echo date('g:i A', strtotime($invoice['paid_date'])); ?></small>
-                                <?php else: ?>
-                                    -
-                                <?php endif; ?>
-                            </td>
-                            <td class="sp-invoice-actions-cell">
-                                <a href="generate_invoice_pdf.php?invoice_id=<?php echo $invoice['id']; ?>" 
-                                   class="btn btn-sm btn-success" 
-                                   target="_blank"
-                                   title="Download official PDF invoice">
-                                    <i class="fas fa-download"></i> <span class="d-none d-md-inline">PDF</span>
-                                </a>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-        <?php renderPagination($paid_page, $paid_total_pages, 'paid_page'); ?>
-    </div>
-</div>
-<?php endif; ?>
-
-<!-- No Invoices Message -->
-<?php if (count($all_invoices) === 0): ?>
-<div class="card">
-    <div class="card-body text-center py-5">
-        <i class="fas fa-file-invoice fa-4x text-muted mb-3"></i>
-        <h5>No Invoices Yet</h5>
-        <p class="text-muted">You don't have any invoices at the moment.</p>
-    </div>
-</div>
-<?php endif; ?>
-
 <style>
-/* Student portal invoices table – mobile card layout */
 @media (max-width: 768px) {
-    .sp-hide-mobile {
-        display: none !important;
-    }
-
-    .sp-invoices-table thead {
-        display: none; /* hide header on mobile */
-    }
-
-    .sp-invoices-table,
-    .sp-invoices-table tbody {
-        display: block;
-        width: 100%;
-    }
-
+    .sp-hide-mobile { display: none !important; }
+    .sp-invoices-table thead { display: none; }
+    .sp-invoices-table, .sp-invoices-table tbody { display: block; width: 100%; }
     .sp-invoices-table tbody tr.sp-invoice-row {
-        display: block;
-        background: #ffffff;
-        border-radius: 12px;
-        margin-bottom: 12px;
-        padding: 12px;
+        display: block; background: #ffffff; border-radius: 12px;
+        margin-bottom: 12px; padding: 12px;
         box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
         border: 1px solid rgba(148, 163, 184, 0.4);
     }
-
     .sp-invoices-table tbody tr.sp-invoice-row td {
-        display: block;
-        border: none;
-        padding: 4px 0;
-        text-align: left !important;
+        display: block; border: none; padding: 4px 0; text-align: left !important;
     }
-
     .sp-invoices-table tbody tr.sp-invoice-row td:first-child {
-        font-size: 15px;
-        font-weight: 600;
-        padding-bottom: 6px;
-        border-bottom: 1px solid #e5e7eb;
-        margin-bottom: 6px;
+        font-size: 15px; font-weight: 600; padding-bottom: 6px;
+        border-bottom: 1px solid #e5e7eb; margin-bottom: 6px;
     }
-
-    .sp-invoice-actions-cell .btn-group {
-        width: 100%;
-        display: flex;
-        justify-content: flex-end;
-        gap: 6px;
-        margin-top: 8px;
-    }
-
-    .sp-invoice-actions-cell .btn-group .btn {
-        padding: 6px 10px;
-        font-size: 13px;
-    }
-
-    .sp-invoice-actions-cell .btn {
-        margin-top: 8px;
-    }
-
-    /* Pagination mobile styling */
-    .pagination {
-        font-size: 14px;
-    }
-    
-    .pagination .page-link {
-        padding: 6px 10px;
-        margin: 2px;
-    }
+    .sp-invoice-actions-cell .btn-group { width: 100%; display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px; }
+    .sp-invoice-actions-cell .btn-group .btn, .sp-invoice-actions-cell .btn { padding: 6px 10px; font-size: 13px; margin-top: 8px; }
+    .pagination { font-size: 14px; }
+    .pagination .page-link { padding: 6px 10px; margin: 2px; }
 }
-
 @media (min-width: 769px) {
-    /* keep normal table on desktop */
-    .sp-invoices-table {
-        display: table !important;
-        width: 100%;
-    }
-    .sp-invoices-table tbody {
-        display: table-row-group !important;
-    }
-    .sp-invoices-table tbody tr.sp-invoice-row {
-        display: table-row !important;
-        box-shadow: none;
-        border-radius: 0;
-        border: none;
-        padding: 0;
-        margin: 0;
-    }
-    .sp-invoices-table tbody tr.sp-invoice-row td {
-        display: table-cell !important;
-        padding: .75rem;
-    }
+    .sp-invoices-table { display: table !important; width: 100%; }
+    .sp-invoices-table tbody { display: table-row-group !important; }
+    .sp-invoices-table tbody tr.sp-invoice-row { display: table-row !important; box-shadow: none; border-radius: 0; border: none; padding: 0; margin: 0; }
+    .sp-invoices-table tbody tr.sp-invoice-row td { display: table-cell !important; padding: .75rem; }
 }
+.receipt-image { max-width: 100%; height: auto; border-radius: 8px; border: 2px solid #e2e8f0; }
+.receipt-pdf { width: 100%; height: 500px; border: 2px solid #e2e8f0; border-radius: 8px; }
 </style>
+
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-danger"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="stat-content"><h3><?php echo $action_required_count; ?></h3><p>Action Required</p>
+                <small class="text-danger"><strong><?php echo formatCurrency($action_required_total); ?></strong></small></div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-info"><i class="fas fa-clock"></i></div>
+            <div class="stat-content"><h3><?php echo count($pending_invoices); ?></h3><p>Pending Verification</p>
+                <small class="text-info"><strong><?php echo formatCurrency($pending_total); ?></strong></small></div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-success"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-content"><h3><?php echo count($paid_invoices); ?></h3><p>Paid Invoices</p>
+                <small class="text-success"><strong><?php echo formatCurrency($paid_total); ?></strong></small></div>
+        </div>
+    </div>
+</div>
+
+<?php if (count($overdue_invoices) > 0): ?>
+<div class="card mb-4 border-danger">
+    <div class="card-header bg-danger text-white"><i class="fas fa-exclamation-circle"></i> OVERDUE INVOICES - URGENT!
+        <span class="badge bg-light text-danger float-end"><?php echo count($overdue_invoices); ?></span></div>
+    <div class="card-body">
+        <div class="alert alert-danger mb-3"><i class="fas fa-skull-crossbones"></i> <strong>URGENT:</strong> These invoices are past their due date. Please pay immediately!</div>
+        <div class="table-responsive">
+            <table class="table sp-invoices-table">
+                <thead><tr><th>Invoice #</th><th>Date</th><th>Description</th><th class="sp-hide-mobile">Class</th><th>Amount</th><th class="sp-hide-mobile">Due Date</th><th>Action</th></tr></thead>
+                <tbody>
+                    <?php foreach ($overdue_paginated['items'] as $inv): ?>
+                        <tr class="sp-invoice-row table-danger">
+                            <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
+                                <div class="d-md-none text-muted small"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></div>
+                                <div class="d-md-none"><span class="badge bg-danger">OVERDUE</span></div></td>
+                            <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></td>
+                            <td><?php echo htmlspecialchars($inv['description']); ?></td>
+                            <td class="sp-hide-mobile"><?php echo $inv['class_code'] ? '<span class="badge bg-info">' . $inv['class_code'] . '</span>' : '-'; ?></td>
+                            <td><strong class="text-danger"><?php echo formatCurrency($inv['amount']); ?></strong>
+                                <div class="d-md-none text-muted small">Due: <?php echo date('d M Y', strtotime($inv['due_date'])); ?></div></td>
+                            <td class="sp-hide-mobile"><span class="text-danger"><strong><?php echo date('d M Y', strtotime($inv['due_date'])); ?></strong></span></td>
+                            <td class="sp-invoice-actions-cell">
+                                <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#invoiceModal<?php echo $inv['id']; ?>"><i class="fas fa-eye"></i> View & Pay</button>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php renderPagination($overdue_paginated); ?>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php if (count($unpaid_invoices) > 0): ?>
+<div class="card mb-4">
+    <div class="card-header bg-warning text-dark"><i class="fas fa-exclamation-triangle"></i> Unpaid Invoices
+        <span class="badge bg-dark float-end"><?php echo count($unpaid_invoices); ?></span></div>
+    <div class="card-body">
+        <div class="alert alert-warning mb-3"><i class="fas fa-info-circle"></i> These invoices need payment. Upload your receipt to complete payment.</div>
+        <div class="table-responsive">
+            <table class="table sp-invoices-table">
+                <thead><tr><th>Invoice #</th><th>Date</th><th>Description</th><th class="sp-hide-mobile">Class</th><th>Amount</th><th class="sp-hide-mobile">Due Date</th><th>Action</th></tr></thead>
+                <tbody>
+                    <?php foreach ($unpaid_paginated['items'] as $inv): ?>
+                        <tr class="sp-invoice-row">
+                            <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
+                                <div class="d-md-none text-muted small"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></div></td>
+                            <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></td>
+                            <td><?php echo htmlspecialchars($inv['description']); ?></td>
+                            <td class="sp-hide-mobile"><?php echo $inv['class_code'] ? '<span class="badge bg-info">' . $inv['class_code'] . '</span>' : '-'; ?></td>
+                            <td><strong><?php echo formatCurrency($inv['amount']); ?></strong>
+                                <div class="d-md-none text-muted small">Due: <?php echo date('d M Y', strtotime($inv['due_date'])); ?></div></td>
+                            <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['due_date'])); ?></td>
+                            <td class="sp-invoice-actions-cell">
+                                <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#invoiceModal<?php echo $inv['id']; ?>"><i class="fas fa-upload"></i> Pay</button>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php renderPagination($unpaid_paginated); ?>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php if (count($pending_invoices) > 0): ?>
+<div class="card mb-4">
+    <div class="card-header bg-info text-white"><i class="fas fa-clock"></i> Pending Verification
+        <span class="badge bg-light text-dark float-end"><?php echo count($pending_invoices); ?></span></div>
+    <div class="card-body">
+        <div class="alert alert-info mb-3"><i class="fas fa-hourglass-half"></i> Payment receipts submitted. Awaiting admin verification.</div>
+        <div class="table-responsive">
+            <table class="table sp-invoices-table">
+                <thead><tr><th>Invoice #</th><th>Date</th><th>Description</th><th class="sp-hide-mobile">Class</th><th>Amount</th><th class="sp-hide-mobile">Receipt Uploaded</th><th>Action</th></tr></thead>
+                <tbody>
+                    <?php foreach ($pending_paginated['items'] as $inv): ?>
+                        <tr class="sp-invoice-row">
+                            <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
+                                <div class="d-md-none"><span class="badge bg-info"><i class="fas fa-clock"></i> Pending</span></div></td>
+                            <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></td>
+                            <td><?php echo htmlspecialchars($inv['description']); ?></td>
+                            <td class="sp-hide-mobile"><?php echo $inv['class_code'] ? '<span class="badge bg-info">' . $inv['class_code'] . '</span>' : '-'; ?></td>
+                            <td><strong><?php echo formatCurrency($inv['amount']); ?></strong></td>
+                            <td class="sp-hide-mobile"><?php echo $inv['upload_date'] ? date('d M Y', strtotime($inv['upload_date'])) : '-'; ?></td>
+                            <td class="sp-invoice-actions-cell">
+                                <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#invoiceModal<?php echo $inv['id']; ?>"><i class="fas fa-eye"></i> View</button>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php renderPagination($pending_paginated); ?>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php if (count($paid_invoices) > 0): ?>
+<div class="card mb-4">
+    <div class="card-header bg-success text-white"><i class="fas fa-check-circle"></i> Paid Invoices
+        <span class="badge bg-light text-dark float-end"><?php echo count($paid_invoices); ?></span></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table sp-invoices-table">
+                <thead><tr><th>Invoice #</th><th>Date</th><th>Description</th><th class="sp-hide-mobile">Class</th><th>Amount</th><th class="sp-hide-mobile">Paid Date</th><th>Action</th></tr></thead>
+                <tbody>
+                    <?php foreach ($paid_paginated['items'] as $inv): ?>
+                        <tr class="sp-invoice-row">
+                            <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
+                                <div class="d-md-none"><span class="badge bg-success">PAID</span></div></td>
+                            <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></td>
+                            <td><?php echo htmlspecialchars($inv['description']); ?></td>
+                            <td class="sp-hide-mobile"><?php echo $inv['class_code'] ? '<span class="badge bg-info">' . $inv['class_code'] . '</span>' : '-'; ?></td>
+                            <td><strong><?php echo formatCurrency($inv['amount']); ?></strong></td>
+                            <td class="sp-hide-mobile"><?php echo $inv['paid_date'] ? date('d M Y', strtotime($inv['paid_date'])) : '-'; ?></td>
+                            <td class="sp-invoice-actions-cell">
+                                <a href="generate_invoice_pdf.php?invoice_id=<?php echo $inv['id']; ?>" class="btn btn-sm btn-success" target="_blank"><i class="fas fa-download"></i> PDF</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php renderPagination($paid_paginated); ?>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php if (count($all_invoices) === 0): ?>
+<div class="card"><div class="card-body text-center py-5">
+    <i class="fas fa-file-invoice fa-4x text-muted mb-3"></i>
+    <h5>No Invoices Yet</h5>
+    <p class="text-muted">You don't have any invoices at the moment.</p>
+</div></div>
+<?php endif; ?>
+
+<?php foreach ($all_invoices as $inv): ?>
+<div class="modal fade" id="invoiceModal<?php echo $inv['id']; ?>" tabindex="-1">
+  <div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header <?php echo $inv['status'] === 'overdue' ? 'bg-danger text-white' : ($inv['status'] === 'pending' ? 'bg-info text-white' : ''); ?>">
+      <h5 class="modal-title"><i class="fas fa-file-invoice"></i> Invoice & Payment Details</h5>
+      <button type="button" class="btn-close <?php echo in_array($inv['status'], ['overdue', 'pending']) ? 'btn-close-white' : ''; ?>" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+      <?php if ($inv['status'] === 'overdue'): ?>
+        <div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> <strong>OVERDUE!</strong> Please pay immediately.</div>
+      <?php endif; ?>
+      
+      <h6><i class="fas fa-file-invoice"></i> Invoice Information</h6>
+      <table class="table table-bordered mb-4">
+        <tr><th width="30%">Invoice #</th><td><?php echo htmlspecialchars($inv['invoice_number']); ?></td></tr>
+        <tr><th>Description</th><td><?php echo nl2br(htmlspecialchars($inv['description'])); ?></td></tr>
+        <tr><th>Amount</th><td><strong><?php echo formatCurrency($inv['amount']); ?></strong></td></tr>
+        <tr><th>Due Date</th><td><?php echo date('d M Y', strtotime($inv['due_date'])); ?></td></tr>
+        <?php if ($inv['class_name']): ?>
+        <tr><th>Class</th><td><span class="badge bg-info"><?php echo $inv['class_code']; ?></span> <?php echo htmlspecialchars($inv['class_name']); ?></td></tr>
+        <?php endif; ?>
+      </table>
+
+      <?php if (!empty($inv['payment_id'])): ?>
+        <hr><h6><i class="fas fa-receipt"></i> Payment Information</h6>
+        <table class="table table-bordered mb-3">
+          <tr><th width="30%">Upload Date</th><td><?php echo date('d M Y, g:i A', strtotime($inv['upload_date'])); ?></td></tr>
+          <tr><th>Status</th><td>
+            <?php if ($inv['verification_status'] === 'verified'): ?>
+              <span class="badge bg-success"><i class="fas fa-check-circle"></i> Verified</span>
+            <?php elseif ($inv['verification_status'] === 'rejected'): ?>
+              <span class="badge bg-danger"><i class="fas fa-times-circle"></i> Rejected</span>
+            <?php else: ?>
+              <span class="badge bg-warning"><i class="fas fa-clock"></i> Pending Verification</span>
+            <?php endif; ?>
+          </td></tr>
+          <?php if (!empty($inv['admin_notes'])): ?>
+          <tr><th>Admin Notes</th><td><?php echo nl2br(htmlspecialchars($inv['admin_notes'])); ?></td></tr>
+          <?php endif; ?>
+        </table>
+
+        <h6>Your Uploaded Receipt</h6>
+        <?php if (!empty($inv['receipt_data'])): ?>
+          <?php if ($inv['receipt_mime_type'] === 'application/pdf'): ?>
+            <embed src="data:<?php echo $inv['receipt_mime_type']; ?>;base64,<?php echo $inv['receipt_data']; ?>" type="<?php echo $inv['receipt_mime_type']; ?>" class="receipt-pdf">
+          <?php else: ?>
+            <img src="data:<?php echo $inv['receipt_mime_type']; ?>;base64,<?php echo $inv['receipt_data']; ?>" alt="Receipt" class="receipt-image">
+          <?php endif; ?>
+        <?php else: ?>
+          <div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Receipt not available.</div>
+        <?php endif; ?>
+      <?php elseif (in_array($inv['status'], ['unpaid', 'overdue'])): ?>
+        <hr><h6><i class="fas fa-upload"></i> Upload Payment Receipt</h6>
+        <form method="POST" action="index.php?page=payments" enctype="multipart/form-data">
+          <input type="hidden" name="action" value="upload_payment">
+          <input type="hidden" name="invoice_id" value="<?php echo $inv['id']; ?>">
+          <input type="hidden" name="invoice_class_id" value="<?php echo $inv['class_id']; ?>">
+          <input type="hidden" name="invoice_amount" value="<?php echo $inv['amount']; ?>">
+          <div class="mb-3">
+            <label class="form-label">Receipt (Image/PDF) *</label>
+            <input type="file" name="receipt" class="form-control" accept="image/*,.pdf" required>
+            <div class="form-text">Max 5MB | JPG, PNG, PDF</div>
+          </div>
+          <button type="submit" class="btn btn-success"><i class="fas fa-upload"></i> Submit Payment</button>
+        </form>
+      <?php endif; ?>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div>
+  </div></div>
+</div>
+<?php endforeach; ?>
