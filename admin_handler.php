@@ -384,10 +384,37 @@ if ($action === 'verify_payment') {
     $payment_id = $_POST['payment_id'];
     $verification_status = $_POST['verification_status'];
     $admin_notes = $_POST['admin_notes'] ?? '';
+    $invoice_id = $_POST['invoice_id'] ?? null;
 
-    $stmt = $pdo->prepare("UPDATE payments SET verification_status = ?, admin_notes = ?, verified_date = NOW() WHERE id = ?");
-    $stmt->execute([$verification_status, $admin_notes, $payment_id]);
-    $_SESSION['success'] = "Payment status updated!";
+    try {
+        $pdo->beginTransaction();
+        
+        // Update payment status
+        $stmt = $pdo->prepare("UPDATE payments SET verification_status = ?, admin_notes = ?, verified_date = NOW() WHERE id = ?");
+        $stmt->execute([$verification_status, $admin_notes, $payment_id]);
+        
+        // If payment is verified and linked to an invoice, mark invoice as paid
+        if ($verification_status === 'verified' && $invoice_id) {
+            $stmt = $pdo->prepare("UPDATE invoices SET status = 'paid', paid_date = NOW() WHERE id = ?");
+            $stmt->execute([$invoice_id]);
+            
+            // Get invoice number for success message
+            $stmt = $pdo->prepare("SELECT invoice_number FROM invoices WHERE id = ?");
+            $stmt->execute([$invoice_id]);
+            $invoice = $stmt->fetch();
+            
+            $pdo->commit();
+            $_SESSION['success'] = "Payment verified! Invoice {$invoice['invoice_number']} marked as PAID.";
+        } else {
+            $pdo->commit();
+            $_SESSION['success'] = "Payment status updated to: " . ucfirst($verification_status);
+        }
+        
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        $_SESSION['error'] = "Failed to verify payment: " . $e->getMessage();
+    }
+    
     header('Location: admin.php?page=payments');
     exit;
 }
