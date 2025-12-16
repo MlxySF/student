@@ -251,7 +251,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                 <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editInvoiceModal<?php echo $invoice['id']; ?>"><i class="fas fa-edit"></i></button>
                 <button class="btn btn-danger" onclick="if(confirm('Delete?')) document.getElementById('deleteInvoiceForm<?php echo $invoice['id']; ?>').submit();"><i class="fas fa-trash"></i></button>
             </div>
-            <form id="deleteInvoiceForm<?php echo $invoice['id']; ?>" method="POST" action="admin_handler.php" style="display:none;">
+            <form id="deleteInvoiceForm<?php echo $invoice['id']; ?>" method="POST" action="admin.php" style="display:none;">
                 <input type="hidden" name="action" value="delete_invoice"><input type="hidden" name="invoice_id" value="<?php echo $invoice['id']; ?>">
             </form>
         </td>
@@ -329,7 +329,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                 <?php if ($invoice['verification_status'] === 'pending'): ?>
                     <hr class="my-4">
                     <h6 class="mb-3">Verify Payment</h6>
-                    <form method="POST" action="admin_handler.php">
+                    <form method="POST" action="admin.php">
                         <input type="hidden" name="action" value="verify_payment">
                         <input type="hidden" name="payment_id" value="<?php echo $invoice['payment_id']; ?>">
                         <input type="hidden" name="invoice_id" value="<?php echo $invoice['id']; ?>">
@@ -362,7 +362,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
     <div class="modal-dialog"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title"><i class="fas fa-edit"></i> Edit Invoice</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <form method="POST" action="admin_handler.php">
+        <form method="POST" action="admin.php">
             <div class="modal-body">
                 <input type="hidden" name="action" value="edit_invoice">
                 <input type="hidden" name="invoice_id" value="<?php echo $invoice['id']; ?>">
@@ -397,7 +397,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
     <div class="modal-dialog"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title"><i class="fas fa-plus"></i> Create New Invoice</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <form method="POST" action="admin_handler.php">
+        <form method="POST" action="admin.php">
             <div class="modal-body">
                 <input type="hidden" name="action" value="create_invoice">
                 <div class="mb-3"><label class="form-label">Student *</label>
@@ -447,7 +447,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
             <h5 class="modal-title"><i class="fas fa-calendar-alt"></i> Generate Monthly Invoices</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
-        <form method="POST" action="admin_handler.php" onsubmit="return confirm('Generate monthly invoices for <?php echo date('F Y'); ?>?\n\nDue date: <?php echo date('F 10, Y'); ?>');">
+        <form method="POST" action="admin.php" onsubmit="return confirm('Generate monthly invoices for <?php echo date('F Y'); ?>?\n\nDue date: <?php echo date('F 10, Y'); ?>');">
             <div class="modal-body">
                 <input type="hidden" name="action" value="generate_monthly_invoices">
                 <div class="alert alert-info"><h6><i class="fas fa-info-circle"></i> About</h6>
