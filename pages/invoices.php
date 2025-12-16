@@ -345,6 +345,7 @@ function renderPagination($data) {
           <input type="hidden" name="invoice_id" value="<?php echo $inv['id']; ?>">
           <input type="hidden" name="invoice_class_id" value="<?php echo $inv['class_id']; ?>">
           <input type="hidden" name="invoice_amount" value="<?php echo $inv['amount']; ?>">
+          <input type="hidden" name="invoice_payment_month" value="<?php echo date('M Y'); ?>">
           <div class="mb-3">
             <label class="form-label">Receipt (Image/PDF) *</label>
             <input type="file" name="receipt" class="form-control" accept="image/*,.pdf" required>
