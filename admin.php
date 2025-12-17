@@ -1,5 +1,5 @@
 <?php
-// admin.php - Complete Admin Panel
+// admin.php - Modern Admin Panel with Stunning Design
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -19,8 +19,6 @@ function redirectIfNotAdmin() {
     }
 }
 
-// Safety stub function: This should NOT be used in admin context
-// Defined here only to prevent "undefined function" errors if accidentally called
 function getStudentId() {
     return null;
 }
@@ -52,180 +50,6 @@ if (isset($_GET['logout'])) {
     exit;
 }
 
-// Handle Invoice Actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    redirectIfNotAdmin();
-    
-    // CREATE INVOICE
-    if ($_POST['action'] === 'create_invoice') {
-        $student_id = $_POST['student_id'];
-        $invoice_type = $_POST['invoice_type'];
-        $class_id = !empty($_POST['class_id']) ? $_POST['class_id'] : null;
-        $description = $_POST['description'];
-        $amount = $_POST['amount'];
-        $due_date = $_POST['due_date'];
-        
-        // Generate invoice number
-        $invoice_number = 'INV-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
-        
-        // Set payment_month for monthly_fee type
-        $payment_month = null;
-        if ($invoice_type === 'monthly_fee') {
-            $payment_month = date('M Y'); // e.g., "Dec 2025"
-        }
-        
-        $stmt = $pdo->prepare("
-            INSERT INTO invoices (student_id, invoice_number, invoice_type, class_id, description, amount, due_date, payment_month, status, created_at) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'unpaid', NOW())
-        ");
-        
-        if ($stmt->execute([$student_id, $invoice_number, $invoice_type, $class_id, $description, $amount, $due_date, $payment_month])) {
-            $_SESSION['success'] = "Invoice created successfully!";
-        } else {
-            $_SESSION['error'] = "Failed to create invoice.";
-        }
-        
-        header('Location: admin.php?page=invoices');
-        exit;
-    }
-    
-    // GENERATE MONTHLY INVOICES
-    if ($_POST['action'] === 'generate_monthly_invoices') {
-        $current_month = date('M Y'); // e.g., "Dec 2025"
-        $due_date = date('Y-m-10'); // 10th of current month
-        $generated_count = 0;
-        
-        // Get all active enrollments
-        $stmt = $pdo->query("
-            SELECT DISTINCT e.student_id, e.class_id, c.monthly_fee, s.student_id as student_code, s.full_name
-            FROM enrollments e
-            JOIN students s ON e.student_id = s.id
-            JOIN classes c ON e.class_id = c.id
-            WHERE e.status = 'active' AND c.monthly_fee > 0
-        ");
-        $enrollments = $stmt->fetchAll();
-        
-        foreach ($enrollments as $enrollment) {
-            // Check if invoice already exists for this month
-            $check_stmt = $pdo->prepare("
-                SELECT id FROM invoices 
-                WHERE student_id = ? 
-                AND class_id = ? 
-                AND invoice_type = 'monthly_fee' 
-                AND payment_month = ?
-            ");
-            $check_stmt->execute([$enrollment['student_id'], $enrollment['class_id'], $current_month]);
-            
-            if ($check_stmt->rowCount() == 0) {
-                // Generate invoice number
-                $invoice_number = 'INV-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
-                
-                $description = "Monthly Fee - $current_month";
-                
-                $insert_stmt = $pdo->prepare("
-                    INSERT INTO invoices (student_id, invoice_number, invoice_type, class_id, description, amount, due_date, payment_month, status, created_at) 
-                    VALUES (?, ?, 'monthly_fee', ?, ?, ?, ?, ?, 'unpaid', NOW())
-                ");
-                
-                if ($insert_stmt->execute([
-                    $enrollment['student_id'],
-                    $invoice_number,
-                    $enrollment['class_id'],
-                    $description,
-                    $enrollment['monthly_fee'],
-                    $due_date,
-                    $current_month
-                ])) {
-                    $generated_count++;
-                }
-            }
-        }
-        
-        $_SESSION['success'] = "Generated $generated_count monthly invoices for $current_month!";
-        header('Location: admin.php?page=invoices');
-        exit;
-    }
-    
-    // EDIT INVOICE
-    if ($_POST['action'] === 'edit_invoice') {
-        $invoice_id = $_POST['invoice_id'];
-        $description = $_POST['description'];
-        $amount = $_POST['amount'];
-        $due_date = $_POST['due_date'];
-        $status = $_POST['status'];
-        
-        $stmt = $pdo->prepare("
-            UPDATE invoices 
-            SET description = ?, amount = ?, due_date = ?, status = ? 
-            WHERE id = ?
-        ");
-        
-        if ($stmt->execute([$description, $amount, $due_date, $status, $invoice_id])) {
-            $_SESSION['success'] = "Invoice updated successfully!";
-        } else {
-            $_SESSION['error'] = "Failed to update invoice.";
-        }
-        
-        header('Location: admin.php?page=invoices');
-        exit;
-    }
-    
-    // DELETE INVOICE
-    if ($_POST['action'] === 'delete_invoice') {
-        $invoice_id = $_POST['invoice_id'];
-        
-        $stmt = $pdo->prepare("DELETE FROM invoices WHERE id = ?");
-        
-        if ($stmt->execute([$invoice_id])) {
-            $_SESSION['success'] = "Invoice deleted successfully!";
-        } else {
-            $_SESSION['error'] = "Failed to delete invoice.";
-        }
-        
-        header('Location: admin.php?page=invoices');
-        exit;
-    }
-    
-    // VERIFY PAYMENT
-    if ($_POST['action'] === 'verify_payment') {
-        $payment_id = $_POST['payment_id'];
-        $invoice_id = $_POST['invoice_id'];
-        $verification_status = $_POST['verification_status'];
-        $admin_notes = $_POST['admin_notes'] ?? '';
-        
-        // Update payment verification
-        $stmt = $pdo->prepare("
-            UPDATE payments 
-            SET verification_status = ?, admin_notes = ? 
-            WHERE id = ?
-        ");
-        $stmt->execute([$verification_status, $admin_notes, $payment_id]);
-        
-        // If verified, update invoice status to paid
-        if ($verification_status === 'verified') {
-            $update_invoice = $pdo->prepare("
-                UPDATE invoices 
-                SET status = 'paid', paid_date = NOW() 
-                WHERE id = ?
-            ");
-            $update_invoice->execute([$invoice_id]);
-            $_SESSION['success'] = "Payment verified and invoice marked as PAID!";
-        } else {
-            // If rejected, set invoice back to unpaid
-            $update_invoice = $pdo->prepare("
-                UPDATE invoices 
-                SET status = 'unpaid' 
-                WHERE id = ?
-            ");
-            $update_invoice->execute([$invoice_id]);
-            $_SESSION['success'] = "Payment rejected!";
-        }
-        
-        header('Location: admin.php?page=invoices');
-        exit;
-    }
-}
-
 $page = $_GET['page'] ?? 'login';
 ?>
 <!DOCTYPE html>
@@ -233,455 +57,52 @@ $page = $_GET['page'] ?? 'login';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - <?php echo SITE_NAME; ?></title>
+    <title>Admin Portal - <?php echo SITE_NAME; ?></title>
     
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- DataTables -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-    
-    <style>
-        :root {
-            --primary-color: #2563eb;
-            --secondary-color: #7c3aed;
-            --success-color: #10b981;
-            --danger-color: #ef4444;
-            --warning-color: #f59e0b;
-            --info-color: #06b6d4;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8fafc;
-        }
-
-        /* Fixed Top Header */
-        .top-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 70px;
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .header-menu-btn {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            width: 45px;
-            height: 45px;
-            border-radius: 10px;
-            font-size: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-        }
-
-        .header-menu-btn:hover {
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.05);
-        }
-
-        .school-logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: white;
-            text-decoration: none;
-        }
-
-        .school-logo img {
-            height: 45px;
-            width: auto;
-            border-radius: 8px;
-        }
-
-        .school-logo .logo-placeholder {
-            width: 45px;
-            height: 45px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
-
-        .school-logo .logo-text {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .school-logo .logo-title {
-            font-size: 18px;
-            font-weight: 700;
-            line-height: 1.2;
-        }
-
-        .school-logo .logo-subtitle {
-            font-size: 12px;
-            opacity: 0.9;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .header-user {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: white;
-        }
-
-        .header-user-avatar {
-            width: 40px;
-            height: 40px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .header-user-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .header-user-name {
-            font-size: 14px;
-            font-weight: 600;
-            line-height: 1.2;
-        }
-
-        .header-user-role {
-            font-size: 11px;
-            opacity: 0.9;
-        }
-
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 70px;
-            left: 0;
-            width: 100%;
-            height: calc(100vh - 70px);
-            background: rgba(0,0,0,0.5);
-            z-index: 998;
-        }
-
-        .sidebar-overlay.active {
-            display: block;
-        }
-
-        .admin-sidebar {
-            position: fixed;
-            left: 0;
-            top: 70px;
-            width: 280px;
-            height: calc(100vh - 70px);
-            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-            overflow-y: auto;
-            z-index: 999;
-            transition: left 0.3s ease;
-            padding: 20px 0;
-        }
-
-        .admin-sidebar .nav-link {
-            color: rgba(255,255,255,0.7);
-            padding: 14px 25px;
-            margin: 3px 0;
-            border-radius: 0;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .admin-sidebar .nav-link:hover,
-        .admin-sidebar .nav-link.active {
-            background: rgba(255,255,255,0.1);
-            color: white;
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .admin-sidebar .nav-link i {
-            width: 20px;
-            font-size: 16px;
-            text-align: center;
-        }
-
-        body.logged-in {
-            padding-top: 70px;
-        }
-
-        .admin-content {
-            margin-left: 280px;
-            min-height: calc(100vh - 70px);
-        }
-
-        .content-area {
-            padding: 30px;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
-            display: flex;
-            align-items: center;
-            transition: transform 0.3s;
-            margin-bottom: 20px;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 25px rgba(0,0,0,0.12);
-        }
-
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            margin-right: 20px;
-        }
-
-        .stat-icon.bg-primary { background: linear-gradient(135deg, #2563eb, #1e40af); color: white; }
-        .stat-icon.bg-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
-        .stat-icon.bg-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
-        .stat-icon.bg-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
-        .stat-icon.bg-info { background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; }
-
-        .stat-content h3 {
-            margin: 0;
-            font-size: 32px;
-            font-weight: bold;
-            color: #1e293b;
-        }
-
-        .stat-content p {
-            margin: 0;
-            color: #64748b;
-            font-size: 14px;
-        }
-
-        .table {
-            background: white;
-        }
-
-        .table thead {
-            background: #f8fafc;
-        }
-
-        .badge {
-            padding: 6px 12px;
-            font-weight: 600;
-            font-size: 11px;
-        }
-
-        .login-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .login-card {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 450px;
-            width: 100%;
-        }
-
-        @media (min-width: 769px) {
-            .header-menu-btn {
-                display: none;
-            }
-
-            .admin-sidebar {
-                left: 0;
-            }
-
-            .sidebar-overlay {
-                display: none !important;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .top-header {
-                padding: 0 15px;
-            }
-
-            .school-logo .logo-text {
-                display: none;
-            }
-
-            .header-user-info {
-                display: none;
-            }
-
-            .admin-sidebar {
-                left: -280px;
-            }
-
-            .admin-sidebar.active {
-                left: 0;
-            }
-
-            .admin-content {
-                margin-left: 0;
-            }
-
-            .content-area {
-                padding: 20px 15px;
-            }
-
-            .stat-card {
-                margin-bottom: 15px;
-            }
-
-            .stat-icon {
-                width: 50px;
-                height: 50px;
-                font-size: 20px;
-                margin-right: 15px;
-            }
-
-            .stat-content h3 {
-                font-size: 24px;
-            }
-
-            .stat-content p {
-                font-size: 12px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .top-header {
-                height: 60px;
-            }
-
-            body.logged-in {
-                padding-top: 60px;
-            }
-            
-            .admin-sidebar {
-                top: 60px;
-                height: calc(100vh - 60px);
-            }
-
-            .sidebar-overlay {
-                top: 60px;
-                height: calc(100vh - 60px);
-            }
-
-            .school-logo img,
-            .school-logo .logo-placeholder {
-                height: 38px;
-                width: 38px;
-            }
-
-            .header-menu-btn {
-                width: 40px;
-                height: 40px;
-                font-size: 18px;
-            }
-
-            .header-user-avatar {
-                width: 35px;
-                height: 35px;
-                font-size: 16px;
-            }
-
-            .content-area {
-                padding: 15px 10px;
-                min-height: calc(100vh - 60px);
-            }
-
-            h3.mb-4 {
-                font-size: 18px;
-            }
-
-            .stat-content h3 {
-                font-size: 20px;
-            }
-        }
-
-        .badge-student {
-            background: linear-gradient(135deg, #6366f1, #4f46e5);
-            color: white;
-        }
-
-        .badge-state-team {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-        }
-
-        .badge-backup-team {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: white;
-        }
-    </style>
+    <!-- Modern Admin CSS -->
+    <link rel="stylesheet" href="assets/css/modern-admin.css">
 </head>
-<body<?php echo ($page !== 'login') ? ' class="logged-in"' : ''; ?>>
+<body>
 
 <?php if ($page === 'login'): ?>
-    <div class="login-container">
-        <div class="login-card">
-            <div class="text-center mb-4">
-                <i class="fas fa-shield-halved fa-4x text-primary mb-3"></i>
-                <h2>Admin Portal</h2>
-                <p class="text-muted">Sign in to your admin account</p>
+    <!-- MODERN LOGIN PAGE -->
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i class="fas fa-shield-halved"></i>
+                </div>
+                <h1 class="auth-title">Admin Portal</h1>
+                <p class="auth-subtitle">Sign in to manage your academy</p>
             </div>
 
             <?php if (isset($_SESSION['error'])): ?>
-                <div class="alert alert-danger">
-                    <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+                <div class="alert-modern alert-danger">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span><?php echo $_SESSION['error']; unset($_SESSION['error']); ?></span>
                 </div>
             <?php endif; ?>
 
-            <form method="POST" action="">
+            <form method="POST" action="" class="fade-in">
                 <input type="hidden" name="action" value="admin_login">
-                <div class="mb-3">
+                <div class="form-group">
                     <label class="form-label"><i class="fas fa-user"></i> Username</label>
-                    <input type="text" name="username" class="form-control form-control-lg" required autofocus>
+                    <input type="text" name="username" class="form-control" required autofocus>
                 </div>
-                <div class="mb-4">
+                <div class="form-group">
                     <label class="form-label"><i class="fas fa-lock"></i> Password</label>
-                    <input type="password" name="password" class="form-control form-control-lg" required>
+                    <input type="password" name="password" class="form-control" required>
                 </div>
-                <button type="submit" class="btn btn-primary btn-lg w-100">
-                    <i class="fas fa-sign-in-alt"></i> Login
+                <button type="submit" class="btn-modern btn-primary w-100">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
                 </button>
             </form>
         </div>
@@ -689,147 +110,109 @@ $page = $_GET['page'] ?? 'login';
 
 <?php else: ?>
     <?php redirectIfNotAdmin(); ?>
+    
+    <!-- ANIMATED BACKGROUND -->
+    <div class="bg-animated"></div>
 
-    <div class="top-header">
-        <div class="header-left">
-            <button class="header-menu-btn" id="menuToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-
-            <a href="?page=dashboard" class="school-logo">
-                <div class="logo-placeholder">
-                    <i class="fas fa-shield-halved"></i>
-                </div>
-                <div class="logo-text">
-                    <span class="logo-title">Wushu Academy</span>
-                    <span class="logo-subtitle">Admin Portal</span>
-                </div>
-            </a>
+    <!-- MODERN SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">Wushu Academy</div>
+            <div class="sidebar-subtitle">Admin Portal</div>
         </div>
-
-        <div class="header-right">
-            <div class="header-user">
-                <div class="header-user-avatar">
-                    <?php echo strtoupper(substr($_SESSION['admin_name'], 0, 1)); ?>
-                </div>
-                <div class="header-user-info">
-                    <span class="header-user-name"><?php echo $_SESSION['admin_name']; ?></span>
-                    <span class="header-user-role"><?php echo ucfirst($_SESSION['admin_role']); ?></span>
-                </div>
+        
+        <div class="sidebar-nav">
+            <div class="nav-item">
+                <a class="nav-link <?php echo $page === 'dashboard' ? 'active' : ''; ?>" href="?page=dashboard">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a class="nav-link <?php echo $page === 'registrations' ? 'active' : ''; ?>" href="?page=registrations">
+                    <i class="fas fa-user-plus"></i>
+                    <span>New Registrations</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a class="nav-link <?php echo $page === 'students' ? 'active' : ''; ?>" href="?page=students">
+                    <i class="fas fa-users"></i>
+                    <span>Students</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a class="nav-link <?php echo $page === 'classes' ? 'active' : ''; ?>" href="?page=classes">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    <span>Classes</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a class="nav-link <?php echo $page === 'invoices' ? 'active' : ''; ?>" href="?page=invoices">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Invoices</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a class="nav-link <?php echo $page === 'attendance' ? 'active' : ''; ?>" href="?page=attendance">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Attendance</span>
+                </a>
+            </div>
+            <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 15px;">
+            <div class="nav-item">
+                <a class="nav-link" href="?logout=1">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
             </div>
         </div>
     </div>
 
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-    <div class="admin-sidebar" id="adminSidebar">
-        <nav class="nav flex-column">
-            <a class="nav-link <?php echo $page === 'dashboard' ? 'active' : ''; ?>" href="?page=dashboard">
-                <i class="fas fa-home"></i>
-                <span>Dashboard</span>
-            </a>
-            <a class="nav-link <?php echo $page === 'registrations' ? 'active' : ''; ?>" href="?page=registrations">
-                <i class="fas fa-user-plus"></i>
-                <span>New Registrations</span>
-            </a>
-            <a class="nav-link <?php echo $page === 'students' ? 'active' : ''; ?>" href="?page=students">
-                <i class="fas fa-users"></i>
-                <span>Students</span>
-            </a>
-            <a class="nav-link <?php echo $page === 'classes' ? 'active' : ''; ?>" href="?page=classes">
-                <i class="fas fa-chalkboard-teacher"></i>
-                <span>Classes</span>
-            </a>
-            <a class="nav-link <?php echo $page === 'invoices' ? 'active' : ''; ?>" href="?page=invoices">
-                <i class="fas fa-file-invoice-dollar"></i>
-                <span>Invoices</span>
-            </a>
-            <a class="nav-link <?php echo $page === 'attendance' ? 'active' : ''; ?>" href="?page=attendance">
-                <i class="fas fa-calendar-check"></i>
-                <span>Attendance</span>
-            </a>
-            <hr class="text-white mx-3">
-            <a class="nav-link" href="?logout=1">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Logout</span>
-            </a>
-        </nav>
-    </div>
-
-    <div class="admin-content">
-        <div class="content-area">
-            <h3 class="mb-4">
-                <i class="fas fa-<?php 
-                    echo $page === 'dashboard' ? 'home' : 
-                        ($page === 'registrations' ? 'user-plus' :
-                        ($page === 'students' ? 'users' : 
-                        ($page === 'classes' ? 'chalkboard-teacher' : 
-                        ($page === 'invoices' ? 'file-invoice-dollar' : 'calendar-check')))); 
-                ?>"></i>
-                <?php echo ucfirst($page); ?>
-            </h3>
-
-            <?php if (isset($_SESSION['success'])): ?>
-                <div class="alert alert-success alert-dismissible fade show">
-                    <i class="fas fa-check-circle"></i>
-                    <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <!-- CONTENT HEADER -->
+        <div class="content-header">
+            <div>
+                <h1><?php echo ucfirst($page); ?></h1>
+                <p>Welcome back, <?php echo $_SESSION['admin_name']; ?>!</p>
+            </div>
+            <div class="user-profile" style="display: flex; align-items: center; gap: 15px;">
+                <div class="user-avatar">
+                    <?php echo strtoupper(substr($_SESSION['admin_name'], 0, 1)); ?>
                 </div>
-            <?php endif; ?>
-
-            <?php if (isset($_SESSION['error'])): ?>
-                <div class="alert alert-danger alert-dismissible fade show">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <div>
+                    <div style="font-weight: 600; font-size: 14px;"><?php echo $_SESSION['admin_name']; ?></div>
+                    <div style="font-size: 12px; color: #64748b;"><?php echo ucfirst($_SESSION['admin_role']); ?></div>
                 </div>
-            <?php endif; ?>
-
-            <?php
-            $pages_dir = 'admin_pages/';
-            switch($page) {
-                case 'dashboard':
-                    if (file_exists($pages_dir . 'dashboard.php')) {
-                        include $pages_dir . 'dashboard.php';
-                    }
-                    break;
-                case 'registrations':
-                    if (file_exists($pages_dir . 'registrations.php')) {
-                        include $pages_dir . 'registrations.php';
-                    }
-                    break;
-                case 'students':
-                    if (file_exists($pages_dir . 'students.php')) {
-                        include $pages_dir . 'students.php';
-                    }
-                    break;
-                case 'classes':
-                    if (file_exists($pages_dir . 'classes.php')) {
-                        include $pages_dir . 'classes.php';
-                    }
-                    break;
-                case 'invoices':
-                    if (file_exists($pages_dir . 'invoices.php')) {
-                        include $pages_dir . 'invoices.php';
-                    }
-                    break;
-                case 'payments':
-                    if (file_exists($pages_dir . 'payments.php')) {
-                        include $pages_dir . 'payments.php';
-                    }
-                    break;
-                case 'attendance':
-                    if (file_exists($pages_dir . 'attendance.php')) {
-                        include $pages_dir . 'attendance.php';
-                    }
-                    break;
-                default:
-                    if (file_exists($pages_dir . 'dashboard.php')) {
-                        include $pages_dir . 'dashboard.php';
-                    }
-            }
-            ?>
+            </div>
         </div>
+
+        <!-- ALERTS -->
+        <?php if (isset($_SESSION['success'])): ?>
+            <div class="alert-modern alert-success">
+                <i class="fas fa-check-circle"></i>
+                <span><?php echo $_SESSION['success']; unset($_SESSION['success']); ?></span>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_SESSION['error'])): ?>
+            <div class="alert-modern alert-danger">
+                <i class="fas fa-exclamation-circle"></i>
+                <span><?php echo $_SESSION['error']; unset($_SESSION['error']); ?></span>
+            </div>
+        <?php endif; ?>
+
+        <!-- PAGE CONTENT -->
+        <?php
+        $pages_dir = 'admin_pages/';
+        $page_file = $pages_dir . $page . '.php';
+        
+        if (file_exists($page_file)) {
+            include $page_file;
+        } else {
+            include $pages_dir . 'dashboard.php';
+        }
+        ?>
     </div>
 <?php endif; ?>
 
@@ -839,52 +222,22 @@ $page = $_GET['page'] ?? 'login';
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const menuToggle = document.getElementById('menuToggle');
-        const sidebar = document.getElementById('adminSidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-
-        if (!menuToggle || !sidebar || !overlay) return;
-
-        function toggleSidebar() {
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-            const icon = menuToggle.querySelector('i');
-            if (sidebar.classList.contains('active')) {
-                icon.className = 'fas fa-times';
-            } else {
-                icon.className = 'fas fa-bars';
-            }
-        }
-
-        menuToggle.addEventListener('click', toggleSidebar);
-        overlay.addEventListener('click', toggleSidebar);
-
-        const navLinks = document.querySelectorAll('.admin-sidebar .nav-link');
-        navLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                if (window.innerWidth <= 768) {
-                    setTimeout(toggleSidebar, 200);
-                }
-            });
-        });
-
-        window.addEventListener('resize', function() {
-            if (window.innerWidth > 768) {
-                sidebar.classList.remove('active');
-                overlay.classList.remove('active');
-                const icon = menuToggle.querySelector('i');
-                if (icon) icon.className = 'fas fa-bars';
-            }
-        });
-    });
-
+    // Initialize DataTables with modern styling
     $(document).ready(function() {
         $('.data-table').DataTable({
             pageLength: 25,
-            order: [[0, 'desc']]
+            order: [[0, 'desc']],
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search..."
+            }
         });
     });
+
+    // Auto-dismiss alerts after 5 seconds
+    setTimeout(function() {
+        $('.alert-modern').fadeOut('slow');
+    }, 5000);
 </script>
 </body>
 </html>
