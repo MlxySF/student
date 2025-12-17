@@ -520,6 +520,35 @@ if ($action === 'bulk_attendance') {
     exit;
 }
 
+if ($action === 'delete_attendance_day') {
+    $class_id = $_POST['class_id'] ?? null;
+    $attendance_date = $_POST['attendance_date'] ?? null;
+
+    if (!$class_id || !$attendance_date) {
+        $_SESSION['error'] = "Invalid data for deletion.";
+        header('Location: admin.php?page=attendance');
+        exit;
+    }
+
+    try {
+        $stmt = $pdo->prepare("DELETE FROM attendance WHERE class_id = ? AND attendance_date = ?");
+        $stmt->execute([$class_id, $attendance_date]);
+        
+        $deleted_count = $stmt->rowCount();
+        
+        if ($deleted_count > 0) {
+            $_SESSION['success'] = "Deleted {$deleted_count} attendance record(s) for " . date('F j, Y', strtotime($attendance_date));
+        } else {
+            $_SESSION['error'] = "No attendance records found for this date.";
+        }
+    } catch (Exception $e) {
+        $_SESSION['error'] = "Failed to delete attendance: " . $e->getMessage();
+    }
+    
+    header('Location: admin.php?page=attendance&class_id=' . $class_id . '&date=' . $attendance_date);
+    exit;
+}
+
 // Default redirect
 header('Location: admin.php');
 exit;
