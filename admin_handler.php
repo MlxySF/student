@@ -128,6 +128,63 @@ if ($action === 'reject_registration') {
     exit;
 }
 
+if ($action === 'delete_registration') {
+    $regId = $_POST['registration_id'];
+    try {
+        $pdo->beginTransaction();
+        
+        // Get registration details
+        $checkStmt = $pdo->prepare("SELECT id, registration_number, student_account_id, email FROM registrations WHERE id = ?");
+        $checkStmt->execute([$regId]);
+        $registration = $checkStmt->fetch();
+        
+        if (!$registration) {
+            $_SESSION['error'] = "Registration not found (ID: $regId)";
+            $pdo->rollBack();
+        } else {
+            $regNumber = $registration['registration_number'];
+            $studentAccountId = $registration['student_account_id'];
+            $email = $registration['email'];
+            
+            // Delete the registration
+            $stmt = $pdo->prepare("DELETE FROM registrations WHERE id = ?");
+            $stmt->execute([$regId]);
+            
+            // Delete associated student account if exists
+            if ($studentAccountId) {
+                $stmt = $pdo->prepare("DELETE FROM students WHERE id = ?");
+                $stmt->execute([$studentAccountId]);
+                
+                // Also delete any enrollments for this student
+                $stmt = $pdo->prepare("DELETE FROM enrollments WHERE student_id = ?");
+                $stmt->execute([$studentAccountId]);
+                
+                // Delete any attendance records
+                $stmt = $pdo->prepare("DELETE FROM attendance WHERE student_id = ?");
+                $stmt->execute([$studentAccountId]);
+                
+                // Delete any invoices
+                $stmt = $pdo->prepare("DELETE FROM invoices WHERE student_id = ?");
+                $stmt->execute([$studentAccountId]);
+                
+                // Delete any payments
+                $stmt = $pdo->prepare("DELETE FROM payments WHERE student_id = ?");
+                $stmt->execute([$studentAccountId]);
+            }
+            
+            $pdo->commit();
+            $_SESSION['success'] = "Registration $regNumber and associated student account deleted successfully!";
+        }
+    } catch (PDOException $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        $_SESSION['error'] = "Database error: " . $e->getMessage();
+    }
+    header('Location: admin.php?page=registrations');
+    exit;
+}
+
 // ============ STUDENT MANAGEMENT ============
 
 if ($action === 'create_student') {
