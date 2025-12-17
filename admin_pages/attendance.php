@@ -13,32 +13,6 @@ if ($selected_class) {
     $stmt = $pdo->prepare("SELECT * FROM classes WHERE id = ?");
     $stmt->execute([$selected_class]);
     $class_details = $stmt->fetch();
-    
-    // Auto-correct date to match class day if needed
-    if ($class_details && $class_details['day_of_week']) {
-        $dayMap = [
-            'Monday' => 1,
-            'Tuesday' => 2,
-            'Wednesday' => 3,
-            'Thursday' => 4,
-            'Friday' => 5,
-            'Saturday' => 6,
-            'Sunday' => 0
-        ];
-        
-        $requiredDay = $dayMap[$class_details['day_of_week']];
-        $currentDate = new DateTime($selected_date);
-        $currentDayOfWeek = (int)$currentDate->format('w'); // 0 = Sunday, 6 = Saturday
-        
-        // If selected date doesn't match class day, find nearest valid date
-        if ($currentDayOfWeek !== $requiredDay) {
-            // Find next occurrence of the required day
-            $daysToAdd = ($requiredDay - $currentDayOfWeek + 7) % 7;
-            if ($daysToAdd == 0) $daysToAdd = 7;
-            $currentDate->modify("+{$daysToAdd} days");
-            $selected_date = $currentDate->format('Y-m-d');
-        }
-    }
 }
 
 // Get students enrolled in selected class
@@ -107,12 +81,6 @@ $recent_attendance = $stmt->fetchAll();
         <i class="fas fa-filter"></i> Mark Attendance - Filter
         <?php if ($class_details && $class_details['day_of_week']): ?>
             <span class="badge bg-primary ms-2"><?php echo $class_details['day_of_week']; ?>s Only</span>
-            <?php if ($class_details['start_time'] && $class_details['end_time']): ?>
-                <span class="badge bg-info ms-1">
-                    <?php echo date('g:i A', strtotime($class_details['start_time'])); ?> - 
-                    <?php echo date('g:i A', strtotime($class_details['end_time'])); ?>
-                </span>
-            <?php endif; ?>
         <?php endif; ?>
     </div>
     <div class="card-body">
@@ -120,7 +88,7 @@ $recent_attendance = $stmt->fetchAll();
             <input type="hidden" name="page" value="attendance">
             <div class="col-md-4">
                 <label class="form-label">Select Class</label>
-                <select name="class_id" id="classSelect" class="form-control" onchange="updateDateForClass()">
+                <select name="class_id" id="classSelect" class="form-control" onchange="this.form.submit()">
                     <option value="">-- Select Class --</option>
                     <?php foreach($all_classes as $c): ?>
                     <option value="<?php echo $c['id']; ?>" 
@@ -136,30 +104,13 @@ $recent_attendance = $stmt->fetchAll();
             </div>
             <div class="col-md-4">
                 <label class="form-label">Select Date</label>
-                <input type="date" name="date" id="dateSelect" class="form-control" value="<?php echo $selected_date; ?>" readonly style="background-color: white;">
-                <small class="text-info" id="dateHint">
-                    <?php if ($class_details && $class_details['day_of_week']): ?>
-                        Click arrows to navigate between <?php echo $class_details['day_of_week']; ?>s
-                    <?php else: ?>
-                        Select a class first
-                    <?php endif; ?>
-                </small>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">Navigate</label>
-                <div class="btn-group w-100">
-                    <button type="button" class="btn btn-outline-secondary" id="prevDate" onclick="navigateDate(-1)">
-                        <i class="fas fa-chevron-left"></i> Prev
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary" id="nextDate" onclick="navigateDate(1)">
-                        Next <i class="fas fa-chevron-right"></i>
-                    </button>
-                </div>
+                <input type="date" name="date" id="dateSelect" class="form-control" value="<?php echo $selected_date; ?>" onchange="this.form.submit()">
+                <small class="text-muted" id="dateHint"></small>
             </div>
             <div class="col-md-2">
                 <label class="form-label">&nbsp;</label>
                 <button type="submit" class="btn btn-primary w-100">
-                    <i class="fas fa-search"></i> Load
+                    <i class="fas fa-search"></i> Filter
                 </button>
             </div>
         </form>
@@ -167,6 +118,11 @@ $recent_attendance = $stmt->fetchAll();
 </div>
 
 <script>
+// Restrict date selection based on class day
+const classSelect = document.getElementById('classSelect');
+const dateSelect = document.getElementById('dateSelect');
+const dateHint = document.getElementById('dateHint');
+
 const dayMap = {
     'Monday': 1,
     'Tuesday': 2,
@@ -177,64 +133,50 @@ const dayMap = {
     'Sunday': 0
 };
 
-let currentClassDay = null;
-
-function updateDateForClass() {
-    const classSelect = document.getElementById('classSelect');
-    const dateSelect = document.getElementById('dateSelect');
+function updateDateRestriction() {
     const selectedOption = classSelect.options[classSelect.selectedIndex];
     const classDay = selectedOption.getAttribute('data-day');
     
     if (classDay && dayMap.hasOwnProperty(classDay)) {
-        currentClassDay = dayMap[classDay];
+        const dayNumber = dayMap[classDay];
+        dateHint.textContent = `Only ${classDay}s can be selected for this class`;
+        dateHint.style.color = '#0d6efd';
         
-        // Find next occurrence of this day
-        const today = new Date();
-        const currentDay = today.getDay();
-        let daysToAdd = (currentClassDay - currentDay + 7) % 7;
-        if (daysToAdd === 0) daysToAdd = 7; // Get next week if today is the day
-        
-        today.setDate(today.getDate() + daysToAdd);
-        dateSelect.value = today.toISOString().split('T')[0];
+        // Add validation on date change
+        dateSelect.addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            const selectedDayOfWeek = selectedDate.getDay();
+            
+            if (selectedDayOfWeek !== dayNumber) {
+                alert(`This class only meets on ${classDay}s. Please select a ${classDay}.`);
+                // Find next valid date
+                const today = new Date();
+                let nextValidDate = new Date(today);
+                
+                // Find next occurrence of the class day
+                while (nextValidDate.getDay() !== dayNumber) {
+                    nextValidDate.setDate(nextValidDate.getDate() + 1);
+                }
+                
+                this.value = nextValidDate.toISOString().split('T')[0];
+            }
+        });
     } else {
-        currentClassDay = null;
-        dateSelect.value = new Date().toISOString().split('T')[0];
+        dateHint.textContent = '';
     }
 }
 
-function navigateDate(direction) {
-    const dateSelect = document.getElementById('dateSelect');
-    const currentDate = new Date(dateSelect.value);
-    
-    if (currentClassDay !== null) {
-        // Move by 7 days (one week) to get to next/prev occurrence of the same day
-        currentDate.setDate(currentDate.getDate() + (direction * 7));
-    } else {
-        // Move by 1 day if no class day restriction
-        currentDate.setDate(currentDate.getDate() + direction);
-    }
-    
-    dateSelect.value = currentDate.toISOString().split('T')[0];
+if (classSelect && dateSelect) {
+    classSelect.addEventListener('change', updateDateRestriction);
+    updateDateRestriction(); // Run on page load
 }
-
-// Initialize on page load
-window.addEventListener('DOMContentLoaded', function() {
-    const classSelect = document.getElementById('classSelect');
-    if (classSelect.value) {
-        const selectedOption = classSelect.options[classSelect.selectedIndex];
-        const classDay = selectedOption.getAttribute('data-day');
-        if (classDay && dayMap.hasOwnProperty(classDay)) {
-            currentClassDay = dayMap[classDay];
-        }
-    }
-});
 </script>
 
 <?php if ($selected_class && count($enrolled_students) > 0): ?>
 <!-- Bulk Attendance Form -->
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="fas fa-users"></i> Mark Attendance - <?php echo date('l, F j, Y', strtotime($selected_date)); ?></span>
+        <span><i class="fas fa-users"></i> Mark Attendance - <?php echo formatDate($selected_date); ?></span>
         <?php 
         // Check if attendance exists for this class and date
         $checkStmt = $pdo->prepare("SELECT COUNT(*) as count FROM attendance WHERE class_id = ? AND attendance_date = ?");
@@ -242,7 +184,7 @@ window.addEventListener('DOMContentLoaded', function() {
         $attendanceExists = $checkStmt->fetch()['count'] > 0;
         
         if ($attendanceExists): ?>
-            <button class="btn btn-danger btn-sm" onclick="if(confirm('Delete ALL attendance records for this class on <?php echo date('l, F j, Y', strtotime($selected_date)); ?>?')) document.getElementById('deleteAttendanceForm').submit();">
+            <button class="btn btn-danger btn-sm" onclick="if(confirm('Delete ALL attendance records for this class on <?php echo formatDate($selected_date); ?>?')) document.getElementById('deleteAttendanceForm').submit();">
                 <i class="fas fa-trash"></i> Delete All Attendance for This Day
             </button>
             <form id="deleteAttendanceForm" method="POST" action="admin_handler.php" style="display:none;">
