@@ -85,11 +85,12 @@ try {
     error_log("Error getting recent payments: " . $e->getMessage());
 }
 
-// Helper function to safely display UTF-8 text
-function safeDisplay($text) {
-    // Just escape special HTML characters but preserve UTF-8
-    return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
-}
+// Status display mapping with Chinese characters
+$statusDisplayMap = [
+    'State Team' => 'State Team 州队',
+    'Backup Team' => 'Backup Team 后备队',
+    'Student' => 'Student 学生'
+];
 ?>
 
 <div class="row">
@@ -155,14 +156,17 @@ function safeDisplay($text) {
             </div>
             <div class="card-body">
                 <?php if (!empty($studentsByStatus)): ?>
-                    <?php foreach ($studentsByStatus as $status => $count): ?>
+                    <?php foreach ($studentsByStatus as $status => $count): 
+                        // Get display text with Chinese characters
+                        $displayStatus = isset($statusDisplayMap[$status]) ? $statusDisplayMap[$status] : $status;
+                    ?>
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <div>
                                 <span class="badge <?php 
                                     echo strpos($status, 'State Team') !== false ? 'badge-state-team' : 
                                         (strpos($status, 'Backup Team') !== false ? 'badge-backup-team' : 'badge-student'); 
                                 ?>">
-                                    <?php echo safeDisplay($status); ?>
+                                    <?php echo $displayStatus; ?>
                                 </span>
                             </div>
                             <strong><?php echo $count; ?> students</strong>
@@ -200,16 +204,20 @@ function safeDisplay($text) {
                         </thead>
                         <tbody>
                             <?php if (!empty($recentRegistrations)): ?>
-                                <?php foreach ($recentRegistrations as $reg): ?>
+                                <?php foreach ($recentRegistrations as $reg): 
+                                    // Get display status with Chinese
+                                    $regStatus = $reg['status'];
+                                    $displayRegStatus = isset($statusDisplayMap[$regStatus]) ? $statusDisplayMap[$regStatus] : $regStatus;
+                                ?>
                                 <tr>
-                                    <td><strong><?php echo safeDisplay($reg['registration_number']); ?></strong></td>
-                                    <td><?php echo safeDisplay($reg['name_en']); ?></td>
+                                    <td><strong><?php echo htmlspecialchars($reg['registration_number']); ?></strong></td>
+                                    <td><?php echo htmlspecialchars($reg['name_en']); ?></td>
                                     <td>
                                         <span class="badge <?php 
-                                            echo strpos($reg['status'], 'State Team') !== false ? 'badge-state-team' : 
-                                                (strpos($reg['status'], 'Backup Team') !== false ? 'badge-backup-team' : 'badge-student'); 
+                                            echo strpos($regStatus, 'State Team') !== false ? 'badge-state-team' : 
+                                                (strpos($regStatus, 'Backup Team') !== false ? 'badge-backup-team' : 'badge-student'); 
                                         ?>">
-                                            <?php echo safeDisplay($reg['status']); ?>
+                                            <?php echo $displayRegStatus; ?>
                                         </span>
                                     </td>
                                     <td>
@@ -268,11 +276,11 @@ function safeDisplay($text) {
                     <?php if (!empty($recentPayments)): ?>
                         <?php foreach ($recentPayments as $payment): ?>
                         <tr>
-                            <td><strong><?php echo safeDisplay($payment['student_id']); ?></strong></td>
-                            <td><?php echo safeDisplay($payment['full_name']); ?></td>
-                            <td><?php echo safeDisplay($payment['class_name']); ?></td>
+                            <td><strong><?php echo htmlspecialchars($payment['student_id']); ?></strong></td>
+                            <td><?php echo htmlspecialchars($payment['full_name']); ?></td>
+                            <td><?php echo htmlspecialchars($payment['class_name']); ?></td>
                             <td><strong>RM <?php echo number_format($payment['amount'], 2); ?></strong></td>
-                            <td><?php echo safeDisplay($payment['payment_month']); ?></td>
+                            <td><?php echo htmlspecialchars($payment['payment_month']); ?></td>
                             <td><?php echo date('M j, Y', strtotime($payment['upload_date'])); ?></td>
                             <td>
                                 <a href="?page=payments&view=<?php echo $payment['id']; ?>" class="btn btn-sm btn-primary">
