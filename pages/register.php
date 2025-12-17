@@ -1143,8 +1143,8 @@
             <button type="button" onclick="downloadPDF()" style="background: #16a34a; color: white; padding: 16px 32px; border-radius: 12px; font-weight: bold; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); border: none; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: transform 0.2s;">
                 <i class="fas fa-download" style="font-size: 20px;"></i>
                 <div style="text-align: left;">
-                    <div>Download Agreement</div>
-                    <div style="font-size: 12px; font-weight: normal;">下载协议PDF</div>
+                    <div>Download Signed Agreement</div>
+                    <div style="font-size: 12px; font-weight: normal;">下载已签协议 PDF</div>
                 </div>
             </button>
             <button type="button" onclick="submitAnother()" style="background: linear-gradient(to right, #7c3aed, #6d28d9); color: white; padding: 16px 32px; border-radius: 12px; font-weight: bold; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3); border: none; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: transform 0.2s;">
