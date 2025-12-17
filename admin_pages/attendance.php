@@ -107,7 +107,7 @@ $recent_attendance = $stmt->fetchAll();
         <i class="fas fa-users"></i> Mark Attendance - <?php echo formatDate($selected_date); ?>
     </div>
     <div class="card-body">
-        <form method="POST">
+        <form method="POST" action="admin_handler.php">
             <input type="hidden" name="action" value="bulk_attendance">
             <input type="hidden" name="class_id" value="<?php echo $selected_class; ?>">
             <input type="hidden" name="attendance_date" value="<?php echo $selected_date; ?>">
@@ -144,7 +144,7 @@ $recent_attendance = $stmt->fetchAll();
                                 <div class="modal fade" id="noteModal<?php echo $s['id']; ?>">
                                     <div class="modal-dialog">
                                         <div class="modal-content">
-                                            <form method="POST">
+                                            <form method="POST" action="admin_handler.php">
                                                 <input type="hidden" name="action" value="mark_attendance">
                                                 <input type="hidden" name="student_id" value="<?php echo $s['id']; ?>">
                                                 <input type="hidden" name="class_id" value="<?php echo $selected_class; ?>">
