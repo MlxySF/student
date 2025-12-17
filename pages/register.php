@@ -681,10 +681,10 @@
         <p>• 选择 三堂课：收费 <strong>RM 280</strong></p>
         <p>• 选择 四堂课：收费 <strong>RM 320</strong></p>
         <p class="font-bold mt-1"><br>State team athletes must choose at least two classes.</p>
-        <p>• If only one class is chosen: <strong>RM 120</strong></p>
-        <p>• If a second class is chosen: <strong>RM 200</strong></p>
-        <p>• If a third class is chosen: <strong>RM 280</strong></p>
-        <p>• If a forth class is chosen: <strong>RM 320</strong></p>
+        <p>• Choose one class: <strong>RM 120</strong></p>
+        <p>• Choose two classes: <strong>RM 200</strong></p>
+        <p>• Choose three classes: <strong>RM 280</strong></p>
+        <p>• Choose four classes: <strong>RM 320</strong></p>
     </div>
 
     <div class="space-y-4">
@@ -731,16 +731,6 @@
                                 </div>
                             </div>
                         </label>
-
-                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all">
-                            <input type="checkbox" name="sch" value="Wushu Sport Academy: Wed 8pm-10pm">
-                            <div class="custom-checkbox-label">
-                                <div class="text-sm font-bold text-slate-800 mb-1">
-                                    <i class="far fa-calendar mr-2 text-amber-500"></i>Wednesday 星期三 · 8:00 PM - 10:00 PM
-                                </div>
-                                <div class="text-xs text-slate-500">全部组别 All Groups (A/B/C/D, 太极 Tai Chi, 传统 Traditional)</div>
-                            </div>
-                        </label>
                     </div>
                 </div>
             </div>
@@ -785,9 +775,10 @@
                         <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all">
                             <input type="checkbox" name="sch" value="SJK(C) Puay Chai 2: Wed 8pm-10pm">
                             <div class="custom-checkbox-label">
-                                <div class="text-sm font-bold text-slate-800">
+                                <div class="text-sm font-bold text-slate-800 mb-1">
                                     <i class="far fa-calendar mr-2 text-amber-500"></i>Wednesday 星期三 · 8:00 PM - 10:00 PM
                                 </div>
+                                <div class="text-xs text-slate-500">全部组别 All Groups (A/B/C/D, 太极 Tai Chi, 传统 Traditional)</div>
                             </div>
                         </label>
                     </div>
@@ -1705,6 +1696,11 @@
         }
 
         const isRegularStudent = selectedStatus === 'Student 学生';
+        const isStateorBackupStudent = selectedStatus === 'State Team 州队' || 'Backup Team 后备队';
+        
+        const restrictedClassesState = [
+            "Wushu Sport Academy: Sun 12pm-2pm"
+        ];
 
         const restrictedClasses = [
             "SJK(C) Puay Chai 2: Tue 8pm-10pm",
@@ -1720,6 +1716,34 @@
                 const errorMsg = container ? container.querySelector('.disabled-msg') : null;
 
                 if (isRegularStudent) {
+                    checkbox.checked = false;
+                    checkbox.disabled = true;
+                    if (container) {
+                        container.style.opacity = '0.5';
+                        container.style.cursor = 'not-allowed';
+                        container.style.background = '#f1f5f9';
+                    }
+                    if (errorMsg) errorMsg.classList.remove('hidden');
+                } else {
+                    checkbox.disabled = false;
+                    if (container) {
+                        container.style.opacity = '1';
+                        container.style.cursor = 'pointer';
+                        container.style.background = 'white';
+                    }
+                    if (errorMsg) errorMsg.classList.add('hidden');
+                }
+            }
+        });
+        
+        restrictedClassesState.forEach(val => {
+            const checkbox = document.querySelector(`input[name="sch"][value="${val}"]`);
+            
+            if (checkbox) {
+                const container = checkbox.closest('label');
+                const errorMsg = container ? container.querySelector('.disabled-msg') : null;
+
+                if (isStateorBackupStudent) {
                     checkbox.checked = false;
                     checkbox.disabled = true;
                     if (container) {
