@@ -261,6 +261,11 @@
             max-height: 1000px;
         }
 
+        /* Hidden Schedule Item */
+        .schedule-hidden {
+            display: none !important;
+        }
+
         /* PDF Templates */
         #pdf-template-page1, #pdf-template-page2 {
             position: fixed !important;
@@ -708,7 +713,7 @@
             <div class="school-schedules">
                 <div class="school-schedules-inner">
                     <div class="space-y-3">
-                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all">
+                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all" data-schedule="wsa-sun-10am">
                             <input type="checkbox" name="sch" value="Wushu Sport Academy: Sun 10am-12pm">
                             <div class="custom-checkbox-label">
                                 <div class="text-sm font-bold text-slate-800 mb-1">
@@ -720,7 +725,7 @@
                             </div>
                         </label>
 
-                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all">
+                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all" data-schedule="wsa-sun-12pm">
                             <input type="checkbox" name="sch" value="Wushu Sport Academy: Sun 12pm-2pm">
                             <div class="custom-checkbox-label">
                                 <div class="text-sm font-bold text-slate-800">
@@ -729,8 +734,8 @@
                             </div>
                         </label>
                         
-                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all">
-                            <input type="checkbox" name="sch" value="SJK(C) Puay Chai 2: Wed 8pm-10pm">
+                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all" data-schedule="wsa-wed-8pm">
+                            <input type="checkbox" name="sch" value="Wushu Sport Academy: Wed 8pm-10pm">
                             <div class="custom-checkbox-label">
                                 <div class="text-sm font-bold text-slate-800 mb-1">
                                     <i class="far fa-calendar mr-2 text-amber-500"></i>Wednesday 星期三 · 8:00 PM - 10:00 PM
@@ -738,7 +743,6 @@
                                 <div class="text-xs text-slate-600">
                                     <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">只有基础套路 和 太极套路</span>
                                 </div>
-                                <!-- <div class="text-xs text-slate-500">全部组别 All Groups (A/B/C/D 套路) 没有太极 和 传统</div> -->
                             </div>
                         </label>
                     </div>
@@ -766,7 +770,7 @@
             <div class="school-schedules">
                 <div class="school-schedules-inner">
                     <div class="space-y-3">
-                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all">
+                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all" data-schedule="pc2-tue-8pm">
                             <input type="checkbox" name="sch" value="SJK(C) Puay Chai 2: Tue 8pm-10pm">
                             <div class="custom-checkbox-label">
                                 <div class="text-sm font-bold text-slate-800 mb-1">
@@ -782,7 +786,7 @@
                             </div>
                         </label>
 
-                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all">
+                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all" data-schedule="pc2-wed-8pm">
                             <input type="checkbox" name="sch" value="SJK(C) Puay Chai 2: Wed 8pm-10pm">
                             <div class="custom-checkbox-label">
                                 <div class="text-sm font-bold text-slate-800 mb-1">
@@ -791,7 +795,6 @@
                                 <div class="text-xs text-slate-600">
                                     <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">全部组别 All Groups (A/B/C/D 套路) 没有太极 和 没有传统</span>
                                 </div>
-                                <!-- <div class="text-xs text-slate-500">全部组别 All Groups (A/B/C/D 套路) 没有太极 和 传统</div> -->
                             </div>
                         </label>
                     </div>
@@ -819,7 +822,7 @@
             <div class="school-schedules">
                 <div class="school-schedules-inner">
                     <div class="space-y-3">
-                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all">
+                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all" data-schedule="chinwoo-sun-2pm">
                             <input type="checkbox" name="sch" value="Stadium Chinwoo: Sun 2pm-4pm">
                             <div class="custom-checkbox-label">
                                 <div class="text-sm font-bold text-slate-800 mb-1">
@@ -1456,7 +1459,7 @@
     let currentStep = 1;
     const totalSteps = 7;
     let registrationData = null;
-    let savedPdfBlob = null; // Store PDF for later download
+    let savedPdfBlob = null;
 
     // ========================================
     // DOM CONTENT LOADED
@@ -1501,6 +1504,58 @@
                 option.style.fontWeight = 'normal';
             }
         });
+    }
+
+    // ========================================
+    // SCHEDULE AVAILABILITY - MODIFIED FOR NORMAL STUDENTS
+    // ========================================
+    function updateScheduleAvailability() {
+        const statusRadios = document.getElementsByName('status');
+        let selectedStatus = 'Student 学生';
+        for (const radio of statusRadios) {
+            if (radio.checked) {
+                selectedStatus = radio.value;
+                break;
+            }
+        }
+
+        const isRegularStudent = selectedStatus === 'Student 学生';
+        
+        // For normal students, only show WSA Sunday 10am-12pm and 12pm-2pm
+        if (isRegularStudent) {
+            // Hide all schedules except the two allowed for normal students
+            const allScheduleLabels = document.querySelectorAll('label[data-schedule]');
+            
+            allScheduleLabels.forEach(label => {
+                const scheduleKey = label.getAttribute('data-schedule');
+                const checkbox = label.querySelector('input[type="checkbox"]');
+                
+                // Only show wsa-sun-10am and wsa-sun-12pm for normal students
+                if (scheduleKey === 'wsa-sun-10am' || scheduleKey === 'wsa-sun-12pm') {
+                    label.style.display = 'flex'; // Show this schedule
+                    if (checkbox) {
+                        checkbox.disabled = false;
+                    }
+                } else {
+                    label.style.display = 'none'; // Hide this schedule
+                    if (checkbox) {
+                        checkbox.checked = false; // Uncheck if previously selected
+                        checkbox.disabled = true;
+                    }
+                }
+            });
+        } else {
+            // For State Team and Backup Team, show all schedules
+            const allScheduleLabels = document.querySelectorAll('label[data-schedule]');
+            
+            allScheduleLabels.forEach(label => {
+                const checkbox = label.querySelector('input[type="checkbox"]');
+                label.style.display = 'flex'; // Show all schedules
+                if (checkbox) {
+                    checkbox.disabled = false;
+                }
+            });
+        }
     }
 
     // ========================================
@@ -1696,89 +1751,6 @@
     }
 
     // ========================================
-    // SCHEDULE AVAILABILITY
-    // ========================================
-    function updateScheduleAvailability() {
-        const statusRadios = document.getElementsByName('status');
-        let selectedStatus = 'Student 学生';
-        for (const radio of statusRadios) {
-            if (radio.checked) {
-                selectedStatus = radio.value;
-                break;
-            }
-        }
-
-        const isRegularStudent = selectedStatus === 'Student 学生';
-        const isStateorBackupStudent = selectedStatus === 'State Team 州队' || 'Backup Team 后备队';
-        
-        const restrictedClassesState = [
-            "Wushu Sport Academy: Sun 12pm-2pm"
-        ];
-
-        const restrictedClasses = [
-            "SJK(C) Puay Chai 2: Tue 8pm-10pm",
-            "SJK(C) Puay Chai 2: Wed 8pm-10pm",
-            "Stadium Chinwoo: Sun 2pm-4pm"
-        ];
-
-        restrictedClasses.forEach(val => {
-            const checkbox = document.querySelector(`input[name="sch"][value="${val}"]`);
-            
-            if (checkbox) {
-                const container = checkbox.closest('label');
-                const errorMsg = container ? container.querySelector('.disabled-msg') : null;
-
-                if (isRegularStudent) {
-                    checkbox.checked = false;
-                    checkbox.disabled = true;
-                    if (container) {
-                        container.style.opacity = '0.5';
-                        container.style.cursor = 'not-allowed';
-                        container.style.background = '#f1f5f9';
-                    }
-                    if (errorMsg) errorMsg.classList.remove('hidden');
-                } else {
-                    checkbox.disabled = false;
-                    if (container) {
-                        container.style.opacity = '1';
-                        container.style.cursor = 'pointer';
-                        container.style.background = 'white';
-                    }
-                    if (errorMsg) errorMsg.classList.add('hidden');
-                }
-            }
-        });
-        
-        restrictedClassesState.forEach(val => {
-            const checkbox = document.querySelector(`input[name="sch"][value="${val}"]`);
-            
-            if (checkbox) {
-                const container = checkbox.closest('label');
-                const errorMsg = container ? container.querySelector('.disabled-msg') : null;
-
-                if (isStateorBackupStudent) {
-                    checkbox.checked = false;
-                    checkbox.disabled = true;
-                    if (container) {
-                        container.style.opacity = '0.5';
-                        container.style.cursor = 'not-allowed';
-                        container.style.background = '#f1f5f9';
-                    }
-                    if (errorMsg) errorMsg.classList.remove('hidden');
-                } else {
-                    checkbox.disabled = false;
-                    if (container) {
-                        container.style.opacity = '1';
-                        container.style.cursor = 'pointer';
-                        container.style.background = 'white';
-                    }
-                    if (errorMsg) errorMsg.classList.add('hidden');
-                }
-            }
-        });
-    }
-
-    // ========================================
     // STEP NAVIGATION
     // ========================================
     function changeStep(dir) {
@@ -1870,18 +1842,15 @@
             if (overlay) overlay.style.display = 'none';
 
             if (result.success) {
-                // Store credentials for display
                 registrationData.registrationNumber = result.registration_number;
                 registrationData.studentId = result.student_id;
                 registrationData.password = result.password;
                 registrationData.emailSent = result.email_sent;
 
-                // Update success page
                 document.getElementById('reg-number-display').innerHTML = `
                     <strong style="font-size: 20px; color: #7c3aed;">Registration Number: ${result.registration_number}</strong>
                 `;
 
-                // Add account credentials display to success page
                 const successContent = document.querySelector('#step-7 > div');
                 const credentialsHTML = `
                     <div style="background: #dcfce7; border: 2px solid #16a34a; border-radius: 12px; padding: 24px; margin: 24px auto; max-width: 600px;">
@@ -1912,13 +1881,11 @@
                     </div>
                 `;
 
-                // Insert credentials before the info box
                 const infoBox = successContent.querySelector('.bg-blue-50');
                 if (infoBox) {
                     infoBox.insertAdjacentHTML('beforebegin', credentialsHTML);
                 }
 
-                // Move to Step 7 (Success)
                 document.getElementById(`step-${currentStep}`).classList.remove('active');
                 currentStep = 7;
                 document.getElementById(`step-${currentStep}`).classList.add('active');
@@ -2119,7 +2086,6 @@
             const displayName = nameCn ? `${nameEn} (${nameCn})` : nameEn;
             const namePlain = nameEn;
 
-            // Generate and auto-download PDF
             const pdfBase64 = await generatePDFFile();
 
             registrationData = {
@@ -2217,7 +2183,6 @@
         const date = document.getElementById('today-date').value;
         const signature = canvas.toDataURL('image/png');
 
-        // Fill PDF templates
         document.getElementById('pdf-name').innerText = displayName;
         document.getElementById('pdf-ic').innerText = ic;
         document.getElementById('pdf-age').innerText = age;
@@ -2240,7 +2205,6 @@
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p', 'mm', 'a4');
 
-        // Render Page 1
         const page1 = document.getElementById('pdf-template-page1');
         page1.style.visibility = 'visible';
         page1.style.opacity = '1';
@@ -2271,7 +2235,6 @@
         page1.style.top = '-99999px';
         page1.style.zIndex = '-9999';
 
-        // Render Page 2
         const page2 = document.getElementById('pdf-template-page2');
         page2.style.visibility = 'visible';
         page2.style.opacity = '1';
@@ -2303,14 +2266,11 @@
         page2.style.top = '-99999px';
         page2.style.zIndex = '-9999';
 
-        // AUTO DOWNLOAD PDF
         const nameForFile = document.getElementById('name-en').value.replace(/\s+/g, '_');
         pdf.save(`${nameForFile}_Registration_Agreement.pdf`);
 
-        // Store PDF blob for later download
         savedPdfBlob = pdf.output('blob');
 
-        // Return base64 for database
         return pdf.output('datauristring').split(',')[1];
     }
 
@@ -2431,6 +2391,7 @@
         document.getElementById('upload-preview').classList.add('hidden');
     }
 </script>
+
 
 
 </body>
