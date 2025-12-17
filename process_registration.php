@@ -2,6 +2,7 @@
 /**
  * process_registration.php - Complete Registration Processing with PHPMailer
  * Handles student registration, account creation, and email notification
+ * Updated: Allows re-registration with same email if previous registration was rejected
  */
 
 header('Content-Type: application/json');
@@ -405,6 +406,33 @@ try {
     // Start transaction
     $conn->beginTransaction();
 
+    $email = trim($data['email']);
+    
+    // Check if email exists in students table
+    $stmt = $conn->prepare("SELECT id, student_id FROM students WHERE email = ?");
+    $stmt->execute([$email]);
+    $existingStudent = $stmt->fetch();
+    
+    // Check if email exists in registrations table and get its status
+    $stmt = $conn->prepare("SELECT id, payment_status, student_account_id FROM registrations WHERE email = ?");
+    $stmt->execute([$email]);
+    $existingRegistration = $stmt->fetch();
+    
+    $isReregistration = false;
+    $oldRegistrationId = null;
+    $oldStudentAccountId = null;
+    
+    // If registration exists and is rejected, allow re-registration
+    if ($existingRegistration && $existingRegistration['payment_status'] === 'rejected') {
+        $isReregistration = true;
+        $oldRegistrationId = $existingRegistration['id'];
+        $oldStudentAccountId = $existingRegistration['student_account_id'];
+        error_log("Re-registration detected for email: $email (Old Registration ID: $oldRegistrationId)");
+    } else if ($existingStudent || ($existingRegistration && $existingRegistration['payment_status'] !== 'rejected')) {
+        // Email exists and is NOT rejected
+        throw new Exception("Email already registered. Please use a different email address.");
+    }
+
     // Generate registration number
     $year = date('Y');
     $stmt = $conn->query("SELECT COUNT(*) FROM registrations WHERE YEAR(created_at) = $year");
@@ -419,67 +447,134 @@ try {
     // Prepare student data
     $studentId = $regNumber;
     $fullName = trim($data['name_en']);
-    $email = trim($data['email']);
     $phone = trim($data['phone']);
     $studentStatus = trim($data['status']);
 
-    // Check if email already exists
-    $stmt = $conn->prepare("SELECT id FROM students WHERE email = ?");
-    $stmt->execute([$email]);
+    $studentAccountId = null;
     
-    if ($stmt->fetch()) {
-        throw new Exception("Email already registered. Please use a different email address.");
+    if ($isReregistration && $oldStudentAccountId) {
+        // Update existing student account
+        $stmt = $conn->prepare("
+            UPDATE students 
+            SET student_id = ?, full_name = ?, email = ?, phone = ?, password = ?, student_status = ?
+            WHERE id = ?
+        ");
+        $stmt->execute([$studentId, $fullName, $email, $phone, $hashedPassword, $studentStatus, $oldStudentAccountId]);
+        $studentAccountId = $oldStudentAccountId;
+        error_log("Updated existing student account ID: $studentAccountId");
+    } else {
+        // Insert new student account
+        $stmt = $conn->prepare("
+            INSERT INTO students (student_id, full_name, email, phone, password, student_status, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, NOW())
+        ");
+        $stmt->execute([$studentId, $fullName, $email, $phone, $hashedPassword, $studentStatus]);
+        $studentAccountId = $conn->lastInsertId();
+        error_log("Created new student account ID: $studentAccountId");
     }
 
-    // Insert into students table
-    $stmt = $conn->prepare("
-        INSERT INTO students (student_id, full_name, email, phone, password, student_status, created_at) 
-        VALUES (?, ?, ?, ?, ?, ?, NOW())
-    ");
-    $stmt->execute([$studentId, $fullName, $email, $phone, $hashedPassword, $studentStatus]);
-    $studentAccountId = $conn->lastInsertId();
+    if ($isReregistration && $oldRegistrationId) {
+        // Update existing rejected registration with new data and set status to pending
+        $sql = "UPDATE registrations SET
+            registration_number = :reg_num,
+            name_cn = :name_cn,
+            name_en = :name_en,
+            ic = :ic,
+            age = :age,
+            school = :school,
+            status = :status,
+            phone = :phone,
+            email = :email,
+            level = :level,
+            events = :events,
+            schedule = :schedule,
+            parent_name = :parent_name,
+            parent_ic = :parent_ic,
+            form_date = :form_date,
+            signature_base64 = :signature_base64,
+            pdf_base64 = :pdf_base64,
+            payment_amount = :payment_amount,
+            payment_date = :payment_date,
+            payment_receipt_base64 = :payment_receipt_base64,
+            payment_status = 'pending',
+            class_count = :class_count,
+            student_account_id = :student_account_id,
+            account_created = 'yes',
+            password_generated = :password_generated,
+            created_at = NOW()
+            WHERE id = :old_reg_id";
 
-    // Insert into registrations table
-    $sql = "INSERT INTO registrations (
-        registration_number, name_cn, name_en, ic, age, school, status,
-        phone, email, level, events, schedule, parent_name, parent_ic,
-        form_date, signature_base64, pdf_base64, 
-        payment_amount, payment_date, payment_receipt_base64, payment_status, class_count,
-        student_account_id, account_created, password_generated, created_at
-    ) VALUES (
-        :reg_num, :name_cn, :name_en, :ic, :age, :school, :status,
-        :phone, :email, :level, :events, :schedule, :parent_name, :parent_ic,
-        :form_date, :signature_base64, :pdf_base64,
-        :payment_amount, :payment_date, :payment_receipt_base64, 'pending', :class_count,
-        :student_account_id, 'yes', :password_generated, NOW()
-    )";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([
+            ':reg_num' => $regNumber,
+            ':name_cn' => isset($data['name_cn']) ? trim($data['name_cn']) : '',
+            ':name_en' => $fullName,
+            ':ic' => trim($data['ic']),
+            ':age' => intval($data['age']),
+            ':school' => trim($data['school']),
+            ':status' => $studentStatus,
+            ':phone' => $phone,
+            ':email' => $email,
+            ':level' => isset($data['level']) ? trim($data['level']) : '',
+            ':events' => trim($data['events']),
+            ':schedule' => trim($data['schedule']),
+            ':parent_name' => trim($data['parent_name']),
+            ':parent_ic' => trim($data['parent_ic']),
+            ':form_date' => $data['form_date'],
+            ':signature_base64' => $data['signature_base64'],
+            ':pdf_base64' => $data['signed_pdf_base64'],
+            ':payment_amount' => floatval($data['payment_amount']),
+            ':payment_date' => $data['payment_date'],
+            ':payment_receipt_base64' => $data['payment_receipt_base64'],
+            ':class_count' => intval($data['class_count']),
+            ':student_account_id' => $studentAccountId,
+            ':password_generated' => $generatedPassword,
+            ':old_reg_id' => $oldRegistrationId
+        ]);
+        error_log("Updated registration ID $oldRegistrationId with new data, status changed to pending");
+    } else {
+        // Insert new registration
+        $sql = "INSERT INTO registrations (
+            registration_number, name_cn, name_en, ic, age, school, status,
+            phone, email, level, events, schedule, parent_name, parent_ic,
+            form_date, signature_base64, pdf_base64, 
+            payment_amount, payment_date, payment_receipt_base64, payment_status, class_count,
+            student_account_id, account_created, password_generated, created_at
+        ) VALUES (
+            :reg_num, :name_cn, :name_en, :ic, :age, :school, :status,
+            :phone, :email, :level, :events, :schedule, :parent_name, :parent_ic,
+            :form_date, :signature_base64, :pdf_base64,
+            :payment_amount, :payment_date, :payment_receipt_base64, 'pending', :class_count,
+            :student_account_id, 'yes', :password_generated, NOW()
+        )";
 
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([
-        ':reg_num' => $regNumber,
-        ':name_cn' => isset($data['name_cn']) ? trim($data['name_cn']) : '',
-        ':name_en' => $fullName,
-        ':ic' => trim($data['ic']),
-        ':age' => intval($data['age']),
-        ':school' => trim($data['school']),
-        ':status' => $studentStatus,
-        ':phone' => $phone,
-        ':email' => $email,
-        ':level' => isset($data['level']) ? trim($data['level']) : '',
-        ':events' => trim($data['events']),
-        ':schedule' => trim($data['schedule']),
-        ':parent_name' => trim($data['parent_name']),
-        ':parent_ic' => trim($data['parent_ic']),
-        ':form_date' => $data['form_date'],
-        ':signature_base64' => $data['signature_base64'],
-        ':pdf_base64' => $data['signed_pdf_base64'],
-        ':payment_amount' => floatval($data['payment_amount']),
-        ':payment_date' => $data['payment_date'],
-        ':payment_receipt_base64' => $data['payment_receipt_base64'],
-        ':class_count' => intval($data['class_count']),
-        ':student_account_id' => $studentAccountId,
-        ':password_generated' => $generatedPassword
-    ]);
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([
+            ':reg_num' => $regNumber,
+            ':name_cn' => isset($data['name_cn']) ? trim($data['name_cn']) : '',
+            ':name_en' => $fullName,
+            ':ic' => trim($data['ic']),
+            ':age' => intval($data['age']),
+            ':school' => trim($data['school']),
+            ':status' => $studentStatus,
+            ':phone' => $phone,
+            ':email' => $email,
+            ':level' => isset($data['level']) ? trim($data['level']) : '',
+            ':events' => trim($data['events']),
+            ':schedule' => trim($data['schedule']),
+            ':parent_name' => trim($data['parent_name']),
+            ':parent_ic' => trim($data['parent_ic']),
+            ':form_date' => $data['form_date'],
+            ':signature_base64' => $data['signature_base64'],
+            ':pdf_base64' => $data['signed_pdf_base64'],
+            ':payment_amount' => floatval($data['payment_amount']),
+            ':payment_date' => $data['payment_date'],
+            ':payment_receipt_base64' => $data['payment_receipt_base64'],
+            ':class_count' => intval($data['class_count']),
+            ':student_account_id' => $studentAccountId,
+            ':password_generated' => $generatedPassword
+        ]);
+    }
 
     // Commit transaction
     $conn->commit();
@@ -494,7 +589,8 @@ try {
     }
 
     // Log success
-    error_log("✅ Registration successful: $regNumber for $email (Status: $studentStatus) | Email sent: " . ($emailSent ? 'Yes' : 'No'));
+    $regType = $isReregistration ? 'Re-registration' : 'Registration';
+    error_log("✅ $regType successful: $regNumber for $email (Status: $studentStatus) | Email sent: " . ($emailSent ? 'Yes' : 'No'));
 
     // Return success response
     echo json_encode([
@@ -505,7 +601,9 @@ try {
         'password' => $generatedPassword,
         'status' => $studentStatus,
         'email_sent' => $emailSent,
-        'message' => 'Registration successful! Your account has been created.' . 
+        'is_reregistration' => $isReregistration,
+        'message' => ($isReregistration ? 'Re-registration successful! Your previous rejected registration has been updated. ' : 'Registration successful! ') .
+                    'Your account has been created.' . 
                     ($emailSent ? ' Please check your email for login credentials.' : ' Please save your credentials displayed on screen.')
     ]);
 
