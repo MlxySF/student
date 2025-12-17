@@ -10,7 +10,7 @@ try {
 }
 
 try {
-    // Get students by status - using student_status
+    // Get students by status - using student_status with explicit UTF-8 handling
     $stmt = $pdo->query("
         SELECT student_status, COUNT(*) as count 
         FROM students 
@@ -84,6 +84,13 @@ try {
     $recentPayments = [];
     error_log("Error getting recent payments: " . $e->getMessage());
 }
+
+// Status display mapping with Chinese characters
+$statusDisplayMap = [
+    'State Team' => 'State Team 州队',
+    'Backup Team' => 'Backup Team 后备队',
+    'Student' => 'Student 学生'
+];
 ?>
 
 <div class="row">
@@ -149,14 +156,17 @@ try {
             </div>
             <div class="card-body">
                 <?php if (!empty($studentsByStatus)): ?>
-                    <?php foreach ($studentsByStatus as $status => $count): ?>
+                    <?php foreach ($studentsByStatus as $status => $count): 
+                        // Get display text with Chinese characters
+                        $displayStatus = isset($statusDisplayMap[$status]) ? $statusDisplayMap[$status] : $status;
+                    ?>
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <div>
                                 <span class="badge <?php 
                                     echo strpos($status, 'State Team') !== false ? 'badge-state-team' : 
                                         (strpos($status, 'Backup Team') !== false ? 'badge-backup-team' : 'badge-student'); 
                                 ?>">
-                                    <?php echo htmlspecialchars($status); ?>
+                                    <?php echo $displayStatus; ?>
                                 </span>
                             </div>
                             <strong><?php echo $count; ?> students</strong>
@@ -194,21 +204,25 @@ try {
                         </thead>
                         <tbody>
                             <?php if (!empty($recentRegistrations)): ?>
-                                <?php foreach ($recentRegistrations as $reg): ?>
+                                <?php foreach ($recentRegistrations as $reg): 
+                                    // Get display status with Chinese
+                                    $regStatus = $reg['status'];
+                                    $displayRegStatus = isset($statusDisplayMap[$regStatus]) ? $statusDisplayMap[$regStatus] : $regStatus;
+                                ?>
                                 <tr>
                                     <td><strong><?php echo htmlspecialchars($reg['registration_number']); ?></strong></td>
                                     <td><?php echo htmlspecialchars($reg['name_en']); ?></td>
                                     <td>
                                         <span class="badge <?php 
-                                            echo strpos($reg['status'], 'State Team') !== false ? 'badge-state-team' : 
-                                                (strpos($reg['status'], 'Backup Team') !== false ? 'badge-backup-team' : 'badge-student'); 
+                                            echo strpos($regStatus, 'State Team') !== false ? 'badge-state-team' : 
+                                                (strpos($regStatus, 'Backup Team') !== false ? 'badge-backup-team' : 'badge-student'); 
                                         ?>">
-                                            <?php echo htmlspecialchars($reg['status']); ?>
+                                            <?php echo $displayRegStatus; ?>
                                         </span>
                                     </td>
                                     <td>
                                         <span class="badge bg-<?php 
-                                            echo $reg['payment_status'] === 'verified' ? 'success' : 
+                                            echo $reg['payment_status'] === 'verified' || $reg['payment_status'] === 'approved' ? 'success' : 
                                                 ($reg['payment_status'] === 'pending' ? 'warning' : 'danger'); 
                                         ?>">
                                             <?php echo ucfirst($reg['payment_status']); ?>
