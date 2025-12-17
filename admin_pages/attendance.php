@@ -1,11 +1,19 @@
 <?php
-// Get all classes
+// Get all classes with schedule
 $all_classes = $pdo->query("SELECT * FROM classes ORDER BY class_code")->fetchAll();
 
 // Selected class and date
 $selected_class = $_GET['class_id'] ?? null;
 $selected_date = $_GET['date'] ?? date('Y-m-d');
 $selected_month = $_GET['month'] ?? date('Y-m');
+
+// Get class details for schedule restrictions
+$class_details = null;
+if ($selected_class) {
+    $stmt = $pdo->prepare("SELECT * FROM classes WHERE id = ?");
+    $stmt->execute([$selected_class]);
+    $class_details = $stmt->fetch();
+}
 
 // Get students enrolled in selected class
 $enrolled_students = [];
@@ -71,24 +79,33 @@ $recent_attendance = $stmt->fetchAll();
 <div class="card mb-3">
     <div class="card-header">
         <i class="fas fa-filter"></i> Mark Attendance - Filter
+        <?php if ($class_details && $class_details['day_of_week']): ?>
+            <span class="badge bg-primary ms-2"><?php echo $class_details['day_of_week']; ?>s Only</span>
+        <?php endif; ?>
     </div>
     <div class="card-body">
-        <form method="GET" class="row g-3">
+        <form method="GET" class="row g-3" id="filterForm">
             <input type="hidden" name="page" value="attendance">
             <div class="col-md-4">
                 <label class="form-label">Select Class</label>
-                <select name="class_id" class="form-control" onchange="this.form.submit()">
+                <select name="class_id" id="classSelect" class="form-control" onchange="this.form.submit()">
                     <option value="">-- Select Class --</option>
                     <?php foreach($all_classes as $c): ?>
-                    <option value="<?php echo $c['id']; ?>" <?php echo $selected_class == $c['id'] ? 'selected' : ''; ?>>
+                    <option value="<?php echo $c['id']; ?>" 
+                            data-day="<?php echo $c['day_of_week'] ?? ''; ?>"
+                            <?php echo $selected_class == $c['id'] ? 'selected' : ''; ?>>
                         <?php echo $c['class_code']; ?> - <?php echo htmlspecialchars($c['class_name']); ?>
+                        <?php if ($c['day_of_week']): ?>
+                            (<?php echo $c['day_of_week']; ?>s)
+                        <?php endif; ?>
                     </option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div class="col-md-4">
                 <label class="form-label">Select Date</label>
-                <input type="date" name="date" class="form-control" value="<?php echo $selected_date; ?>" onchange="this.form.submit()">
+                <input type="date" name="date" id="dateSelect" class="form-control" value="<?php echo $selected_date; ?>" onchange="this.form.submit()">
+                <small class="text-muted" id="dateHint"></small>
             </div>
             <div class="col-md-2">
                 <label class="form-label">&nbsp;</label>
@@ -100,11 +117,82 @@ $recent_attendance = $stmt->fetchAll();
     </div>
 </div>
 
+<script>
+// Restrict date selection based on class day
+const classSelect = document.getElementById('classSelect');
+const dateSelect = document.getElementById('dateSelect');
+const dateHint = document.getElementById('dateHint');
+
+const dayMap = {
+    'Monday': 1,
+    'Tuesday': 2,
+    'Wednesday': 3,
+    'Thursday': 4,
+    'Friday': 5,
+    'Saturday': 6,
+    'Sunday': 0
+};
+
+function updateDateRestriction() {
+    const selectedOption = classSelect.options[classSelect.selectedIndex];
+    const classDay = selectedOption.getAttribute('data-day');
+    
+    if (classDay && dayMap.hasOwnProperty(classDay)) {
+        const dayNumber = dayMap[classDay];
+        dateHint.textContent = `Only ${classDay}s can be selected for this class`;
+        dateHint.style.color = '#0d6efd';
+        
+        // Add validation on date change
+        dateSelect.addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            const selectedDayOfWeek = selectedDate.getDay();
+            
+            if (selectedDayOfWeek !== dayNumber) {
+                alert(`This class only meets on ${classDay}s. Please select a ${classDay}.`);
+                // Find next valid date
+                const today = new Date();
+                let nextValidDate = new Date(today);
+                
+                // Find next occurrence of the class day
+                while (nextValidDate.getDay() !== dayNumber) {
+                    nextValidDate.setDate(nextValidDate.getDate() + 1);
+                }
+                
+                this.value = nextValidDate.toISOString().split('T')[0];
+            }
+        });
+    } else {
+        dateHint.textContent = '';
+    }
+}
+
+if (classSelect && dateSelect) {
+    classSelect.addEventListener('change', updateDateRestriction);
+    updateDateRestriction(); // Run on page load
+}
+</script>
+
 <?php if ($selected_class && count($enrolled_students) > 0): ?>
 <!-- Bulk Attendance Form -->
 <div class="card mb-3">
-    <div class="card-header">
-        <i class="fas fa-users"></i> Mark Attendance - <?php echo formatDate($selected_date); ?>
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-users"></i> Mark Attendance - <?php echo formatDate($selected_date); ?></span>
+        <?php 
+        // Check if attendance exists for this class and date
+        $checkStmt = $pdo->prepare("SELECT COUNT(*) as count FROM attendance WHERE class_id = ? AND attendance_date = ?");
+        $checkStmt->execute([$selected_class, $selected_date]);
+        $attendanceExists = $checkStmt->fetch()['count'] > 0;
+        
+        if ($attendanceExists): ?>
+            <button class="btn btn-danger btn-sm" onclick="if(confirm('Delete ALL attendance records for this class on <?php echo formatDate($selected_date); ?>?')) document.getElementById('deleteAttendanceForm').submit();">
+                <i class="fas fa-trash"></i> Delete All Attendance for This Day
+            </button>
+            <form id="deleteAttendanceForm" method="POST" action="admin_handler.php" style="display:none;">
+                <input type="hidden" name="action" value="delete_attendance_day">
+                <input type="hidden" name="class_id" value="<?php echo $selected_class; ?>">
+                <input type="hidden" name="attendance_date" value="<?php echo $selected_date; ?>">
+            </form>
+        <?php endif; ?>
     </div>
     <div class="card-body">
         <form method="POST" action="admin_handler.php" id="bulkAttendanceForm">
