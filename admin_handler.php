@@ -440,7 +440,53 @@ if ($action === 'mark_attendance') {
     }
 
     $_SESSION['success'] = "Attendance marked!";
-    header('Location: admin.php?page=attendance');
+    header('Location: admin.php?page=attendance&class_id=' . $class_id . '&date=' . $attendance_date);
+    exit;
+}
+
+if ($action === 'bulk_attendance') {
+    $class_id = $_POST['class_id'];
+    $attendance_date = $_POST['attendance_date'];
+    $attendance_data = $_POST['attendance'] ?? [];
+
+    if (empty($attendance_data)) {
+        $_SESSION['error'] = "No attendance data provided.";
+        header('Location: admin.php?page=attendance&class_id=' . $class_id . '&date=' . $attendance_date);
+        exit;
+    }
+
+    try {
+        $pdo->beginTransaction();
+        
+        $marked_count = 0;
+        
+        foreach ($attendance_data as $student_id => $status) {
+            // Check if attendance record exists
+            $stmt = $pdo->prepare("SELECT id FROM attendance WHERE student_id = ? AND class_id = ? AND attendance_date = ?");
+            $stmt->execute([$student_id, $class_id, $attendance_date]);
+            
+            if ($stmt->fetch()) {
+                // Update existing record
+                $stmt = $pdo->prepare("UPDATE attendance SET status = ?, marked_at = NOW() WHERE student_id = ? AND class_id = ? AND attendance_date = ?");
+                $stmt->execute([$status, $student_id, $class_id, $attendance_date]);
+            } else {
+                // Insert new record
+                $stmt = $pdo->prepare("INSERT INTO attendance (student_id, class_id, attendance_date, status, marked_at) VALUES (?, ?, ?, ?, NOW())");
+                $stmt->execute([$student_id, $class_id, $attendance_date, $status]);
+            }
+            
+            $marked_count++;
+        }
+        
+        $pdo->commit();
+        $_SESSION['success'] = "Attendance saved successfully! Marked {$marked_count} student(s).";
+        
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        $_SESSION['error'] = "Failed to save attendance: " . $e->getMessage();
+    }
+    
+    header('Location: admin.php?page=attendance&class_id=' . $class_id . '&date=' . $attendance_date);
     exit;
 }
 
