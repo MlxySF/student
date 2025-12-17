@@ -1,4 +1,13 @@
 <?php
+// Enable error reporting for debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Log errors to file
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/error_log.txt');
+
 session_start();
 require_once 'config.php';
 
@@ -54,6 +63,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $action = $_POST['action'] ?? '';
+
+// Log the action for debugging
+error_log("Action received: " . $action);
 
 // ============ REGISTRATION APPROVAL ============
 
@@ -422,34 +434,47 @@ if ($action === 'verify_payment') {
 // ============ ATTENDANCE ============
 
 if ($action === 'mark_attendance') {
+    error_log("Mark attendance action triggered");
     $student_id = $_POST['student_id'];
     $class_id = $_POST['class_id'];
     $attendance_date = $_POST['attendance_date'];
     $status = $_POST['status'];
     $notes = $_POST['notes'] ?? '';
 
-    $stmt = $pdo->prepare("SELECT id FROM attendance WHERE student_id = ? AND class_id = ? AND attendance_date = ?");
-    $stmt->execute([$student_id, $class_id, $attendance_date]);
+    try {
+        $stmt = $pdo->prepare("SELECT id FROM attendance WHERE student_id = ? AND class_id = ? AND attendance_date = ?");
+        $stmt->execute([$student_id, $class_id, $attendance_date]);
 
-    if ($stmt->fetch()) {
-        $stmt = $pdo->prepare("UPDATE attendance SET status = ?, notes = ? WHERE student_id = ? AND class_id = ? AND attendance_date = ?");
-        $stmt->execute([$status, $notes, $student_id, $class_id, $attendance_date]);
-    } else {
-        $stmt = $pdo->prepare("INSERT INTO attendance (student_id, class_id, attendance_date, status, notes) VALUES (?, ?, ?, ?, ?)");
-        $stmt->execute([$student_id, $class_id, $attendance_date, $status, $notes]);
+        if ($stmt->fetch()) {
+            $stmt = $pdo->prepare("UPDATE attendance SET status = ?, notes = ? WHERE student_id = ? AND class_id = ? AND attendance_date = ?");
+            $stmt->execute([$status, $notes, $student_id, $class_id, $attendance_date]);
+        } else {
+            $stmt = $pdo->prepare("INSERT INTO attendance (student_id, class_id, attendance_date, status, notes) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$student_id, $class_id, $attendance_date, $status, $notes]);
+        }
+
+        $_SESSION['success'] = "Attendance marked!";
+    } catch (Exception $e) {
+        error_log("Mark attendance error: " . $e->getMessage());
+        $_SESSION['error'] = "Failed to mark attendance: " . $e->getMessage();
     }
-
-    $_SESSION['success'] = "Attendance marked!";
+    
     header('Location: admin.php?page=attendance&class_id=' . $class_id . '&date=' . $attendance_date);
     exit;
 }
 
 if ($action === 'bulk_attendance') {
-    $class_id = $_POST['class_id'];
-    $attendance_date = $_POST['attendance_date'];
+    error_log("Bulk attendance action triggered");
+    $class_id = $_POST['class_id'] ?? null;
+    $attendance_date = $_POST['attendance_date'] ?? null;
     $attendance_data = $_POST['attendance'] ?? [];
 
+    error_log("Class ID: " . $class_id);
+    error_log("Attendance Date: " . $attendance_date);
+    error_log("Attendance Data: " . print_r($attendance_data, true));
+
     if (empty($attendance_data)) {
+        error_log("No attendance data provided");
         $_SESSION['error'] = "No attendance data provided.";
         header('Location: admin.php?page=attendance&class_id=' . $class_id . '&date=' . $attendance_date);
         exit;
@@ -461,15 +486,19 @@ if ($action === 'bulk_attendance') {
         $marked_count = 0;
         
         foreach ($attendance_data as $student_id => $status) {
+            error_log("Processing student ID: $student_id, status: $status");
+            
             // Check if attendance record exists
             $stmt = $pdo->prepare("SELECT id FROM attendance WHERE student_id = ? AND class_id = ? AND attendance_date = ?");
             $stmt->execute([$student_id, $class_id, $attendance_date]);
             
             if ($stmt->fetch()) {
+                error_log("Updating existing attendance for student $student_id");
                 // Update existing record
                 $stmt = $pdo->prepare("UPDATE attendance SET status = ? WHERE student_id = ? AND class_id = ? AND attendance_date = ?");
                 $stmt->execute([$status, $student_id, $class_id, $attendance_date]);
             } else {
+                error_log("Inserting new attendance for student $student_id");
                 // Insert new record
                 $stmt = $pdo->prepare("INSERT INTO attendance (student_id, class_id, attendance_date, status) VALUES (?, ?, ?, ?)");
                 $stmt->execute([$student_id, $class_id, $attendance_date, $status]);
@@ -479,10 +508,13 @@ if ($action === 'bulk_attendance') {
         }
         
         $pdo->commit();
+        error_log("Attendance saved successfully. Marked $marked_count students.");
         $_SESSION['success'] = "Attendance saved successfully! Marked {$marked_count} student(s).";
         
     } catch (Exception $e) {
         $pdo->rollBack();
+        error_log("Bulk attendance error: " . $e->getMessage());
+        error_log("Error trace: " . $e->getTraceAsString());
         $_SESSION['error'] = "Failed to save attendance: " . $e->getMessage();
     }
     
@@ -491,5 +523,6 @@ if ($action === 'bulk_attendance') {
 }
 
 // Default redirect
+error_log("No matching action found, redirecting to admin.php");
 header('Location: admin.php');
 exit;
