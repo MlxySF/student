@@ -28,7 +28,7 @@ $stmt = $pdo->query("
     FROM attendance a
     JOIN students s ON a.student_id = s.id
     JOIN classes c ON a.class_id = c.id
-    ORDER BY a.attendance_date DESC, a.marked_at DESC
+    ORDER BY a.attendance_date DESC, a.created_at DESC
     LIMIT 50
 ");
 $recent_attendance = $stmt->fetchAll();
