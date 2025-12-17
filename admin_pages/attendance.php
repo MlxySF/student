@@ -36,8 +36,42 @@ $recent_attendance = $stmt->fetchAll();
 
 <h3><i class="fas fa-calendar-check"></i> Attendance Management</h3>
 
+<!-- Export Section -->
+<div class="card mb-3">
+    <div class="card-header bg-success text-white">
+        <i class="fas fa-file-excel"></i> Export Attendance to Excel
+    </div>
+    <div class="card-body">
+        <form method="GET" action="export_attendance_excel.php" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label"><i class="fas fa-chalkboard"></i> Select Class</label>
+                <select name="class_id" class="form-control" required>
+                    <option value="">-- Select Class --</option>
+                    <?php foreach($all_classes as $c): ?>
+                    <option value="<?php echo $c['id']; ?>">
+                        <?php echo $c['class_code']; ?> - <?php echo htmlspecialchars($c['class_name']); ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label"><i class="fas fa-calendar"></i> Export Month</label>
+                <input type="month" name="month" class="form-control" value="<?php echo $selected_month; ?>" required>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-success w-100">
+                    <i class="fas fa-file-excel"></i> Export to Excel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Class and Date Filter -->
 <div class="card mb-3">
+    <div class="card-header">
+        <i class="fas fa-filter"></i> Mark Attendance - Filter
+    </div>
     <div class="card-body">
         <form method="GET" class="row g-3">
             <input type="hidden" name="page" value="attendance">
@@ -65,27 +99,6 @@ $recent_attendance = $stmt->fetchAll();
         </form>
     </div>
 </div>
-
-<?php if ($selected_class): ?>
-<!-- Export Section -->
-<div class="card mb-3">
-    <div class="card-body">
-        <form method="GET" action="export_attendance_excel.php" class="row g-3 align-items-end">
-            <input type="hidden" name="class_id" value="<?php echo $selected_class; ?>">
-            <div class="col-md-6">
-                <label class="form-label"><i class="fas fa-calendar"></i> Export Month</label>
-                <input type="month" name="month" class="form-control" value="<?php echo $selected_month; ?>">
-                <small class="text-muted">Select the month to export attendance</small>
-            </div>
-            <div class="col-md-6">
-                <button type="submit" class="btn btn-success w-100">
-                    <i class="fas fa-file-excel"></i> Export to Excel
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-<?php endif; ?>
 
 <?php if ($selected_class && count($enrolled_students) > 0): ?>
 <!-- Bulk Attendance Form -->
