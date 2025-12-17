@@ -272,9 +272,12 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $passw
     <body>
         <div class='container'>
             <div class='header'>
-                <h1>🥋 Welcome to Wushu Sport Academy!</h1>
-                <p>报名成功 · Registration Successful</p>
-            </div>
+    <div style='text-align: center; margin-bottom: 16px;'>
+        <img src='https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png' alt='Wushu Sport Academy Logo' style='width: 60px; height: 60px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.2);'>
+    </div>
+    <h1 style='margin-top: 12px;'>Welcome to Wushu Sport Academy!</h1>
+    <p>报名成功 · Registration Successful</p>
+</div>
             
             <div class='content'>
                 <div class='greeting'>Dear {$studentName},</div>
