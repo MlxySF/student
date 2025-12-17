@@ -717,9 +717,6 @@
                                 <div class="text-xs text-slate-600">
                                     <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">只限于州队/后备队 Only for State/Backup Team</span>
                                 </div>
-                                <div class="text-[10px] text-red-500 font-bold hidden disabled-msg mt-1">
-                                    <i class="fas fa-ban mr-1"></i>Not available for Normal Students 普通学生不允许参加
-                                </div>
                             </div>
                         </label>
 
@@ -729,6 +726,19 @@
                                 <div class="text-sm font-bold text-slate-800">
                                     <i class="far fa-calendar mr-2 text-amber-500"></i>Sunday 星期日 · 12:00 PM - 2:00 PM
                                 </div>
+                            </div>
+                        </label>
+                        
+                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all">
+                            <input type="checkbox" name="sch" value="SJK(C) Puay Chai 2: Wed 8pm-10pm">
+                            <div class="custom-checkbox-label">
+                                <div class="text-sm font-bold text-slate-800 mb-1">
+                                    <i class="far fa-calendar mr-2 text-amber-500"></i>Wednesday 星期三 · 8:00 PM - 10:00 PM
+                                </div>
+                                <div class="text-xs text-slate-600">
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">只有基础套路 和 太极套路</span>
+                                </div>
+                                <!-- <div class="text-xs text-slate-500">全部组别 All Groups (A/B/C/D 套路) 没有太极 和 传统</div> -->
                             </div>
                         </label>
                     </div>
@@ -764,7 +774,7 @@
                                 </div>
                                 <div class="text-xs text-slate-600">
                                     <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">只限于州队/后备队 Only for State/Backup Team</span>
-                                    <span class="text-slate-400 ml-1">(D/C/B/A 套路 Routine)</span>
+                                    <span class="text-slate-400 ml-1">(D/C/B/A 套路 Routine) 和 传统套路</span>
                                 </div>
                                 <div class="text-[10px] text-red-500 font-bold hidden disabled-msg mt-1">
                                     <i class="fas fa-ban mr-1"></i>Not available for Normal Students 普通学生不允许参加
@@ -778,7 +788,10 @@
                                 <div class="text-sm font-bold text-slate-800 mb-1">
                                     <i class="far fa-calendar mr-2 text-amber-500"></i>Wednesday 星期三 · 8:00 PM - 10:00 PM
                                 </div>
-                                <div class="text-xs text-slate-500">全部组别 All Groups (A/B/C/D, 太极 Tai Chi, 传统 Traditional)</div>
+                                <div class="text-xs text-slate-600">
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">全部组别 All Groups (A/B/C/D 套路) 没有太极 和 没有传统</span>
+                                </div>
+                                <!-- <div class="text-xs text-slate-500">全部组别 All Groups (A/B/C/D 套路) 没有太极 和 传统</div> -->
                             </div>
                         </label>
                     </div>
@@ -1704,7 +1717,7 @@
 
         const restrictedClasses = [
             "SJK(C) Puay Chai 2: Tue 8pm-10pm",
-            "Wushu Sport Academy: Sun 10am-12pm",
+            "SJK(C) Puay Chai 2: Wed 8pm-10pm",
             "Stadium Chinwoo: Sun 2pm-4pm"
         ];
 
