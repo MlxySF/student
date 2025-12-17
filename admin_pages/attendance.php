@@ -123,16 +123,19 @@ $recent_attendance = $stmt->fetchAll();
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach($enrolled_students as $s): ?>
+                        <?php foreach($enrolled_students as $s): 
+                            // Set default status to 'present' if not set
+                            $current_status = $s['attendance_status'] ?? 'present';
+                        ?>
                         <tr>
                             <td><span class="badge bg-secondary"><?php echo $s['student_id']; ?></span></td>
                             <td><?php echo htmlspecialchars($s['full_name']); ?></td>
                             <td>
                                 <select name="attendance[<?php echo $s['id']; ?>]" class="form-control form-control-sm" required>
-                                    <option value="present" <?php echo $s['attendance_status'] === 'present' ? 'selected' : ''; ?>>Present</option>
-                                    <option value="absent" <?php echo $s['attendance_status'] === 'absent' ? 'selected' : ''; ?>>Absent</option>
-                                    <option value="late" <?php echo $s['attendance_status'] === 'late' ? 'selected' : ''; ?>>Late</option>
-                                    <option value="excused" <?php echo $s['attendance_status'] === 'excused' ? 'selected' : ''; ?>>Excused</option>
+                                    <option value="present" <?php echo $current_status === 'present' ? 'selected' : ''; ?>>Present</option>
+                                    <option value="absent" <?php echo $current_status === 'absent' ? 'selected' : ''; ?>>Absent</option>
+                                    <option value="late" <?php echo $current_status === 'late' ? 'selected' : ''; ?>>Late</option>
+                                    <option value="excused" <?php echo $current_status === 'excused' ? 'selected' : ''; ?>>Excused</option>
                                 </select>
                             </td>
                             <td>
@@ -158,10 +161,10 @@ $recent_attendance = $stmt->fetchAll();
                                                     <div class="mb-3">
                                                         <label>Status</label>
                                                         <select name="status" class="form-control" required>
-                                                            <option value="present" <?php echo $s['attendance_status'] === 'present' ? 'selected' : ''; ?>>Present</option>
-                                                            <option value="absent" <?php echo $s['attendance_status'] === 'absent' ? 'selected' : ''; ?>>Absent</option>
-                                                            <option value="late" <?php echo $s['attendance_status'] === 'late' ? 'selected' : ''; ?>>Late</option>
-                                                            <option value="excused" <?php echo $s['attendance_status'] === 'excused' ? 'selected' : ''; ?>>Excused</option>
+                                                            <option value="present" <?php echo $current_status === 'present' ? 'selected' : ''; ?>>Present</option>
+                                                            <option value="absent" <?php echo $current_status === 'absent' ? 'selected' : ''; ?>>Absent</option>
+                                                            <option value="late" <?php echo $current_status === 'late' ? 'selected' : ''; ?>>Late</option>
+                                                            <option value="excused" <?php echo $current_status === 'excused' ? 'selected' : ''; ?>>Excused</option>
                                                         </select>
                                                     </div>
                                                     <div class="mb-3">
