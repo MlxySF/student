@@ -84,6 +84,9 @@ $registrations = $stmt->fetchAll();
                             <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#viewModal<?php echo $reg['id']; ?>">
                                 <i class="fas fa-eye"></i> View
                             </button>
+                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal<?php echo $reg['id']; ?>">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -92,6 +95,69 @@ $registrations = $stmt->fetchAll();
         </div>
     </div>
 </div>
+
+<!-- Delete Confirmation Modals -->
+<?php foreach ($registrations as $reg): ?>
+<div class="modal fade" id="deleteModal<?php echo $reg['id']; ?>" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i> Delete Registration
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Are you sure you want to delete this registration?</strong></p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle"></i> This will also delete the associated student account if it exists.
+                </div>
+                <table class="table table-sm table-bordered">
+                    <tr>
+                        <th width="40%">Registration #:</th>
+                        <td><?php echo htmlspecialchars($reg['registration_number']); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Student Name:</th>
+                        <td><?php echo htmlspecialchars($reg['name_en']); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Email:</th>
+                        <td><?php echo htmlspecialchars($reg['email']); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            <span class="badge bg-<?php echo $badgeColor; ?>">
+                                <?php 
+                                $statusValue = $reg['payment_status'] ?? '';
+                                if ($statusValue === 'approved') echo 'Approved';
+                                elseif ($statusValue === 'pending') echo 'Pending';
+                                elseif ($statusValue === 'rejected') echo 'Rejected';
+                                else echo 'No Status';
+                                ?>
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+                <p class="text-danger mb-0"><strong>⚠️ This action cannot be undone!</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <form method="POST" action="admin_handler.php" class="d-inline">
+                    <input type="hidden" name="action" value="delete_registration">
+                    <input type="hidden" name="registration_id" value="<?php echo $reg['id']; ?>">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Yes, Delete Registration
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endforeach; ?>
 
 <!-- View Modals (Outside the table) -->
 <?php foreach ($registrations as $reg): ?>
