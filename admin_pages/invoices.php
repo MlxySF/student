@@ -156,7 +156,6 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
             <div class="col-md-3">
                 <label class="form-label"><i class="fas fa-calendar"></i> Payment Month</label>
                 <input type="month" name="filter_month" class="form-control" value="<?php echo htmlspecialchars($filter_month); ?>">
-                <div class="form-text">Select any month</div>
             </div>
             
             <div class="col-md-3">
