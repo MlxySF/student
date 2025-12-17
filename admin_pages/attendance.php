@@ -107,7 +107,7 @@ $recent_attendance = $stmt->fetchAll();
         <i class="fas fa-users"></i> Mark Attendance - <?php echo formatDate($selected_date); ?>
     </div>
     <div class="card-body">
-        <form method="POST" action="admin_handler.php">
+        <form method="POST" action="admin_handler.php" id="attendanceForm">
             <input type="hidden" name="action" value="bulk_attendance">
             <input type="hidden" name="class_id" value="<?php echo $selected_class; ?>">
             <input type="hidden" name="attendance_date" value="<?php echo $selected_date; ?>">
@@ -131,7 +131,7 @@ $recent_attendance = $stmt->fetchAll();
                             <td><span class="badge bg-secondary"><?php echo $s['student_id']; ?></span></td>
                             <td><?php echo htmlspecialchars($s['full_name']); ?></td>
                             <td>
-                                <select name="attendance[<?php echo $s['id']; ?>]" class="form-control form-control-sm" required>
+                                <select name="attendance[<?php echo $s['id']; ?>]" class="form-control form-control-sm">
                                     <option value="present" <?php echo $current_status === 'present' ? 'selected' : ''; ?>>Present</option>
                                     <option value="absent" <?php echo $current_status === 'absent' ? 'selected' : ''; ?>>Absent</option>
                                     <option value="late" <?php echo $current_status === 'late' ? 'selected' : ''; ?>>Late</option>
@@ -195,6 +195,26 @@ $recent_attendance = $stmt->fetchAll();
         </form>
     </div>
 </div>
+
+<script>
+// Ensure form submits properly
+document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+    console.log('Form submitting...');
+    console.log('Action:', this.action);
+    console.log('Method:', this.method);
+    
+    // Log form data
+    const formData = new FormData(this);
+    console.log('Form data:');
+    for (let [key, value] of formData.entries()) {
+        console.log(key, ':', value);
+    }
+    
+    // Don't prevent default - let it submit normally
+    return true;
+});
+</script>
+
 <?php elseif($selected_class): ?>
 <div class="alert alert-info">
     <i class="fas fa-info-circle"></i> No students enrolled in this class.
