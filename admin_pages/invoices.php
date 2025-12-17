@@ -220,6 +220,20 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
     <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#generateMonthlyInvoicesModal">
         <i class="fas fa-calendar-alt"></i> Generate Monthly Invoices
     </button>
+    <?php
+    // Build export URL with current filters
+    $export_url = 'export_invoices_excel.php?';
+    if ($filter_type) {
+        $export_url .= 'filter_type=' . urlencode($filter_type) . '&';
+    }
+    if ($filter_month) {
+        $export_url .= 'filter_month=' . urlencode($filter_month);
+    }
+    $export_url = rtrim($export_url, '?&');
+    ?>
+    <a href="<?php echo $export_url; ?>" class="btn btn-outline-success" <?php echo count($all_invoices) === 0 ? 'disabled' : ''; ?>>
+        <i class="fas fa-file-excel"></i> Export to Excel
+    </a>
 </div>
 
 <div class="card">
