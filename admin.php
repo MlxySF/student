@@ -196,10 +196,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         // Update payment verification
         $stmt = $pdo->prepare("
             UPDATE payments 
-            SET verification_status = ?, admin_notes = ?, verified_at = NOW(), verified_by = ? 
+            SET verification_status = ?, admin_notes = ? 
             WHERE id = ?
         ");
-        $stmt->execute([$verification_status, $admin_notes, $_SESSION['admin_id'], $payment_id]);
+        $stmt->execute([$verification_status, $admin_notes, $payment_id]);
         
         // If verified, update invoice status to paid
         if ($verification_status === 'verified') {
