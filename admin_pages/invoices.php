@@ -9,7 +9,7 @@ if ($filter_month) {
     $filter_month_formatted = date('M Y', strtotime($filter_month . '-01'));
 }
 
-// Build WHERE clauses
+// Build WHERE clauses for single-table queries
 $where_conditions = [];
 $params = [];
 
@@ -24,6 +24,20 @@ if ($filter_type) {
 }
 
 $where_clause = count($where_conditions) > 0 ? " AND " . implode(" AND ", $where_conditions) : "";
+
+// Build WHERE clauses for JOIN queries (with table alias)
+$where_conditions_join = [];
+$params_join = [];
+
+if ($filter_month_formatted) {
+    $where_conditions_join[] = "TRIM(i.payment_month) = ?";
+    $params_join[] = $filter_month_formatted;
+}
+
+if ($filter_type) {
+    $where_conditions_join[] = "i.invoice_type = ?";
+    $params_join[] = $filter_type;
+}
 
 // Get invoice statistics
 $sql_unpaid = "SELECT COUNT(*) as total FROM invoices WHERE status = 'unpaid'" . $where_clause;
@@ -58,8 +72,8 @@ $sql = "
     LEFT JOIN classes c ON i.class_id = c.id
     LEFT JOIN payments p ON i.id = p.invoice_id";
 
-if (count($where_conditions) > 0) {
-    $sql .= " WHERE " . implode(" AND ", $where_conditions);
+if (count($where_conditions_join) > 0) {
+    $sql .= " WHERE " . implode(" AND ", $where_conditions_join);
 }
 
 $sql .= "
@@ -75,7 +89,7 @@ $sql .= "
 ";
 
 $stmt = $pdo->prepare($sql);
-$stmt->execute($params);
+$stmt->execute($params_join);
 $all_invoices = $stmt->fetchAll();
 
 // Get students and classes for creating invoices
