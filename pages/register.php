@@ -1521,39 +1521,65 @@
 
         const isRegularStudent = selectedStatus === 'Student 学生';
         
-        // For normal students, only show WSA Sunday 10am-12pm and 12pm-2pm
+        // Get all school boxes
+        const schoolBoxes = document.querySelectorAll('.school-box');
+        
         if (isRegularStudent) {
-            // Hide all schedules except the two allowed for normal students
-            const allScheduleLabels = document.querySelectorAll('label[data-schedule]');
-            
-            allScheduleLabels.forEach(label => {
-                const scheduleKey = label.getAttribute('data-schedule');
-                const checkbox = label.querySelector('input[type="checkbox"]');
+            // For normal students, only show WSA and hide all schedules except Sunday 10am-12pm and 12pm-2pm
+            schoolBoxes.forEach(schoolBox => {
+                const schoolHeader = schoolBox.querySelector('.school-text h3');
+                const schoolName = schoolHeader ? schoolHeader.textContent : '';
                 
-                // Only show wsa-sun-10am and wsa-sun-12pm for normal students
-                if (scheduleKey === 'wsa-sun-10am' || scheduleKey === 'wsa-sun-12pm') {
-                    label.style.display = 'flex'; // Show this schedule
-                    if (checkbox) {
-                        checkbox.disabled = false;
-                    }
+                // Check if this is the Wushu Sport Academy
+                if (schoolName.includes('Wushu Sport Academy') || schoolName.includes('武术体育学院')) {
+                    // Show WSA school box
+                    schoolBox.style.display = 'block';
+                    
+                    // Handle individual schedules within WSA
+                    const allScheduleLabels = schoolBox.querySelectorAll('label[data-schedule]');
+                    allScheduleLabels.forEach(label => {
+                        const scheduleKey = label.getAttribute('data-schedule');
+                        const checkbox = label.querySelector('input[type="checkbox"]');
+                        
+                        // Only show wsa-sun-10am and wsa-sun-12pm for normal students
+                        if (scheduleKey === 'wsa-sun-10am' || scheduleKey === 'wsa-sun-12pm') {
+                            label.style.display = 'flex';
+                            if (checkbox) {
+                                checkbox.disabled = false;
+                            }
+                        } else {
+                            label.style.display = 'none';
+                            if (checkbox) {
+                                checkbox.checked = false;
+                                checkbox.disabled = true;
+                            }
+                        }
+                    });
                 } else {
-                    label.style.display = 'none'; // Hide this schedule
-                    if (checkbox) {
-                        checkbox.checked = false; // Uncheck if previously selected
+                    // Hide Puay Chai 2 and Chinwoo completely for normal students
+                    schoolBox.style.display = 'none';
+                    
+                    // Uncheck and disable all checkboxes in hidden school boxes
+                    const allCheckboxes = schoolBox.querySelectorAll('input[type="checkbox"]');
+                    allCheckboxes.forEach(checkbox => {
+                        checkbox.checked = false;
                         checkbox.disabled = true;
-                    }
+                    });
                 }
             });
         } else {
-            // For State Team and Backup Team, show all schedules
-            const allScheduleLabels = document.querySelectorAll('label[data-schedule]');
-            
-            allScheduleLabels.forEach(label => {
-                const checkbox = label.querySelector('input[type="checkbox"]');
-                label.style.display = 'flex'; // Show all schedules
-                if (checkbox) {
-                    checkbox.disabled = false;
-                }
+            // For State Team and Backup Team, show all school boxes and all schedules
+            schoolBoxes.forEach(schoolBox => {
+                schoolBox.style.display = 'block';
+                
+                const allScheduleLabels = schoolBox.querySelectorAll('label[data-schedule]');
+                allScheduleLabels.forEach(label => {
+                    const checkbox = label.querySelector('input[type="checkbox"]');
+                    label.style.display = 'flex';
+                    if (checkbox) {
+                        checkbox.disabled = false;
+                    }
+                });
             });
         }
     }
@@ -2391,6 +2417,7 @@
         document.getElementById('upload-preview').classList.add('hidden');
     }
 </script>
+
 
 
 
