@@ -435,7 +435,7 @@ if ($action === 'mark_attendance') {
         $stmt = $pdo->prepare("UPDATE attendance SET status = ?, notes = ? WHERE student_id = ? AND class_id = ? AND attendance_date = ?");
         $stmt->execute([$status, $notes, $student_id, $class_id, $attendance_date]);
     } else {
-        $stmt = $pdo->prepare("INSERT INTO attendance (student_id, class_id, attendance_date, status, notes, marked_at) VALUES (?, ?, ?, ?, ?, NOW())");
+        $stmt = $pdo->prepare("INSERT INTO attendance (student_id, class_id, attendance_date, status, notes) VALUES (?, ?, ?, ?, ?)");
         $stmt->execute([$student_id, $class_id, $attendance_date, $status, $notes]);
     }
 
@@ -467,11 +467,11 @@ if ($action === 'bulk_attendance') {
             
             if ($stmt->fetch()) {
                 // Update existing record
-                $stmt = $pdo->prepare("UPDATE attendance SET status = ?, marked_at = NOW() WHERE student_id = ? AND class_id = ? AND attendance_date = ?");
+                $stmt = $pdo->prepare("UPDATE attendance SET status = ? WHERE student_id = ? AND class_id = ? AND attendance_date = ?");
                 $stmt->execute([$status, $student_id, $class_id, $attendance_date]);
             } else {
                 // Insert new record
-                $stmt = $pdo->prepare("INSERT INTO attendance (student_id, class_id, attendance_date, status, marked_at) VALUES (?, ?, ?, ?, NOW())");
+                $stmt = $pdo->prepare("INSERT INTO attendance (student_id, class_id, attendance_date, status) VALUES (?, ?, ?, ?)");
                 $stmt->execute([$student_id, $class_id, $attendance_date, $status]);
             }
             
