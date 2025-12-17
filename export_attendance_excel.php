@@ -15,7 +15,7 @@ if (!$selected_class) {
     die('Class not selected');
 }
 
-// Get class information
+// Get class information INCLUDING SCHEDULE
 $stmt = $pdo->prepare("SELECT * FROM classes WHERE id = ?");
 $stmt->execute([$selected_class]);
 $class = $stmt->fetch();
@@ -56,17 +56,37 @@ foreach ($attendance_records as $record) {
     $attendance_map[$key] = $record['status'];
 }
 
-// Generate date range for the month
+// Generate date range for the month - ONLY CLASS DAYS
 $dates = [];
 $current = strtotime($month_start);
 $end = strtotime($month_end);
+
+// Map day_of_week to PHP day number (1=Monday, 7=Sunday)
+$day_map = [
+    'Monday' => 1,
+    'Tuesday' => 2,
+    'Wednesday' => 3,
+    'Thursday' => 4,
+    'Friday' => 5,
+    'Saturday' => 6,
+    'Sunday' => 7
+];
+
+$class_day_number = $class['day_of_week'] ? $day_map[$class['day_of_week']] : null;
+
 while ($current <= $end) {
     $date_str = date('Y-m-d', $current);
     $day_of_week = date('N', $current); // 1 = Monday, 7 = Sunday
     
-    // Skip weekends if desired, or include them
-    // For now, include all days
-    $dates[] = $date_str;
+    // If class has a specific day set, only include that day
+    if ($class_day_number) {
+        if ($day_of_week == $class_day_number) {
+            $dates[] = $date_str;
+        }
+    } else {
+        // If no day set, include all days (fallback to old behavior)
+        $dates[] = $date_str;
+    }
     
     $current = strtotime('+1 day', $current);
 }
@@ -83,9 +103,15 @@ $output = fopen('php://output', 'w');
 // Add UTF-8 BOM for proper Excel encoding
 fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
 
-// Write title row (class name)
+// Write title row (class name with schedule info)
 $title_month = date('F Y', strtotime($selected_month . '-01'));
-fputcsv($output, [$class['class_name'] . " - Attendance Report for " . $title_month]);
+$schedule_info = '';
+if ($class['day_of_week'] && $class['start_time'] && $class['end_time']) {
+    $schedule_info = " - Every " . $class['day_of_week'] . " (" . 
+                     date('g:i A', strtotime($class['start_time'])) . " - " . 
+                     date('g:i A', strtotime($class['end_time'])) . ")";
+}
+fputcsv($output, [$class['class_name'] . $schedule_info . " - Attendance Report for " . $title_month]);
 
 // Write empty row for spacing
 fputcsv($output, []);
@@ -96,6 +122,10 @@ foreach ($dates as $date) {
     $day_num = date('d', strtotime($date));
     $header[] = $day_num;
 }
+$header[] = 'Total Present';
+$header[] = 'Total Absent';
+$header[] = 'Total Late';
+$header[] = 'Attendance %';
 fputcsv($output, $header);
 
 // Write date row (full dates for reference)
@@ -104,6 +134,10 @@ foreach ($dates as $date) {
     $formatted_date = date('D d/m', strtotime($date));
     $date_row[] = $formatted_date;
 }
+$date_row[] = '';
+$date_row[] = '';
+$date_row[] = '';
+$date_row[] = '';
 fputcsv($output, $date_row);
 
 // Write student attendance data
@@ -113,6 +147,11 @@ foreach ($students as $student) {
         $student['full_name']
     ];
     
+    $total_present = 0;
+    $total_absent = 0;
+    $total_late = 0;
+    $total_excused = 0;
+    
     foreach ($dates as $date) {
         $key = $student['id'] . '_' . $date;
         $status = $attendance_map[$key] ?? '';
@@ -121,20 +160,33 @@ foreach ($students as $student) {
         switch ($status) {
             case 'present':
                 $row[] = 'P';
+                $total_present++;
                 break;
             case 'absent':
                 $row[] = 'A';
+                $total_absent++;
                 break;
             case 'late':
                 $row[] = 'L';
+                $total_late++;
                 break;
             case 'excused':
                 $row[] = 'E';
+                $total_excused++;
                 break;
             default:
                 $row[] = '';
         }
     }
+    
+    // Calculate attendance percentage
+    $total_classes = count($dates);
+    $attendance_percentage = $total_classes > 0 ? round(($total_present / $total_classes) * 100, 1) : 0;
+    
+    $row[] = $total_present;
+    $row[] = $total_absent;
+    $row[] = $total_late;
+    $row[] = $attendance_percentage . '%';
     
     fputcsv($output, $row);
 }
@@ -147,6 +199,17 @@ fputcsv($output, ['A', 'Absent']);
 fputcsv($output, ['L', 'Late']);
 fputcsv($output, ['E', 'Excused']);
 fputcsv($output, ['', 'No Record']);
+
+// Add summary info
+fputcsv($output, []);
+fputcsv($output, ['Summary:']);
+fputcsv($output, ['Total Class Days in ' . $title_month, count($dates)]);
+if ($class['day_of_week']) {
+    fputcsv($output, ['Class Day', $class['day_of_week']]);
+    if ($class['start_time'] && $class['end_time']) {
+        fputcsv($output, ['Class Time', date('g:i A', strtotime($class['start_time'])) . ' - ' . date('g:i A', strtotime($class['end_time']))]);
+    }
+}
 
 fclose($output);
 exit();
