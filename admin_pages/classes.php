@@ -43,10 +43,10 @@ $all_classes = $pdo->query("
                         <tr>
                             <th>Class Code</th>
                             <th>Class Name</th>
+                            <th>Schedule</th>
                             <th class="hide-mobile">Monthly Fee</th>
                             <th class="hide-mobile">Enrolled</th>
                             <th class="hide-mobile">Description</th>
-                            <th class="hide-mobile">Created</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -60,12 +60,19 @@ $all_classes = $pdo->query("
                                         RM <?php echo number_format($class['monthly_fee'], 2); ?>/mo
                                     </div>
                                 </td>
+                                <td>
+                                    <?php if ($class['day_of_week'] && $class['start_time'] && $class['end_time']): ?>
+                                        <span class="badge bg-primary"><?php echo $class['day_of_week']; ?></span><br>
+                                        <small><?php echo date('g:i A', strtotime($class['start_time'])); ?> - <?php echo date('g:i A', strtotime($class['end_time'])); ?></small>
+                                    <?php else: ?>
+                                        <span class="text-muted">Not set</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td class="hide-mobile">RM <?php echo number_format($class['monthly_fee'], 2); ?></td>
                                 <td class="hide-mobile">
                                     <span class="badge bg-success"><?php echo $class['enrolled_students']; ?> students</span>
                                 </td>
                                 <td class="hide-mobile"><?php echo htmlspecialchars($class['description']); ?></td>
-                                <td class="hide-mobile"><?php echo date('M d, Y', strtotime($class['created_at'])); ?></td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
                                         <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editClassModal<?php echo $class['id']; ?>" title="Edit">
@@ -85,7 +92,7 @@ $all_classes = $pdo->query("
 
                             <!-- Edit Class Modal -->
                             <div class="modal fade" id="editClassModal<?php echo $class['id']; ?>" tabindex="-1">
-                                <div class="modal-dialog">
+                                <div class="modal-dialog modal-lg">
                                     <div class="modal-content">
                                         <div class="modal-header">
                                             <h5 class="modal-title"><i class="fas fa-edit"></i> Edit Class</h5>
@@ -95,14 +102,42 @@ $all_classes = $pdo->query("
                                             <div class="modal-body">
                                                 <input type="hidden" name="action" value="edit_class">
                                                 <input type="hidden" name="class_id" value="<?php echo $class['id']; ?>">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Class Code *</label>
-                                                    <input type="text" name="class_code" class="form-control" value="<?php echo htmlspecialchars($class['class_code']); ?>" required>
+                                                
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label">Class Code *</label>
+                                                        <input type="text" name="class_code" class="form-control" value="<?php echo htmlspecialchars($class['class_code']); ?>" required>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label">Class Name *</label>
+                                                        <input type="text" name="class_name" class="form-control" value="<?php echo htmlspecialchars($class['class_name']); ?>" required>
+                                                    </div>
                                                 </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Class Name *</label>
-                                                    <input type="text" name="class_name" class="form-control" value="<?php echo htmlspecialchars($class['class_name']); ?>" required>
+                                                
+                                                <div class="row">
+                                                    <div class="col-md-4 mb-3">
+                                                        <label class="form-label">Day of Week *</label>
+                                                        <select name="day_of_week" class="form-control" required>
+                                                            <option value="">Select Day</option>
+                                                            <option value="Monday" <?php echo $class['day_of_week'] === 'Monday' ? 'selected' : ''; ?>>Monday</option>
+                                                            <option value="Tuesday" <?php echo $class['day_of_week'] === 'Tuesday' ? 'selected' : ''; ?>>Tuesday</option>
+                                                            <option value="Wednesday" <?php echo $class['day_of_week'] === 'Wednesday' ? 'selected' : ''; ?>>Wednesday</option>
+                                                            <option value="Thursday" <?php echo $class['day_of_week'] === 'Thursday' ? 'selected' : ''; ?>>Thursday</option>
+                                                            <option value="Friday" <?php echo $class['day_of_week'] === 'Friday' ? 'selected' : ''; ?>>Friday</option>
+                                                            <option value="Saturday" <?php echo $class['day_of_week'] === 'Saturday' ? 'selected' : ''; ?>>Saturday</option>
+                                                            <option value="Sunday" <?php echo $class['day_of_week'] === 'Sunday' ? 'selected' : ''; ?>>Sunday</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-4 mb-3">
+                                                        <label class="form-label">Start Time *</label>
+                                                        <input type="time" name="start_time" class="form-control" value="<?php echo $class['start_time']; ?>" required>
+                                                    </div>
+                                                    <div class="col-md-4 mb-3">
+                                                        <label class="form-label">End Time *</label>
+                                                        <input type="time" name="end_time" class="form-control" value="<?php echo $class['end_time']; ?>" required>
+                                                    </div>
                                                 </div>
+                                                
                                                 <div class="mb-3">
                                                     <label class="form-label">Monthly Fee (RM) *</label>
                                                     <input type="number" step="0.01" name="monthly_fee" class="form-control" value="<?php echo $class['monthly_fee']; ?>" required>
@@ -132,7 +167,7 @@ $all_classes = $pdo->query("
 
 <!-- Create Class Modal -->
 <div class="modal fade" id="createClassModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="fas fa-plus"></i> Create New Class</h5>
@@ -141,15 +176,45 @@ $all_classes = $pdo->query("
             <form method="POST" action="admin_handler.php">
                 <div class="modal-body">
                     <input type="hidden" name="action" value="create_class">
-                    <div class="mb-3">
-                        <label class="form-label">Class Code *</label>
-                        <input type="text" name="class_code" class="form-control" placeholder="e.g., WSA-SUN-10AM" required>
-                        <small class="text-muted">Unique code for the class</small>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Class Code *</label>
+                            <input type="text" name="class_code" class="form-control" placeholder="e.g., WSA-SUN-10AM" required>
+                            <small class="text-muted">Unique code for the class</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Class Name *</label>
+                            <input type="text" name="class_name" class="form-control" placeholder="Wushu Sport Academy: Sun 10am-12pm" required>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Class Name *</label>
-                        <input type="text" name="class_name" class="form-control" placeholder="Wushu Sport Academy: Sun 10am-12pm" required>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Day of Week *</label>
+                            <select name="day_of_week" class="form-control" required>
+                                <option value="">Select Day</option>
+                                <option value="Monday">Monday</option>
+                                <option value="Tuesday">Tuesday</option>
+                                <option value="Wednesday">Wednesday</option>
+                                <option value="Thursday">Thursday</option>
+                                <option value="Friday">Friday</option>
+                                <option value="Saturday">Saturday</option>
+                                <option value="Sunday">Sunday</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Start Time *</label>
+                            <input type="time" name="start_time" class="form-control" required>
+                            <small class="text-muted">e.g., 10:00 AM</small>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">End Time *</label>
+                            <input type="time" name="end_time" class="form-control" required>
+                            <small class="text-muted">e.g., 12:00 PM</small>
+                        </div>
                     </div>
+                    
                     <div class="mb-3">
                         <label class="form-label">Monthly Fee (RM) *</label>
                         <input type="number" step="0.01" name="monthly_fee" class="form-control" placeholder="200.00" required>
