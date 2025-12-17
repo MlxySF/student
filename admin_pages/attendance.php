@@ -107,7 +107,7 @@ $recent_attendance = $stmt->fetchAll();
         <i class="fas fa-users"></i> Mark Attendance - <?php echo formatDate($selected_date); ?>
     </div>
     <div class="card-body">
-        <form method="POST" action="admin_handler.php" id="attendanceForm">
+        <form method="POST" action="admin_handler.php" id="bulkAttendanceForm">
             <input type="hidden" name="action" value="bulk_attendance">
             <input type="hidden" name="class_id" value="<?php echo $selected_class; ?>">
             <input type="hidden" name="attendance_date" value="<?php echo $selected_date; ?>">
@@ -124,7 +124,6 @@ $recent_attendance = $stmt->fetchAll();
                     </thead>
                     <tbody>
                         <?php foreach($enrolled_students as $s): 
-                            // Set default status to 'present' if not set
                             $current_status = $s['attendance_status'] ?? 'present';
                         ?>
                         <tr>
@@ -142,44 +141,6 @@ $recent_attendance = $stmt->fetchAll();
                                 <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#noteModal<?php echo $s['id']; ?>">
                                     <i class="fas fa-sticky-note"></i>
                                 </button>
-
-                                <!-- Note Modal -->
-                                <div class="modal fade" id="noteModal<?php echo $s['id']; ?>">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <form method="POST" action="admin_handler.php">
-                                                <input type="hidden" name="action" value="mark_attendance">
-                                                <input type="hidden" name="student_id" value="<?php echo $s['id']; ?>">
-                                                <input type="hidden" name="class_id" value="<?php echo $selected_class; ?>">
-                                                <input type="hidden" name="attendance_date" value="<?php echo $selected_date; ?>">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Add Note</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <p><strong><?php echo htmlspecialchars($s['full_name']); ?></strong></p>
-                                                    <div class="mb-3">
-                                                        <label>Status</label>
-                                                        <select name="status" class="form-control" required>
-                                                            <option value="present" <?php echo $current_status === 'present' ? 'selected' : ''; ?>>Present</option>
-                                                            <option value="absent" <?php echo $current_status === 'absent' ? 'selected' : ''; ?>>Absent</option>
-                                                            <option value="late" <?php echo $current_status === 'late' ? 'selected' : ''; ?>>Late</option>
-                                                            <option value="excused" <?php echo $current_status === 'excused' ? 'selected' : ''; ?>>Excused</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label>Notes</label>
-                                                        <textarea name="notes" class="form-control" rows="3"><?php echo htmlspecialchars($s['notes'] ?? ''); ?></textarea>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                    <button type="submit" class="btn btn-primary">Save</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -196,24 +157,46 @@ $recent_attendance = $stmt->fetchAll();
     </div>
 </div>
 
-<script>
-// Ensure form submits properly
-document.getElementById('attendanceForm').addEventListener('submit', function(e) {
-    console.log('Form submitting...');
-    console.log('Action:', this.action);
-    console.log('Method:', this.method);
-    
-    // Log form data
-    const formData = new FormData(this);
-    console.log('Form data:');
-    for (let [key, value] of formData.entries()) {
-        console.log(key, ':', value);
-    }
-    
-    // Don't prevent default - let it submit normally
-    return true;
-});
-</script>
+<!-- Note Modals (OUTSIDE the main form) -->
+<?php foreach($enrolled_students as $s): 
+    $current_status = $s['attendance_status'] ?? 'present';
+?>
+<div class="modal fade" id="noteModal<?php echo $s['id']; ?>">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="admin_handler.php">
+                <input type="hidden" name="action" value="mark_attendance">
+                <input type="hidden" name="student_id" value="<?php echo $s['id']; ?>">
+                <input type="hidden" name="class_id" value="<?php echo $selected_class; ?>">
+                <input type="hidden" name="attendance_date" value="<?php echo $selected_date; ?>">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Note - <?php echo htmlspecialchars($s['full_name']); ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Status</label>
+                        <select name="status" class="form-control" required>
+                            <option value="present" <?php echo $current_status === 'present' ? 'selected' : ''; ?>>Present</option>
+                            <option value="absent" <?php echo $current_status === 'absent' ? 'selected' : ''; ?>>Absent</option>
+                            <option value="late" <?php echo $current_status === 'late' ? 'selected' : ''; ?>>Late</option>
+                            <option value="excused" <?php echo $current_status === 'excused' ? 'selected' : ''; ?>>Excused</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Notes</label>
+                        <textarea name="notes" class="form-control" rows="3"><?php echo htmlspecialchars($s['notes'] ?? ''); ?></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<?php endforeach; ?>
 
 <?php elseif($selected_class): ?>
 <div class="alert alert-info">
