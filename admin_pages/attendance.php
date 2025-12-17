@@ -5,6 +5,7 @@ $all_classes = $pdo->query("SELECT * FROM classes ORDER BY class_code")->fetchAl
 // Selected class and date
 $selected_class = $_GET['class_id'] ?? null;
 $selected_date = $_GET['date'] ?? date('Y-m-d');
+$selected_month = $_GET['month'] ?? date('Y-m');
 
 // Get students enrolled in selected class
 $enrolled_students = [];
@@ -40,7 +41,7 @@ $recent_attendance = $stmt->fetchAll();
     <div class="card-body">
         <form method="GET" class="row g-3">
             <input type="hidden" name="page" value="attendance">
-            <div class="col-md-5">
+            <div class="col-md-4">
                 <label class="form-label">Select Class</label>
                 <select name="class_id" class="form-control" onchange="this.form.submit()">
                     <option value="">-- Select Class --</option>
@@ -51,7 +52,7 @@ $recent_attendance = $stmt->fetchAll();
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-5">
+            <div class="col-md-4">
                 <label class="form-label">Select Date</label>
                 <input type="date" name="date" class="form-control" value="<?php echo $selected_date; ?>" onchange="this.form.submit()">
             </div>
@@ -64,6 +65,27 @@ $recent_attendance = $stmt->fetchAll();
         </form>
     </div>
 </div>
+
+<?php if ($selected_class): ?>
+<!-- Export Section -->
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="GET" action="export_attendance_excel.php" class="row g-3 align-items-end">
+            <input type="hidden" name="class_id" value="<?php echo $selected_class; ?>">
+            <div class="col-md-6">
+                <label class="form-label"><i class="fas fa-calendar"></i> Export Month</label>
+                <input type="month" name="month" class="form-control" value="<?php echo $selected_month; ?>">
+                <small class="text-muted">Select the month to export attendance</small>
+            </div>
+            <div class="col-md-6">
+                <button type="submit" class="btn btn-success w-100">
+                    <i class="fas fa-file-excel"></i> Export to Excel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<?php endif; ?>
 
 <?php if ($selected_class && count($enrolled_students) > 0): ?>
 <!-- Bulk Attendance Form -->
