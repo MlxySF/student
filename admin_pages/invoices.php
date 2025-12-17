@@ -1,10 +1,10 @@
 <?php
-// Month filter
-$filter_month = isset($_GET['filter_month']) ? $_GET['filter_month'] : '';
+// Month filter - trim to handle any whitespace issues
+$filter_month = isset($_GET['filter_month']) ? trim($_GET['filter_month']) : '';
 
 // Get invoice statistics
 $sql_unpaid = "SELECT COUNT(*) as total FROM invoices WHERE status = 'unpaid'";
-if ($filter_month) $sql_unpaid .= " AND payment_month = ?";
+if ($filter_month) $sql_unpaid .= " AND TRIM(payment_month) = ?";
 $stmt = $pdo->prepare($sql_unpaid);
 if ($filter_month) {
     $stmt->execute([$filter_month]);
@@ -14,7 +14,7 @@ if ($filter_month) {
 $unpaid_count = $stmt->fetch()['total'];
 
 $sql_pending = "SELECT COUNT(*) as total FROM invoices WHERE status = 'pending'";
-if ($filter_month) $sql_pending .= " AND payment_month = ?";
+if ($filter_month) $sql_pending .= " AND TRIM(payment_month) = ?";
 $stmt = $pdo->prepare($sql_pending);
 if ($filter_month) {
     $stmt->execute([$filter_month]);
@@ -24,7 +24,7 @@ if ($filter_month) {
 $pending_count = $stmt->fetch()['total'];
 
 $sql_paid = "SELECT COUNT(*) as total FROM invoices WHERE status = 'paid'";
-if ($filter_month) $sql_paid .= " AND payment_month = ?";
+if ($filter_month) $sql_paid .= " AND TRIM(payment_month) = ?";
 $stmt = $pdo->prepare($sql_paid);
 if ($filter_month) {
     $stmt->execute([$filter_month]);
@@ -34,7 +34,7 @@ if ($filter_month) {
 $paid_count = $stmt->fetch()['total'];
 
 $sql_outstanding = "SELECT SUM(amount) as total FROM invoices WHERE status IN ('unpaid', 'pending')";
-if ($filter_month) $sql_outstanding .= " AND payment_month = ?";
+if ($filter_month) $sql_outstanding .= " AND TRIM(payment_month) = ?";
 $stmt = $pdo->prepare($sql_outstanding);
 if ($filter_month) {
     $stmt->execute([$filter_month]);
@@ -56,7 +56,7 @@ $sql = "
     LEFT JOIN payments p ON i.id = p.invoice_id";
 
 if ($filter_month) {
-    $sql .= " WHERE i.payment_month = ?";
+    $sql .= " WHERE TRIM(i.payment_month) = ?";
 }
 
 $sql .= "
@@ -79,8 +79,8 @@ if ($filter_month) {
 }
 $all_invoices = $stmt->fetchAll();
 
-// Get unique months for filter dropdown
-$months_stmt = $pdo->query("SELECT DISTINCT payment_month FROM invoices WHERE payment_month IS NOT NULL AND payment_month != '' ORDER BY payment_month DESC");
+// Get unique months for filter dropdown - trim all results
+$months_stmt = $pdo->query("SELECT DISTINCT TRIM(payment_month) as payment_month FROM invoices WHERE payment_month IS NOT NULL AND payment_month != '' ORDER BY payment_month DESC");
 $available_months = $months_stmt->fetchAll(PDO::FETCH_COLUMN);
 
 // Get students and classes for creating invoices
@@ -151,6 +151,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
         <?php if ($filter_month): ?>
             <div class="alert alert-info mt-3 mb-0">
                 <i class="fas fa-info-circle"></i> Showing invoices for <strong><?php echo htmlspecialchars($filter_month); ?></strong>
+                <div class="small text-muted mt-1">Found <?php echo count($all_invoices); ?> invoice(s)</div>
             </div>
         <?php endif; ?>
     </div>
