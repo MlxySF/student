@@ -123,7 +123,7 @@ if (isParent()) {
             <p class="mb-0 text-muted">Register additional children and manage all your children's accounts from one place.</p>
         </div>
         <div class="col-md-4 text-md-end mt-3 mt-md-0">
-            <a href="register_additional_child.php" class="btn btn-primary btn-lg">
+            <a href="register.php" class="btn btn-primary btn-lg">
                 <i class="fas fa-user-plus"></i> Register Additional Child
             </a>
         </div>
