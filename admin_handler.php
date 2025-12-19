@@ -423,6 +423,28 @@ if ($action === 'delete_registration') {
 
 // ============ STUDENT MANAGEMENT ============
 
+if ($action === 'edit_student_registration') {
+    $registration_id = $_POST['registration_id'];
+    $name_en = trim($_POST['name_en']);
+    $name_cn = trim($_POST['name_cn'] ?? '');
+    $age = intval($_POST['age']);
+    $school = trim($_POST['school']);
+    $phone = trim($_POST['phone']);
+    $ic = trim($_POST['ic'] ?? '');
+    $student_status = $_POST['student_status'];
+
+    try {
+        $stmt = $pdo->prepare("UPDATE registrations SET name_en = ?, name_cn = ?, age = ?, school = ?, phone = ?, ic = ?, student_status = ?, updated_at = NOW() WHERE id = ?");
+        $stmt->execute([$name_en, $name_cn, $age, $school, $phone, $ic, $student_status, $registration_id]);
+        $_SESSION['success'] = "Student updated successfully!";
+    } catch (PDOException $e) {
+        $_SESSION['error'] = "Failed to update student: " . $e->getMessage();
+    }
+
+    header('Location: admin.php?page=students');
+    exit;
+}
+
 if ($action === 'create_student') {
     $student_id = 'STU' . str_pad(rand(1, 99999), 5, '0', STR_PAD_LEFT);
     $full_name = $_POST['full_name'];
