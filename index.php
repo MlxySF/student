@@ -2,24 +2,22 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-session_start();
+// Include config and new auth helper
 require_once 'config.php';
+require_once 'auth_helper.php';
 
 // ============================================================
-// HELPER FUNCTIONS
+// LEGACY HELPER FUNCTIONS (for backward compatibility)
 // ============================================================
 
 // Check if student is logged in and redirect if not
 function redirectIfNotLoggedIn() {
-    if (!isset($_SESSION['student_id'])) {
-        header('Location: index.php?page=login');
-        exit;
-    }
+    requireLogin();
 }
 
-// Get current logged-in student ID
+// Get current logged-in student ID - now uses new auth system
 function getStudentId() {
-    return $_SESSION['student_id'] ?? null;
+    return getActiveStudentId();
 }
 
 // Validate receipt file upload
@@ -74,59 +72,77 @@ function fileToBase64($file) {
 }
 
 // ============================================================
-// END HELPER FUNCTIONS
+// AUTHENTICATION HANDLERS
 // ============================================================
 
-
-// Handle Login
+// Handle Login - UPDATED for parent/student support
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'login') {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    $stmt = $pdo->prepare("SELECT * FROM students WHERE email = ?");
-    $stmt->execute([$email]);
-    $student = $stmt->fetch();
+    // Use new unified authentication
+    $authResult = authenticateUser($email, $password, $pdo);
 
-    if ($student && password_verify($password, $student['password'])) {
-        // Check registration approval status
-        $regStmt = $pdo->prepare("SELECT payment_status FROM registrations WHERE email = ? ORDER BY created_at DESC LIMIT 1");
-        $regStmt->execute([$email]);
-        $registration = $regStmt->fetch();
-        
-        if ($registration) {
-            $paymentStatus = $registration['payment_status'];
+    if ($authResult['success']) {
+        $userData = $authResult['user_data'];
+        $userType = $authResult['user_type'];
+
+        // For students, check registration approval
+        if ($userType === 'student') {
+            $regStmt = $pdo->prepare("SELECT payment_status FROM registrations WHERE email = ? ORDER BY created_at DESC LIMIT 1");
+            $regStmt->execute([$email]);
+            $registration = $regStmt->fetch();
             
-            // Block if rejected
-            if ($paymentStatus === 'rejected') {
-                $_SESSION['error'] = "Your registration has been rejected. Please contact the academy for more information.";
-                header('Location: index.php?page=login');
-                exit;
-            }
-            
-            // Block if still pending
-            if ($paymentStatus === 'pending' || empty($paymentStatus)) {
-                $_SESSION['error'] = "Your registration is still pending approval. Please wait for admin verification.";
-                header('Location: index.php?page=login');
-                exit;
-            }
-            
-            // Only allow login if approved
-            if ($paymentStatus !== 'approved') {
-                $_SESSION['error'] = "Your registration status is: " . ($paymentStatus ?? 'unknown') . ". Please contact the academy.";
-                header('Location: index.php?page=login');
-                exit;
+            if ($registration) {
+                $paymentStatus = $registration['payment_status'];
+                
+                if ($paymentStatus === 'rejected') {
+                    $_SESSION['error'] = "Your registration has been rejected. Please contact the academy for more information.";
+                    header('Location: index.php?page=login');
+                    exit;
+                }
+                
+                if ($paymentStatus === 'pending' || empty($paymentStatus)) {
+                    $_SESSION['error'] = "Your registration is still pending approval. Please wait for admin verification.";
+                    header('Location: index.php?page=login');
+                    exit;
+                }
+                
+                if ($paymentStatus !== 'approved') {
+                    $_SESSION['error'] = "Your registration status is: " . ($paymentStatus ?? 'unknown') . ". Please contact the academy.";
+                    header('Location: index.php?page=login');
+                    exit;
+                }
             }
         }
+
+        // Create session
+        createLoginSession($authResult);
         
-        // Registration is approved or no registration found (legacy students) - allow login
-        $_SESSION['student_id'] = $student['id'];
-        $_SESSION['student_name'] = $student['full_name'];
+        // Set legacy session variables for backward compatibility
+        if ($userType === 'student') {
+            $_SESSION['student_id'] = $userData['id'];
+            $_SESSION['student_name'] = $userData['full_name'];
+        } else if ($userType === 'parent') {
+            // For parents, set the first child as the active student
+            $_SESSION['student_name'] = $authResult['children'][0]['full_name'] ?? 'Parent';
+        }
+        
         header('Location: index.php?page=dashboard');
         exit;
     } else {
-        $_SESSION['error'] = "Invalid email or password.";
+        $_SESSION['error'] = $authResult['error'];
     }
 }
+
+// Handle Logout - use new function
+if (isset($_GET['logout'])) {
+    logoutUser();
+}
+
+// ============================================================
+// FORM HANDLERS
+// ============================================================
 
 // Handle Profile Update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_profile') {
@@ -138,13 +154,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
     // Check if email is already used by another student
     $stmt = $pdo->prepare("SELECT id FROM students WHERE email = ? AND id != ?");
-    $stmt->execute([$email, getStudentId()]);
+    $stmt->execute([$email, getActiveStudentId()]);
 
     if ($stmt->fetch()) {
         $_SESSION['error'] = "Email is already used by another student.";
     } else {
         $stmt = $pdo->prepare("UPDATE students SET full_name = ?, email = ?, phone = ? WHERE id = ?");
-        $stmt->execute([$full_name, $email, $phone, getStudentId()]);
+        $stmt->execute([$full_name, $email, $phone, getActiveStudentId()]);
 
         $_SESSION['student_name'] = $full_name;
         $_SESSION['success'] = "Profile updated successfully!";
@@ -162,12 +178,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $new_password = $_POST['new_password'];
     $confirm_password = $_POST['confirm_password'];
 
-    // Get current student
-    $stmt = $pdo->prepare("SELECT password FROM students WHERE id = ?");
-    $stmt->execute([getStudentId()]);
-    $student = $stmt->fetch();
+    // Get current student or parent password
+    if (isStudent()) {
+        $stmt = $pdo->prepare("SELECT password FROM students WHERE id = ?");
+        $stmt->execute([getUserId()]);
+    } else if (isParent()) {
+        $stmt = $pdo->prepare("SELECT password FROM parent_accounts WHERE id = ?");
+        $stmt->execute([getUserId()]);
+    }
+    
+    $user = $stmt->fetch();
 
-    if (!password_verify($current_password, $student['password'])) {
+    if (!password_verify($current_password, $user['password'])) {
         $_SESSION['error'] = "Current password is incorrect.";
     } elseif ($new_password !== $confirm_password) {
         $_SESSION['error'] = "New passwords do not match.";
@@ -175,9 +197,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $_SESSION['error'] = "Password must be at least 6 characters.";
     } else {
         $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-        $stmt = $pdo->prepare("UPDATE students SET password = ? WHERE id = ?");
-        $stmt->execute([$hashed_password, getStudentId()]);
-
+        
+        if (isStudent()) {
+            $stmt = $pdo->prepare("UPDATE students SET password = ? WHERE id = ?");
+        } else if (isParent()) {
+            $stmt = $pdo->prepare("UPDATE parent_accounts SET password = ? WHERE id = ?");
+        }
+        
+        $stmt->execute([$hashed_password, getUserId()]);
         $_SESSION['success'] = "Password changed successfully!";
     }
 
@@ -185,25 +212,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-// Handle Payment Upload - BASE64 STORAGE VERSION
+// Handle Payment Upload
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'upload_payment') {
     redirectIfNotLoggedIn();
 
-    // Determine payment type and get appropriate values
+    // Determine payment type
     $invoice_id = !empty($_POST['invoice_id']) ? $_POST['invoice_id'] : null;
     $is_invoice_payment = !empty($invoice_id);
 
     if ($invoice_id) {
-        // Invoice Payment - no auto-generated notes needed since it's linked via invoice_id
         $class_id = !empty($_POST['invoice_class_id']) ? $_POST['invoice_class_id'] : null;
         $amount = $_POST['invoice_amount'];
         $payment_month = !empty($_POST['invoice_payment_month']) ? $_POST['invoice_payment_month'] : date('M Y');
-        $notes = ''; // Leave notes empty for invoice payments
+        $notes = '';
 
-        // If no class_id from invoice, get first enrolled class
         if (!$class_id) {
             $stmt = $pdo->prepare("SELECT class_id FROM enrollments WHERE student_id = ? AND status = 'active' LIMIT 1");
-            $stmt->execute([getStudentId()]);
+            $stmt->execute([getActiveStudentId()]);
             $enrollment = $stmt->fetch();
             $class_id = $enrollment ? $enrollment['class_id'] : null;
         }
@@ -213,19 +238,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             header('Location: index.php?page=invoices');
             exit;
         }
-
     } else {
-        // Class Payment - use student-provided notes
         $class_id = $_POST['class_id'];
         $amount = $_POST['amount'];
         $payment_month = $_POST['payment_month'];
         $notes = $_POST['notes'] ?? '';
     }
 
-    // Handle file upload - BASE64 VERSION
     if (isset($_FILES['receipt']) && $_FILES['receipt']['error'] === 0) {
-
-        // Validate file
         $validation = validateReceiptFile($_FILES['receipt']);
 
         if (!$validation['valid']) {
@@ -235,7 +255,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             exit;
         }
 
-        // Convert to base64
         $receiptData = fileToBase64($_FILES['receipt']);
 
         if ($receiptData === false) {
@@ -245,11 +264,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             exit;
         }
 
-        // Generate filename for reference (not actually saved to disk)
         $ext = pathinfo($_FILES['receipt']['name'], PATHINFO_EXTENSION);
         $filename = 'receipt_' . getStudentId() . '_' . time() . '.' . $ext;
 
-        // Insert payment record with base64 data
+        // Get parent_account_id if this is a child account
+        $parent_account_id = null;
+        if (isStudent()) {
+            $studentData = getActiveStudentData($pdo);
+            $parent_account_id = $studentData['parent_account_id'];
+        } else if (isParent()) {
+            $parent_account_id = getUserId();
+        }
+
         $stmt = $pdo->prepare("
             INSERT INTO payments (
                 student_id, 
@@ -261,34 +287,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 receipt_mime_type,
                 receipt_size,
                 admin_notes,
-                invoice_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                invoice_id,
+                parent_account_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
 
         $success = $stmt->execute([
-            getStudentId(), 
+            getActiveStudentId(), 
             $class_id, 
             $amount, 
             $payment_month, 
-            $filename,                    // Reference filename (not actually saved)
-            $receiptData['data'],         // Base64 encoded receipt
-            $receiptData['mime'],         // MIME type (image/jpeg, application/pdf, etc)
-            $receiptData['size'],         // Original file size in bytes
-            $notes,                       // Empty for invoice payments, user notes for class payments
-            $invoice_id                   // Link to invoice (NULL for class payments)
+            $filename,
+            $receiptData['data'],
+            $receiptData['mime'],
+            $receiptData['size'],
+            $notes,
+            $invoice_id,
+            $parent_account_id
         ]);
 
         if ($success) {
-            // If this came from an invoice, update invoice status to 'pending' (awaiting verification)
             if ($invoice_id) {
-                // Update invoice to pending
                 $update = $pdo->prepare("UPDATE invoices SET status = 'pending' WHERE id = ?");
                 $update->execute([$invoice_id]);
-                
-                // Set success message with more details
-                $_SESSION['success'] = "Payment submitted successfully! Your invoice is now pending verification. You can view it below in the 'Pending Verification' section.";
-                
-                // Redirect with cache busting timestamp
+                $_SESSION['success'] = "Payment submitted successfully! Your invoice is now pending verification.";
                 header('Location: index.php?page=invoices&t=' . time());
                 exit;
             } else {
@@ -299,21 +321,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         } else {
             $_SESSION['error'] = "Failed to save payment record.";
         }
-
     } else {
         $_SESSION['error'] = "Please select a receipt file.";
     }
 
-    // Fallback redirect
     $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
     header('Location: index.php?page=' . $redirect_page);
-    exit;
-}
-
-// Handle Logout
-if (isset($_GET['logout'])) {
-    session_destroy();
-    header('Location: index.php');
     exit;
 }
 
@@ -353,7 +366,6 @@ $page = $_GET['page'] ?? 'login';
            FIXED HEADER DESIGN
            ============================================ */
 
-        /* Fixed Top Header */
         .top-header {
             position: fixed;
             top: 0;
@@ -369,14 +381,12 @@ $page = $_GET['page'] ?? 'login';
             padding: 0 20px;
         }
 
-        /* Left Side - Logo & Menu */
         .header-left {
             display: flex;
             align-items: center;
             gap: 15px;
         }
 
-        /* Hamburger Menu Button */
         .header-menu-btn {
             background: rgba(255,255,255,0.2);
             border: none;
@@ -397,7 +407,6 @@ $page = $_GET['page'] ?? 'login';
             transform: scale(1.05);
         }
 
-        /* School Logo */
         .school-logo {
             display: flex;
             align-items: center;
@@ -439,11 +448,43 @@ $page = $_GET['page'] ?? 'login';
             opacity: 0.9;
         }
 
-        /* Right Side - User Info */
         .header-right {
             display: flex;
             align-items: center;
             gap: 15px;
+        }
+
+        /* Child Selector for Parents */
+        .child-selector {
+            background: rgba(255,255,255,0.15);
+            padding: 8px 15px;
+            border-radius: 10px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .child-selector:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        .child-selector select {
+            background: transparent;
+            border: none;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 0;
+            outline: none;
+        }
+
+        .child-selector select option {
+            background: #4f46e5;
+            color: white;
         }
 
         .header-user {
@@ -480,7 +521,6 @@ $page = $_GET['page'] ?? 'login';
             opacity: 0.9;
         }
 
-        /* Sidebar Overlay */
         .sidebar-overlay {
             display: none;
             position: fixed;
@@ -496,7 +536,6 @@ $page = $_GET['page'] ?? 'login';
             display: block;
         }
 
-        /* Sidebar */
         .sidebar {
             position: fixed;
             left: 0;
@@ -511,7 +550,6 @@ $page = $_GET['page'] ?? 'login';
             box-shadow: 4px 0 15px rgba(0,0,0,0.1);
         }
 
-        /* Sidebar Links */
         .sidebar .nav-link {
             color: rgba(255,255,255,0.8);
             padding: 14px 25px;
@@ -536,7 +574,6 @@ $page = $_GET['page'] ?? 'login';
             text-align: center;
         }
 
-        /* Adjust main content for fixed header */
         body.logged-in {
             padding-top: 70px;
         }
@@ -645,7 +682,6 @@ $page = $_GET['page'] ?? 'login';
             padding: 40px;
         }
 
-        /* Registration Button Styling */
         .btn-outline-primary {
             border: 2px solid var(--primary-color);
             color: var(--primary-color);
@@ -668,7 +704,6 @@ $page = $_GET['page'] ?? 'login';
             border-color: rgba(0,0,0,0.1) !important;
         }
 
-        /* Desktop View */
         @media (min-width: 769px) {
             .header-menu-btn {
                 display: none;
@@ -683,7 +718,6 @@ $page = $_GET['page'] ?? 'login';
             }
         }
 
-        /* Mobile View */
         @media (max-width: 768px) {
             .top-header {
                 padding: 0 15px;
@@ -694,6 +728,10 @@ $page = $_GET['page'] ?? 'login';
             }
 
             .header-user-info {
+                display: none;
+            }
+
+            .child-selector span {
                 display: none;
             }
 
@@ -853,7 +891,6 @@ $page = $_GET['page'] ?? 'login';
                 </button>
             </form>
 
-            <!-- Registration Link -->
             <div class="text-center mt-4 pt-3 border-top">
                 <p class="text-muted mb-2">
                     <i class="fas fa-user-plus"></i> New Student?
@@ -873,23 +910,15 @@ $page = $_GET['page'] ?? 'login';
 
     <!-- Fixed Top Header -->
     <div class="top-header">
-        <!-- Left Side: Menu + Logo -->
         <div class="header-left">
-            <!-- Hamburger Menu Button -->
             <button class="header-menu-btn" id="menuToggle">
                 <i class="fas fa-bars"></i>
             </button>
 
-            <!-- School Logo -->
             <a href="?page=dashboard" class="school-logo">
-                <!-- Option 1: If you have a logo image, use this: -->
-                <!-- <img src="assets/logo.png" alt="School Logo"> -->
-
-                <!-- Option 2: Placeholder icon (current) -->
                 <div class="logo-placeholder">
                     <i class="fas fa-graduation-cap"></i>
                 </div>
-
                 <div class="logo-text">
                     <span class="logo-title">Wushu Academy</span>
                     <span class="logo-subtitle">Student Portal</span>
@@ -897,15 +926,29 @@ $page = $_GET['page'] ?? 'login';
             </a>
         </div>
 
-        <!-- Right Side: User Info -->
         <div class="header-right">
+            <?php if (isParent()): ?>
+                <!-- Child Selector for Parents -->
+                <div class="child-selector">
+                    <i class="fas fa-child"></i>
+                    <span>Viewing:</span>
+                    <select onchange="window.location.href='?page=<?php echo $page; ?>&switch_child=' + this.value" class="form-select-sm">
+                        <?php foreach (getParentChildren() as $child): ?>
+                            <option value="<?php echo $child['id']; ?>" <?php echo ($child['id'] == getActiveStudentId()) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($child['full_name']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            <?php endif; ?>
+
             <div class="header-user">
                 <div class="header-user-avatar">
                     <i class="fas fa-user"></i>
                 </div>
                 <div class="header-user-info">
-                    <span class="header-user-name"><?php echo $_SESSION['student_name']; ?></span>
-                    <span class="header-user-role">Student</span>
+                    <span class="header-user-name"><?php echo htmlspecialchars(getUserFullName()); ?></span>
+                    <span class="header-user-role"><?php echo isParent() ? 'Parent Account' : 'Student'; ?></span>
                 </div>
             </div>
         </div>
@@ -955,6 +998,9 @@ $page = $_GET['page'] ?? 'login';
                     ($page === 'classes' ? 'chalkboard-teacher' : 'user'))); 
             ?>"></i>
             <?php echo ucfirst($page); ?>
+            <?php if (isParent()): ?>
+                <small class="text-muted" style="font-size: 16px;">- <?php echo htmlspecialchars(getActiveStudentName()); ?></small>
+            <?php endif; ?>
         </h3>
 
         <?php if (isset($_SESSION['success'])): ?>
@@ -1020,18 +1066,13 @@ $page = $_GET['page'] ?? 'login';
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Auto-dismiss ONLY success/error session messages after 7 seconds
     setTimeout(() => {
-        // Only dismiss alerts that are direct children of content-area (session messages)
         document.querySelectorAll('.content-area > .alert').forEach(alert => {
             const bsAlert = new bootstrap.Alert(alert);
             bsAlert.close();
         });
     }, 7000);
 
-    // ============================================
-    // MOBILE MENU TOGGLE
-    // ============================================
     document.addEventListener('DOMContentLoaded', function() {
         const menuToggle = document.getElementById('menuToggle');
         const sidebar = document.getElementById('sidebar');
@@ -1039,12 +1080,10 @@ $page = $_GET['page'] ?? 'login';
 
         if (!menuToggle || !sidebar || !overlay) return;
 
-        // Toggle sidebar
         function toggleSidebar() {
             sidebar.classList.toggle('active');
             overlay.classList.toggle('active');
 
-            // Change icon
             const icon = menuToggle.querySelector('i');
             if (sidebar.classList.contains('active')) {
                 icon.className = 'fas fa-times';
@@ -1053,11 +1092,9 @@ $page = $_GET['page'] ?? 'login';
             }
         }
 
-        // Event listeners
         menuToggle.addEventListener('click', toggleSidebar);
         overlay.addEventListener('click', toggleSidebar);
 
-        // Close sidebar when clicking a link (mobile only)
         const navLinks = document.querySelectorAll('.sidebar .nav-link');
         navLinks.forEach(link => {
             link.addEventListener('click', function() {
@@ -1067,7 +1104,6 @@ $page = $_GET['page'] ?? 'login';
             });
         });
 
-        // Handle window resize
         window.addEventListener('resize', function() {
             if (window.innerWidth > 768) {
                 sidebar.classList.remove('active');
