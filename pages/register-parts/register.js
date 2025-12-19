@@ -133,8 +133,8 @@
                         const scheduleKey = label.getAttribute('data-schedule');
                         const checkbox = label.querySelector('input[type="checkbox"]');
                         
-                        // Only show wsa-sun-10am and wsa-sun-12pm for normal students
-                        if (scheduleKey === 'wsa-sun-10am' || scheduleKey === 'wsa-sun-12pm') {
+                        // Only show wsa-sun-10am and wsa-sun-1pm for normal students
+                        if (scheduleKey === 'wsa-sun-10am' || scheduleKey === 'wsa-sun-1pm') {
                             label.style.display = 'flex';
                             if (checkbox) {
                                 checkbox.disabled = false;
