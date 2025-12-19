@@ -10,6 +10,7 @@
  * FIXED: Auto-detect MIME type from base64 image data
  * FIXED: Strip data URI prefix, save only pure base64 to database
  * UPDATED: Split invoices by class - one invoice per registered class with class code
+ * FIXED: Use student_status column name in registrations INSERT statement
  */
 
 header('Content-Type: application/json');
@@ -686,10 +687,11 @@ try {
 
     // ==========================
     // Insert Registration Record
+    // FIXED: Use student_status column name
     // ==========================
 
     $sql = "INSERT INTO registrations (
-        registration_number, name_cn, name_en, ic, age, school, status,
+        registration_number, name_cn, name_en, ic, age, school, student_status,
         phone, email, level, events, schedule, parent_name, parent_ic,
         form_date, signature_base64, pdf_base64,
         payment_amount, payment_date, payment_receipt_base64, payment_status, class_count,
@@ -712,7 +714,7 @@ try {
         $childIC,
         (int)$data['age'],
         trim($data['school']),
-        $studentStatus,
+        $studentStatus,  // This now goes into student_status column
         $phone,
         $parentEmail,
         isset($data['level']) ? trim($data['level']) : '',
