@@ -72,15 +72,14 @@ if ($action === 'verify_registration') {
     try {
         $pdo->beginTransaction();
         
-        // Get registration details including parent info
-        // IMPORTANT: Get password_generated (plain text) from registrations table, NOT hashed password from parent_accounts
+        // Get registration details including parent IC to generate parent password
         $stmt = $pdo->prepare("
             SELECT 
                 r.id, r.registration_number, r.name_en, r.email, r.status,
                 r.payment_status, r.student_account_id, r.parent_account_id,
-                r.password_generated as parent_plain_password,
                 r.is_additional_child,
-                pa.ic_number as parent_ic
+                r.parent_ic,
+                pa.ic_number as parent_ic_from_account
             FROM registrations r
             LEFT JOIN parent_accounts pa ON r.parent_account_id = pa.id
             WHERE r.id = ?
@@ -100,13 +99,17 @@ if ($action === 'verify_registration') {
         $parentAccountId = $registration['parent_account_id'];
         $adminId = $_SESSION['admin_id'] ?? null;
         
-        // Calculate plain text password from parent IC if not stored
-        $parentPlainPassword = $registration['parent_plain_password'];
-        if (empty($parentPlainPassword) && !empty($registration['parent_ic'])) {
-            // Generate password from last 4 digits of IC
-            $parentIcClean = str_replace('-', '', $registration['parent_ic']);
+        // Generate PARENT password from PARENT IC (last 4 digits)
+        $parentIC = $registration['parent_ic'] ?? $registration['parent_ic_from_account'];
+        $parentPlainPassword = null;
+        
+        if (!empty($parentIC)) {
+            // Remove dashes and get last 4 digits
+            $parentIcClean = str_replace('-', '', $parentIC);
             $parentPlainPassword = substr($parentIcClean, -4);
-            error_log("[verify_registration] Generated password from parent IC: {$parentPlainPassword}");
+            error_log("[verify_registration] Generated PARENT password from parent IC: {$parentPlainPassword}");
+        } else {
+            error_log("[verify_registration] WARNING: Parent IC not found!");
         }
         
         // 1. Update registration status to approved
@@ -160,7 +163,7 @@ if ($action === 'verify_registration') {
         // Use is_additional_child column - if 0, it's the first child
         $isFirstChild = ($registration['is_additional_child'] == 0);
         
-        error_log("[verify_registration] IsFirstChild: " . ($isFirstChild ? 'YES' : 'NO') . ", PlainPassword: " . ($parentPlainPassword ?? 'NULL'));
+        error_log("[verify_registration] IsFirstChild: " . ($isFirstChild ? 'YES' : 'NO') . ", Parent IC: {$parentIC}, PARENT Password: " . ($parentPlainPassword ?? 'NULL'));
         
         // Commit all database changes first
         $pdo->commit();
@@ -173,7 +176,7 @@ if ($action === 'verify_registration') {
                 $registration['name_en'],
                 $registration['registration_number'],
                 $registration['status'],
-                $parentPlainPassword,  // Send PLAIN TEXT password, not hashed
+                $parentPlainPassword,  // Send PARENT'S password (last 4 of PARENT IC)
                 $isFirstChild
             );
         } catch (Exception $e) {
