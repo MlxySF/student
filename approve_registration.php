@@ -1,8 +1,9 @@
 <?php
 /**
  * approve_registration.php
- * Approves a registration and automatically approves the linked invoice
- * Updates both registrations and invoices tables
+ * Approves a registration and automatically approves the linked invoice and payment
+ * Updates registrations, invoices, and payments tables
+ * FIXED: Find invoice by student_id (from student_account_id column)
  */
 
 header('Content-Type: application/json');
@@ -43,8 +44,8 @@ try {
     
     $conn->beginTransaction();
     
-    // Get registration details
-    $stmt = $conn->prepare("SELECT id, registration_number, name_en, payment_status FROM registrations WHERE id = ?");
+    // Get registration details including student_account_id
+    $stmt = $conn->prepare("SELECT id, registration_number, name_en, payment_status, student_account_id FROM registrations WHERE id = ?");
     $stmt->execute([$registrationId]);
     $registration = $stmt->fetch(PDO::FETCH_ASSOC);
     
@@ -55,6 +56,8 @@ try {
     if ($registration['payment_status'] !== 'pending') {
         throw new Exception('Registration is not pending approval');
     }
+    
+    $studentAccountId = $registration['student_account_id'];
     
     if ($action === 'approve') {
         // 1. Update registration status to approved
@@ -68,27 +71,62 @@ try {
         ");
         $stmt->execute([$adminNotes, $_SESSION['admin_username'] ?? 'admin', $registrationId]);
         
-        // 2. Auto-approve the linked invoice
+        // 2. Auto-approve the linked registration fee invoice (by student_id and type)
         $stmt = $conn->prepare("
             UPDATE invoices 
             SET status = 'paid',
                 paid_date = NOW(),
                 updated_at = NOW()
-            WHERE registration_id = ? AND status = 'pending'
+            WHERE student_id = ? 
+              AND invoice_type = 'registration' 
+              AND status = 'pending'
         ");
-        $stmt->execute([$registrationId]);
-        $invoiceUpdated = $stmt->rowCount();
+        $stmt->execute([$studentAccountId]);
+        $invoicesUpdated = $stmt->rowCount();
+        
+        // 3. Auto-approve linked payment records (payment with same invoice_id)
+        if ($invoicesUpdated > 0) {
+            // Get the invoice ID that was just approved
+            $stmt = $conn->prepare("
+                SELECT id FROM invoices 
+                WHERE student_id = ? 
+                  AND invoice_type = 'registration' 
+                  AND status = 'paid'
+                ORDER BY created_at DESC
+                LIMIT 1
+            ");
+            $stmt->execute([$studentAccountId]);
+            $invoice = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($invoice) {
+                // Approve the payment linked to this invoice
+                $stmt = $conn->prepare("
+                    UPDATE payments 
+                    SET verification_status = 'approved',
+                        verified_at = NOW(),
+                        verified_by = ?,
+                        admin_notes = 'Auto-approved with registration'
+                    WHERE invoice_id = ? 
+                      AND verification_status = 'pending'
+                ");
+                $stmt->execute([$_SESSION['admin_username'] ?? 'admin', $invoice['id']]);
+                $paymentsUpdated = $stmt->rowCount();
+                
+                error_log("[Approve] Registration #{$registration['registration_number']} approved. Invoice ID {$invoice['id']} marked PAID, Payment approved: " . ($paymentsUpdated > 0 ? 'YES' : 'NO'));
+            }
+        }
         
         $conn->commit();
         
-        error_log("[Approve] Registration #{$registration['registration_number']} approved. Invoice auto-approved: " . ($invoiceUpdated > 0 ? 'YES' : 'NO'));
+        error_log("[Approve] Registration #{$registration['registration_number']} approved. Invoices updated: {$invoicesUpdated}, Student ID: {$studentAccountId}");
         
         echo json_encode([
             'success' => true,
             'message' => 'Registration approved successfully',
             'registration_number' => $registration['registration_number'],
             'student_name' => $registration['name_en'],
-            'invoice_approved' => $invoiceUpdated > 0
+            'invoice_approved' => $invoicesUpdated > 0,
+            'payment_approved' => isset($paymentsUpdated) && $paymentsUpdated > 0
         ]);
         
     } else if ($action === 'reject') {
@@ -108,21 +146,56 @@ try {
             UPDATE invoices 
             SET status = 'cancelled',
                 updated_at = NOW()
-            WHERE registration_id = ? AND status = 'pending'
+            WHERE student_id = ? 
+              AND invoice_type = 'registration' 
+              AND status = 'pending'
         ");
-        $stmt->execute([$registrationId]);
-        $invoiceUpdated = $stmt->rowCount();
+        $stmt->execute([$studentAccountId]);
+        $invoicesUpdated = $stmt->rowCount();
+        
+        // 3. Reject linked payment records
+        if ($invoicesUpdated > 0) {
+            $stmt = $conn->prepare("
+                SELECT id FROM invoices 
+                WHERE student_id = ? 
+                  AND invoice_type = 'registration' 
+                  AND status = 'cancelled'
+                ORDER BY created_at DESC
+                LIMIT 1
+            ");
+            $stmt->execute([$studentAccountId]);
+            $invoice = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($invoice) {
+                $stmt = $conn->prepare("
+                    UPDATE payments 
+                    SET verification_status = 'rejected',
+                        verified_at = NOW(),
+                        verified_by = ?,
+                        admin_notes = CONCAT('Rejected with registration: ', ?)
+                    WHERE invoice_id = ? 
+                      AND verification_status = 'pending'
+                ");
+                $stmt->execute([
+                    $_SESSION['admin_username'] ?? 'admin',
+                    $adminNotes,
+                    $invoice['id']
+                ]);
+                $paymentsUpdated = $stmt->rowCount();
+            }
+        }
         
         $conn->commit();
         
-        error_log("[Reject] Registration #{$registration['registration_number']} rejected. Invoice cancelled: " . ($invoiceUpdated > 0 ? 'YES' : 'NO'));
+        error_log("[Reject] Registration #{$registration['registration_number']} rejected. Invoice cancelled: {$invoicesUpdated}, Student ID: {$studentAccountId}");
         
         echo json_encode([
             'success' => true,
             'message' => 'Registration rejected',
             'registration_number' => $registration['registration_number'],
             'student_name' => $registration['name_en'],
-            'invoice_cancelled' => $invoiceUpdated > 0
+            'invoice_cancelled' => $invoicesUpdated > 0,
+            'payment_rejected' => isset($paymentsUpdated) && $paymentsUpdated > 0
         ]);
         
     } else {
