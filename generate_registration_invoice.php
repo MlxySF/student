@@ -1,7 +1,6 @@
 <?php
 // generate_registration_invoice.php
 require_once 'fpdf.php';
-require_once 'config.php';
 
 class RegistrationInvoice extends FPDF {
     function Header() {
@@ -30,25 +29,6 @@ $data = json_decode(file_get_contents('php://input'), true);
 
 if (!$data) {
     die('Invalid data');
-}
-
-// Fetch class codes from database if student_id is provided
-$classCodes = [];
-if (!empty($data['student_id'])) {
-    try {
-        $stmt = $pdo->prepare("
-            SELECT DISTINCT c.class_code
-            FROM enrollments e
-            JOIN classes c ON e.class_id = c.id
-            WHERE e.student_id = ? AND e.status = 'active'
-            ORDER BY c.class_code
-        ");
-        $stmt->execute([$data['student_id']]);
-        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $classCodes = array_column($results, 'class_code');
-    } catch (Exception $e) {
-        // Silently fail, continue with what we have
-    }
 }
 
 $pdf = new RegistrationInvoice();
@@ -117,15 +97,7 @@ $pdf->MultiCell(0, 6, $data['schedule']);
 
 $pdf->Cell(50, 6, 'Number of Classes:', 0, 0);
 $pdf->Cell(0, 6, $data['class_count'] . ' classes', 0, 1);
-
-// Class Codes
-if (!empty($classCodes)) {
-    $pdf->Cell(50, 6, 'Class Codes:', 0, 0);
-    $classCodesStr = implode(', ', $classCodes);
-    $pdf->MultiCell(0, 6, $classCodesStr);
-}
-
-$pdf->Ln(3);
+$pdf->Ln(5);
 
 // Payment Information
 $pdf->SetFont('Arial', 'B', 11);
@@ -148,4 +120,3 @@ $pdf->MultiCell(0, 5, 'Thank you for registering with Wushu Sport Academy. Your 
 
 // Output PDF
 $pdf->Output('I', 'Registration_Invoice_' . $data['registration_number'] . '.pdf');
-?>
