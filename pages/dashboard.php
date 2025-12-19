@@ -1,35 +1,24 @@
 <?php
-// pages/dashboard.php - Updated for parent-only account system
-// Get student/child information from registrations table
-$stmt = $pdo->prepare("SELECT * FROM registrations WHERE id = ?");
+// pages/dashboard.php - Updated for multi-child parent support
+// Get student information using context-aware function
+$stmt = $pdo->prepare("SELECT * FROM students WHERE id = ?");
 $stmt->execute([getActiveStudentId()]);
 $student = $stmt->fetch();
 
-// If no student found, show error
-if (!$student) {
-    echo '<div class="alert alert-danger">No child selected. Please contact administrator.</div>';
-    return;
-}
-
-// Map registration fields to student-like structure for backward compatibility
-$student['full_name'] = $student['name_en'];
-$student['student_id'] = $student['registration_number'];
-$student['student_status'] = $student['status'];
-
-// Get enrolled classes count (from classes table)
+// Get enrolled classes count
 $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM enrollments WHERE student_id = ? AND status = 'active'");
 $stmt->execute([getActiveStudentId()]);
-$classesCount = $stmt->fetch()['count'] ?? 0;
+$classesCount = $stmt->fetch()['count'];
 
 // Get unpaid invoices count
 $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM invoices WHERE student_id = ? AND status IN ('unpaid', 'overdue')");
 $stmt->execute([getActiveStudentId()]);
-$unpaidInvoicesCount = $stmt->fetch()['count'] ?? 0;
+$unpaidInvoicesCount = $stmt->fetch()['count'];
 
 // Get pending payments count
 $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM payments WHERE student_id = ? AND verification_status = 'pending'");
 $stmt->execute([getActiveStudentId()]);
-$pendingPaymentsCount = $stmt->fetch()['count'] ?? 0;
+$pendingPaymentsCount = $stmt->fetch()['count'];
 
 // Get total attendance percentage
 $stmt = $pdo->prepare("
@@ -41,7 +30,7 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([getActiveStudentId()]);
 $attendanceData = $stmt->fetch();
-$attendancePercentage = ($attendanceData && $attendanceData['total'] > 0)
+$attendancePercentage = $attendanceData['total'] > 0 
     ? round(($attendanceData['present'] / $attendanceData['total']) * 100) 
     : 0;
 
@@ -57,7 +46,7 @@ $stmt = $pdo->prepare("
     LIMIT 5
 ");
 $stmt->execute([getActiveStudentId()]);
-$recentInvoices = $stmt->fetchAll() ?: [];
+$recentInvoices = $stmt->fetchAll();
 
 // Get upcoming classes (enrolled active classes)
 $stmt = $pdo->prepare("
@@ -72,7 +61,7 @@ $stmt = $pdo->prepare("
     LIMIT 5
 ");
 $stmt->execute([getActiveStudentId()]);
-$enrolledClasses = $stmt->fetchAll() ?: [];
+$enrolledClasses = $stmt->fetchAll();
 
 // Get recent attendance records (last 10)
 $stmt = $pdo->prepare("
@@ -87,7 +76,7 @@ $stmt = $pdo->prepare("
     LIMIT 10
 ");
 $stmt->execute([getActiveStudentId()]);
-$recentAttendance = $stmt->fetchAll() ?: [];
+$recentAttendance = $stmt->fetchAll();
 
 // For parents: Get summary of all children
 $allChildrenSummary = [];
@@ -104,20 +93,20 @@ if (isParent()) {
         $stmt = $pdo->prepare("SELECT COUNT(*) as total, SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present FROM attendance WHERE student_id = ?");
         $stmt->execute([$childId]);
         $attData = $stmt->fetch();
-        $attRate = ($attData && $attData['total'] > 0) ? round(($attData['present'] / $attData['total']) * 100) : 0;
+        $attRate = $attData['total'] > 0 ? round(($attData['present'] / $attData['total']) * 100) : 0;
         
         // Get child's enrolled classes count
         $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM enrollments WHERE student_id = ? AND status = 'active'");
         $stmt->execute([$childId]);
-        $classCount = $stmt->fetch()['count'] ?? 0;
+        $classCount = $stmt->fetch()['count'];
         
         $allChildrenSummary[] = [
             'id' => $childId,
             'name' => $child['full_name'],
-            'student_id' => $child['registration_number'],
-            'status' => $child['student_status'] ?? '',
-            'unpaid_count' => $invoiceData['count'] ?? 0,
-            'unpaid_total' => $invoiceData['total'] ?? 0,
+            'student_id' => $child['student_id'],
+            'status' => $child['student_status'],
+            'unpaid_count' => $invoiceData['count'],
+            'unpaid_total' => $invoiceData['total'],
             'attendance_rate' => $attRate,
             'classes_count' => $classCount
         ];
@@ -126,7 +115,7 @@ if (isParent()) {
 ?>
 
 <?php if (isParent()): ?>
-<!-- NEW: Register Additional Child Button -->
+<!-- NEW: Register Additional Child Button (Stage 3) -->
 <div class="alert alert-info mb-4 animate__animated animate__fadeIn" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-left: 5px solid #3b82f6;">
     <div class="row align-items-center">
         <div class="col-md-8">
@@ -154,7 +143,7 @@ if (isParent()) {
                 <thead>
                     <tr>
                         <th>Child</th>
-                        <th>Registration #</th>
+                        <th>Student ID</th>
                         <th>Status</th>
                         <th>Classes</th>
                         <th>Attendance</th>
@@ -210,7 +199,6 @@ if (isParent()) {
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
-                <?php if (count($allChildrenSummary) > 0): ?>
                 <tfoot>
                     <tr class="table-light">
                         <td colspan="5" class="text-end"><strong>Total Outstanding:</strong></td>
@@ -221,7 +209,6 @@ if (isParent()) {
                         </td>
                     </tr>
                 </tfoot>
-                <?php endif; ?>
             </table>
         </div>
     </div>
@@ -296,10 +283,10 @@ if (isParent()) {
                     <?php endif; ?>
                 </h4>
                 <p class="text-muted mb-2">
-                    <i class="fas fa-envelope"></i> <strong>Email:</strong> <?php echo htmlspecialchars($student['email'] ?? 'N/A'); ?>
+                    <i class="fas fa-envelope"></i> <strong>Email:</strong> <?php echo htmlspecialchars($student['email']); ?>
                 </p>
                 <p class="text-muted mb-2">
-                    <i class="fas fa-phone"></i> <strong>Phone:</strong> <?php echo htmlspecialchars($student['phone'] ?? 'N/A'); ?>
+                    <i class="fas fa-phone"></i> <strong>Phone:</strong> <?php echo htmlspecialchars($student['phone']); ?>
                 </p>
                 <p class="text-muted mb-0">
                     <i class="fas fa-id-badge"></i> <strong>Student ID:</strong> <?php echo htmlspecialchars($student['student_id']); ?>
@@ -309,8 +296,8 @@ if (isParent()) {
                     <i class="fas fa-user-tag"></i> <strong>Status:</strong> 
                     <span class="badge 
                         <?php 
-                        echo (strpos($student['student_status'], 'State Team') !== false) ? 'bg-success' : 
-                             ((strpos($student['student_status'], 'Backup Team') !== false) ? 'bg-warning' : 'bg-primary');
+                        echo ($student['student_status'] === 'State Team 州队') ? 'bg-success' : 
+                             (($student['student_status'] === 'Backup Team 后备队') ? 'bg-warning' : 'bg-primary');
                         ?>">
                         <?php echo htmlspecialchars($student['student_status']); ?>
                     </span>
