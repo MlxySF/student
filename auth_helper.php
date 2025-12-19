@@ -1,8 +1,8 @@
 <?php
 /**
- * auth_helper.php - Unified Authentication Helper
- * Supports both parent and student account logins
- * Handles child selection for parent accounts
+ * auth_helper.php - Parent-Only Authentication Helper
+ * Only parents can login - children are managed under parent account
+ * No separate student accounts
  */
 
 // Start session if not already started
@@ -15,59 +15,53 @@ if (session_status() === PHP_SESSION_NONE) {
 // ============================================================
 
 /**
- * Check if user is logged in (parent or student)
+ * Check if user is logged in (parent only now)
  */
 function isLoggedIn() {
-    return isset($_SESSION['user_id']) && isset($_SESSION['user_type']);
+    return isset($_SESSION['user_id']) && isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'parent';
 }
 
 /**
  * Check if logged in as parent
  */
 function isParent() {
-    return isLoggedIn() && $_SESSION['user_type'] === 'parent';
+    return isLoggedIn();
 }
 
 /**
- * Check if logged in as student
+ * Check if logged in as student (DEPRECATED - always returns false)
  */
 function isStudent() {
-    return isLoggedIn() && $_SESSION['user_type'] === 'student';
+    return false; // No more student logins
 }
 
 /**
- * Get current user ID (parent or student)
+ * Get current user ID (parent account ID)
  */
 function getUserId() {
     return $_SESSION['user_id'] ?? null;
 }
 
 /**
- * Get current user type ('parent' or 'student')
+ * Get current user type (always 'parent')
  */
 function getUserType() {
-    return $_SESSION['user_type'] ?? null;
+    return 'parent';
 }
 
 /**
- * Get currently selected student ID (for parents viewing child's data)
- * For students, returns their own ID
+ * Get currently selected child registration ID
  */
 function getActiveStudentId() {
-    if (isStudent()) {
-        return $_SESSION['user_id'];
-    } else if (isParent()) {
-        return $_SESSION['active_student_id'] ?? null;
-    }
-    return null;
+    return $_SESSION['active_student_id'] ?? null;
 }
 
 /**
- * Set active student for parent (when switching between children)
+ * Set active child for parent (when switching between children)
  */
-function setActiveStudent($studentId) {
+function setActiveStudent($registrationId) {
     if (isParent()) {
-        $_SESSION['active_student_id'] = $studentId;
+        $_SESSION['active_student_id'] = $registrationId;
         return true;
     }
     return false;
@@ -84,29 +78,25 @@ function getUserEmail() {
  * Get user full name
  */
 function getUserFullName() {
-    return $_SESSION['user_full_name'] ?? 'User';
+    return $_SESSION['user_full_name'] ?? 'Parent';
 }
 
 /**
- * Get parent's children list (only if logged in as parent)
+ * Get parent's children list
  */
 function getParentChildren() {
     return $_SESSION['children'] ?? [];
 }
 
 /**
- * Get active student full name
+ * Get active child's full name
  */
 function getActiveStudentName() {
-    if (isStudent()) {
-        return getUserFullName();
-    } else if (isParent()) {
-        $children = getParentChildren();
-        $activeId = getActiveStudentId();
-        foreach ($children as $child) {
-            if ($child['id'] == $activeId) {
-                return $child['full_name'];
-            }
+    $children = getParentChildren();
+    $activeId = getActiveStudentId();
+    foreach ($children as $child) {
+        if ($child['id'] == $activeId) {
+            return $child['full_name'];
         }
     }
     return null;
@@ -117,31 +107,13 @@ function getActiveStudentName() {
 // ============================================================
 
 /**
- * Authenticate user (student or parent)
+ * Authenticate parent user
  * Returns array with success status and user data
  */
 function authenticateUser($email, $password, $pdo) {
     $email = trim($email);
     
-    // Try to authenticate as student first
-    $stmt = $pdo->prepare("
-        SELECT id, student_id, full_name, email, password, status, student_type, parent_account_id
-        FROM students 
-        WHERE email = ? AND status = 'active'
-    ");
-    $stmt->execute([$email]);
-    $student = $stmt->fetch();
-    
-    if ($student && password_verify($password, $student['password'])) {
-        // Student login successful
-        return [
-            'success' => true,
-            'user_type' => 'student',
-            'user_data' => $student
-        ];
-    }
-    
-    // Try to authenticate as parent
+    // Only authenticate as parent (no student login)
     $stmt = $pdo->prepare("
         SELECT id, parent_id, full_name, email, password, status
         FROM parent_accounts 
@@ -151,15 +123,22 @@ function authenticateUser($email, $password, $pdo) {
     $parent = $stmt->fetch();
     
     if ($parent && password_verify($password, $parent['password'])) {
-        // Parent login successful - get their children
+        // Parent login successful - get their children from registrations
         $stmt = $pdo->prepare("
             SELECT 
-                s.id, s.student_id, s.full_name, s.email, s.student_status,
-                pcr.relationship, pcr.is_primary
-            FROM students s
-            JOIN parent_child_relationships pcr ON s.id = pcr.student_id
-            WHERE pcr.parent_id = ? AND s.status = 'active'
-            ORDER BY pcr.is_primary DESC, s.full_name ASC
+                r.id,
+                r.registration_number,
+                r.name_en as full_name,
+                r.name_cn,
+                r.age,
+                r.school,
+                r.status as student_status,
+                r.payment_status,
+                r.events,
+                r.schedule
+            FROM registrations r
+            WHERE r.parent_account_id = ? AND r.payment_status != 'rejected'
+            ORDER BY r.created_at ASC
         ");
         $stmt->execute([$parent['id']]);
         $children = $stmt->fetchAll();
@@ -188,27 +167,20 @@ function createLoginSession($authResult) {
     }
     
     $userData = $authResult['user_data'];
-    $userType = $authResult['user_type'];
+    $userType = 'parent';
     
-    // Store common session data
+    // Store session data
     $_SESSION['user_id'] = $userData['id'];
     $_SESSION['user_type'] = $userType;
     $_SESSION['user_email'] = $userData['email'];
     $_SESSION['user_full_name'] = $userData['full_name'];
+    $_SESSION['parent_id'] = $userData['parent_id'];
     $_SESSION['login_time'] = time();
+    $_SESSION['children'] = $authResult['children'];
     
-    if ($userType === 'student') {
-        $_SESSION['student_id'] = $userData['student_id'];
-        $_SESSION['student_type'] = $userData['student_type'] ?? 'independent';
-        $_SESSION['parent_account_id'] = $userData['parent_account_id'];
-    } else if ($userType === 'parent') {
-        $_SESSION['parent_id'] = $userData['parent_id'];
-        $_SESSION['children'] = $authResult['children'];
-        
-        // Set first child as active by default
-        if (!empty($authResult['children'])) {
-            $_SESSION['active_student_id'] = $authResult['children'][0]['id'];
-        }
+    // Set first child as active by default
+    if (!empty($authResult['children'])) {
+        $_SESSION['active_student_id'] = $authResult['children'][0]['id'];
     }
     
     return true;
@@ -239,37 +211,31 @@ function requireLogin() {
 // ============================================================
 
 /**
- * Get student data for active context
- * If parent: returns selected child's data
- * If student: returns own data
+ * Get active child data from registrations table
  */
 function getActiveStudentData($pdo) {
-    $studentId = getActiveStudentId();
-    if (!$studentId) {
+    $registrationId = getActiveStudentId();
+    if (!$registrationId) {
         return null;
     }
     
     $stmt = $pdo->prepare("
-        SELECT * FROM students WHERE id = ?
+        SELECT * FROM registrations WHERE id = ?
     ");
-    $stmt->execute([$studentId]);
+    $stmt->execute([$registrationId]);
     return $stmt->fetch();
 }
 
 /**
- * Get student ID string (e.g., WSA2025-0001) for active context
+ * Get student ID string (e.g., WSA2025-0001) for active child
  */
 if (!function_exists('getStudentId')) {
     function getStudentId() {
-        if (isStudent()) {
-            return $_SESSION['student_id'] ?? null;
-        } else if (isParent()) {
-            $children = getParentChildren();
-            $activeId = getActiveStudentId();
-            foreach ($children as $child) {
-                if ($child['id'] == $activeId) {
-                    return $child['student_id'];
-                }
+        $children = getParentChildren();
+        $activeId = getActiveStudentId();
+        foreach ($children as $child) {
+            if ($child['id'] == $activeId) {
+                return $child['registration_number'];
             }
         }
         return null;
@@ -277,21 +243,17 @@ if (!function_exists('getStudentId')) {
 }
 
 /**
- * Check if parent can access specific student
+ * Check if parent can access specific child registration
  */
-function canAccessStudent($studentId, $pdo) {
-    // Students can only access themselves
-    if (isStudent()) {
-        return getUserId() == $studentId;
+function canAccessStudent($registrationId, $pdo) {
+    if (!isParent()) {
+        return false;
     }
     
-    // Parents can access their children
-    if (isParent()) {
-        $children = getParentChildren();
-        foreach ($children as $child) {
-            if ($child['id'] == $studentId) {
-                return true;
-            }
+    $children = getParentChildren();
+    foreach ($children as $child) {
+        if ($child['id'] == $registrationId) {
+            return true;
         }
     }
     
@@ -307,13 +269,13 @@ function canAccessStudent($studentId, $pdo) {
  */
 function handleChildSwitch() {
     if (isParent() && isset($_GET['switch_child'])) {
-        $studentId = intval($_GET['switch_child']);
+        $registrationId = intval($_GET['switch_child']);
         
         // Verify this child belongs to the parent
         $children = getParentChildren();
         foreach ($children as $child) {
-            if ($child['id'] === $studentId) {
-                setActiveStudent($studentId);
+            if ($child['id'] === $registrationId) {
+                setActiveStudent($registrationId);
                 
                 // Redirect to remove the switch_child parameter
                 $page = $_GET['page'] ?? 'dashboard';
@@ -322,6 +284,18 @@ function handleChildSwitch() {
             }
         }
     }
+}
+
+// ============================================================
+// BACKWARD COMPATIBILITY HELPERS
+// ============================================================
+
+/**
+ * Get active student ID - for backward compatibility
+ * Now returns registration ID instead of student account ID
+ */
+function getActiveStudentId_Legacy() {
+    return getActiveStudentId();
 }
 
 // ============================================================
