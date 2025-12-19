@@ -4,6 +4,7 @@
  * Handles student registration, account creation, and email notification
  * Stage 3: Multi-child parent system - auto-detects parent by email
  * UPDATED: Password is now last 4 digits of IC number
+ * UPDATED: Auto-enrollment into classes based on schedule selection
  */
 
 header('Content-Type: application/json');
@@ -106,6 +107,134 @@ function linkStudentToParent(PDO $conn, int $parentId, int $studentId, string $r
         $stmt->execute([$parentId, $studentId, $relationship]);
         error_log("[Link] Linked student ID={$studentId} to parent ID={$parentId}");
     }
+}
+
+// ==========================================
+// AUTO-ENROLLMENT HELPER FUNCTIONS
+// ==========================================
+
+/**
+ * Parse schedule string and extract data-schedule codes
+ * Example input: "Wushu Sport Academy: Sun 10am-12pm, SJK(C) Puay Chai 2: Tue 8pm-10pm"
+ * Maps to class codes in database
+ */
+function parseScheduleToClassCodes(string $scheduleString): array {
+    // Define mapping between schedule strings and class codes
+    $scheduleToClassCodeMap = [
+        // Wushu Sport Academy
+        'Wushu Sport Academy: Sun 10am-12pm' => 'wsa-sun-10am',
+        'Wushu Sport Academy: Sun 12pm-2pm' => 'wsa-sun-12pm',
+        'Wushu Sport Academy: Wed 8pm-10pm' => 'wsa-wed-8pm',
+        
+        // SJK(C) Puay Chai 2
+        'SJK(C) Puay Chai 2: Tue 8pm-10pm' => 'pc2-tue-8pm',
+        'SJK(C) Puay Chai 2: Wed 8pm-10pm' => 'pc2-wed-8pm',
+        
+        // Stadium Chinwoo
+        'Stadium Chinwoo: Sun 2pm-4pm' => 'chinwoo-sun-2pm',
+    ];
+    
+    $classCodes = [];
+    
+    // Split schedule string by comma and trim
+    $scheduleArray = array_map('trim', explode(',', $scheduleString));
+    
+    foreach ($scheduleArray as $schedule) {
+        if (isset($scheduleToClassCodeMap[$schedule])) {
+            $classCodes[] = $scheduleToClassCodeMap[$schedule];
+            error_log("[Schedule Parse] Mapped '{$schedule}' to '{$scheduleToClassCodeMap[$schedule]}'");
+        } else {
+            error_log("[Schedule Parse] WARNING: No mapping found for '{$schedule}'");
+        }
+    }
+    
+    return $classCodes;
+}
+
+/**
+ * Automatically enroll student into classes based on schedule selection
+ */
+function autoEnrollStudent(PDO $conn, int $studentId, string $scheduleString): array {
+    $enrollmentResults = [
+        'success' => [],
+        'failed' => [],
+        'skipped' => []
+    ];
+    
+    // Parse schedule to get class codes
+    $classCodes = parseScheduleToClassCodes($scheduleString);
+    
+    if (empty($classCodes)) {
+        error_log("[Auto-Enroll] No class codes parsed from schedule: {$scheduleString}");
+        return $enrollmentResults;
+    }
+    
+    error_log("[Auto-Enroll] Starting enrollment for student ID={$studentId}, Classes: " . implode(', ', $classCodes));
+    
+    foreach ($classCodes as $classCode) {
+        try {
+            // Find class by class_code
+            $stmt = $conn->prepare("SELECT id, class_name, status FROM classes WHERE class_code = ? LIMIT 1");
+            $stmt->execute([$classCode]);
+            $class = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$class) {
+                error_log("[Auto-Enroll] Class not found: {$classCode}");
+                $enrollmentResults['failed'][] = [
+                    'class_code' => $classCode,
+                    'reason' => 'Class not found in database'
+                ];
+                continue;
+            }
+            
+            if ($class['status'] !== 'active') {
+                error_log("[Auto-Enroll] Class inactive: {$classCode}");
+                $enrollmentResults['skipped'][] = [
+                    'class_code' => $classCode,
+                    'class_name' => $class['class_name'],
+                    'reason' => 'Class is not active'
+                ];
+                continue;
+            }
+            
+            // Check if already enrolled
+            $stmt = $conn->prepare("SELECT id FROM enrollments WHERE student_id = ? AND class_id = ? LIMIT 1");
+            $stmt->execute([$studentId, $class['id']]);
+            $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($existing) {
+                error_log("[Auto-Enroll] Already enrolled: Student={$studentId}, Class={$classCode}");
+                $enrollmentResults['skipped'][] = [
+                    'class_code' => $classCode,
+                    'class_name' => $class['class_name'],
+                    'reason' => 'Already enrolled'
+                ];
+                continue;
+            }
+            
+            // Create enrollment
+            $stmt = $conn->prepare("INSERT INTO enrollments 
+                (student_id, class_id, enrollment_date, status, created_at) 
+                VALUES (?, ?, CURDATE(), 'active', NOW())");
+            $stmt->execute([$studentId, $class['id']]);
+            
+            error_log("[Auto-Enroll] SUCCESS: Enrolled student ID={$studentId} in class '{$class['class_name']}' (Code: {$classCode})");
+            $enrollmentResults['success'][] = [
+                'class_code' => $classCode,
+                'class_name' => $class['class_name'],
+                'class_id' => $class['id']
+            ];
+            
+        } catch (PDOException $e) {
+            error_log("[Auto-Enroll] ERROR enrolling in {$classCode}: " . $e->getMessage());
+            $enrollmentResults['failed'][] = [
+                'class_code' => $classCode,
+                'reason' => $e->getMessage()
+            ];
+        }
+    }
+    
+    return $enrollmentResults;
 }
 
 // ===============
@@ -254,6 +383,7 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
                     <li>Your payment is under review by the academy</li>
                     <li>You'll receive approval notification via email</li>
                     <li>After approval, login to the parent portal to view schedules, attendance, and invoices</li>
+                    <li>Your child has been automatically enrolled in the selected classes</li>
                 </ol>
             </div>
         </div>
@@ -426,6 +556,19 @@ try {
         $isNewParentAccount ? 0 : 1, // is_additional_child
     ]);
 
+    // ===============================
+    // AUTO-ENROLL INTO CLASSES
+    // ===============================
+    
+    $scheduleString = trim($data['schedule']);
+    error_log("[Auto-Enroll] Schedule string: {$scheduleString}");
+    
+    $enrollmentResults = autoEnrollStudent($conn, $studentAccountId, $scheduleString);
+    
+    error_log("[Auto-Enroll] Results - Success: " . count($enrollmentResults['success']) . 
+              ", Failed: " . count($enrollmentResults['failed']) . 
+              ", Skipped: " . count($enrollmentResults['skipped']));
+
     $conn->commit();
     
     error_log("[Success] Reg#: {$regNumber}, Parent: {$parentCode} (ID:{$parentAccountId}), Student: {$studentAccountId}, IsNewParent: " . ($isNewParentAccount ? 'YES' : 'NO'));
@@ -453,9 +596,10 @@ try {
         'is_new_parent' => $isNewParentAccount,
         'parent_password' => $isNewParentAccount ? $parentPlainPassword : null,
         'email_sent' => $emailSent,
+        'enrollment_results' => $enrollmentResults,
         'message' => $isNewParentAccount 
-            ? 'Parent account created! Child registered successfully. Check your email for parent password.' 
-            : 'Child added successfully to your parent account!',
+            ? 'Parent account created! Child registered and enrolled successfully. Check your email for parent password.' 
+            : 'Child added and enrolled successfully to your parent account!',
     ]);
 
 } catch (PDOException $e) {
