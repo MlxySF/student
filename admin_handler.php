@@ -63,67 +63,110 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $action = $_POST['action'] ?? '';
 
-// ============ REGISTRATION APPROVAL ============
+// ============ REGISTRATION APPROVAL (UPDATED) ============
 
 if ($action === 'verify_registration') {
     $regId = $_POST['registration_id'];
+    
     try {
-        $checkStmt = $pdo->prepare("SELECT id, registration_number, payment_status FROM registrations WHERE id = ?");
-        $checkStmt->execute([$regId]);
-        $registration = $checkStmt->fetch();
+        // Call the approve_registration.php API
+        $apiUrl = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/approve_registration.php';
         
-        if (!$registration) {
-            $_SESSION['error'] = "Registration not found (ID: $regId)";
-        } else {
-            $stmt = $pdo->prepare("UPDATE registrations SET payment_status = ? WHERE id = ?");
-            $result = $stmt->execute(['approved', $regId]);
-            $rowCount = $stmt->rowCount();
-            
-            $verifyStmt = $pdo->prepare("SELECT payment_status FROM registrations WHERE id = ?");
-            $verifyStmt->execute([$regId]);
-            $updated = $verifyStmt->fetch();
-            
-            if ($updated && $updated['payment_status'] === 'approved') {
-                $_SESSION['success'] = "Registration {$registration['registration_number']} approved successfully!";
-            } else {
-                $currentStatus = $updated['payment_status'] ?? 'NULL';
-                $_SESSION['error'] = "Update executed but status is still: {$currentStatus}. Rows affected: {$rowCount}.";
+        $postData = json_encode([
+            'registration_id' => $regId,
+            'action' => 'approve',
+            'notes' => 'Approved by admin via registration page'
+        ]);
+        
+        $ch = curl_init($apiUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Content-Length: ' . strlen($postData)
+        ]);
+        
+        // Pass session cookie for authentication
+        curl_setopt($ch, CURLOPT_COOKIE, session_name() . '=' . session_id());
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        $result = json_decode($response, true);
+        
+        if ($httpCode === 200 && isset($result['success']) && $result['success']) {
+            $message = "Registration {$result['registration_number']} approved!";
+            if ($result['invoice_approved']) {
+                $message .= " Invoice marked as PAID.";
             }
+            if ($result['payment_approved']) {
+                $message .= " Payment verified.";
+            }
+            $_SESSION['success'] = $message;
+        } else {
+            $_SESSION['error'] = $result['error'] ?? 'Failed to approve registration';
         }
-    } catch (PDOException $e) {
-        $_SESSION['error'] = "Database error: " . $e->getMessage();
+        
+    } catch (Exception $e) {
+        error_log("[verify_registration] Error: " . $e->getMessage());
+        $_SESSION['error'] = "Error approving registration: " . $e->getMessage();
     }
+    
     header('Location: admin.php?page=registrations');
     exit;
 }
 
 if ($action === 'reject_registration') {
     $regId = $_POST['registration_id'];
+    
     try {
-        $checkStmt = $pdo->prepare("SELECT id, registration_number FROM registrations WHERE id = ?");
-        $checkStmt->execute([$regId]);
-        $registration = $checkStmt->fetch();
+        // Call the approve_registration.php API
+        $apiUrl = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/approve_registration.php';
         
-        if (!$registration) {
-            $_SESSION['error'] = "Registration not found (ID: $regId)";
-        } else {
-            $stmt = $pdo->prepare("UPDATE registrations SET payment_status = ? WHERE id = ?");
-            $result = $stmt->execute(['rejected', $regId]);
-            
-            $verifyStmt = $pdo->prepare("SELECT payment_status FROM registrations WHERE id = ?");
-            $verifyStmt->execute([$regId]);
-            $updated = $verifyStmt->fetch();
-            
-            if ($updated && $updated['payment_status'] === 'rejected') {
-                $_SESSION['success'] = "Registration {$registration['registration_number']} rejected.";
-            } else {
-                $currentStatus = $updated['payment_status'] ?? 'NULL';
-                $_SESSION['error'] = "Update executed but status is still: {$currentStatus}";
+        $postData = json_encode([
+            'registration_id' => $regId,
+            'action' => 'reject',
+            'notes' => 'Rejected by admin via registration page'
+        ]);
+        
+        $ch = curl_init($apiUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Content-Length: ' . strlen($postData)
+        ]);
+        
+        // Pass session cookie for authentication
+        curl_setopt($ch, CURLOPT_COOKIE, session_name() . '=' . session_id());
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        $result = json_decode($response, true);
+        
+        if ($httpCode === 200 && isset($result['success']) && $result['success']) {
+            $message = "Registration {$result['registration_number']} rejected.";
+            if ($result['invoice_cancelled']) {
+                $message .= " Invoice cancelled.";
             }
+            if ($result['payment_rejected']) {
+                $message .= " Payment rejected.";
+            }
+            $_SESSION['success'] = $message;
+        } else {
+            $_SESSION['error'] = $result['error'] ?? 'Failed to reject registration';
         }
-    } catch (PDOException $e) {
-        $_SESSION['error'] = "Database error: " . $e->getMessage();
+        
+    } catch (Exception $e) {
+        error_log("[reject_registration] Error: " . $e->getMessage());
+        $_SESSION['error'] = "Error rejecting registration: " . $e->getMessage();
     }
+    
     header('Location: admin.php?page=registrations');
     exit;
 }
