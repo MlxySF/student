@@ -461,6 +461,9 @@
                                 <div class="text-xs text-slate-600">
                                     <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">只限于州队/后备队 Only for State/Backup Team</span>
                                 </div>
+                                <div class="text-xs text-slate-600">
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">(A/B/C/D 传统和太极套路)</span>
+                                </div>
                             </div>
                         </label>
 
@@ -469,6 +472,9 @@
                             <div class="custom-checkbox-label">
                                 <div class="text-sm font-bold text-slate-800">
                                     <i class="far fa-calendar mr-2 text-amber-500"></i>Sunday 星期日 · 1:00 PM - 3:00 PM
+                                </div>
+                                <div class="text-xs text-slate-600">
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">(C/D 和太极套路)</span>
                                 </div>
                             </div>
                         </label>
@@ -505,7 +511,9 @@
                                 </div>
                                 <div class="text-xs text-slate-600">
                                     <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">只限于州队/后备队 Only for State/Backup Team</span>
-                                    <span class="text-slate-400 ml-1">(A/B/C 和 传统套路)</span>
+                                </div>
+                                <div class="text-xs text-slate-600">
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">(A/B/C 和 传统套路)</span>
                                 </div>
                                 <div class="text-[10px] text-red-500 font-bold hidden disabled-msg mt-1">
                                     <i class="fas fa-ban mr-1"></i>Not available for Normal Students 普通学生不允许参加
