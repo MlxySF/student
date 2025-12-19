@@ -3,6 +3,7 @@
  * process_registration.php - Complete Registration Processing with PHPMailer
  * Handles student registration, account creation, and email notification
  * Stage 3: Multi-child parent system - auto-detects parent by email
+ * FIXED: Parent password display in email
  */
 
 header('Content-Type: application/json');
@@ -77,7 +78,7 @@ function findOrCreateParentAccount(PDO $conn, array $parentData): array {
 
     $parentId = (int)$conn->lastInsertId();
 
-    error_log("[Parent] Created NEW parent account ID={$parentId}, code={$parentCode}, email={$email}");
+    error_log("[Parent] Created NEW parent account ID={$parentId}, code={$parentCode}, email={$email}, password={$plainPassword}");
 
     return [
         'id' => $parentId,
@@ -110,9 +111,11 @@ function linkStudentToParent(PDO $conn, int $parentId, int $studentId, string $r
 // Email functions
 // ===============
 
-function sendRegistrationEmail($toEmail, $studentName, $registrationNumber, $password, $studentStatus, $isNewParent, $parentPassword = null) {
+function sendRegistrationEmail($toEmail, $studentName, $registrationNumber, $childPassword, $studentStatus, $isNewParent, $parentPassword) {
     $mail = new PHPMailer(true);
     try {
+        error_log("[Email] Sending to: {$toEmail}, isNewParent: " . ($isNewParent ? 'YES' : 'NO') . ", parentPassword: " . ($parentPassword ?? 'NULL'));
+        
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
@@ -128,35 +131,64 @@ function sendRegistrationEmail($toEmail, $studentName, $registrationNumber, $pas
         $mail->isHTML(true);
         $mail->CharSet = 'UTF-8';
         $mail->Subject = '🎊 Wushu Sport Academy - Child Registration Successful';
-        $mail->Body    = getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $password, $studentStatus, $isNewParent, $parentPassword);
+        $mail->Body    = getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $childPassword, $studentStatus, $isNewParent, $parentPassword);
         $mail->AltBody = "Registration Successful!";
 
         $mail->send();
+        error_log("[Email] Successfully sent to {$toEmail}");
         return true;
     } catch (Exception $e) {
-        error_log("Email error: {$mail->ErrorInfo}");
+        error_log("[Email] Error: {$mail->ErrorInfo}");
         return false;
     }
 }
 
 function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $childPassword, $studentStatus, $isNewParent, $parentPassword) {
+    // Build parent section
     $parentSection = '';
-    if ($isNewParent && $parentPassword) {
+    
+    if ($isNewParent) {
+        // FIRST CHILD - Show parent account details
+        if (!$parentPassword || trim($parentPassword) === '') {
+            error_log("[Email Template] WARNING: isNewParent=true but parentPassword is empty!");
+            $parentPassword = "ERROR: Password not generated";
+        }
+        
         $parentSection = "
-        <div style='background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 20px 0; border-radius: 8px;'>
-            <h3 style='margin: 0 0 12px 0; color: #856404;'>🔑 Parent Account Created!</h3>
-            <p style='margin: 0 0 8px 0; color: #856404;'><strong>This is your FIRST child registration.</strong> A parent account has been created for you.</p>
-            <p style='margin: 0 0 8px 0; color: #856404;'><strong>Parent Login Email:</strong> {$toEmail}</p>
-            <p style='margin: 0 0 8px 0; color: #856404;'><strong>Parent Password:</strong></p>
-            <div style='font-size: 24px; color: #dc2626; font-weight: bold; font-family: monospace; letter-spacing: 3px; background: #fff; padding: 12px; border-radius: 6px; display: inline-block;'>{$parentPassword}</div>
-            <p style='margin: 12px 0 0 0; font-size: 13px; color: #856404;'>⚠️ <strong>Save this password!</strong> Use it to login and manage all your children.</p>
+        <div style='background: #fff3cd; border-left: 4px solid #ffc107; padding: 24px; margin: 24px 0; border-radius: 8px;'>
+            <h3 style='margin: 0 0 16px 0; color: #856404; font-size: 20px;'>🔑 Parent Account Created!</h3>
+            <p style='margin: 0 0 12px 0; color: #856404; font-size: 15px;'><strong>This is your FIRST child registration.</strong> A parent account has been created for you to manage all your children.</p>
+            
+            <table style='width: 100%; margin: 16px 0;'>
+                <tr>
+                    <td style='padding: 8px 0; color: #856404; font-weight: 600; width: 40%;'>Parent Login Email:</td>
+                    <td style='padding: 8px 0; color: #856404;'>{$toEmail}</td>
+                </tr>
+                <tr>
+                    <td style='padding: 12px 0 8px 0; color: #856404; font-weight: 600; vertical-align: top;'>Parent Password:</td>
+                    <td style='padding: 12px 0 8px 0;'>
+                        <div style='font-size: 28px; color: #dc2626; font-weight: bold; font-family: "Courier New", monospace; letter-spacing: 4px; background: #fff; padding: 16px 20px; border-radius: 8px; display: inline-block; border: 2px solid #ffc107;'>{$parentPassword}</div>
+                    </td>
+                </tr>
+            </table>
+            
+            <div style='background: #fff; padding: 12px 16px; border-radius: 6px; margin-top: 16px;'>
+                <p style='margin: 0; font-size: 14px; color: #856404;'>⚠️ <strong>IMPORTANT:</strong> Save this password securely! You'll need it to:</p>
+                <ul style='margin: 8px 0 0 20px; padding: 0; color: #856404; font-size: 14px;'>
+                    <li>Login to the parent portal</li>
+                    <li>View all your children's data</li>
+                    <li>Manage payments and attendance</li>
+                    <li>Register additional children</li>
+                </ul>
+            </div>
         </div>
         ";
     } else {
+        // ADDITIONAL CHILD - Show confirmation
         $parentSection = "
         <div style='background: #d1ecf1; border-left: 4px solid #0dcaf0; padding: 20px; margin: 20px 0; border-radius: 8px;'>
-            <h3 style='margin: 0 0 12px 0; color: #0c5460;'>✅ Child Added to Your Account</h3>
-            <p style='margin: 0; color: #0c5460;'>This child has been linked to your existing parent account. Login with your parent email to view all children.</p>
+            <h3 style='margin: 0 0 12px 0; color: #0c5460; font-size: 18px;'>✅ Child Added to Your Parent Account</h3>
+            <p style='margin: 0; color: #0c5460; font-size: 14px;'>This child has been successfully linked to your existing parent account. Login with your parent email and password to view all children.</p>
         </div>
         ";
     }
@@ -166,45 +198,70 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
     <html lang='en'>
     <head>
         <meta charset='UTF-8'>
-        <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5; }
-            .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-            .header { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white; padding: 32px 24px; text-align: center; }
-            .header h1 { margin: 0 0 8px 0; font-size: 28px; font-weight: 700; }
-            .content { padding: 32px 24px; background: white; }
-            .child-info { background: #f8fafc; padding: 20px; margin: 20px 0; border-left: 4px solid #22c55e; border-radius: 8px; }
-            .child-info h3 { margin: 0 0 12px 0; color: #166534; }
-            .footer { text-align: center; padding: 24px; background: #f8fafc; color: #64748b; font-size: 13px; }
-        </style>
+        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+        <title>Registration Successful</title>
     </head>
-    <body>
-        <div class='container'>
-            <div class='header'>
-                <h1>🎉 Child Registered Successfully!</h1>
-                <p>报名成功 · Registration Successful</p>
+    <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5;'>
+        <div style='max-width: 600px; margin: 20px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+            <!-- Header -->
+            <div style='background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white; padding: 40px 24px; text-align: center;'>
+                <h1 style='margin: 0 0 8px 0; font-size: 32px; font-weight: 700;'>🎉 Registration Successful!</h1>
+                <p style='margin: 0; font-size: 16px; opacity: 0.95;'>报名成功 · Child Registered</p>
             </div>
-            <div class='content'>
-                <p style='font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 16px;'>Dear Parent,</p>
-                <p style='margin-bottom: 16px;'>Your child has been successfully registered for Wushu training!</p>
+            
+            <!-- Content -->
+            <div style='padding: 32px 24px; background: white;'>
+                <p style='font-size: 18px; font-weight: 600; color: #1e293b; margin: 0 0 16px 0;'>Dear Parent,</p>
+                <p style='margin: 0 0 24px 0; font-size: 15px; color: #475569;'>Your child <strong>{$studentName}</strong> has been successfully registered for Wushu training at Wushu Sport Academy!</p>
                 
                 {$parentSection}
                 
-                <div class='child-info'>
-                    <h3>👶 Child Details</h3>
-                    <p style='margin: 4px 0;'><strong>Child Name:</strong> {$studentName}</p>
-                    <p style='margin: 4px 0;'><strong>Student ID:</strong> {$registrationNumber}</p>
-                    <p style='margin: 4px 0;'><strong>Status:</strong> {$studentStatus}</p>
-                    <p style='margin: 4px 0;'><strong>Child Password:</strong> <code style='background: #fff; padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px;'>{$childPassword}</code></p>
+                <!-- Child Details -->
+                <div style='background: #f0fdf4; border-left: 4px solid #22c55e; padding: 20px; margin: 24px 0; border-radius: 8px;'>
+                    <h3 style='margin: 0 0 16px 0; color: #166534; font-size: 18px;'>👶 Child Account Details</h3>
+                    <table style='width: 100%;'>
+                        <tr>
+                            <td style='padding: 6px 0; color: #166534; font-weight: 600; width: 40%;'>Child Name:</td>
+                            <td style='padding: 6px 0; color: #166534;'>{$studentName}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 6px 0; color: #166534; font-weight: 600;'>Student ID:</td>
+                            <td style='padding: 6px 0; color: #166534;'>{$registrationNumber}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 6px 0; color: #166534; font-weight: 600;'>Status:</td>
+                            <td style='padding: 6px 0; color: #166534;'><span style='background: #dcfce7; padding: 4px 12px; border-radius: 4px; font-size: 13px; font-weight: 600;'>{$studentStatus}</span></td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 6px 0; color: #166534; font-weight: 600; vertical-align: top;'>Child Password:</td>
+                            <td style='padding: 6px 0; color: #166534;'><code style='background: #fff; padding: 6px 12px; border: 1px solid #bbf7d0; border-radius: 4px; font-family: monospace; font-size: 14px;'>{$childPassword}</code><br><span style='font-size: 12px; color: #15803d;'>(Optional: For child to login independently)</span></td>
+                        </tr>
+                    </table>
                 </div>
                 
-                <div style='background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 8px; margin: 20px 0;'>
-                    <p style='margin: 0 0 8px 0; font-weight: 600; color: #1e40af;'>💡 To Register More Children:</p>
-                    <p style='margin: 0; color: #1e40af; font-size: 14px;'>Simply use the <strong>same email address</strong> ({$toEmail}) when registering. All children will be automatically linked to your parent account!</p>
+                <!-- Register More Children -->
+                <div style='background: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 24px 0;'>
+                    <p style='margin: 0 0 8px 0; font-weight: 600; color: #1e40af; font-size: 16px;'>💡 Register More Children</p>
+                    <p style='margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;'>To register additional children, simply use the <strong>same email address</strong> ({$toEmail}) when filling the registration form. All your children will be automatically linked to your parent account!</p>
+                </div>
+                
+                <!-- Next Steps -->
+                <div style='background: #f8fafc; padding: 20px; border-radius: 8px; margin: 24px 0;'>
+                    <h4 style='margin: 0 0 12px 0; color: #1e293b; font-size: 16px;'>📋 Next Steps:</h4>
+                    <ol style='margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.8;'>
+                        <li>Your payment is under review by the academy</li>
+                        <li>You'll receive approval notification via email</li>
+                        <li>After approval, login to the parent portal to view your children's schedules, attendance, and invoices</li>
+                    </ol>
                 </div>
             </div>
-            <div class='footer'>
-                <p><strong>Wushu Sport Academy 武术体育学院</strong></p>
-                <p>📧 admin@wushusportacademy.com | 📱 +60 12-345 6789</p>
+            
+            <!-- Footer -->
+            <div style='text-align: center; padding: 24px; background: #f8fafc; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0;'>
+                <p style='margin: 0 0 8px 0; font-weight: 600; color: #1e293b; font-size: 15px;'>Wushu Sport Academy 武术体育学院</p>
+                <p style='margin: 4px 0;'>📧 Email: admin@wushusportacademy.com</p>
+                <p style='margin: 4px 0;'>📱 Phone: +60 12-345 6789</p>
+                <p style='margin: 16px 0 0 0; font-size: 11px; color: #94a3b8;'>This is an automated email. Please do not reply directly to this message.</p>
             </div>
         </div>
     </body>
@@ -293,6 +350,8 @@ try {
     $parentCode          = $parentAccountInfo['parent_id'];
     $isNewParentAccount  = $parentAccountInfo['is_new'];
     $parentPlainPassword = $parentAccountInfo['plain_password'];
+    
+    error_log("[Parent Info] ID={$parentAccountId}, Code={$parentCode}, IsNew={$isNewParentAccount}, Password=" . ($parentPlainPassword ?? 'NULL'));
 
     // ======================
     // Create Student Account
@@ -369,8 +428,16 @@ try {
     
     error_log("[Success] Reg#: {$regNumber}, Parent: {$parentCode} (ID:{$parentAccountId}), Student: {$studentAccountId}, IsNewParent: " . ($isNewParentAccount ? 'YES' : 'NO'));
 
-    // Send email
-    $emailSent = sendRegistrationEmail($parentEmail, $fullName, $regNumber, $generatedPassword, $studentStatus, $isNewParentAccount, $parentPlainPassword);
+    // Send email with proper parameters
+    $emailSent = sendRegistrationEmail(
+        $parentEmail, 
+        $fullName, 
+        $regNumber, 
+        $generatedPassword, 
+        $studentStatus, 
+        $isNewParentAccount, 
+        $parentPlainPassword
+    );
 
     echo json_encode([
         'success' => true,
@@ -384,7 +451,7 @@ try {
         'parent_password' => $isNewParentAccount ? $parentPlainPassword : null,
         'email_sent' => $emailSent,
         'message' => $isNewParentAccount 
-            ? 'Parent account created! Child registered successfully. You can now register more children using the same email.' 
+            ? 'Parent account created! Child registered successfully. Check your email for parent password.' 
             : 'Child added successfully to your parent account!',
     ]);
 
