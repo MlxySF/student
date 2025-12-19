@@ -120,7 +120,7 @@ $invoice_stats = $stmt->fetch();
                         <?php endif; ?>
                         <p class="text-muted">
                             <span class="badge bg-dark"><?php echo $student['student_id']; ?></span>
-                            <?php if (!empty($student['student_status']) && $student['student_status'] !== 'Student 学生'): ?>
+                            <?php if (!empty($student['student_status'])): ?>
                             <br><span class="badge <?php 
                                 echo (strpos($student['student_status'], 'State Team') !== false) ? 'bg-success' : 
                                      ((strpos($student['student_status'], 'Backup Team') !== false) ? 'bg-warning' : 'bg-info');
