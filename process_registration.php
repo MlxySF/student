@@ -3,7 +3,7 @@
  * process_registration.php - Complete Registration Processing with PHPMailer
  * Handles student registration, account creation, and email notification
  * Stage 3: Multi-child parent system - auto-detects parent by email
- * FIXED: Parent password display in email
+ * FIXED: String escaping in email template
  */
 
 header('Content-Type: application/json');
@@ -167,7 +167,7 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
                 <tr>
                     <td style='padding: 12px 0 8px 0; color: #856404; font-weight: 600; vertical-align: top;'>Parent Password:</td>
                     <td style='padding: 12px 0 8px 0;'>
-                        <div style='font-size: 28px; color: #dc2626; font-weight: bold; font-family: "Courier New", monospace; letter-spacing: 4px; background: #fff; padding: 16px 20px; border-radius: 8px; display: inline-block; border: 2px solid #ffc107;'>{$parentPassword}</div>
+                        <div style='font-size: 28px; color: #dc2626; font-weight: bold; font-family: Courier, monospace; letter-spacing: 4px; background: #fff; padding: 16px 20px; border-radius: 8px; display: inline-block; border: 2px solid #ffc107;'>{$parentPassword}</div>
                     </td>
                 </tr>
             </table>
@@ -193,80 +193,74 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
         ";
     }
 
-    return "
-    <!DOCTYPE html>
-    <html lang='en'>
-    <head>
-        <meta charset='UTF-8'>
-        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-        <title>Registration Successful</title>
-    </head>
-    <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5;'>
-        <div style='max-width: 600px; margin: 20px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
-            <!-- Header -->
-            <div style='background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white; padding: 40px 24px; text-align: center;'>
-                <h1 style='margin: 0 0 8px 0; font-size: 32px; font-weight: 700;'>🎉 Registration Successful!</h1>
-                <p style='margin: 0; font-size: 16px; opacity: 0.95;'>报名成功 · Child Registered</p>
+    $html = "<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Registration Successful</title>
+</head>
+<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5;'>
+    <div style='max-width: 600px; margin: 20px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+        <div style='background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white; padding: 40px 24px; text-align: center;'>
+            <h1 style='margin: 0 0 8px 0; font-size: 32px; font-weight: 700;'>🎉 Registration Successful!</h1>
+            <p style='margin: 0; font-size: 16px; opacity: 0.95;'>报名成功 · Child Registered</p>
+        </div>
+        
+        <div style='padding: 32px 24px; background: white;'>
+            <p style='font-size: 18px; font-weight: 600; color: #1e293b; margin: 0 0 16px 0;'>Dear Parent,</p>
+            <p style='margin: 0 0 24px 0; font-size: 15px; color: #475569;'>Your child <strong>{$studentName}</strong> has been successfully registered for Wushu training at Wushu Sport Academy!</p>
+            
+            {$parentSection}
+            
+            <div style='background: #f0fdf4; border-left: 4px solid #22c55e; padding: 20px; margin: 24px 0; border-radius: 8px;'>
+                <h3 style='margin: 0 0 16px 0; color: #166534; font-size: 18px;'>👶 Child Account Details</h3>
+                <table style='width: 100%;'>
+                    <tr>
+                        <td style='padding: 6px 0; color: #166534; font-weight: 600; width: 40%;'>Child Name:</td>
+                        <td style='padding: 6px 0; color: #166534;'>{$studentName}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 6px 0; color: #166534; font-weight: 600;'>Student ID:</td>
+                        <td style='padding: 6px 0; color: #166534;'>{$registrationNumber}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 6px 0; color: #166534; font-weight: 600;'>Status:</td>
+                        <td style='padding: 6px 0; color: #166534;'><span style='background: #dcfce7; padding: 4px 12px; border-radius: 4px; font-size: 13px; font-weight: 600;'>{$studentStatus}</span></td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 6px 0; color: #166534; font-weight: 600; vertical-align: top;'>Child Password:</td>
+                        <td style='padding: 6px 0; color: #166534;'><code style='background: #fff; padding: 6px 12px; border: 1px solid #bbf7d0; border-radius: 4px; font-family: monospace; font-size: 14px;'>{$childPassword}</code><br><span style='font-size: 12px; color: #15803d;'>(Optional: For child to login independently)</span></td>
+                    </tr>
+                </table>
             </div>
             
-            <!-- Content -->
-            <div style='padding: 32px 24px; background: white;'>
-                <p style='font-size: 18px; font-weight: 600; color: #1e293b; margin: 0 0 16px 0;'>Dear Parent,</p>
-                <p style='margin: 0 0 24px 0; font-size: 15px; color: #475569;'>Your child <strong>{$studentName}</strong> has been successfully registered for Wushu training at Wushu Sport Academy!</p>
-                
-                {$parentSection}
-                
-                <!-- Child Details -->
-                <div style='background: #f0fdf4; border-left: 4px solid #22c55e; padding: 20px; margin: 24px 0; border-radius: 8px;'>
-                    <h3 style='margin: 0 0 16px 0; color: #166534; font-size: 18px;'>👶 Child Account Details</h3>
-                    <table style='width: 100%;'>
-                        <tr>
-                            <td style='padding: 6px 0; color: #166534; font-weight: 600; width: 40%;'>Child Name:</td>
-                            <td style='padding: 6px 0; color: #166534;'>{$studentName}</td>
-                        </tr>
-                        <tr>
-                            <td style='padding: 6px 0; color: #166534; font-weight: 600;'>Student ID:</td>
-                            <td style='padding: 6px 0; color: #166534;'>{$registrationNumber}</td>
-                        </tr>
-                        <tr>
-                            <td style='padding: 6px 0; color: #166534; font-weight: 600;'>Status:</td>
-                            <td style='padding: 6px 0; color: #166534;'><span style='background: #dcfce7; padding: 4px 12px; border-radius: 4px; font-size: 13px; font-weight: 600;'>{$studentStatus}</span></td>
-                        </tr>
-                        <tr>
-                            <td style='padding: 6px 0; color: #166534; font-weight: 600; vertical-align: top;'>Child Password:</td>
-                            <td style='padding: 6px 0; color: #166534;'><code style='background: #fff; padding: 6px 12px; border: 1px solid #bbf7d0; border-radius: 4px; font-family: monospace; font-size: 14px;'>{$childPassword}</code><br><span style='font-size: 12px; color: #15803d;'>(Optional: For child to login independently)</span></td>
-                        </tr>
-                    </table>
-                </div>
-                
-                <!-- Register More Children -->
-                <div style='background: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 24px 0;'>
-                    <p style='margin: 0 0 8px 0; font-weight: 600; color: #1e40af; font-size: 16px;'>💡 Register More Children</p>
-                    <p style='margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;'>To register additional children, simply use the <strong>same email address</strong> ({$toEmail}) when filling the registration form. All your children will be automatically linked to your parent account!</p>
-                </div>
-                
-                <!-- Next Steps -->
-                <div style='background: #f8fafc; padding: 20px; border-radius: 8px; margin: 24px 0;'>
-                    <h4 style='margin: 0 0 12px 0; color: #1e293b; font-size: 16px;'>📋 Next Steps:</h4>
-                    <ol style='margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.8;'>
-                        <li>Your payment is under review by the academy</li>
-                        <li>You'll receive approval notification via email</li>
-                        <li>After approval, login to the parent portal to view your children's schedules, attendance, and invoices</li>
-                    </ol>
-                </div>
+            <div style='background: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 24px 0;'>
+                <p style='margin: 0 0 8px 0; font-weight: 600; color: #1e40af; font-size: 16px;'>💡 Register More Children</p>
+                <p style='margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;'>To register additional children, simply use the <strong>same email address</strong> ({$toEmail}) when filling the registration form. All your children will be automatically linked to your parent account!</p>
             </div>
             
-            <!-- Footer -->
-            <div style='text-align: center; padding: 24px; background: #f8fafc; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0;'>
-                <p style='margin: 0 0 8px 0; font-weight: 600; color: #1e293b; font-size: 15px;'>Wushu Sport Academy 武术体育学院</p>
-                <p style='margin: 4px 0;'>📧 Email: admin@wushusportacademy.com</p>
-                <p style='margin: 4px 0;'>📱 Phone: +60 12-345 6789</p>
-                <p style='margin: 16px 0 0 0; font-size: 11px; color: #94a3b8;'>This is an automated email. Please do not reply directly to this message.</p>
+            <div style='background: #f8fafc; padding: 20px; border-radius: 8px; margin: 24px 0;'>
+                <h4 style='margin: 0 0 12px 0; color: #1e293b; font-size: 16px;'>📋 Next Steps:</h4>
+                <ol style='margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.8;'>
+                    <li>Your payment is under review by the academy</li>
+                    <li>You'll receive approval notification via email</li>
+                    <li>After approval, login to the parent portal to view schedules, attendance, and invoices</li>
+                </ol>
             </div>
         </div>
-    </body>
-    </html>
-    ";
+        
+        <div style='text-align: center; padding: 24px; background: #f8fafc; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0;'>
+            <p style='margin: 0 0 8px 0; font-weight: 600; color: #1e293b; font-size: 15px;'>Wushu Sport Academy 武术体育学院</p>
+            <p style='margin: 4px 0;'>📧 Email: admin@wushusportacademy.com</p>
+            <p style='margin: 4px 0;'>📱 Phone: +60 12-345 6789</p>
+            <p style='margin: 16px 0 0 0; font-size: 11px; color: #94a3b8;'>This is an automated email. Please do not reply directly to this message.</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+    return $html;
 }
 
 // ============================
