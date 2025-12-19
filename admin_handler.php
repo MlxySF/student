@@ -294,38 +294,60 @@ if ($action === 'unenroll_student') {
 // ============ CLASS MANAGEMENT ============
 
 if ($action === 'create_class') {
-    $class_code = strtoupper($_POST['class_code']);
-    $class_name = $_POST['class_name'];
-    $monthly_fee = $_POST['monthly_fee'];
-    $description = $_POST['description'] ?? '';
-    $day_of_week = $_POST['day_of_week'] ?? null;
-    $start_time = $_POST['start_time'] ?? null;
-    $end_time = $_POST['end_time'] ?? null;
+    $class_code = strtoupper(trim($_POST['class_code']));
+    $class_name = trim($_POST['class_name']);
+    $monthly_fee = floatval($_POST['monthly_fee']);
+    $description = trim($_POST['description'] ?? '');
+    $day_of_week = trim($_POST['day_of_week'] ?? '');
+    $start_time = trim($_POST['start_time'] ?? '');
+    $end_time = trim($_POST['end_time'] ?? '');
 
     try {
-        $stmt = $pdo->prepare("INSERT INTO classes (class_code, class_name, monthly_fee, description, day_of_week, start_time, end_time) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$class_code, $class_name, $monthly_fee, $description, $day_of_week, $start_time, $end_time]);
-        $_SESSION['success'] = "Class created with schedule!";
+        // FIXED: Check if class code already EXISTS (if found, it's duplicate)
+        $checkStmt = $pdo->prepare("SELECT id FROM classes WHERE class_code = ?");
+        $checkStmt->execute([$class_code]);
+        
+        if ($checkStmt->fetch()) {
+            // Class code FOUND - it's a duplicate
+            $_SESSION['error'] = "Class code '{$class_code}' already exists. Please use a different code.";
+        } else {
+            // Class code NOT found - safe to create
+            $stmt = $pdo->prepare("INSERT INTO classes (class_code, class_name, monthly_fee, description, day_of_week, start_time, end_time) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$class_code, $class_name, $monthly_fee, $description, $day_of_week, $start_time, $end_time]);
+            $_SESSION['success'] = "Class '{$class_name}' created successfully!";
+        }
     } catch(PDOException $e) {
-        $_SESSION['error'] = "Class code already exists.";
+        $_SESSION['error'] = "Failed to create class: " . $e->getMessage();
     }
     header('Location: admin.php?page=classes');
     exit;
 }
 
 if ($action === 'edit_class') {
-    $id = $_POST['class_id'];
-    $class_code = strtoupper($_POST['class_code']);
-    $class_name = $_POST['class_name'];
-    $monthly_fee = $_POST['monthly_fee'];
-    $description = $_POST['description'] ?? '';
-    $day_of_week = $_POST['day_of_week'] ?? null;
-    $start_time = $_POST['start_time'] ?? null;
-    $end_time = $_POST['end_time'] ?? null;
+    $id = intval($_POST['class_id']);
+    $class_code = strtoupper(trim($_POST['class_code']));
+    $class_name = trim($_POST['class_name']);
+    $monthly_fee = floatval($_POST['monthly_fee']);
+    $description = trim($_POST['description'] ?? '');
+    $day_of_week = trim($_POST['day_of_week'] ?? '');
+    $start_time = trim($_POST['start_time'] ?? '');
+    $end_time = trim($_POST['end_time'] ?? '');
 
-    $stmt = $pdo->prepare("UPDATE classes SET class_code = ?, class_name = ?, monthly_fee = ?, description = ?, day_of_week = ?, start_time = ?, end_time = ? WHERE id = ?");
-    $stmt->execute([$class_code, $class_name, $monthly_fee, $description, $day_of_week, $start_time, $end_time, $id]);
-    $_SESSION['success'] = "Class updated with schedule!";
+    try {
+        // Check if class code is used by another class
+        $checkStmt = $pdo->prepare("SELECT id FROM classes WHERE class_code = ? AND id != ?");
+        $checkStmt->execute([$class_code, $id]);
+        
+        if ($checkStmt->fetch()) {
+            $_SESSION['error'] = "Class code '{$class_code}' is already used by another class.";
+        } else {
+            $stmt = $pdo->prepare("UPDATE classes SET class_code = ?, class_name = ?, monthly_fee = ?, description = ?, day_of_week = ?, start_time = ?, end_time = ? WHERE id = ?");
+            $stmt->execute([$class_code, $class_name, $monthly_fee, $description, $day_of_week, $start_time, $end_time, $id]);
+            $_SESSION['success'] = "Class '{$class_name}' updated successfully!";
+        }
+    } catch(PDOException $e) {
+        $_SESSION['error'] = "Failed to update class: " . $e->getMessage();
+    }
     header('Location: admin.php?page=classes');
     exit;
 }
