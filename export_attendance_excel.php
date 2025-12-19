@@ -39,7 +39,7 @@ $stmt = $pdo->prepare("
 $stmt->execute([$selected_class]);
 $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Get all attendance records for the month
+// Get all attendance records for the month with notes
 // attendance.student_id is a foreign key that references students.id
 $stmt = $pdo->prepare("
     SELECT student_id, attendance_date, status, notes
@@ -50,12 +50,15 @@ $stmt = $pdo->prepare("
 $stmt->execute([$selected_class, $month_start, $month_end]);
 $attendance_records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Create attendance lookup array
+// Create attendance lookup array with status and notes
 // attendance.student_id already contains students.id (foreign key)
 $attendance_map = [];
 foreach ($attendance_records as $record) {
     $key = $record['student_id'] . '_' . $record['attendance_date'];
-    $attendance_map[$key] = $record['status'];
+    $attendance_map[$key] = [
+        'status' => $record['status'],
+        'notes' => $record['notes']
+    ];
 }
 
 // Generate date range for the month - ONLY CLASS DAYS
@@ -128,6 +131,7 @@ $header[] = 'Total Present';
 $header[] = 'Total Absent';
 $header[] = 'Total Late';
 $header[] = 'Attendance %';
+$header[] = 'Notes';
 fputcsv($output, $header);
 
 // Write date row (full dates for reference)
@@ -136,6 +140,7 @@ foreach ($dates as $date) {
     $formatted_date = date('D d/m', strtotime($date));
     $date_row[] = $formatted_date;
 }
+$date_row[] = '';
 $date_row[] = '';
 $date_row[] = '';
 $date_row[] = '';
@@ -153,11 +158,25 @@ foreach ($students as $student) {
     $total_absent = 0;
     $total_late = 0;
     $total_excused = 0;
+    $all_notes = [];
     
     foreach ($dates as $date) {
         // Use students.id (database ID) to match with attendance.student_id
         $key = $student['id'] . '_' . $date;
-        $status = $attendance_map[$key] ?? '';
+        $attendance = $attendance_map[$key] ?? null;
+        
+        if ($attendance) {
+            $status = $attendance['status'];
+            $notes = $attendance['notes'];
+            
+            // Collect notes with dates
+            if ($notes) {
+                $date_formatted = date('M j', strtotime($date));
+                $all_notes[] = "[$date_formatted] " . ucfirst($status) . ": " . $notes;
+            }
+        } else {
+            $status = '';
+        }
         
         // Convert status to single character or abbreviation
         switch ($status) {
@@ -191,6 +210,9 @@ foreach ($students as $student) {
     $row[] = $total_late;
     $row[] = $attendance_percentage . '%';
     
+    // Add combined notes
+    $row[] = implode(' | ', $all_notes);
+    
     fputcsv($output, $row);
 }
 
@@ -202,6 +224,12 @@ fputcsv($output, ['A', 'Absent']);
 fputcsv($output, ['L', 'Late']);
 fputcsv($output, ['E', 'Excused']);
 fputcsv($output, ['', 'No Record']);
+
+// Add notes explanation
+fputcsv($output, []);
+fputcsv($output, ['Notes Column:']);
+fputcsv($output, ['Shows all remarks added for the month with dates and status']);
+fputcsv($output, ['Format: [Date] Status: Remark | [Date] Status: Remark']);
 
 // Add summary info
 fputcsv($output, []);
