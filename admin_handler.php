@@ -63,53 +63,102 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $action = $_POST['action'] ?? '';
 
-// ============ REGISTRATION APPROVAL (UPDATED) ============
+// ============ REGISTRATION APPROVAL (FIXED - DIRECT DB) ============
 
 if ($action === 'verify_registration') {
     $regId = $_POST['registration_id'];
     
     try {
-        // Call the approve_registration.php API
-        $apiUrl = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/approve_registration.php';
+        $pdo->beginTransaction();
         
-        $postData = json_encode([
-            'registration_id' => $regId,
-            'action' => 'approve',
-            'notes' => 'Approved by admin via registration page'
-        ]);
+        // Get registration details including student_account_id
+        $stmt = $pdo->prepare("SELECT id, registration_number, name_en, payment_status, student_account_id FROM registrations WHERE id = ?");
+        $stmt->execute([$regId]);
+        $registration = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        $ch = curl_init($apiUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'Content-Length: ' . strlen($postData)
-        ]);
-        
-        // Pass session cookie for authentication
-        curl_setopt($ch, CURLOPT_COOKIE, session_name() . '=' . session_id());
-        
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        $result = json_decode($response, true);
-        
-        if ($httpCode === 200 && isset($result['success']) && $result['success']) {
-            $message = "Registration {$result['registration_number']} approved!";
-            if ($result['invoice_approved']) {
-                $message .= " Invoice marked as PAID.";
-            }
-            if ($result['payment_approved']) {
-                $message .= " Payment verified.";
-            }
-            $_SESSION['success'] = $message;
-        } else {
-            $_SESSION['error'] = $result['error'] ?? 'Failed to approve registration';
+        if (!$registration) {
+            throw new Exception('Registration not found');
         }
         
+        if ($registration['payment_status'] !== 'pending') {
+            throw new Exception('Registration is not pending approval');
+        }
+        
+        $studentAccountId = $registration['student_account_id'];
+        $adminUsername = $_SESSION['admin_username'] ?? 'admin';
+        
+        // 1. Update registration status to approved
+        $stmt = $pdo->prepare("
+            UPDATE registrations 
+            SET payment_status = 'approved',
+                admin_notes = 'Approved by admin',
+                approved_at = NOW(),
+                approved_by = ?
+            WHERE id = ?
+        ");
+        $stmt->execute([$adminUsername, $regId]);
+        
+        // 2. Auto-approve the linked registration fee invoice
+        $stmt = $pdo->prepare("
+            UPDATE invoices 
+            SET status = 'paid',
+                paid_date = NOW(),
+                updated_at = NOW()
+            WHERE student_id = ? 
+              AND invoice_type = 'registration' 
+              AND status = 'pending'
+        ");
+        $stmt->execute([$studentAccountId]);
+        $invoicesUpdated = $stmt->rowCount();
+        
+        // 3. Auto-approve linked payment records
+        $paymentsUpdated = 0;
+        if ($invoicesUpdated > 0) {
+            // Get the invoice ID that was just approved
+            $stmt = $pdo->prepare("
+                SELECT id FROM invoices 
+                WHERE student_id = ? 
+                  AND invoice_type = 'registration' 
+                  AND status = 'paid'
+                ORDER BY created_at DESC
+                LIMIT 1
+            ");
+            $stmt->execute([$studentAccountId]);
+            $invoice = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($invoice) {
+                // Approve the payment linked to this invoice
+                $stmt = $pdo->prepare("
+                    UPDATE payments 
+                    SET verification_status = 'approved',
+                        verified_at = NOW(),
+                        verified_by = ?,
+                        admin_notes = 'Auto-approved with registration'
+                    WHERE invoice_id = ? 
+                      AND verification_status = 'pending'
+                ");
+                $stmt->execute([$adminUsername, $invoice['id']]);
+                $paymentsUpdated = $stmt->rowCount();
+            }
+        }
+        
+        $pdo->commit();
+        
+        $message = "Registration {$registration['registration_number']} approved successfully!";
+        if ($invoicesUpdated > 0) {
+            $message .= " Invoice marked as PAID.";
+        }
+        if ($paymentsUpdated > 0) {
+            $message .= " Payment verified.";
+        }
+        
+        error_log("[Approve] Reg#{$registration['registration_number']}: invoices=$invoicesUpdated, payments=$paymentsUpdated");
+        $_SESSION['success'] = $message;
+        
     } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         error_log("[verify_registration] Error: " . $e->getMessage());
         $_SESSION['error'] = "Error approving registration: " . $e->getMessage();
     }
@@ -122,47 +171,93 @@ if ($action === 'reject_registration') {
     $regId = $_POST['registration_id'];
     
     try {
-        // Call the approve_registration.php API
-        $apiUrl = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/approve_registration.php';
+        $pdo->beginTransaction();
         
-        $postData = json_encode([
-            'registration_id' => $regId,
-            'action' => 'reject',
-            'notes' => 'Rejected by admin via registration page'
-        ]);
+        // Get registration details
+        $stmt = $pdo->prepare("SELECT id, registration_number, name_en, payment_status, student_account_id FROM registrations WHERE id = ?");
+        $stmt->execute([$regId]);
+        $registration = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        $ch = curl_init($apiUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'Content-Length: ' . strlen($postData)
-        ]);
-        
-        // Pass session cookie for authentication
-        curl_setopt($ch, CURLOPT_COOKIE, session_name() . '=' . session_id());
-        
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        $result = json_decode($response, true);
-        
-        if ($httpCode === 200 && isset($result['success']) && $result['success']) {
-            $message = "Registration {$result['registration_number']} rejected.";
-            if ($result['invoice_cancelled']) {
-                $message .= " Invoice cancelled.";
-            }
-            if ($result['payment_rejected']) {
-                $message .= " Payment rejected.";
-            }
-            $_SESSION['success'] = $message;
-        } else {
-            $_SESSION['error'] = $result['error'] ?? 'Failed to reject registration';
+        if (!$registration) {
+            throw new Exception('Registration not found');
         }
         
+        if ($registration['payment_status'] !== 'pending') {
+            throw new Exception('Registration is not pending approval');
+        }
+        
+        $studentAccountId = $registration['student_account_id'];
+        $adminUsername = $_SESSION['admin_username'] ?? 'admin';
+        
+        // 1. Update registration status to rejected
+        $stmt = $pdo->prepare("
+            UPDATE registrations 
+            SET payment_status = 'rejected',
+                admin_notes = 'Rejected by admin',
+                reviewed_at = NOW(),
+                reviewed_by = ?
+            WHERE id = ?
+        ");
+        $stmt->execute([$adminUsername, $regId]);
+        
+        // 2. Cancel linked invoice
+        $stmt = $pdo->prepare("
+            UPDATE invoices 
+            SET status = 'cancelled',
+                updated_at = NOW()
+            WHERE student_id = ? 
+              AND invoice_type = 'registration' 
+              AND status = 'pending'
+        ");
+        $stmt->execute([$studentAccountId]);
+        $invoicesUpdated = $stmt->rowCount();
+        
+        // 3. Reject linked payment records
+        $paymentsUpdated = 0;
+        if ($invoicesUpdated > 0) {
+            $stmt = $pdo->prepare("
+                SELECT id FROM invoices 
+                WHERE student_id = ? 
+                  AND invoice_type = 'registration' 
+                  AND status = 'cancelled'
+                ORDER BY created_at DESC
+                LIMIT 1
+            ");
+            $stmt->execute([$studentAccountId]);
+            $invoice = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($invoice) {
+                $stmt = $pdo->prepare("
+                    UPDATE payments 
+                    SET verification_status = 'rejected',
+                        verified_at = NOW(),
+                        verified_by = ?,
+                        admin_notes = 'Rejected with registration'
+                    WHERE invoice_id = ? 
+                      AND verification_status = 'pending'
+                ");
+                $stmt->execute([$adminUsername, $invoice['id']]);
+                $paymentsUpdated = $stmt->rowCount();
+            }
+        }
+        
+        $pdo->commit();
+        
+        $message = "Registration {$registration['registration_number']} rejected.";
+        if ($invoicesUpdated > 0) {
+            $message .= " Invoice cancelled.";
+        }
+        if ($paymentsUpdated > 0) {
+            $message .= " Payment rejected.";
+        }
+        
+        error_log("[Reject] Reg#{$registration['registration_number']}: invoices=$invoicesUpdated, payments=$paymentsUpdated");
+        $_SESSION['success'] = $message;
+        
     } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         error_log("[reject_registration] Error: " . $e->getMessage());
         $_SESSION['error'] = "Error rejecting registration: " . $e->getMessage();
     }
