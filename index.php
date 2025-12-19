@@ -77,7 +77,7 @@ function fileToBase64($file) {
 // AUTHENTICATION HANDLERS
 // ============================================================
 
-// Handle Login - UPDATED for parent/student support
+// Handle Login - UPDATED to handle rejection/pending status
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'login') {
     $email = $_POST['email'];
     $password = $_POST['password'];
@@ -86,42 +86,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $authResult = authenticateUser($email, $password, $pdo);
 
     if ($authResult['success']) {
-        $userData = $authResult['user_data'];
-        $userType = $authResult['user_type'];
-
-        // For students, check registration approval
-        if ($userType === 'student') {
-            $regStmt = $pdo->prepare("SELECT payment_status FROM registrations WHERE email = ? ORDER BY created_at DESC LIMIT 1");
-            $regStmt->execute([$email]);
-            $registration = $regStmt->fetch();
-            
-            if ($registration) {
-                $paymentStatus = $registration['payment_status'];
-                
-                if ($paymentStatus === 'rejected') {
-                    $_SESSION['error'] = "Your registration has been rejected. Please contact the academy for more information.";
-                    header('Location: index.php?page=login');
-                    exit;
-                }
-                
-                if ($paymentStatus === 'pending' || empty($paymentStatus)) {
-                    $_SESSION['error'] = "Your registration is still pending approval. Please wait for admin verification.";
-                    header('Location: index.php?page=login');
-                    exit;
-                }
-                
-                if ($paymentStatus !== 'approved') {
-                    $_SESSION['error'] = "Your registration status is: " . ($paymentStatus ?? 'unknown') . ". Please contact the academy.";
-                    header('Location: index.php?page=login');
-                    exit;
-                }
-            }
-        }
-
         // Create session
         createLoginSession($authResult);
         
         // Set legacy session variables for backward compatibility
+        $userData = $authResult['user_data'];
+        $userType = $authResult['user_type'];
+        
         if ($userType === 'student') {
             $_SESSION['student_id'] = $userData['id'];
             $_SESSION['student_name'] = $userData['full_name'];
@@ -133,7 +104,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         header('Location: index.php?page=dashboard');
         exit;
     } else {
-        $_SESSION['error'] = $authResult['error'];
+        // Login failed - display appropriate error message
+        $errorType = $authResult['error'] ?? 'unknown';
+        $errorMessage = $authResult['message'] ?? 'An error occurred during login.';
+        
+        switch ($errorType) {
+            case 'rejected':
+                $_SESSION['error'] = $errorMessage;
+                $_SESSION['show_register_button'] = true; // Flag to show registration button
+                break;
+            
+            case 'pending':
+                $_SESSION['error'] = $errorMessage;
+                break;
+            
+            case 'no_registration':
+                $_SESSION['error'] = $errorMessage;
+                $_SESSION['show_register_button'] = true;
+                break;
+            
+            case 'invalid_credentials':
+            default:
+                $_SESSION['error'] = $errorMessage;
+                break;
+        }
+        
+        header('Location: index.php?page=login');
+        exit;
     }
 }
 
@@ -868,7 +865,18 @@ $page = $_GET['page'] ?? 'login';
 
             <?php if (isset($_SESSION['error'])): ?>
                 <div class="alert alert-danger">
-                    <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <?php echo $_SESSION['error']; ?>
+                    
+                    <?php if (isset($_SESSION['show_register_button'])): ?>
+                        <hr class="my-3">
+                        <a href="pages/register.php" class="btn btn-outline-danger btn-sm w-100">
+                            <i class="fas fa-pen-to-square"></i> Register New Application
+                        </a>
+                        <?php unset($_SESSION['show_register_button']); ?>
+                    <?php endif; ?>
+                    
+                    <?php unset($_SESSION['error']); ?>
                 </div>
             <?php endif; ?>
 
