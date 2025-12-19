@@ -13,7 +13,7 @@ try {
     // Get students by status - using student_status with explicit UTF-8 handling
     $stmt = $pdo->query("
         SELECT student_status, COUNT(*) as count 
-        FROM students 
+        FROM registrations 
         WHERE student_status IS NOT NULL AND student_status != ''
         GROUP BY student_status
     ");
@@ -156,15 +156,15 @@ $statusDisplayMap = [
             </div>
             <div class="card-body">
                 <?php if (!empty($studentsByStatus)): ?>
-                    <?php foreach ($studentsByStatus as $status => $count): 
+                    <?php foreach ($studentsByStatus as $student_status => $count): 
                         // Get display text with Chinese characters
-                        $displayStatus = isset($statusDisplayMap[$status]) ? $statusDisplayMap[$status] : $status;
+                        $displayStatus = isset($statusDisplayMap[$student_status]) ? $statusDisplayMap[$student_status] : $student_status;
                     ?>
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <div>
                                 <span class="badge <?php 
-                                    echo strpos($status, 'State Team') !== false ? 'badge-state-team' : 
-                                        (strpos($status, 'Backup Team') !== false ? 'badge-backup-team' : 'badge-student'); 
+                                    echo strpos($student_status, 'State Team') !== false ? 'badge-state-team' : 
+                                        (strpos($student_status, 'Backup Team') !== false ? 'badge-backup-team' : 'badge-student'); 
                                 ?>">
                                     <?php echo $displayStatus; ?>
                                 </span>
