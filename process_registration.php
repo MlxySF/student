@@ -8,6 +8,7 @@
  * UPDATED: Creates registration fee invoice viewable in parent portal
  * UPDATED: Links payment receipt to invoice for admin verification
  * FIXED: Auto-detect MIME type from base64 image data
+ * FIXED: Strip data URI prefix, save only pure base64 to database
  */
 
 header('Content-Type: application/json');
@@ -43,11 +44,11 @@ function detectMimeTypeFromBase64(string $base64Data): string {
         return 'image/' . $matches[1];
     }
     
-    // Remove data URI prefix if present
-    $base64Data = preg_replace('/^data:image\/\w+;base64,/', '', $base64Data);
+    // Remove data URI prefix if present for checking signature
+    $cleanBase64 = preg_replace('/^data:image\/\w+;base64,/', '', $base64Data);
     
     // Decode first few bytes to check file signature
-    $imageData = base64_decode(substr($base64Data, 0, 100));
+    $imageData = base64_decode(substr($cleanBase64, 0, 100));
     
     // Check image signatures (magic numbers)
     if (substr($imageData, 0, 3) === "\xFF\xD8\xFF") {
@@ -65,6 +66,14 @@ function detectMimeTypeFromBase64(string $base64Data): string {
     // Default to JPEG if cannot detect
     error_log('[MIME Detection] Could not detect image type, defaulting to image/jpeg');
     return 'image/jpeg';
+}
+
+// =========================
+// Helper: Strip data URI prefix from base64
+// =========================
+function stripDataURIPrefix(string $base64Data): string {
+    // Remove data:image/xxx;base64, prefix if present
+    return preg_replace('/^data:image\/\w+;base64,/', '', $base64Data);
 }
 
 // ==========================================
@@ -325,6 +334,10 @@ function createRegistrationInvoiceAndPayment(PDO $conn, int $studentId, int $par
         $receiptMimeType = detectMimeTypeFromBase64($paymentData['receipt_base64']);
         error_log("[Payment] Detected receipt MIME type: {$receiptMimeType}");
         
+        // Strip data URI prefix to get pure base64
+        $pureBase64Receipt = stripDataURIPrefix($paymentData['receipt_base64']);
+        error_log("[Payment] Stripped data URI prefix, saving pure base64 (length: " . strlen($pureBase64Receipt) . " chars)");
+        
         // Create payment record with the uploaded receipt
         // Note: We don't have class_id for registration payment, so it's NULL
         $stmt = $conn->prepare("
@@ -348,8 +361,8 @@ function createRegistrationInvoiceAndPayment(PDO $conn, int $studentId, int $par
             $parentAccountId,
             $amount,
             date('Y-m'),  // Current month
-            $paymentData['receipt_base64'],
-            $receiptMimeType  // Use detected MIME type
+            $pureBase64Receipt,  // Pure base64 without data URI prefix
+            $receiptMimeType     // Detected MIME type
         ]);
         
         $paymentId = (int)$conn->lastInsertId();
