@@ -2,8 +2,7 @@
 /**
  * process_registration.php - Complete Registration Processing with PHPMailer
  * Handles student registration, account creation, and email notification
- * Stage 3: Updated to support parent accounts and multi-child registration
- * FIXED: Allow same parent email for multiple children
+ * Stage 3: Multi-child parent system - auto-detects parent by email
  */
 
 header('Content-Type: application/json');
@@ -29,12 +28,9 @@ function generateRandomPassword(): string {
 }
 
 // ==========================================
-// NEW: Parent account helper functions (S3)
+// Parent account helper functions
 // ==========================================
 
-/**
- * Generate a new parent_id like PAR-2025-0001
- */
 function generateParentCode(PDO $conn): string {
     $year = date('Y');
     $stmt = $conn->prepare("SELECT COUNT(*) FROM parent_accounts WHERE YEAR(created_at) = ?");
@@ -43,36 +39,25 @@ function generateParentCode(PDO $conn): string {
     return 'PAR-' . $year . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
 }
 
-/**
- * Find existing parent by email, or create a new parent account.
- * When $loginPassword is provided, verifies password for existing parent.
- *
- * Returns array: [ 'id' => int, 'is_new' => bool, 'plain_password' => string|null ]
- */
-function findOrCreateParentAccount(PDO $conn, array $parentData, ?string $loginPassword = null): array {
+function findOrCreateParentAccount(PDO $conn, array $parentData): array {
     $email = trim($parentData['email']);
 
-    // 1) Check existing parent by email
-    $stmt = $conn->prepare("SELECT id, password FROM parent_accounts WHERE email = ? LIMIT 1");
+    // Check if parent account already exists with this email
+    $stmt = $conn->prepare("SELECT id, parent_id, password FROM parent_accounts WHERE email = ? LIMIT 1");
     $stmt->execute([$email]);
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($existing) {
-        // If login password is supplied (scenario: link additional child), verify it
-        if ($loginPassword !== null && $loginPassword !== '') {
-            if (!password_verify($loginPassword, $existing['password'])) {
-                throw new Exception('Invalid parent email/password. Unable to link to existing parent account.');
-            }
-        }
-        error_log("[Stage3] Using existing parent account ID={$existing['id']} ({$email})");
+        error_log("[Parent] Found existing parent account ID={$existing['id']} for email={$email}");
         return [
             'id' => (int)$existing['id'],
+            'parent_id' => $existing['parent_id'],
             'is_new' => false,
             'plain_password' => null,
         ];
     }
 
-    // 2) Create new parent account
+    // Create new parent account
     $parentCode = generateParentCode($conn);
     $plainPassword = generateRandomPassword();
     $hash = password_hash($plainPassword, PASSWORD_DEFAULT);
@@ -92,18 +77,16 @@ function findOrCreateParentAccount(PDO $conn, array $parentData, ?string $loginP
 
     $parentId = (int)$conn->lastInsertId();
 
-    error_log("[Stage3] Created new parent account ID={$parentId} ({$email})");
+    error_log("[Parent] Created NEW parent account ID={$parentId}, code={$parentCode}, email={$email}");
 
     return [
         'id' => $parentId,
+        'parent_id' => $parentCode,
         'is_new' => true,
         'plain_password' => $plainPassword,
     ];
 }
 
-/**
- * Link student to parent via parent_child_relationships and students.parent_account_id
- */
 function linkStudentToParent(PDO $conn, int $parentId, int $studentId, string $relationship = 'guardian'): void {
     // Update student record
     $stmt = $conn->prepare("UPDATE students SET parent_account_id = ?, student_type = 'child' WHERE id = ?");
@@ -119,7 +102,7 @@ function linkStudentToParent(PDO $conn, int $parentId, int $studentId, string $r
             (parent_id, student_id, relationship, is_primary, can_manage_payments, can_view_attendance, created_at)
             VALUES (?, ?, ?, 1, 1, 1, NOW())");
         $stmt->execute([$parentId, $studentId, $relationship]);
-        error_log("[Stage3] Linked student ID={$studentId} to parent ID={$parentId}");
+        error_log("[Link] Linked student ID={$studentId} to parent ID={$parentId}");
     }
 }
 
@@ -127,7 +110,7 @@ function linkStudentToParent(PDO $conn, int $parentId, int $studentId, string $r
 // Email functions
 // ===============
 
-function sendRegistrationEmail($toEmail, $studentName, $registrationNumber, $password, $studentStatus) {
+function sendRegistrationEmail($toEmail, $studentName, $registrationNumber, $password, $studentStatus, $isNewParent, $parentPassword = null) {
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
@@ -139,13 +122,13 @@ function sendRegistrationEmail($toEmail, $studentName, $registrationNumber, $pas
         $mail->Port       = 587;
 
         $mail->setFrom('noreply@wushusportacademy.com', 'Wushu Sport Academy');
-        $mail->addAddress($toEmail, $studentName);
+        $mail->addAddress($toEmail);
         $mail->addReplyTo('admin@wushusportacademy.com', 'Academy Admin');
 
         $mail->isHTML(true);
         $mail->CharSet = 'UTF-8';
         $mail->Subject = '🎊 Wushu Sport Academy - Child Registration Successful';
-        $mail->Body    = getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $password, $studentStatus);
+        $mail->Body    = getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $password, $studentStatus, $isNewParent, $parentPassword);
         $mail->AltBody = "Registration Successful!";
 
         $mail->send();
@@ -156,7 +139,28 @@ function sendRegistrationEmail($toEmail, $studentName, $registrationNumber, $pas
     }
 }
 
-function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $password, $studentStatus) {
+function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $childPassword, $studentStatus, $isNewParent, $parentPassword) {
+    $parentSection = '';
+    if ($isNewParent && $parentPassword) {
+        $parentSection = "
+        <div style='background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 20px 0; border-radius: 8px;'>
+            <h3 style='margin: 0 0 12px 0; color: #856404;'>🔑 Parent Account Created!</h3>
+            <p style='margin: 0 0 8px 0; color: #856404;'><strong>This is your FIRST child registration.</strong> A parent account has been created for you.</p>
+            <p style='margin: 0 0 8px 0; color: #856404;'><strong>Parent Login Email:</strong> {$toEmail}</p>
+            <p style='margin: 0 0 8px 0; color: #856404;'><strong>Parent Password:</strong></p>
+            <div style='font-size: 24px; color: #dc2626; font-weight: bold; font-family: monospace; letter-spacing: 3px; background: #fff; padding: 12px; border-radius: 6px; display: inline-block;'>{$parentPassword}</div>
+            <p style='margin: 12px 0 0 0; font-size: 13px; color: #856404;'>⚠️ <strong>Save this password!</strong> Use it to login and manage all your children.</p>
+        </div>
+        ";
+    } else {
+        $parentSection = "
+        <div style='background: #d1ecf1; border-left: 4px solid #0dcaf0; padding: 20px; margin: 20px 0; border-radius: 8px;'>
+            <h3 style='margin: 0 0 12px 0; color: #0c5460;'>✅ Child Added to Your Account</h3>
+            <p style='margin: 0; color: #0c5460;'>This child has been linked to your existing parent account. Login with your parent email to view all children.</p>
+        </div>
+        ";
+    }
+
     return "
     <!DOCTYPE html>
     <html lang='en'>
@@ -168,33 +172,35 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $passw
             .header { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white; padding: 32px 24px; text-align: center; }
             .header h1 { margin: 0 0 8px 0; font-size: 28px; font-weight: 700; }
             .content { padding: 32px 24px; background: white; }
-            .credentials { background: #f8fafc; padding: 24px; margin: 24px 0; border-left: 4px solid #fbbf24; border-radius: 8px; }
-            .credentials h3 { margin: 0 0 16px 0; font-size: 18px; color: #1e293b; }
-            .password-highlight { font-size: 22px; color: #dc2626; font-weight: bold; font-family: 'Courier New', monospace; letter-spacing: 3px; background: #fef2f2; padding: 12px 16px; border-radius: 6px; display: inline-block; margin-top: 4px; }
+            .child-info { background: #f8fafc; padding: 20px; margin: 20px 0; border-left: 4px solid #22c55e; border-radius: 8px; }
+            .child-info h3 { margin: 0 0 12px 0; color: #166534; }
             .footer { text-align: center; padding: 24px; background: #f8fafc; color: #64748b; font-size: 13px; }
         </style>
     </head>
     <body>
         <div class='container'>
             <div class='header'>
-                <h1>Child Registered Successfully!</h1>
+                <h1>🎉 Child Registered Successfully!</h1>
                 <p>报名成功 · Registration Successful</p>
             </div>
             <div class='content'>
                 <p style='font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 16px;'>Dear Parent,</p>
-                <p style='margin-bottom: 16px;'>Your child <strong>{$studentName}</strong> has been successfully registered!</p>
-                <p style='color: #64748b; margin-bottom: 24px;'>您的孩子已成功注册。</p>
+                <p style='margin-bottom: 16px;'>Your child has been successfully registered for Wushu training!</p>
                 
-                <div class='credentials'>
-                    <h3>🔑 Child Account Details</h3>
-                    <p><strong>Child Name:</strong> {$studentName}</p>
-                    <p><strong>Student ID:</strong> {$registrationNumber}</p>
-                    <p><strong>Status:</strong> {$studentStatus}</p>
-                    <p><strong>Login Email:</strong> {$toEmail}</p>
-                    <p><strong>Password:</strong><br><div class='password-highlight'>{$password}</div></p>
+                {$parentSection}
+                
+                <div class='child-info'>
+                    <h3>👶 Child Details</h3>
+                    <p style='margin: 4px 0;'><strong>Child Name:</strong> {$studentName}</p>
+                    <p style='margin: 4px 0;'><strong>Student ID:</strong> {$registrationNumber}</p>
+                    <p style='margin: 4px 0;'><strong>Status:</strong> {$studentStatus}</p>
+                    <p style='margin: 4px 0;'><strong>Child Password:</strong> <code style='background: #fff; padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px;'>{$childPassword}</code></p>
                 </div>
                 
-                <p style='font-size: 14px; color: #64748b;'><strong>💡 To register more children:</strong> Use the same parent email to link them to your account.</p>
+                <div style='background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 8px; margin: 20px 0;'>
+                    <p style='margin: 0 0 8px 0; font-weight: 600; color: #1e40af;'>💡 To Register More Children:</p>
+                    <p style='margin: 0; color: #1e40af; font-size: 14px;'>Simply use the <strong>same email address</strong> ({$toEmail}) when registering. All children will be automatically linked to your parent account!</p>
+                </div>
             </div>
             <div class='footer'>
                 <p><strong>Wushu Sport Academy 武术体育学院</strong></p>
@@ -240,19 +246,18 @@ try {
 
     $conn->beginTransaction();
 
-    $email = trim($data['email']);
-    
-    error_log("[Registration] Starting registration for email: {$email}");
-
-    // FIXED: Check for duplicate CHILD (by IC), not by email
-    // This allows multiple children to share the same parent email
+    $parentEmail = trim($data['email']); // This is the PARENT email from the form
     $childIC = trim($data['ic']);
-    $stmt = $conn->prepare("SELECT id FROM registrations WHERE ic = ? AND payment_status != 'rejected' ORDER BY id DESC LIMIT 1");
+    
+    error_log("[Registration] Starting registration for parent email: {$parentEmail}, child IC: {$childIC}");
+
+    // Check for duplicate CHILD (by IC), not by email
+    $stmt = $conn->prepare("SELECT id, registration_number FROM registrations WHERE ic = ? AND payment_status != 'rejected' ORDER BY id DESC LIMIT 1");
     $stmt->execute([$childIC]);
     $existingChild = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($existingChild) {
-        throw new Exception('A child with this IC number is already registered. Please use a different IC or contact admin.');
+        throw new Exception('A child with this IC number (' . $childIC . ') is already registered (Reg#: ' . $existingChild['registration_number'] . '). Please check the IC number.');
     }
 
     // Generate registration number
@@ -262,7 +267,7 @@ try {
     $count = (int)$stmt->fetchColumn();
     $regNumber = 'WSA' . $year . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
 
-    // Student account password (child)
+    // Student account password (for optional child login)
     $generatedPassword = generateRandomPassword();
     $hashedPassword    = password_hash($generatedPassword, PASSWORD_DEFAULT);
 
@@ -272,24 +277,25 @@ try {
     $studentStatus = trim($data['status']);
 
     // ===============================
-    // Parent account resolution
+    // Find or Create Parent Account
     // ===============================
 
     $parentData = [
         'name'  => trim($data['parent_name']),
-        'email' => $email, // Use the email as parent email
+        'email' => $parentEmail, // Parent email
         'phone' => $phone,
         'ic'    => trim($data['parent_ic']),
     ];
 
-    $parentAccountInfo = findOrCreateParentAccount($conn, $parentData, null);
+    $parentAccountInfo = findOrCreateParentAccount($conn, $parentData);
 
     $parentAccountId     = $parentAccountInfo['id'];
+    $parentCode          = $parentAccountInfo['parent_id'];
     $isNewParentAccount  = $parentAccountInfo['is_new'];
     $parentPlainPassword = $parentAccountInfo['plain_password'];
 
     // ======================
-    // Create student
+    // Create Student Account
     // ======================
 
     $stmt = $conn->prepare("INSERT INTO students
@@ -298,20 +304,20 @@ try {
     $stmt->execute([
         $studentId,
         $fullName,
-        $email,
+        $parentEmail, // Store parent email in student record
         $phone,
         $hashedPassword,
         $studentStatus,
     ]);
     $studentAccountId = (int)$conn->lastInsertId();
     
-    error_log("[Registration] Created student ID={$studentAccountId}, linking to parent ID={$parentAccountId}");
+    error_log("[Student] Created student ID={$studentAccountId} ({$fullName})");
 
     // Link student to parent
     linkStudentToParent($conn, $parentAccountId, $studentAccountId, 'guardian');
 
     // ==========================
-    // Insert registration
+    // Insert Registration Record
     // ==========================
 
     $sql = "INSERT INTO registrations (
@@ -340,7 +346,7 @@ try {
         trim($data['school']),
         $studentStatus,
         $phone,
-        $email,
+        $parentEmail,
         isset($data['level']) ? trim($data['level']) : '',
         trim($data['events']),
         trim($data['schedule']),
@@ -361,23 +367,24 @@ try {
 
     $conn->commit();
     
-    error_log("[Registration] Success! Reg#: {$regNumber}, Parent: {$parentAccountId}, Student: {$studentAccountId}");
+    error_log("[Success] Reg#: {$regNumber}, Parent: {$parentCode} (ID:{$parentAccountId}), Student: {$studentAccountId}, IsNewParent: " . ($isNewParentAccount ? 'YES' : 'NO'));
 
     // Send email
-    $emailSent = sendRegistrationEmail($email, $fullName, $regNumber, $generatedPassword, $studentStatus);
+    $emailSent = sendRegistrationEmail($parentEmail, $fullName, $regNumber, $generatedPassword, $studentStatus, $isNewParentAccount, $parentPlainPassword);
 
     echo json_encode([
         'success' => true,
         'registration_number' => $regNumber,
         'student_id' => $studentId,
-        'email' => $email,
-        'password' => $generatedPassword,
-        'status' => $studentStatus,
-        'email_sent' => $emailSent,
+        'email' => $parentEmail,
+        'child_password' => $generatedPassword,
         'parent_account_id' => $parentAccountId,
+        'parent_code' => $parentCode,
         'is_new_parent' => $isNewParentAccount,
+        'parent_password' => $isNewParentAccount ? $parentPlainPassword : null,
+        'email_sent' => $emailSent,
         'message' => $isNewParentAccount 
-            ? 'Registration successful! Parent account created. You can now register more children using the same email.' 
+            ? 'Parent account created! Child registered successfully. You can now register more children using the same email.' 
             : 'Child added successfully to your parent account!',
     ]);
 
