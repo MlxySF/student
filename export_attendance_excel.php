@@ -131,7 +131,6 @@ $header[] = 'Total Present';
 $header[] = 'Total Absent';
 $header[] = 'Total Late';
 $header[] = 'Attendance %';
-$header[] = 'Notes';
 fputcsv($output, $header);
 
 // Write date row (full dates for reference)
@@ -140,7 +139,6 @@ foreach ($dates as $date) {
     $formatted_date = date('D d/m', strtotime($date));
     $date_row[] = $formatted_date;
 }
-$date_row[] = '';
 $date_row[] = '';
 $date_row[] = '';
 $date_row[] = '';
@@ -158,47 +156,45 @@ foreach ($students as $student) {
     $total_absent = 0;
     $total_late = 0;
     $total_excused = 0;
-    $all_notes = [];
     
     foreach ($dates as $date) {
         // Use students.id (database ID) to match with attendance.student_id
         $key = $student['id'] . '_' . $date;
         $attendance = $attendance_map[$key] ?? null;
         
+        $cell_value = '';
+        
         if ($attendance) {
             $status = $attendance['status'];
             $notes = $attendance['notes'];
             
-            // Collect notes with dates
-            if ($notes) {
-                $date_formatted = date('M j', strtotime($date));
-                $all_notes[] = "[$date_formatted] " . ucfirst($status) . ": " . $notes;
+            // Convert status to single character
+            switch ($status) {
+                case 'present':
+                    $cell_value = 'P';
+                    $total_present++;
+                    break;
+                case 'absent':
+                    $cell_value = 'A';
+                    $total_absent++;
+                    break;
+                case 'late':
+                    $cell_value = 'L';
+                    $total_late++;
+                    break;
+                case 'excused':
+                    $cell_value = 'E';
+                    $total_excused++;
+                    break;
             }
-        } else {
-            $status = '';
+            
+            // Add notes in brackets if they exist
+            if ($notes) {
+                $cell_value .= " [" . $notes . "]";
+            }
         }
         
-        // Convert status to single character or abbreviation
-        switch ($status) {
-            case 'present':
-                $row[] = 'P';
-                $total_present++;
-                break;
-            case 'absent':
-                $row[] = 'A';
-                $total_absent++;
-                break;
-            case 'late':
-                $row[] = 'L';
-                $total_late++;
-                break;
-            case 'excused':
-                $row[] = 'E';
-                $total_excused++;
-                break;
-            default:
-                $row[] = '';
-        }
+        $row[] = $cell_value;
     }
     
     // Calculate attendance percentage
@@ -209,9 +205,6 @@ foreach ($students as $student) {
     $row[] = $total_absent;
     $row[] = $total_late;
     $row[] = $attendance_percentage . '%';
-    
-    // Add combined notes
-    $row[] = implode(' | ', $all_notes);
     
     fputcsv($output, $row);
 }
@@ -227,9 +220,9 @@ fputcsv($output, ['', 'No Record']);
 
 // Add notes explanation
 fputcsv($output, []);
-fputcsv($output, ['Notes Column:']);
-fputcsv($output, ['Shows all remarks added for the month with dates and status']);
-fputcsv($output, ['Format: [Date] Status: Remark | [Date] Status: Remark']);
+fputcsv($output, ['Notes Format:']);
+fputcsv($output, ['Notes appear in brackets after the status code']);
+fputcsv($output, ['Example: P [Arrived late] or A [Sick leave]']);
 
 // Add summary info
 fputcsv($output, []);
