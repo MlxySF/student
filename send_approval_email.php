@@ -92,7 +92,7 @@ function getApprovalEmailHTML($parentEmail, $studentName, $registrationNumber, $
         ";
     }
     
-    $portalUrl = 'https://app.tc/student/index.php'; // Update with your actual portal URL
+    $portalUrl = 'https://wushusportacademy.app.tc/student/index.php'; // Update with your actual portal URL
     
     $html = "<!DOCTYPE html>
 <html lang='en'>
