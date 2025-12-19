@@ -39,22 +39,22 @@ $stmt = $pdo->prepare("
 $stmt->execute([$selected_class]);
 $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Get all attendance records for the month - JOIN with students to get database ID
+// Get all attendance records for the month
+// attendance.student_id is a foreign key that references students.id
 $stmt = $pdo->prepare("
-    SELECT a.student_id, a.attendance_date, a.status, a.notes, s.id as student_db_id
-    FROM attendance a
-    JOIN students s ON a.student_id = s.id
-    WHERE a.class_id = ? AND a.attendance_date >= ? AND a.attendance_date <= ?
-    ORDER BY a.attendance_date
+    SELECT student_id, attendance_date, status, notes
+    FROM attendance
+    WHERE class_id = ? AND attendance_date >= ? AND attendance_date <= ?
+    ORDER BY attendance_date
 ");
 $stmt->execute([$selected_class, $month_start, $month_end]);
 $attendance_records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Create attendance lookup array - use student database ID from students table
+// Create attendance lookup array
+// attendance.student_id already contains students.id (foreign key)
 $attendance_map = [];
 foreach ($attendance_records as $record) {
-    // Use student_db_id (students.id) instead of student_id from attendance
-    $key = $record['student_db_id'] . '_' . $record['attendance_date'];
+    $key = $record['student_id'] . '_' . $record['attendance_date'];
     $attendance_map[$key] = $record['status'];
 }
 
@@ -155,7 +155,7 @@ foreach ($students as $student) {
     $total_excused = 0;
     
     foreach ($dates as $date) {
-        // Use students.id (database ID) for lookup
+        // Use students.id (database ID) to match with attendance.student_id
         $key = $student['id'] . '_' . $date;
         $status = $attendance_map[$key] ?? '';
         
