@@ -91,11 +91,11 @@
 
                     <!-- REMARK FOR ADDITIONAL CHILDREN -->
                         <div class="bg-blue-50 border-l-4 border-blue-500 p-3 mb-2 rounded-r-lg">
-                            <p class="text-xs text-blue-800 leading-relaxed">
+                            <p class="text-s text-blue-800 leading-relaxed">
                                 <i class="fas fa-info-circle mr-1"></i>
                                 <strong>Registering another child?</strong> Use the <strong>same parent email</strong> to link all your children under one parent account.
                             </p>
-                            <p class="text-xs text-blue-700 leading-relaxed mt-1">
+                            <p class="text-s text-blue-700 leading-relaxed mt-1">
                                 <strong>注册另一个孩子？</strong>使用<strong>相同的家长电邮</strong>将所有孩子连接到一个家长账户。
                             </p>
                         </div>
@@ -441,6 +441,17 @@
             <div class="school-schedules">
                 <div class="school-schedules-inner">
                     <div class="space-y-3">
+                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all" data-schedule="wsa-wed-8pm">
+                            <input type="checkbox" name="sch" value="Wushu Sport Academy: Wed 8pm-10pm">
+                            <div class="custom-checkbox-label">
+                                <div class="text-sm font-bold text-slate-800 mb-1">
+                                    <i class="far fa-calendar mr-2 text-amber-500"></i>Wednesday 星期三 · 8:00 PM - 10:00 PM
+                                </div>
+                                <div class="text-xs text-slate-600">
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">只有基础套路 和 太极套路</span>
+                                </div>
+                            </div>
+                        </label>
                         <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all" data-schedule="wsa-sun-10am">
                             <input type="checkbox" name="sch" value="Wushu Sport Academy: Sun 10am-12pm">
                             <div class="custom-checkbox-label">
@@ -453,23 +464,11 @@
                             </div>
                         </label>
 
-                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all" data-schedule="wsa-sun-12pm">
-                            <input type="checkbox" name="sch" value="Wushu Sport Academy: Sun 12pm-2pm">
+                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all" data-schedule="wsa-sun-1pm">
+                            <input type="checkbox" name="sch" value="Wushu Sport Academy: Sun 1pm-3pm">
                             <div class="custom-checkbox-label">
                                 <div class="text-sm font-bold text-slate-800">
-                                    <i class="far fa-calendar mr-2 text-amber-500"></i>Sunday 星期日 · 12:00 PM - 2:00 PM
-                                </div>
-                            </div>
-                        </label>
-                        
-                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all" data-schedule="wsa-wed-8pm">
-                            <input type="checkbox" name="sch" value="Wushu Sport Academy: Wed 8pm-10pm">
-                            <div class="custom-checkbox-label">
-                                <div class="text-sm font-bold text-slate-800 mb-1">
-                                    <i class="far fa-calendar mr-2 text-amber-500"></i>Wednesday 星期三 · 8:00 PM - 10:00 PM
-                                </div>
-                                <div class="text-xs text-slate-600">
-                                    <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">只有基础套路 和 太极套路</span>
+                                    <i class="far fa-calendar mr-2 text-amber-500"></i>Sunday 星期日 · 1:00 PM - 3:00 PM
                                 </div>
                             </div>
                         </label>
@@ -506,7 +505,7 @@
                                 </div>
                                 <div class="text-xs text-slate-600">
                                     <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">只限于州队/后备队 Only for State/Backup Team</span>
-                                    <span class="text-slate-400 ml-1">(D/C/B/A 套路 Routine) 和 传统套路</span>
+                                    <span class="text-slate-400 ml-1">(A/B/C 和 传统套路)</span>
                                 </div>
                                 <div class="text-[10px] text-red-500 font-bold hidden disabled-msg mt-1">
                                     <i class="fas fa-ban mr-1"></i>Not available for Normal Students 普通学生不允许参加
@@ -525,42 +524,14 @@
                                 </div>
                             </div>
                         </label>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- SCHOOL 3: Stadium Chinwoo -->
-        <div class="school-box" onclick="toggleSchoolBox(this)">
-            <div class="school-header">
-                <div class="school-info">
-                    <img src="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Chinwoo+Logo.jpg" alt="Chinwoo Logo" class="school-logo">
-                    <div class="school-text">
-                        <h3>
-                            <i class="fas fa-map-marker-alt" style="color: #fbbf24;"></i>
-                            Stadium Chinwoo 精武体育馆
-                        </h3>
-                        <p><i class="fas fa-location-dot" style="color: #94a3b8;"></i> Jalan Hang Jebat, 50150 Kuala Lumpur</p>
-                    </div>
-                </div>
-                <div class="school-toggle">
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-            </div>
-            <div class="school-schedules">
-                <div class="school-schedules-inner">
-                    <div class="space-y-3">
-                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all" data-schedule="chinwoo-sun-2pm">
-                            <input type="checkbox" name="sch" value="Stadium Chinwoo: Sun 2pm-4pm">
+                        <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all" data-schedule="pc2-fri-8pm">
+                            <input type="checkbox" name="sch" value="SJK(C) Puay Chai 2: Wed 8pm-10pm">
                             <div class="custom-checkbox-label">
                                 <div class="text-sm font-bold text-slate-800 mb-1">
-                                    <i class="far fa-calendar mr-2 text-amber-500"></i>Sunday 星期日 · 2:00 PM - 4:00 PM
+                                    <i class="far fa-calendar mr-2 text-amber-500"></i>Friday 星期五 · 8:00 PM - 10:00 PM
                                 </div>
                                 <div class="text-xs text-slate-600">
-                                    <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">只限于州队/后备队 Only for State/Backup Team</span>
-                                </div>
-                                <div class="text-[10px] text-red-500 font-bold hidden disabled-msg mt-1">
-                                    <i class="fas fa-ban mr-1"></i>Not available for Normal Students 普通学生不允许参加
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">太极套路而已</span>
                                 </div>
                             </div>
                         </label>
