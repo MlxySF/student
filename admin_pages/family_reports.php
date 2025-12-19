@@ -1,52 +1,45 @@
 <?php
-// admin_pages/family_reports.php - Family Reports and Analytics (Stage 4 Phase 4)
+// admin_pages/family_reports.php - Family Reports (Stage 4 Phase 4)
 if (!isset($_SESSION['admin_id'])) {
     header('Location: admin.php?page=login');
     exit;
 }
 
 // Get filter parameters
-$children_filter = isset($_GET['children_filter']) ? $_GET['children_filter'] : '';
-$status_filter = isset($_GET['status_filter']) ? $_GET['status_filter'] : '';
-$outstanding_filter = isset($_GET['outstanding_filter']) ? $_GET['outstanding_filter'] : '';
+$status_filter = isset($_GET['status']) ? $_GET['status'] : '';
+$min_children = isset($_GET['min_children']) ? intval($_GET['min_children']) : 0;
+$has_outstanding = isset($_GET['has_outstanding']) ? $_GET['has_outstanding'] : '';
+$sort_by = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'total_outstanding';
+$sort_order = isset($_GET['sort_order']) ? $_GET['sort_order'] : 'DESC';
 
-// Build base query
-$sql = "SELECT 
-    pa.id,
-    pa.parent_id,
-    pa.full_name,
-    pa.email,
-    pa.phone,
-    pa.status,
-    COUNT(DISTINCT pcr.student_id) as children_count,
-    COUNT(DISTINCT e.id) as total_enrollments,
-    COALESCE(SUM(CASE WHEN i.status IN ('unpaid', 'overdue') THEN i.amount ELSE 0 END), 0) as total_outstanding,
-    COALESCE(SUM(CASE WHEN i.status = 'paid' THEN i.amount ELSE 0 END), 0) as total_paid,
-    COALESCE(SUM(i.amount), 0) as total_invoiced
-FROM parent_accounts pa
-LEFT JOIN parent_child_relationships pcr ON pa.id = pcr.parent_id
-LEFT JOIN students s ON pcr.student_id = s.id
-LEFT JOIN enrollments e ON s.id = e.student_id AND e.status = 'active'
-LEFT JOIN invoices i ON s.id = i.student_id
-WHERE 1=1";
+// Build query
+$sql = "
+    SELECT 
+        pa.id,
+        pa.parent_id,
+        pa.full_name,
+        pa.email,
+        pa.phone,
+        pa.status,
+        pa.created_at,
+        COUNT(DISTINCT pcr.student_id) as children_count,
+        COUNT(DISTINCT e.id) as total_enrollments,
+        COALESCE(SUM(CASE WHEN i.status = 'paid' THEN i.amount ELSE 0 END), 0) as total_paid,
+        COALESCE(SUM(CASE WHEN i.status IN ('unpaid', 'overdue') THEN i.amount ELSE 0 END), 0) as total_outstanding,
+        COALESCE(SUM(i.amount), 0) as total_invoiced,
+        COUNT(DISTINCT CASE WHEN i.status IN ('unpaid', 'overdue') THEN i.id END) as unpaid_invoices_count,
+        COUNT(DISTINCT CASE WHEN i.status = 'paid' THEN i.id END) as paid_invoices_count
+    FROM parent_accounts pa
+    LEFT JOIN parent_child_relationships pcr ON pa.id = pcr.parent_id
+    LEFT JOIN students s ON pcr.student_id = s.id
+    LEFT JOIN enrollments e ON s.id = e.student_id AND e.status = 'active'
+    LEFT JOIN invoices i ON s.id = i.student_id
+    WHERE 1=1
+";
 
 $params = [];
 
 // Apply filters
-if ($children_filter) {
-    switch($children_filter) {
-        case '1':
-            $sql .= " AND (SELECT COUNT(*) FROM parent_child_relationships WHERE parent_id = pa.id) = 1";
-            break;
-        case '2-3':
-            $sql .= " AND (SELECT COUNT(*) FROM parent_child_relationships WHERE parent_id = pa.id) BETWEEN 2 AND 3";
-            break;
-        case '4+':
-            $sql .= " AND (SELECT COUNT(*) FROM parent_child_relationships WHERE parent_id = pa.id) >= 4";
-            break;
-    }
-}
-
 if ($status_filter) {
     $sql .= " AND pa.status = ?";
     $params[] = $status_filter;
@@ -54,40 +47,60 @@ if ($status_filter) {
 
 $sql .= " GROUP BY pa.id";
 
-// Apply outstanding filter after grouping
-if ($outstanding_filter) {
-    $sql .= " HAVING total_outstanding " . 
-            ($outstanding_filter === 'none' ? '= 0' : 
-            ($outstanding_filter === 'low' ? 'BETWEEN 0.01 AND 500' : 
-            ($outstanding_filter === 'medium' ? 'BETWEEN 500.01 AND 1000' : '> 1000')));
+// Apply HAVING filters (after GROUP BY)
+if ($min_children > 0) {
+    $sql .= " HAVING children_count >= ?";
+    $params[] = $min_children;
 }
 
-$sql .= " ORDER BY children_count DESC, total_outstanding DESC";
+if ($has_outstanding === 'yes') {
+    $sql .= ($min_children > 0 ? " AND" : " HAVING") . " total_outstanding > 0";
+} elseif ($has_outstanding === 'no') {
+    $sql .= ($min_children > 0 ? " AND" : " HAVING") . " total_outstanding = 0";
+}
+
+// Apply sorting
+$allowed_sort = ['parent_id', 'full_name', 'children_count', 'total_outstanding', 'total_paid', 'created_at'];
+if (in_array($sort_by, $allowed_sort)) {
+    $sql .= " ORDER BY {$sort_by} " . ($sort_order === 'ASC' ? 'ASC' : 'DESC');
+} else {
+    $sql .= " ORDER BY total_outstanding DESC";
+}
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $families = $stmt->fetchAll();
 
-// Calculate overall statistics
+// Calculate totals
 $total_families = count($families);
 $total_children = array_sum(array_column($families, 'children_count'));
-$total_enrollments = array_sum(array_column($families, 'total_enrollments'));
-$total_outstanding = array_sum(array_column($families, 'total_outstanding'));
-$total_paid = array_sum(array_column($families, 'total_paid'));
-$total_revenue = array_sum(array_column($families, 'total_invoiced'));
-
-// Get distribution data
-$distribution = [
-    'single_child' => count(array_filter($families, fn($f) => $f['children_count'] == 1)),
-    'two_children' => count(array_filter($families, fn($f) => $f['children_count'] == 2)),
-    'three_children' => count(array_filter($families, fn($f) => $f['children_count'] == 3)),
-    'four_plus' => count(array_filter($families, fn($f) => $f['children_count'] >= 4))
-];
+$total_outstanding_all = array_sum(array_column($families, 'total_outstanding'));
+$total_paid_all = array_sum(array_column($families, 'total_paid'));
+$total_invoiced_all = array_sum(array_column($families, 'total_invoiced'));
 ?>
 
-<!-- Overall Statistics -->
 <div class="row mb-4">
-    <div class="col-lg-3 col-md-6 mb-3">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4><i class="fas fa-chart-bar"></i> Family Financial Reports</h4>
+                <p class="text-muted mb-0">Comprehensive view of all family accounts with financial summaries</p>
+            </div>
+            <div>
+                <button class="btn btn-success" onclick="exportToExcel()">
+                    <i class="fas fa-file-excel"></i> Export to Excel
+                </button>
+                <button class="btn btn-primary" onclick="printReport()">
+                    <i class="fas fa-print"></i> Print Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
         <div class="stat-card">
             <div class="stat-icon bg-primary">
                 <i class="fas fa-users"></i>
@@ -98,7 +111,7 @@ $distribution = [
             </div>
         </div>
     </div>
-    <div class="col-lg-3 col-md-6 mb-3">
+    <div class="col-md-3">
         <div class="stat-card">
             <div class="stat-icon bg-info">
                 <i class="fas fa-child"></i>
@@ -109,64 +122,25 @@ $distribution = [
             </div>
         </div>
     </div>
-    <div class="col-lg-3 col-md-6 mb-3">
+    <div class="col-md-3">
         <div class="stat-card">
             <div class="stat-icon bg-success">
                 <i class="fas fa-dollar-sign"></i>
             </div>
             <div class="stat-content">
-                <h3>RM <?php echo number_format($total_paid, 2); ?></h3>
+                <h3>RM <?php echo number_format($total_paid_all, 2); ?></h3>
                 <p>Total Paid</p>
             </div>
         </div>
     </div>
-    <div class="col-lg-3 col-md-6 mb-3">
+    <div class="col-md-3">
         <div class="stat-card">
-            <div class="stat-icon <?php echo ($total_outstanding > 0) ? 'bg-danger' : 'bg-success'; ?>">
-                <i class="fas fa-exclamation-circle"></i>
+            <div class="stat-icon bg-danger">
+                <i class="fas fa-exclamation-triangle"></i>
             </div>
             <div class="stat-content">
-                <h3>RM <?php echo number_format($total_outstanding, 2); ?></h3>
+                <h3>RM <?php echo number_format($total_outstanding_all, 2); ?></h3>
                 <p>Total Outstanding</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Family Distribution -->
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Family Size Distribution</h5>
-            </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-md-3">
-                        <div class="p-3">
-                            <div class="h2 text-primary"><?php echo $distribution['single_child']; ?></div>
-                            <small class="text-muted">Single Child Families</small>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="p-3">
-                            <div class="h2 text-success"><?php echo $distribution['two_children']; ?></div>
-                            <small class="text-muted">Two Children Families</small>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="p-3">
-                            <div class="h2 text-warning"><?php echo $distribution['three_children']; ?></div>
-                            <small class="text-muted">Three Children Families</small>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="p-3">
-                            <div class="h2" style="color: #7c3aed;"><?php echo $distribution['four_plus']; ?></div>
-                            <small class="text-muted">4+ Children Families</small>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -182,67 +156,67 @@ $distribution = [
             <input type="hidden" name="page" value="family_reports">
             
             <div class="col-md-3">
-                <label class="form-label">Number of Children</label>
-                <select class="form-select" name="children_filter">
-                    <option value="">All Families</option>
-                    <option value="1" <?php echo $children_filter === '1' ? 'selected' : ''; ?>>1 Child</option>
-                    <option value="2-3" <?php echo $children_filter === '2-3' ? 'selected' : ''; ?>>2-3 Children</option>
-                    <option value="4+" <?php echo $children_filter === '4+' ? 'selected' : ''; ?>>4+ Children</option>
+                <label class="form-label">Parent Status</label>
+                <select class="form-select" name="status">
+                    <option value="" <?php echo $status_filter === '' ? 'selected' : ''; ?>>All Statuses</option>
+                    <option value="active" <?php echo $status_filter === 'active' ? 'selected' : ''; ?>>Active Only</option>
+                    <option value="inactive" <?php echo $status_filter === 'inactive' ? 'selected' : ''; ?>>Inactive Only</option>
                 </select>
             </div>
             
             <div class="col-md-3">
-                <label class="form-label">Account Status</label>
-                <select class="form-select" name="status_filter">
-                    <option value="">All Status</option>
-                    <option value="active" <?php echo $status_filter === 'active' ? 'selected' : ''; ?>>Active</option>
-                    <option value="inactive" <?php echo $status_filter === 'inactive' ? 'selected' : ''; ?>>Inactive</option>
+                <label class="form-label">Minimum Children</label>
+                <select class="form-select" name="min_children">
+                    <option value="0" <?php echo $min_children === 0 ? 'selected' : ''; ?>>All</option>
+                    <option value="1" <?php echo $min_children === 1 ? 'selected' : ''; ?>>1+</option>
+                    <option value="2" <?php echo $min_children === 2 ? 'selected' : ''; ?>>2+</option>
+                    <option value="3" <?php echo $min_children === 3 ? 'selected' : ''; ?>>3+</option>
+                    <option value="4" <?php echo $min_children === 4 ? 'selected' : ''; ?>>4+</option>
                 </select>
             </div>
             
             <div class="col-md-3">
-                <label class="form-label">Outstanding Amount</label>
-                <select class="form-select" name="outstanding_filter">
-                    <option value="">All Amounts</option>
-                    <option value="none" <?php echo $outstanding_filter === 'none' ? 'selected' : ''; ?>>No Outstanding</option>
-                    <option value="low" <?php echo $outstanding_filter === 'low' ? 'selected' : ''; ?>>RM 0.01 - 500</option>
-                    <option value="medium" <?php echo $outstanding_filter === 'medium' ? 'selected' : ''; ?>>RM 500 - 1,000</option>
-                    <option value="high" <?php echo $outstanding_filter === 'high' ? 'selected' : ''; ?>>Above RM 1,000</option>
+                <label class="form-label">Outstanding Balance</label>
+                <select class="form-select" name="has_outstanding">
+                    <option value="" <?php echo $has_outstanding === '' ? 'selected' : ''; ?>>All</option>
+                    <option value="yes" <?php echo $has_outstanding === 'yes' ? 'selected' : ''; ?>>Has Outstanding</option>
+                    <option value="no" <?php echo $has_outstanding === 'no' ? 'selected' : ''; ?>>Fully Paid</option>
                 </select>
             </div>
             
             <div class="col-md-3">
-                <label class="form-label">&nbsp;</label>
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-search"></i> Apply Filters
-                    </button>
+                <label class="form-label">Sort By</label>
+                <div class="input-group">
+                    <select class="form-select" name="sort_by">
+                        <option value="total_outstanding" <?php echo $sort_by === 'total_outstanding' ? 'selected' : ''; ?>>Outstanding Amount</option>
+                        <option value="total_paid" <?php echo $sort_by === 'total_paid' ? 'selected' : ''; ?>>Paid Amount</option>
+                        <option value="children_count" <?php echo $sort_by === 'children_count' ? 'selected' : ''; ?>>Children Count</option>
+                        <option value="full_name" <?php echo $sort_by === 'full_name' ? 'selected' : ''; ?>>Parent Name</option>
+                        <option value="created_at" <?php echo $sort_by === 'created_at' ? 'selected' : ''; ?>>Created Date</option>
+                    </select>
+                    <select class="form-select" name="sort_order" style="max-width: 100px;">
+                        <option value="DESC" <?php echo $sort_order === 'DESC' ? 'selected' : ''; ?>>DESC</option>
+                        <option value="ASC" <?php echo $sort_order === 'ASC' ? 'selected' : ''; ?>>ASC</option>
+                    </select>
                 </div>
             </div>
+            
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Apply Filters
+                </button>
+                <a href="?page=family_reports" class="btn btn-secondary">
+                    <i class="fas fa-redo"></i> Reset
+                </a>
+            </div>
         </form>
-        
-        <?php if ($children_filter || $status_filter || $outstanding_filter): ?>
-        <div class="mt-3">
-            <a href="?page=family_reports" class="btn btn-outline-secondary btn-sm">
-                <i class="fas fa-times"></i> Clear Filters
-            </a>
-        </div>
-        <?php endif; ?>
     </div>
 </div>
 
-<!-- Family Reports Table -->
-<div class="card">
-    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-table"></i> Family Financial Reports</h5>
-        <div>
-            <button class="btn btn-light btn-sm" onclick="exportToExcel()">
-                <i class="fas fa-file-excel"></i> Export to Excel
-            </button>
-            <button class="btn btn-light btn-sm" onclick="window.print()">
-                <i class="fas fa-print"></i> Print
-            </button>
-        </div>
+<!-- Report Table -->
+<div class="card" id="reportTable">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-table"></i> Family Financial Summary</h5>
     </div>
     <div class="card-body">
         <?php if (count($families) > 0): ?>
@@ -252,27 +226,32 @@ $distribution = [
                     <tr>
                         <th>Parent ID</th>
                         <th>Parent Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
+                        <th>Contact</th>
                         <th>Children</th>
-                        <th>Classes</th>
+                        <th>Enrollments</th>
                         <th>Total Invoiced</th>
-                        <th>Paid</th>
+                        <th>Total Paid</th>
                         <th>Outstanding</th>
-                        <th>Payment %</th>
+                        <th>Payment Rate</th>
+                        <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($families as $family): 
-                        $payment_percentage = $family['total_invoiced'] > 0 ? 
-                            ($family['total_paid'] / $family['total_invoiced']) * 100 : 100;
+                        $payment_rate = ($family['total_invoiced'] > 0) 
+                            ? ($family['total_paid'] / $family['total_invoiced'] * 100) 
+                            : 0;
                     ?>
                     <tr>
                         <td><strong><?php echo htmlspecialchars($family['parent_id']); ?></strong></td>
                         <td><?php echo htmlspecialchars($family['full_name']); ?></td>
-                        <td><small><?php echo htmlspecialchars($family['email']); ?></small></td>
-                        <td><small><?php echo htmlspecialchars($family['phone']); ?></small></td>
+                        <td>
+                            <small>
+                                <i class="fas fa-envelope"></i> <?php echo htmlspecialchars($family['email']); ?><br>
+                                <i class="fas fa-phone"></i> <?php echo htmlspecialchars($family['phone']); ?>
+                            </small>
+                        </td>
                         <td>
                             <span class="badge <?php 
                                 echo ($family['children_count'] >= 4) ? 'bg-purple' : 
@@ -281,40 +260,33 @@ $distribution = [
                                 <?php echo $family['children_count']; ?>
                             </span>
                         </td>
-                        <td>
-                            <span class="badge bg-primary">
-                                <?php echo $family['total_enrollments']; ?>
-                            </span>
-                        </td>
+                        <td><?php echo $family['total_enrollments']; ?></td>
                         <td>RM <?php echo number_format($family['total_invoiced'], 2); ?></td>
-                        <td>
-                            <span class="text-success">
-                                RM <?php echo number_format($family['total_paid'], 2); ?>
-                            </span>
-                        </td>
+                        <td class="text-success"><strong>RM <?php echo number_format($family['total_paid'], 2); ?></strong></td>
                         <td>
                             <?php if ($family['total_outstanding'] > 0): ?>
-                            <span class="text-danger">
-                                <strong>RM <?php echo number_format($family['total_outstanding'], 2); ?></strong>
-                            </span>
+                            <span class="text-danger"><strong>RM <?php echo number_format($family['total_outstanding'], 2); ?></strong></span><br>
+                            <small class="text-muted"><?php echo $family['unpaid_invoices_count']; ?> invoice(s)</small>
                             <?php else: ?>
-                            <span class="text-muted">-</span>
+                            <span class="badge bg-success">Paid</span>
                             <?php endif; ?>
                         </td>
                         <td>
                             <div class="progress" style="height: 20px;">
                                 <div class="progress-bar <?php 
-                                    echo ($payment_percentage >= 80) ? 'bg-success' : 
-                                         (($payment_percentage >= 50) ? 'bg-warning' : 'bg-danger');
+                                    echo ($payment_rate >= 80) ? 'bg-success' : 
+                                         (($payment_rate >= 50) ? 'bg-warning' : 'bg-danger');
                                 ?>" 
                                      role="progressbar" 
-                                     style="width: <?php echo $payment_percentage; ?>%"
-                                     aria-valuenow="<?php echo $payment_percentage; ?>" 
-                                     aria-valuemin="0" 
-                                     aria-valuemax="100">
-                                    <?php echo number_format($payment_percentage, 0); ?>%
+                                     style="width: <?php echo min($payment_rate, 100); ?>%">
+                                    <?php echo number_format($payment_rate, 0); ?>%
                                 </div>
                             </div>
+                        </td>
+                        <td>
+                            <span class="badge <?php echo ($family['status'] === 'active') ? 'bg-success' : 'bg-secondary'; ?>">
+                                <?php echo ucfirst($family['status']); ?>
+                            </span>
                         </td>
                         <td>
                             <a href="?page=parent_details&id=<?php echo $family['id']; ?>" 
@@ -328,86 +300,110 @@ $distribution = [
                 </tbody>
                 <tfoot>
                     <tr class="table-secondary">
-                        <th colspan="6" class="text-end"><strong>TOTALS:</strong></th>
-                        <th><strong>RM <?php echo number_format($total_revenue, 2); ?></strong></th>
-                        <th><strong class="text-success">RM <?php echo number_format($total_paid, 2); ?></strong></th>
-                        <th><strong class="text-danger">RM <?php echo number_format($total_outstanding, 2); ?></strong></th>
-                        <th colspan="2"></th>
+                        <th colspan="5" class="text-end"><strong>TOTALS:</strong></th>
+                        <th><strong>RM <?php echo number_format($total_invoiced_all, 2); ?></strong></th>
+                        <th class="text-success"><strong>RM <?php echo number_format($total_paid_all, 2); ?></strong></th>
+                        <th class="text-danger"><strong>RM <?php echo number_format($total_outstanding_all, 2); ?></strong></th>
+                        <th colspan="3"></th>
                     </tr>
                 </tfoot>
             </table>
         </div>
         <?php else: ?>
         <div class="text-center py-5 text-muted">
-            <i class="fas fa-search fa-4x mb-3 opacity-50"></i>
-            <p>No families found matching your filters.</p>
+            <i class="fas fa-chart-bar fa-4x mb-3 opacity-50"></i>
+            <p>No families found matching the selected filters.</p>
         </div>
         <?php endif; ?>
     </div>
 </div>
 
 <style>
-@media print {
-    .stat-card,
-    .card-header button,
-    .btn,
-    .admin-sidebar,
-    .top-header {
-        display: none !important;
-    }
-}
-
 .bg-purple {
     background: linear-gradient(135deg, #7c3aed, #6d28d9);
     color: white;
 }
 
-.opacity-50 {
-    opacity: 0.5;
+.stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
+
+.stat-content h3 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.stat-content p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+@media print {
+    .btn, .card-header, .stat-card {
+        display: none !important;
+    }
 }
 </style>
 
 <script>
+const reportData = <?php echo json_encode($families); ?>;
+
 function exportToExcel() {
-    // Simple CSV export
-    let csv = 'Parent ID,Parent Name,Email,Phone,Children,Classes,Total Invoiced,Paid,Outstanding,Payment %\n';
+    // Prepare data for export
+    let csvContent = "Parent ID,Parent Name,Email,Phone,Children,Enrollments,Total Invoiced,Total Paid,Outstanding,Payment Rate,Status\n";
     
-    const table = document.getElementById('familyReportTable');
-    const rows = table.querySelectorAll('tbody tr');
-    
-    rows.forEach(row => {
-        const cols = row.querySelectorAll('td');
-        const data = [
-            cols[0].textContent.trim(),
-            cols[1].textContent.trim(),
-            cols[2].textContent.trim(),
-            cols[3].textContent.trim(),
-            cols[4].textContent.trim(),
-            cols[5].textContent.trim(),
-            cols[6].textContent.trim(),
-            cols[7].textContent.trim(),
-            cols[8].textContent.trim(),
-            cols[9].textContent.trim().replace('%', '')
-        ];
-        csv += data.map(field => '"' + field + '"').join(',') + '\n';
+    reportData.forEach(family => {
+        const paymentRate = (family.total_invoiced > 0) 
+            ? (family.total_paid / family.total_invoiced * 100).toFixed(2) 
+            : 0;
+        
+        csvContent += `"${family.parent_id}","${family.full_name}","${family.email}","${family.phone}",${family.children_count},${family.total_enrollments},${family.total_invoiced},${family.total_paid},${family.total_outstanding},${paymentRate}%,"${family.status}"\n`;
     });
     
-    // Download CSV
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'family_reports_' + new Date().toISOString().split('T')[0] + '.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
+    // Add totals row
+    csvContent += `\n"TOTALS","","","",<?php echo $total_children; ?>,"",<?php echo $total_invoiced_all; ?>,<?php echo $total_paid_all; ?>,<?php echo $total_outstanding_all; ?>,"",""\n`;
+    
+    // Create download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'family_financial_report_<?php echo date('Y-m-d'); ?>.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function printReport() {
+    window.print();
 }
 
 $(document).ready(function() {
     $('.data-table').DataTable({
-        pageLength: 25,
-        order: [[8, 'desc']], // Sort by outstanding (descending)
+        pageLength: 50,
+        order: [[7, 'desc']], // Sort by outstanding
         columnDefs: [
-            { orderable: false, targets: 10 } // Disable sorting on Actions column
+            { orderable: false, targets: [10] } // Disable sorting on Actions
         ]
     });
 });
