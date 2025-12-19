@@ -1,5 +1,10 @@
 <?php
-// Student Attendance Page - View attendance records
+// Student Attendance Page - Updated for multi-child parent support
+
+// Get current student info
+$stmt = $pdo->prepare("SELECT full_name FROM students WHERE id = ?");
+$stmt->execute([getActiveStudentId()]);
+$current_student = $stmt->fetch();
 
 // Get enrolled classes
 $stmt = $pdo->prepare("
@@ -9,7 +14,7 @@ $stmt = $pdo->prepare("
     WHERE e.student_id = ? AND e.status = 'active'
     ORDER BY c.class_code
 ");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $enrolled_classes = $stmt->fetchAll();
 
 // Get attendance records
@@ -21,7 +26,7 @@ $stmt = $pdo->prepare("
     ORDER BY a.attendance_date DESC
     LIMIT 50
 ");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $attendance_records = $stmt->fetchAll();
 
 // Calculate attendance statistics
@@ -34,7 +39,7 @@ $stmt = $pdo->prepare("
     FROM attendance
     WHERE student_id = ?
 ");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $attendance_stats = $stmt->fetch();
 
 // Calculate attendance percentage
@@ -42,6 +47,12 @@ $attendance_percentage = $attendance_stats['total_records'] > 0
     ? round(($attendance_stats['present_count'] + $attendance_stats['late_count']) / $attendance_stats['total_records'] * 100, 1)
     : 0;
 ?>
+
+<?php if (isParent()): ?>
+<div class="alert alert-info mb-3">
+    <i class="fas fa-info-circle"></i> Viewing attendance for: <strong><?php echo htmlspecialchars($current_student['full_name']); ?></strong>
+</div>
+<?php endif; ?>
 
 <!-- Attendance Statistics -->
 <div class="row mb-4">
@@ -139,7 +150,7 @@ $attendance_percentage = $attendance_stats['total_records'] > 0
         FROM attendance
         WHERE student_id = ? AND class_id = ?
     ");
-    $stmt->execute([getStudentId(), $class['id']]);
+    $stmt->execute([getActiveStudentId(), $class['id']]);
     $class_stats = $stmt->fetch();
 
     $class_percentage = $class_stats['total'] > 0 
@@ -178,7 +189,7 @@ $attendance_percentage = $attendance_stats['total_records'] > 0
 
 <?php if (count($enrolled_classes) === 0): ?>
     <div class="alert alert-info">
-        <i class="fas fa-info-circle"></i> You are not enrolled in any classes yet. Enroll in classes to see attendance records.
+        <i class="fas fa-info-circle"></i> Not enrolled in any classes yet. Enroll in classes to see attendance records.
     </div>
 <?php endif; ?>
 
@@ -219,7 +230,7 @@ $attendance_percentage = $attendance_stats['total_records'] > 0
                                         <?php echo ucfirst($record['status']); ?>
                                     </span>
                                 </td>
-                                <td><?php echo formatDateTime($record['created_at']); ?></td>
+                                <td><?php echo formatDateTime($record['marked_at']); ?></td>
                                 <td>
                                     <?php if ($record['notes']): ?>
                                         <small><?php echo htmlspecialchars($record['notes']); ?></small>
@@ -236,7 +247,7 @@ $attendance_percentage = $attendance_stats['total_records'] > 0
             <div class="text-center py-5">
                 <i class="fas fa-calendar-check fa-4x text-muted mb-3"></i>
                 <h5>No attendance records yet.</h5>
-                <p class="text-muted">Your attendance will be recorded when you attend classes.</p>
+                <p class="text-muted">Attendance will be recorded when classes are attended.</p>
             </div>
         <?php endif; ?>
     </div>

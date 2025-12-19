@@ -1,8 +1,12 @@
 <?php
-// Get student ID from session
-$student_id = getStudentId();
+// Student Classes Page - Updated for multi-child parent support
 
-// Get enrolled classes
+// Get current student info
+$stmt = $pdo->prepare("SELECT full_name FROM students WHERE id = ?");
+$stmt->execute([getActiveStudentId()]);
+$current_student = $stmt->fetch();
+
+// Get enrolled classes using active student ID
 $stmt = $pdo->prepare("
     SELECT c.*, e.enrollment_date, e.status 
     FROM enrollments e 
@@ -10,9 +14,15 @@ $stmt = $pdo->prepare("
     WHERE e.student_id = ? 
     ORDER BY e.enrollment_date DESC
 ");
-$stmt->execute([$student_id]);
+$stmt->execute([getActiveStudentId()]);
 $enrolled_classes = $stmt->fetchAll();
 ?>
+
+<?php if (isParent()): ?>
+<div class="alert alert-info mb-3">
+    <i class="fas fa-info-circle"></i> Viewing classes for: <strong><?php echo htmlspecialchars($current_student['full_name']); ?></strong>
+</div>
+<?php endif; ?>
 
 <!-- My Enrolled Classes -->
 <div class="card">
@@ -56,7 +66,11 @@ $enrolled_classes = $stmt->fetchAll();
         <?php else: ?>
             <div class="alert alert-info">
                 <i class="fas fa-info-circle"></i> 
-                You haven't enrolled in any classes yet. Contact admin to enroll in classes.
+                <?php if (isParent()): ?>
+                    This child hasn't enrolled in any classes yet. Contact admin to enroll.
+                <?php else: ?>
+                    You haven't enrolled in any classes yet. Contact admin to enroll in classes.
+                <?php endif; ?>
             </div>
         <?php endif; ?>
     </div>

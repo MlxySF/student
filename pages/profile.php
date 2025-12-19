@@ -1,9 +1,9 @@
 <?php
-// Student Profile Page - View and update profile information
+// Student Profile Page - Updated for multi-child parent support
 
-// Get student information
+// Get student information using active student ID
 $stmt = $pdo->prepare("SELECT * FROM students WHERE id = ?");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $student = $stmt->fetch();
 
 // Get enrolled classes count
@@ -12,7 +12,7 @@ $stmt = $pdo->prepare("
     FROM enrollments 
     WHERE student_id = ? AND status = 'active'
 ");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $enrollment_stats = $stmt->fetch();
 
 // Get payment statistics
@@ -24,7 +24,7 @@ $stmt = $pdo->prepare("
     FROM payments 
     WHERE student_id = ?
 ");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $payment_stats = $stmt->fetch();
 
 // Get invoice statistics
@@ -36,16 +36,23 @@ $stmt = $pdo->prepare("
     FROM invoices 
     WHERE student_id = ?
 ");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $invoice_stats = $stmt->fetch();
 ?>
+
+<?php if (isParent()): ?>
+<div class="alert alert-info mb-3">
+    <i class="fas fa-info-circle"></i> Viewing profile for: <strong><?php echo htmlspecialchars($student['full_name']); ?></strong>
+    <span class="text-muted">(Parent View - Some fields may be read-only)</span>
+</div>
+<?php endif; ?>
 
 <div class="row">
     <!-- Profile Information Card -->
     <div class="col-md-8 mb-4">
         <div class="card">
             <div class="card-header">
-                <i class="fas fa-user"></i> My Profile Information
+                <i class="fas fa-user"></i> <?php echo isParent() ? 'Child' : 'My'; ?> Profile Information
             </div>
             <div class="card-body">
                 <div class="row mb-4">
@@ -56,6 +63,12 @@ $invoice_stats = $stmt->fetch();
                         <h4 class="mt-3 mb-1"><?php echo htmlspecialchars($student['full_name']); ?></h4>
                         <p class="text-muted">
                             <span class="badge bg-dark"><?php echo $student['student_id']; ?></span>
+                            <?php if (!empty($student['student_status'])): ?>
+                            <br><span class="badge <?php 
+                                echo (strpos($student['student_status'], 'State Team') !== false) ? 'bg-success' : 
+                                     ((strpos($student['student_status'], 'Backup Team') !== false) ? 'bg-warning' : 'bg-info');
+                            ?>"><?php echo htmlspecialchars($student['student_status']); ?></span>
+                            <?php endif; ?>
                         </p>
                     </div>
                 </div>
@@ -79,6 +92,24 @@ $invoice_stats = $stmt->fetch();
                                 <td><strong><i class="fas fa-phone text-primary"></i> Phone:</strong></td>
                                 <td><?php echo htmlspecialchars($student['phone']); ?></td>
                             </tr>
+                            <?php if (!empty($student['ic_number'])): ?>
+                            <tr>
+                                <td><strong><i class="fas fa-id-card text-primary"></i> IC Number:</strong></td>
+                                <td><?php echo htmlspecialchars($student['ic_number']); ?></td>
+                            </tr>
+                            <?php endif; ?>
+                            <?php if (!empty($student['date_of_birth'])): ?>
+                            <tr>
+                                <td><strong><i class="fas fa-birthday-cake text-primary"></i> Date of Birth:</strong></td>
+                                <td><?php echo formatDate($student['date_of_birth']); ?> (Age: <?php echo $student['age'] ?? 'N/A'; ?>)</td>
+                            </tr>
+                            <?php endif; ?>
+                            <?php if (!empty($student['school'])): ?>
+                            <tr>
+                                <td><strong><i class="fas fa-school text-primary"></i> School:</strong></td>
+                                <td><?php echo htmlspecialchars($student['school']); ?></td>
+                            </tr>
+                            <?php endif; ?>
                             <tr>
                                 <td><strong><i class="fas fa-calendar text-primary"></i> Registered:</strong></td>
                                 <td><?php echo formatDateTime($student['created_at']); ?></td>
@@ -91,6 +122,7 @@ $invoice_stats = $stmt->fetch();
                     </table>
                 </div>
 
+                <?php if (!isParent()): ?>
                 <div class="text-center mt-4">
                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
                         <i class="fas fa-edit"></i> Edit Profile
@@ -99,6 +131,11 @@ $invoice_stats = $stmt->fetch();
                         <i class="fas fa-key"></i> Change Password
                     </button>
                 </div>
+                <?php else: ?>
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-lock"></i> Profile editing is disabled in parent view. Student must login to edit their own profile.
+                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -107,7 +144,7 @@ $invoice_stats = $stmt->fetch();
     <div class="col-md-4 mb-4">
         <div class="card mb-3">
             <div class="card-header">
-                <i class="fas fa-chart-bar"></i> My Statistics
+                <i class="fas fa-chart-bar"></i> Statistics
             </div>
             <div class="card-body">
                 <div class="stat-item mb-3">
@@ -180,8 +217,15 @@ $invoice_stats = $stmt->fetch();
             </div>
             <div class="card-body">
                 <p class="mb-2"><strong>Account Status:</strong> <span class="badge bg-success">Active</span></p>
+                <p class="mb-2"><strong>Account Type:</strong> 
+                    <?php if ($student['student_type'] === 'child' && $student['parent_account_id']): ?>
+                        <span class="badge bg-info">Managed by Parent</span>
+                    <?php else: ?>
+                        <span class="badge bg-primary">Independent</span>
+                    <?php endif; ?>
+                </p>
                 <p class="mb-2"><strong>Member Since:</strong> <?php echo formatDate($student['created_at']); ?></p>
-                <p class="mb-0"><strong>Last Login:</strong> <?php echo formatDateTime(getCurrentDateTime()); ?></p>
+                <p class="mb-0"><strong>Last Updated:</strong> <?php echo formatDateTime($student['updated_at']); ?></p>
             </div>
         </div>
     </div>
@@ -196,13 +240,13 @@ $stmt = $pdo->prepare("
     WHERE e.student_id = ?
     ORDER BY e.enrollment_date DESC
 ");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $my_classes = $stmt->fetchAll();
 ?>
 
 <div class="card">
     <div class="card-header">
-        <i class="fas fa-book"></i> My Enrolled Classes
+        <i class="fas fa-book"></i> Enrolled Classes
     </div>
     <div class="card-body">
         <?php if ($my_classes): ?>
@@ -239,13 +283,14 @@ $my_classes = $stmt->fetchAll();
         <?php else: ?>
             <div class="text-center py-4">
                 <i class="fas fa-book fa-3x text-muted mb-3"></i>
-                <p class="text-muted">You are not enrolled in any classes yet.</p>
+                <p class="text-muted">Not enrolled in any classes yet.</p>
             </div>
         <?php endif; ?>
     </div>
 </div>
 
-<!-- Edit Profile Modal -->
+<!-- Edit Profile Modal - Only show if not parent -->
+<?php if (!isParent()): ?>
 <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -286,7 +331,6 @@ $my_classes = $stmt->fetchAll();
     </div>
 </div>
 
-<!-- Change Password Modal -->
 <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -321,6 +365,7 @@ $my_classes = $stmt->fetchAll();
         </div>
     </div>
 </div>
+<?php endif; ?>
 
 <style>
 .stat-item {
