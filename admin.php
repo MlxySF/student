@@ -19,12 +19,6 @@ function redirectIfNotAdmin() {
     }
 }
 
-// Safety stub function: This should NOT be used in admin context
-// Defined here only to prevent "undefined function" errors if accidentally called
-function getStudentId() {
-    return null;
-}
-
 // Handle Admin Login
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'admin_login') {
     $username = $_POST['username'];
