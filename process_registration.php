@@ -7,6 +7,7 @@
  * UPDATED: Auto-enrollment into classes based on schedule selection
  * UPDATED: Creates registration fee invoice viewable in parent portal
  * UPDATED: Links payment receipt to invoice for admin verification
+ * FIXED: Auto-detect MIME type from base64 image data
  */
 
 header('Content-Type: application/json');
@@ -30,6 +31,40 @@ function generatePasswordFromIC(string $ic): string {
     $icClean = str_replace('-', '', $ic);
     $last4 = substr($icClean, -4);
     return $last4;
+}
+
+// =========================
+// Helper: Detect MIME type from base64 image
+// =========================
+function detectMimeTypeFromBase64(string $base64Data): string {
+    // Check if it has data URI prefix
+    if (preg_match('/^data:image\/(\w+);base64,/', $base64Data, $matches)) {
+        // Extract MIME type from data URI
+        return 'image/' . $matches[1];
+    }
+    
+    // Remove data URI prefix if present
+    $base64Data = preg_replace('/^data:image\/\w+;base64,/', '', $base64Data);
+    
+    // Decode first few bytes to check file signature
+    $imageData = base64_decode(substr($base64Data, 0, 100));
+    
+    // Check image signatures (magic numbers)
+    if (substr($imageData, 0, 3) === "\xFF\xD8\xFF") {
+        return 'image/jpeg';
+    } elseif (substr($imageData, 0, 8) === "\x89PNG\r\n\x1A\n") {
+        return 'image/png';
+    } elseif (substr($imageData, 0, 6) === 'GIF87a' || substr($imageData, 0, 6) === 'GIF89a') {
+        return 'image/gif';
+    } elseif (substr($imageData, 0, 2) === 'BM') {
+        return 'image/bmp';
+    } elseif (substr($imageData, 0, 4) === 'RIFF' && substr($imageData, 8, 4) === 'WEBP') {
+        return 'image/webp';
+    }
+    
+    // Default to JPEG if cannot detect
+    error_log('[MIME Detection] Could not detect image type, defaulting to image/jpeg');
+    return 'image/jpeg';
 }
 
 // ==========================================
@@ -286,6 +321,10 @@ function createRegistrationInvoiceAndPayment(PDO $conn, int $studentId, int $par
         
         error_log("[Invoice] Created registration fee invoice: {$invoiceNumber} (ID: {$invoiceId}) for student ID={$studentId}, amount={$amount}");
         
+        // Auto-detect MIME type from base64 data
+        $receiptMimeType = detectMimeTypeFromBase64($paymentData['receipt_base64']);
+        error_log("[Payment] Detected receipt MIME type: {$receiptMimeType}");
+        
         // Create payment record with the uploaded receipt
         // Note: We don't have class_id for registration payment, so it's NULL
         $stmt = $conn->prepare("
@@ -300,7 +339,7 @@ function createRegistrationInvoiceAndPayment(PDO $conn, int $studentId, int $par
                 receipt_mime_type,
                 verification_status,
                 upload_date
-            ) VALUES (?, NULL, ?, ?, ?, ?, ?, 'image/jpeg', 'pending', NOW())
+            ) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, 'pending', NOW())
         ");
         
         $stmt->execute([
@@ -309,12 +348,13 @@ function createRegistrationInvoiceAndPayment(PDO $conn, int $studentId, int $par
             $parentAccountId,
             $amount,
             date('Y-m'),  // Current month
-            $paymentData['receipt_base64']
+            $paymentData['receipt_base64'],
+            $receiptMimeType  // Use detected MIME type
         ]);
         
         $paymentId = (int)$conn->lastInsertId();
         
-        error_log("[Payment] Created payment record (ID: {$paymentId}) linked to invoice {$invoiceNumber}");
+        error_log("[Payment] Created payment record (ID: {$paymentId}) linked to invoice {$invoiceNumber} with MIME type {$receiptMimeType}");
         
         return [
             'success' => true,
