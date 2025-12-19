@@ -42,10 +42,10 @@ $registrations = $stmt->fetchAll();
                         <td><?php echo htmlspecialchars($reg['email']); ?></td>
                         <td>
                             <span class="badge <?php 
-                                echo strpos($reg['status'], 'State Team') !== false ? 'badge-state-team' : 
-                                    (strpos($reg['status'], 'Backup Team') !== false ? 'badge-backup-team' : 'badge-student'); 
+                                echo strpos($reg['student_status'], 'State Team') !== false ? 'badge-state-team' : 
+                                    (strpos($reg['student_status'], 'Backup Team') !== false ? 'badge-backup-team' : 'badge-student'); 
                             ?>">
-                                <?php echo htmlspecialchars($reg['status']); ?>
+                                <?php echo htmlspecialchars($reg['student_status']); ?>
                             </span>
                         </td>
                         <td>
@@ -204,13 +204,13 @@ $registrations = $stmt->fetchAll();
                                         <td><?php echo htmlspecialchars($reg['school']); ?></td>
                                     </tr>
                                     <tr>
-                                        <th>Status:</th>
+                                        <th>Student Status:</th>
                                         <td>
                                             <span class="badge <?php 
-                                                echo strpos($reg['status'], 'State Team') !== false ? 'badge-state-team' : 
-                                                    (strpos($reg['status'], 'Backup Team') !== false ? 'badge-backup-team' : 'badge-student'); 
+                                                echo strpos($reg['student_status'], 'State Team') !== false ? 'badge-state-team' : 
+                                                    (strpos($reg['student_status'], 'Backup Team') !== false ? 'badge-backup-team' : 'badge-student'); 
                                             ?>">
-                                                <?php echo htmlspecialchars($reg['status']); ?>
+                                                <?php echo htmlspecialchars($reg['student_status']); ?>
                                             </span>
                                         </td>
                                     </tr>
