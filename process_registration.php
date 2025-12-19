@@ -5,6 +5,7 @@
  * Stage 3: Multi-child parent system - auto-detects parent by email
  * UPDATED: Password is now last 4 digits of IC number
  * UPDATED: Auto-enrollment into classes based on schedule selection
+ * UPDATED: Creates registration fee invoice viewable in parent portal
  */
 
 header('Content-Type: application/json');
@@ -237,6 +238,68 @@ function autoEnrollStudent(PDO $conn, int $studentId, string $scheduleString): a
     return $enrollmentResults;
 }
 
+// ==========================================
+// REGISTRATION FEE INVOICE CREATION
+// ==========================================
+
+/**
+ * Create a registration fee invoice for the student/parent
+ * This makes the registration fee visible in the parent portal
+ */
+function createRegistrationFeeInvoice(PDO $conn, int $studentId, int $parentAccountId, float $amount, string $studentName): array {
+    try {
+        // Generate invoice number
+        $invoiceNumber = 'INV-REG-' . date('Ym') . '-' . str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+        
+        // Set due date to today (since payment is already uploaded)
+        $dueDate = date('Y-m-d');
+        
+        // Description
+        $description = "Registration Fee for {$studentName} - New Student Registration " . date('Y');
+        
+        // Create invoice
+        $stmt = $conn->prepare("
+            INSERT INTO invoices (
+                invoice_number,
+                student_id,
+                parent_account_id,
+                invoice_type,
+                description,
+                amount,
+                due_date,
+                status,
+                created_at
+            ) VALUES (?, ?, ?, 'registration', ?, ?, ?, 'pending', NOW())
+        ");
+        
+        $stmt->execute([
+            $invoiceNumber,
+            $studentId,
+            $parentAccountId,
+            $description,
+            $amount,
+            $dueDate
+        ]);
+        
+        $invoiceId = (int)$conn->lastInsertId();
+        
+        error_log("[Invoice] Created registration fee invoice: {$invoiceNumber} for student ID={$studentId}, amount={$amount}");
+        
+        return [
+            'success' => true,
+            'invoice_id' => $invoiceId,
+            'invoice_number' => $invoiceNumber
+        ];
+        
+    } catch (PDOException $e) {
+        error_log("[Invoice] ERROR creating registration fee invoice: " . $e->getMessage());
+        return [
+            'success' => false,
+            'error' => $e->getMessage()
+        ];
+    }
+}
+
 // ===============
 // Email functions
 // ===============
@@ -384,6 +447,7 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
                     <li>You'll receive approval notification via email</li>
                     <li>After approval, login to the parent portal to view schedules, attendance, and invoices</li>
                     <li>Your child has been automatically enrolled in the selected classes</li>
+                    <li>The registration fee invoice is now visible in your parent portal</li>
                 </ol>
             </div>
         </div>
@@ -464,6 +528,7 @@ try {
     $fullName     = trim($data['name_en']);
     $phone        = trim($data['phone']);
     $studentStatus = trim($data['status']);
+    $paymentAmount = (float)$data['payment_amount'];
 
     // ===============================
     // Find or Create Parent Account
@@ -546,7 +611,7 @@ try {
         $data['form_date'],
         $data['signature_base64'],
         $data['signed_pdf_base64'],
-        (float)$data['payment_amount'],
+        $paymentAmount,
         $data['payment_date'],
         $data['payment_receipt_base64'],
         (int)$data['class_count'],
@@ -568,6 +633,12 @@ try {
     error_log("[Auto-Enroll] Results - Success: " . count($enrollmentResults['success']) . 
               ", Failed: " . count($enrollmentResults['failed']) . 
               ", Skipped: " . count($enrollmentResults['skipped']));
+
+    // ===============================
+    // CREATE REGISTRATION FEE INVOICE
+    // ===============================
+    
+    $invoiceResult = createRegistrationFeeInvoice($conn, $studentAccountId, $parentAccountId, $paymentAmount, $fullName);
 
     $conn->commit();
     
@@ -597,6 +668,8 @@ try {
         'parent_password' => $isNewParentAccount ? $parentPlainPassword : null,
         'email_sent' => $emailSent,
         'enrollment_results' => $enrollmentResults,
+        'invoice_created' => $invoiceResult['success'],
+        'invoice_number' => $invoiceResult['invoice_number'] ?? null,
         'message' => $isNewParentAccount 
             ? 'Parent account created! Child registered and enrolled successfully. Check your email for parent password.' 
             : 'Child added and enrolled successfully to your parent account!',
