@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $action = $_POST['action'] ?? '';
 
-// ============ REGISTRATION APPROVAL (MINIMAL COLUMNS) ============
+// ============ REGISTRATION APPROVAL ============
 
 if ($action === 'verify_registration') {
     $regId = $_POST['registration_id'];
@@ -85,6 +85,7 @@ if ($action === 'verify_registration') {
         }
         
         $studentAccountId = $registration['student_account_id'];
+        $adminId = $_SESSION['admin_id'] ?? null;
         
         // 1. Update registration status to approved
         $stmt = $pdo->prepare("UPDATE registrations SET payment_status = 'approved' WHERE id = ?");
@@ -102,7 +103,7 @@ if ($action === 'verify_registration') {
         $stmt->execute([$studentAccountId]);
         $invoicesUpdated = $stmt->rowCount();
         
-        // 3. Auto-approve linked payment records (ONLY verification_status and admin_notes)
+        // 3. Auto-verify linked payment records with 'verified' status
         $paymentsUpdated = 0;
         if ($invoicesUpdated > 0) {
             // Get the invoice ID that was just approved
@@ -118,15 +119,17 @@ if ($action === 'verify_registration') {
             $invoice = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($invoice) {
-                // Approve the payment - ONLY update verification_status and admin_notes
+                // Update payment to 'verified' status (not 'approved')
                 $stmt = $pdo->prepare("
                     UPDATE payments 
-                    SET verification_status = 'approved',
-                        admin_notes = 'Auto-approved with registration'
+                    SET verification_status = 'verified',
+                        verified_date = NOW(),
+                        verified_by = ?,
+                        admin_notes = 'Auto-verified with registration approval'
                     WHERE invoice_id = ? 
                       AND verification_status = 'pending'
                 ");
-                $stmt->execute([$invoice['id']]);
+                $stmt->execute([$adminId, $invoice['id']]);
                 $paymentsUpdated = $stmt->rowCount();
             }
         }
@@ -192,7 +195,7 @@ if ($action === 'reject_registration') {
         $stmt->execute([$studentAccountId]);
         $invoicesUpdated = $stmt->rowCount();
         
-        // 3. Reject linked payment records (ONLY verification_status and admin_notes)
+        // 3. Reject linked payment records
         $paymentsUpdated = 0;
         if ($invoicesUpdated > 0) {
             $stmt = $pdo->prepare("
@@ -210,6 +213,7 @@ if ($action === 'reject_registration') {
                 $stmt = $pdo->prepare("
                     UPDATE payments 
                     SET verification_status = 'rejected',
+                        verified_date = NOW(),
                         admin_notes = 'Rejected with registration'
                     WHERE invoice_id = ? 
                       AND verification_status = 'pending'
@@ -482,7 +486,7 @@ if ($action === 'create_class') {
     $end_time = trim($_POST['end_time'] ?? '');
 
     try {
-        // FIXED: Check if class code already EXISTS (if found, it's duplicate)
+        // Check if class code already EXISTS (if found, it's duplicate)
         $checkStmt = $pdo->prepare("SELECT id FROM classes WHERE class_code = ?");
         $checkStmt->execute([$class_code]);
         
