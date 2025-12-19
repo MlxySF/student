@@ -9,6 +9,7 @@
  * UPDATED: Links payment receipt to invoice for admin verification
  * FIXED: Auto-detect MIME type from base64 image data
  * FIXED: Strip data URI prefix, save only pure base64 to database
+ * UPDATED: Split invoices by class - one invoice per registered class with class code
  */
 
 header('Content-Type: application/json');
@@ -284,96 +285,122 @@ function autoEnrollStudent(PDO $conn, int $studentId, string $scheduleString): a
 }
 
 // ==========================================
-// REGISTRATION FEE INVOICE & PAYMENT
+// REGISTRATION FEE INVOICES & PAYMENTS
+// UPDATED: Create one invoice per class
 // ==========================================
 
 /**
- * Create a registration fee invoice and payment record
- * Links the uploaded payment receipt to the invoice
+ * Create registration fee invoices - ONE PER CLASS
+ * Links the uploaded payment receipt to each invoice
+ * Splits total registration fee equally across all classes
  */
-function createRegistrationInvoiceAndPayment(PDO $conn, int $studentId, int $parentAccountId, float $amount, string $studentName, array $paymentData): array {
+function createRegistrationInvoicesAndPayments(PDO $conn, int $studentId, int $parentAccountId, float $totalAmount, string $studentName, array $enrolledClasses, array $paymentData): array {
     try {
-        // Generate invoice number
-        $invoiceNumber = 'INV-REG-' . date('Ym') . '-' . str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+        $results = [];
+        $classCount = count($enrolledClasses);
         
-        // Set due date to today (since payment is already uploaded)
-        $dueDate = date('Y-m-d');
+        if ($classCount === 0) {
+            throw new Exception("No enrolled classes found");
+        }
         
-        // Description
-        $description = "Registration Fee for {$studentName} - New Student Registration " . date('Y');
+        // Calculate amount per class (split total registration fee)
+        $amountPerClass = round($totalAmount / $classCount, 2);
         
-        // Create invoice
-        $stmt = $conn->prepare("
-            INSERT INTO invoices (
-                invoice_number,
-                student_id,
-                parent_account_id,
-                invoice_type,
-                description,
-                amount,
-                due_date,
-                status,
-                created_at
-            ) VALUES (?, ?, ?, 'registration', ?, ?, ?, 'pending', NOW())
-        ");
+        error_log("[Invoice Split] Total: {$totalAmount}, Classes: {$classCount}, Per Class: {$amountPerClass}");
         
-        $stmt->execute([
-            $invoiceNumber,
-            $studentId,
-            $parentAccountId,
-            $description,
-            $amount,
-            $dueDate
-        ]);
-        
-        $invoiceId = (int)$conn->lastInsertId();
-        
-        error_log("[Invoice] Created registration fee invoice: {$invoiceNumber} (ID: {$invoiceId}) for student ID={$studentId}, amount={$amount}");
-        
-        // Auto-detect MIME type from base64 data
-        $receiptMimeType = detectMimeTypeFromBase64($paymentData['receipt_base64']);
-        error_log("[Payment] Detected receipt MIME type: {$receiptMimeType}");
-        
-        // Strip data URI prefix to get pure base64
-        $pureBase64Receipt = stripDataURIPrefix($paymentData['receipt_base64']);
-        error_log("[Payment] Stripped data URI prefix, saving pure base64 (length: " . strlen($pureBase64Receipt) . " chars)");
-        
-        // Create payment record with the uploaded receipt
-        // Note: We don't have class_id for registration payment, so it's NULL
-        $stmt = $conn->prepare("
-            INSERT INTO payments (
-                student_id,
-                class_id,
-                invoice_id,
-                parent_account_id,
-                amount,
-                payment_month,
-                receipt_data,
-                receipt_mime_type,
-                verification_status,
-                upload_date
-            ) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, 'pending', NOW())
-        ");
-        
-        $stmt->execute([
-            $studentId,
-            $invoiceId,
-            $parentAccountId,
-            $amount,
-            date('Y-m'),  // Current month
-            $pureBase64Receipt,  // Pure base64 without data URI prefix
-            $receiptMimeType     // Detected MIME type
-        ]);
-        
-        $paymentId = (int)$conn->lastInsertId();
-        
-        error_log("[Payment] Created payment record (ID: {$paymentId}) linked to invoice {$invoiceNumber} with MIME type {$receiptMimeType}");
+        foreach ($enrolledClasses as $classData) {
+            // Generate unique invoice number
+            $invoiceNumber = 'INV-REG-' . date('Ym') . '-' . str_pad(mt_rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+            
+            // Set due date to today (since payment is already uploaded)
+            $dueDate = date('Y-m-d');
+            
+            // Description includes class name
+            $description = "Registration Fee for {$studentName} - {$classData['class_name']} (" . date('Y') . ")";
+            
+            // Create invoice WITH class_id and class_code
+            $stmt = $conn->prepare("
+                INSERT INTO invoices (
+                    invoice_number,
+                    student_id,
+                    parent_account_id,
+                    class_id,
+                    class_code,
+                    invoice_type,
+                    description,
+                    amount,
+                    due_date,
+                    status,
+                    created_at
+                ) VALUES (?, ?, ?, ?, ?, 'registration', ?, ?, ?, 'pending', NOW())
+            ");
+            
+            $stmt->execute([
+                $invoiceNumber,
+                $studentId,
+                $parentAccountId,
+                $classData['class_id'],
+                $classData['class_code'],
+                $description,
+                $amountPerClass,
+                $dueDate
+            ]);
+            
+            $invoiceId = (int)$conn->lastInsertId();
+            
+            error_log("[Invoice] Created invoice: {$invoiceNumber} (ID: {$invoiceId}) for class {$classData['class_code']}, amount={$amountPerClass}");
+            
+            // Auto-detect MIME type from base64 data
+            $receiptMimeType = detectMimeTypeFromBase64($paymentData['receipt_base64']);
+            
+            // Strip data URI prefix to get pure base64
+            $pureBase64Receipt = stripDataURIPrefix($paymentData['receipt_base64']);
+            
+            // Create payment record linked to this invoice and class
+            $stmt = $conn->prepare("
+                INSERT INTO payments (
+                    student_id,
+                    class_id,
+                    invoice_id,
+                    parent_account_id,
+                    amount,
+                    payment_month,
+                    receipt_data,
+                    receipt_mime_type,
+                    verification_status,
+                    upload_date
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
+            ");
+            
+            $stmt->execute([
+                $studentId,
+                $classData['class_id'],
+                $invoiceId,
+                $parentAccountId,
+                $amountPerClass,
+                date('Y-m'),
+                $pureBase64Receipt,
+                $receiptMimeType
+            ]);
+            
+            $paymentId = (int)$conn->lastInsertId();
+            
+            error_log("[Payment] Created payment record (ID: {$paymentId}) linked to invoice {$invoiceNumber}");
+            
+            $results[] = [
+                'invoice_id' => $invoiceId,
+                'invoice_number' => $invoiceNumber,
+                'payment_id' => $paymentId,
+                'class_code' => $classData['class_code'],
+                'class_name' => $classData['class_name'],
+                'amount' => $amountPerClass
+            ];
+        }
         
         return [
             'success' => true,
-            'invoice_id' => $invoiceId,
-            'invoice_number' => $invoiceNumber,
-            'payment_id' => $paymentId
+            'invoices' => $results,
+            'total_invoices' => count($results)
         ];
         
     } catch (PDOException $e) {
@@ -530,8 +557,8 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
                 <ol style='margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.8;'>
                     <li>Your payment receipt is under review by the academy</li>
                     <li>You will receive approval notification via email</li>
-                    <li>Login to the parent portal to view the registration invoice with your uploaded payment receipt</li>
-                    <li>After approval, the invoice status will change to Paid</li>
+                    <li>Login to the parent portal to view separate invoices for each class (registration fee is split equally)</li>
+                    <li>After approval, all invoice statuses will change to Paid</li>
                     <li>Your child has been automatically enrolled in the selected classes</li>
                 </ol>
             </div>
@@ -720,25 +747,27 @@ try {
               ", Skipped: " . count($enrollmentResults['skipped']));
 
     // ===============================
-    // CREATE INVOICE AND LINK PAYMENT
+    // CREATE INVOICES (ONE PER CLASS) AND LINK PAYMENTS
     // ===============================
     
     $paymentData = [
         'receipt_base64' => $data['payment_receipt_base64']
     ];
     
-    $invoiceResult = createRegistrationInvoiceAndPayment(
+    // Use the new function that creates one invoice per class
+    $invoiceResult = createRegistrationInvoicesAndPayments(
         $conn, 
         $studentAccountId, 
         $parentAccountId, 
         $paymentAmount, 
         $fullName,
+        $enrollmentResults['success'], // Pass enrolled classes with their codes
         $paymentData
     );
 
     $conn->commit();
     
-    error_log("[Success] Reg#: {$regNumber}, Parent: {$parentCode} (ID:{$parentAccountId}), Student: {$studentAccountId}, IsNewParent: " . ($isNewParentAccount ? 'YES' : 'NO'));
+    error_log("[Success] Reg#: {$regNumber}, Parent: {$parentCode} (ID:{$parentAccountId}), Student: {$studentAccountId}, Invoices: " . ($invoiceResult['total_invoices'] ?? 0));
 
     // Send email with proper parameters
     $emailSent = sendRegistrationEmail(
@@ -765,11 +794,11 @@ try {
         'email_sent' => $emailSent,
         'enrollment_results' => $enrollmentResults,
         'invoice_created' => $invoiceResult['success'],
-        'invoice_number' => $invoiceResult['invoice_number'] ?? null,
-        'payment_id' => $invoiceResult['payment_id'] ?? null,
+        'invoices' => $invoiceResult['invoices'] ?? [],
+        'total_invoices' => $invoiceResult['total_invoices'] ?? 0,
         'message' => $isNewParentAccount 
-            ? 'Parent account created! Child registered and enrolled successfully. Check your email for parent password.' 
-            : 'Child added and enrolled successfully to your parent account!',
+            ? 'Parent account created! Child registered with ' . ($invoiceResult['total_invoices'] ?? 0) . ' invoices (one per class).' 
+            : 'Child added with ' . ($invoiceResult['total_invoices'] ?? 0) . ' invoices (one per class)!',
     ]);
 
 } catch (PDOException $e) {
