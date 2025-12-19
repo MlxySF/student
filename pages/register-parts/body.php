@@ -900,8 +900,8 @@
             <i class="fas fa-arrow-right" style="font-size: 14px; color: #1e293b;"></i>
         </div>
         <div style="text-align: left;">
-            <div style="font-size: 13px; font-weight: 700; line-height: 1.3;">Student Login</div>
-            <div style="font-size: 10px; color: #fbbf24; font-weight: 500;">学生登录 →</div>
+            <div style="font-size: 13px; font-weight: 700; line-height: 1.3;">Parent Login</div>
+            <div style="font-size: 10px; color: #fbbf24; font-weight: 500;">家长登录 →</div>
         </div>
     </a>
 </div>
