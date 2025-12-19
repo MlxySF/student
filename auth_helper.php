@@ -109,6 +109,7 @@ function getActiveStudentName() {
 /**
  * Authenticate parent user
  * Returns array with success status and user data
+ * UPDATED: Only allow login if parent has at least one APPROVED child
  */
 function authenticateUser($email, $password, $pdo) {
     $email = trim($email);
@@ -123,7 +124,8 @@ function authenticateUser($email, $password, $pdo) {
     $parent = $stmt->fetch();
     
     if ($parent && password_verify($password, $parent['password'])) {
-        // Parent login successful - get their children from registrations
+        // Parent credentials are correct
+        // Check if they have any APPROVED children
         $stmt = $pdo->prepare("
             SELECT 
                 r.id,
@@ -137,24 +139,72 @@ function authenticateUser($email, $password, $pdo) {
                 r.events,
                 r.schedule
             FROM registrations r
-            WHERE r.parent_account_id = ? AND r.payment_status != 'rejected'
+            WHERE r.parent_account_id = ? AND r.payment_status = 'approved'
             ORDER BY r.created_at ASC
         ");
         $stmt->execute([$parent['id']]);
-        $children = $stmt->fetchAll();
+        $approvedChildren = $stmt->fetchAll();
         
+        // Check if there are any approved children
+        if (empty($approvedChildren)) {
+            // No approved children - check if all registrations were rejected
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) as rejected_count
+                FROM registrations 
+                WHERE parent_account_id = ? AND payment_status = 'rejected'
+            ");
+            $stmt->execute([$parent['id']]);
+            $result = $stmt->fetch();
+            $rejectedCount = (int)$result['rejected_count'];
+            
+            // Check if there are pending registrations
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) as pending_count
+                FROM registrations 
+                WHERE parent_account_id = ? AND payment_status = 'pending'
+            ");
+            $stmt->execute([$parent['id']]);
+            $result = $stmt->fetch();
+            $pendingCount = (int)$result['pending_count'];
+            
+            if ($rejectedCount > 0 && $pendingCount == 0) {
+                // All registrations rejected, none pending
+                return [
+                    'success' => false,
+                    'error' => 'rejected',
+                    'message' => 'Your registration has been rejected. Please contact the academy or submit a new registration.'
+                ];
+            } else if ($pendingCount > 0) {
+                // Has pending registrations waiting for approval
+                return [
+                    'success' => false,
+                    'error' => 'pending',
+                    'message' => 'Your registration is pending approval. Please wait for the academy to review your payment and approve your registration.'
+                ];
+            } else {
+                // No registrations at all (shouldn't happen, but handle it)
+                return [
+                    'success' => false,
+                    'error' => 'no_registration',
+                    'message' => 'No registration found. Please submit a new registration.'
+                ];
+            }
+        }
+        
+        // Parent has approved children - login successful
         return [
             'success' => true,
             'user_type' => 'parent',
             'user_data' => $parent,
-            'children' => $children
+            'children' => $approvedChildren
         ];
     }
     
-    // Authentication failed
+    // Authentication failed - invalid credentials
     return [
         'success' => false,
-        'error' => 'Invalid email or password'
+        'error' => 'invalid_credentials',
+        'message' => 'Invalid email or password'
     ];
 }
 
