@@ -907,7 +907,7 @@
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         border: 2px solid #fbbf24;
         font-size: 14px;
-    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 30px rgba(30, 41, 59, 0.6)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(30, 41, 59, 0.5)';">
+    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 30px rgba(30, 41, 59, 0.6);'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(30, 41, 59, 0.5)';">
         <div style="
             width: 32px;
             height: 32px;
@@ -1161,6 +1161,14 @@
             <p style="font-size: 11.5px; margin: 4px 0; color: #111827;"><strong>Date:</strong> <span id="pdf-date-2"></span></p>
         </div>
     </div>
+
+    <!-- NOTES SECTION BELOW SIGNATURE AND DECLARATION -->
+    <div style="margin-top: 18px; padding: 12px; border: 1px solid #d1d5db; border-radius: 4px; background: #f9fafb;">
+        <h4 style="margin: 0 0 8px 0; font-size: 11px; font-weight: 700; color: #111827; text-transform: uppercase;">NOTES / 备注</h4>
+        <p style="font-size: 10.5px; line-height: 1.5; margin: 0; color: #374151;">
+            <strong>Fees are non-refundable</strong> and must be paid by the 10th of every month. Strict discipline and punctuality are required at all times. The Academy reserves the right to adjust training schedules and venues when necessary. 学费概不退款，必须在每月10号前缴清。学员概不退课，并在每月10号前缴清。学院保留在有需要时调整训练时间及地点的权利。
+        </p>
+    </div>
 </div>
 
 
@@ -1177,3 +1185,4 @@
 
 
 
+</body>
