@@ -3,7 +3,7 @@
  * process_registration.php - Complete Registration Processing with PHPMailer
  * Handles student registration, account creation, and email notification
  * Stage 3: Multi-child parent system - auto-detects parent by email
- * FIXED: String escaping in email template
+ * UPDATED: Password is now last 4 digits of IC number
  */
 
 header('Content-Type: application/json');
@@ -20,12 +20,13 @@ require 'PHPMailer/PHPMailer.php';
 require 'PHPMailer/SMTP.php';
 
 // =========================
-// Helper: Generate password
+// Helper: Generate password from IC
 // =========================
-function generateRandomPassword(): string {
-    $part1 = substr(str_shuffle('ABCDEFGHJKLMNPQRSTUVWXYZ23456789'), 0, 4);
-    $part2 = substr(str_shuffle('abcdefghjkmnpqrstuvwxyz'), 0, 4);
-    return $part1 . $part2;
+function generatePasswordFromIC(string $ic): string {
+    // Remove dashes and get last 4 digits
+    $icClean = str_replace('-', '', $ic);
+    $last4 = substr($icClean, -4);
+    return $last4;
 }
 
 // ==========================================
@@ -60,7 +61,7 @@ function findOrCreateParentAccount(PDO $conn, array $parentData): array {
 
     // Create new parent account
     $parentCode = generateParentCode($conn);
-    $plainPassword = generateRandomPassword();
+    $plainPassword = generatePasswordFromIC($parentData['ic']);
     $hash = password_hash($plainPassword, PASSWORD_DEFAULT);
 
     $stmt = $conn->prepare("INSERT INTO parent_accounts
@@ -168,6 +169,8 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
                     <td style='padding: 12px 0 8px 0; color: #856404; font-weight: 600; vertical-align: top;'>Parent Password:</td>
                     <td style='padding: 12px 0 8px 0;'>
                         <div style='font-size: 28px; color: #dc2626; font-weight: bold; font-family: Courier, monospace; letter-spacing: 4px; background: #fff; padding: 16px 20px; border-radius: 8px; display: inline-block; border: 2px solid #ffc107;'>{$parentPassword}</div>
+                        <br>
+                        <span style='font-size: 13px; color: #856404; display: block; margin-top: 8px;'>💡 This is the <strong>last 4 digits of your IC number</strong></span>
                     </td>
                 </tr>
             </table>
@@ -230,7 +233,7 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
                     </tr>
                     <tr>
                         <td style='padding: 6px 0; color: #166534; font-weight: 600; vertical-align: top;'>Child Password:</td>
-                        <td style='padding: 6px 0; color: #166534;'><code style='background: #fff; padding: 6px 12px; border: 1px solid #bbf7d0; border-radius: 4px; font-family: monospace; font-size: 14px;'>{$childPassword}</code><br><span style='font-size: 12px; color: #15803d;'>(Optional: For child to login independently)</span></td>
+                        <td style='padding: 6px 0; color: #166534;'><code style='background: #fff; padding: 6px 12px; border: 1px solid #bbf7d0; border-radius: 4px; font-family: monospace; font-size: 14px;'>{$childPassword}</code><br><span style='font-size: 12px; color: #15803d;'>(Last 4 digits of child's IC · Optional for independent login)</span></td>
                     </tr>
                 </table>
             </div>
@@ -238,6 +241,11 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
             <div style='background: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 24px 0;'>
                 <p style='margin: 0 0 8px 0; font-weight: 600; color: #1e40af; font-size: 16px;'>💡 Register More Children</p>
                 <p style='margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;'>To register additional children, simply use the <strong>same email address</strong> ({$toEmail}) when filling the registration form. All your children will be automatically linked to your parent account!</p>
+            </div>
+            
+            <div style='background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 8px; margin: 24px 0;'>
+                <p style='margin: 0 0 8px 0; font-weight: 600; color: #92400e; font-size: 15px;'>🔐 Easy Password System</p>
+                <p style='margin: 0; color: #92400e; font-size: 13px; line-height: 1.6;'>All passwords are the <strong>last 4 digits of the IC number</strong> for easy remembering. Parent uses their IC, children use their IC.</p>
             </div>
             
             <div style='background: #f8fafc; padding: 20px; border-radius: 8px; margin: 24px 0;'>
@@ -318,8 +326,8 @@ try {
     $count = (int)$stmt->fetchColumn();
     $regNumber = 'WSA' . $year . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
 
-    // Student account password (for optional child login)
-    $generatedPassword = generateRandomPassword();
+    // Student account password (last 4 digits of child's IC)
+    $generatedPassword = generatePasswordFromIC($childIC);
     $hashedPassword    = password_hash($generatedPassword, PASSWORD_DEFAULT);
 
     $studentId    = $regNumber;
@@ -438,6 +446,7 @@ try {
         'registration_number' => $regNumber,
         'student_id' => $studentId,
         'email' => $parentEmail,
+        'password' => $generatedPassword,
         'child_password' => $generatedPassword,
         'parent_account_id' => $parentAccountId,
         'parent_code' => $parentCode,
