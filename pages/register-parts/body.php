@@ -144,7 +144,7 @@
 
                 <div class="space-y-4">
                     <!-- Basic Level -->
-                    <div class="border-l-4 border-slate-700 bg-slate-50 rounded-r-xl p-4">
+                    <div class="border-l-4 border-slate-700 bg-slate-50 rounded-r-xl p-4 basic-routines">
                         <h3 class="font-bold text-slate-800 mb-3">基础 Basic</h3>
                         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                             <label class="cursor-pointer flex items-center gap-2">
