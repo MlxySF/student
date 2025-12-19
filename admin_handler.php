@@ -133,8 +133,19 @@ if ($action === 'delete_registration') {
     try {
         $pdo->beginTransaction();
         
-        // Get registration details
-        $checkStmt = $pdo->prepare("SELECT id, registration_number, student_account_id, email FROM registrations WHERE id = ?");
+        // Get registration details including parent account info
+        $checkStmt = $pdo->prepare("
+            SELECT 
+                r.id, 
+                r.registration_number, 
+                r.student_account_id, 
+                r.parent_account_id,
+                r.email,
+                s.parent_account_id as student_parent_id
+            FROM registrations r
+            LEFT JOIN students s ON r.student_account_id = s.id
+            WHERE r.id = ?
+        ");
         $checkStmt->execute([$regId]);
         $registration = $checkStmt->fetch();
         
@@ -144,41 +155,93 @@ if ($action === 'delete_registration') {
         } else {
             $regNumber = $registration['registration_number'];
             $studentAccountId = $registration['student_account_id'];
+            $parentAccountId = $registration['parent_account_id'] ?? $registration['student_parent_id'];
             $email = $registration['email'];
             
-            // Delete the registration
+            error_log("[Delete Registration] Reg#: {$regNumber}, Student ID: {$studentAccountId}, Parent ID: {$parentAccountId}");
+            
+            // Delete the registration first
             $stmt = $pdo->prepare("DELETE FROM registrations WHERE id = ?");
             $stmt->execute([$regId]);
             
             // Delete associated student account if exists
             if ($studentAccountId) {
-                $stmt = $pdo->prepare("DELETE FROM students WHERE id = ?");
+                // Delete parent-child relationship
+                $stmt = $pdo->prepare("DELETE FROM parent_child_relationships WHERE student_id = ?");
                 $stmt->execute([$studentAccountId]);
                 
-                // Also delete any enrollments for this student
+                // Delete enrollments
                 $stmt = $pdo->prepare("DELETE FROM enrollments WHERE student_id = ?");
                 $stmt->execute([$studentAccountId]);
                 
-                // Delete any attendance records
+                // Delete attendance records
                 $stmt = $pdo->prepare("DELETE FROM attendance WHERE student_id = ?");
                 $stmt->execute([$studentAccountId]);
                 
-                // Delete any invoices
+                // Delete invoices
                 $stmt = $pdo->prepare("DELETE FROM invoices WHERE student_id = ?");
                 $stmt->execute([$studentAccountId]);
                 
-                // Delete any payments
+                // Delete payments
                 $stmt = $pdo->prepare("DELETE FROM payments WHERE student_id = ?");
                 $stmt->execute([$studentAccountId]);
+                
+                // Finally delete the student account
+                $stmt = $pdo->prepare("DELETE FROM students WHERE id = ?");
+                $stmt->execute([$studentAccountId]);
+                
+                error_log("[Delete Registration] Deleted student account ID: {$studentAccountId}");
             }
             
-            $pdo->commit();
-            $_SESSION['success'] = "Registration $regNumber and associated student account deleted successfully!";
+            // Check if parent account should be deleted
+            if ($parentAccountId) {
+                // Count how many children this parent still has
+                $stmt = $pdo->prepare("
+                    SELECT COUNT(*) as child_count 
+                    FROM students 
+                    WHERE parent_account_id = ?
+                ");
+                $stmt->execute([$parentAccountId]);
+                $result = $stmt->fetch();
+                $childCount = (int)$result['child_count'];
+                
+                error_log("[Delete Registration] Parent ID {$parentAccountId} has {$childCount} remaining children");
+                
+                if ($childCount === 0) {
+                    // No more children - delete the parent account
+                    
+                    // First delete any remaining relationships (should be none, but just in case)
+                    $stmt = $pdo->prepare("DELETE FROM parent_child_relationships WHERE parent_id = ?");
+                    $stmt->execute([$parentAccountId]);
+                    
+                    // Delete the parent account
+                    $stmt = $pdo->prepare("SELECT parent_id, full_name FROM parent_accounts WHERE id = ?");
+                    $stmt->execute([$parentAccountId]);
+                    $parentInfo = $stmt->fetch();
+                    
+                    $stmt = $pdo->prepare("DELETE FROM parent_accounts WHERE id = ?");
+                    $stmt->execute([$parentAccountId]);
+                    
+                    error_log("[Delete Registration] Deleted parent account: {$parentInfo['parent_id']} ({$parentInfo['full_name']})");
+                    
+                    $pdo->commit();
+                    $_SESSION['success'] = "Registration {$regNumber} deleted successfully! Student account and parent account (no other children) have been removed.";
+                } else {
+                    // Parent still has other children - keep the parent account
+                    $pdo->commit();
+                    $_SESSION['success'] = "Registration {$regNumber} deleted successfully! Student account removed. Parent account retained ({$childCount} other child(ren) exist).";
+                }
+            } else {
+                // No parent account linked
+                $pdo->commit();
+                $_SESSION['success'] = "Registration {$regNumber} and associated student account deleted successfully!";
+            }
         }
     } catch (PDOException $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
+        error_log("[Delete Registration] Error: " . $e->getMessage());
         $_SESSION['error'] = "Database error: " . $e->getMessage();
     }
     header('Location: admin.php?page=registrations');
