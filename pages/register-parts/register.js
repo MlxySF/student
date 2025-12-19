@@ -79,7 +79,7 @@
         const isStateOrBackupTeam = selectedStatus === 'State Team 州队' || selectedStatus === 'Backup Team 后备队';
         
         // Find the Basic (基础) section - it has border-slate-700 class
-        const basicSection = document.querySelector('.border-l-4.border-slate-700');
+        const basicSection = document.querySelector('.basic-routines');
         
         if (basicSection) {
             if (isStateOrBackupTeam) {
