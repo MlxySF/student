@@ -301,38 +301,70 @@ $pdf->SetX(15);
 $pdf->SetFillColor(15, 52, 96);
 $pdf->SetDrawColor(15, 52, 96);
 $pdf->SetLineWidth(0.3);
-$pdf->SetFont('Helvetica', 'B', 10);
+$pdf->SetFont('Helvetica', 'B', 9);
 $pdf->SetTextColor(255, 255, 255);
 
-$pdf->Cell(90, 8, 'DESCRIPTION', 1, 0, 'L', true);
-$pdf->Cell(40, 8, 'CLASS CODE', 1, 0, 'C', true);
-$pdf->Cell(20, 8, 'QTY', 1, 0, 'C', true);
-$pdf->Cell(35, 8, 'AMOUNT (RM)', 1, 1, 'R', true);
+// Adjusted column widths for wrapping
+$pdf->Cell(75, 8, 'DESCRIPTION', 1, 0, 'L', true);
+$pdf->Cell(35, 8, 'CLASS CODE', 1, 0, 'C', true);
+$pdf->Cell(15, 8, 'QTY', 1, 0, 'C', true);
+$pdf->Cell(30, 8, 'AMOUNT (RM)', 1, 1, 'R', true);
 
-// Item row
-$pdf->SetFont('Helvetica', '', 10);
+// Item row with wrapped description
+$pdf->SetFont('Helvetica', '', 9);
 $pdf->SetTextColor(0, 0, 0);
 $pdf->SetDrawColor(220, 220, 220);
 $pdf->SetLineWidth(0.2);
 
-$description = strlen($invoice['description']) > 55 ? substr($invoice['description'], 0, 55) . '...' : $invoice['description'];
+$description = $invoice['description'];
 $class_code = !empty($invoice['class_code']) ? $invoice['class_code'] : '-';
+$amount = number_format($invoice['amount'], 2);
 
+// Store current Y position
+$startY = $pdf->GetY();
+
+// Create a temporary cell to calculate height of wrapped text
+$pdf->SetXY(15, $startY);
+$pdf->SetFont('Helvetica', '', 9);
+
+// Get the height needed for the wrapped description (max 3 lines)
+$cellHeight = $pdf->GetStringWidth($description) > 60 ? 15 : 8;
+
+// Draw the cells with proper alignment
 $pdf->SetX(15);
-$pdf->Cell(90, 8, $description, 1, 0, 'L');
-$pdf->Cell(40, 8, $class_code, 1, 0, 'C');
-$pdf->Cell(20, 8, '1', 1, 0, 'C');
-$pdf->SetFont('Helvetica', 'B', 10);
-$pdf->Cell(35, 8, number_format($invoice['amount'], 2), 1, 1, 'R');
+$pdf->MultiCell(75, 5, $description, 1, 'L');
 
-$pdf->Ln(5);
+// Get the new Y position after multiline cell
+$endY = $pdf->GetY();
+if ($endY - $startY < 8) {
+    $cellHeight = 8;
+} else {
+    $cellHeight = $endY - $startY;
+}
+
+// Redraw with calculated height
+$pdf->SetXY(15, $startY);
+$pdf->MultiCell(75, 5, $description, 1, 'L');
+
+$pdf->SetXY(90, $startY);
+$pdf->SetFont('Helvetica', '', 9);
+$pdf->Cell(35, $cellHeight, $class_code, 1, 0, 'C');
+
+$pdf->SetX(125);
+$pdf->Cell(15, $cellHeight, '1', 1, 0, 'C');
+
+$pdf->SetX(140);
+$pdf->SetFont('Helvetica', 'B', 9);
+$pdf->Cell(30, $cellHeight, 'RM ' . $amount, 1, 1, 'R');
+
+$pdf->Ln(3);
 
 // ============================================================
 // TOTALS SECTION
 // ============================================================
 
 // Subtotal
-$pdf->SetX(105);
+$pdf->SetX(95);
 $pdf->SetFont('Helvetica', '', 10);
 $pdf->SetTextColor(80, 80, 80);
 $pdf->Cell(60, 6, 'Subtotal:', 0, 0, 'R');
@@ -341,7 +373,7 @@ $pdf->SetFont('Helvetica', 'B', 10);
 $pdf->Cell(0, 6, 'RM ' . number_format($invoice['amount'], 2), 0, 1, 'R');
 
 // Tax
-$pdf->SetX(105);
+$pdf->SetX(95);
 $pdf->SetFont('Helvetica', '', 10);
 $pdf->SetTextColor(80, 80, 80);
 $pdf->Cell(60, 6, 'Tax (0%):', 0, 0, 'R');
@@ -350,14 +382,14 @@ $pdf->SetFont('Helvetica', 'B', 10);
 $pdf->Cell(0, 6, 'RM 0.00', 0, 1, 'R');
 
 // Line separator
-$pdf->SetX(105);
+$pdf->SetX(95);
 $pdf->SetDrawColor(15, 52, 96);
 $pdf->SetLineWidth(0.4);
-$pdf->Line(105, $pdf->GetY(), 195, $pdf->GetY());
+$pdf->Line(95, $pdf->GetY(), 195, $pdf->GetY());
 $pdf->Ln(2);
 
 // Total Amount
-$pdf->SetX(105);
+$pdf->SetX(95);
 $pdf->SetFont('Helvetica', 'B', 11);
 $pdf->SetFillColor(15, 52, 96);
 $pdf->SetTextColor(255, 255, 255);
