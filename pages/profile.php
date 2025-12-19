@@ -1,22 +1,33 @@
 <?php
 // Student Profile Page - Updated for multi-child parent support
-// FIXED: Remove child_dob and child_ic (don't exist), use ic column, allow parent editing
+// FIXED: Enable phone, Chinese name editing, and school dropdown for parents
 
 // Handle profile update for parents
 if (isParent() && isset($_POST['action']) && $_POST['action'] === 'update_child_profile') {
     $registration_id = getActiveStudentId();
     $name_en = trim($_POST['name_en']);
+    $name_cn = trim($_POST['name_cn']);
     $ic = trim($_POST['ic']);
+    $phone = trim($_POST['phone']);
     $school = trim($_POST['school']);
+    $school_other = isset($_POST['school_other']) ? trim($_POST['school_other']) : '';
+    
+    // If school is "Others", use the custom input
+    if ($school === 'Others' && !empty($school_other)) {
+        $school = $school_other;
+    }
     
     try {
-        $stmt = $pdo->prepare("UPDATE registrations SET name_en = ?, ic = ?, school = ?, updated_at = NOW() WHERE id = ?");
-        $stmt->execute([$name_en, $ic, $school, $registration_id]);
+        $stmt = $pdo->prepare("UPDATE registrations SET name_en = ?, name_cn = ?, ic = ?, phone = ?, school = ?, updated_at = NOW() WHERE id = ?");
+        $stmt->execute([$name_en, $name_cn, $ic, $phone, $school, $registration_id]);
         
         echo '<div class="alert alert-success alert-dismissible fade show" role="alert">';
         echo '<i class="fas fa-check-circle"></i> Child profile updated successfully!';
         echo '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
         echo '</div>';
+        
+        // Reload updated data
+        $_GET['updated'] = '1';
     } catch (Exception $e) {
         echo '<div class="alert alert-danger alert-dismissible fade show" role="alert">';
         echo '<i class="fas fa-exclamation-triangle"></i> Error updating profile: ' . htmlspecialchars($e->getMessage());
@@ -32,9 +43,9 @@ if (isParent()) {
     $student = $stmt->fetch();
     if ($student) {
         $student['full_name'] = $student['name_en'];
+        $student['chinese_name'] = $student['name_cn'] ?? '';
         $student['student_id'] = $student['registration_number'];
-        $student['ic_number'] = $student['ic'] ?? ''; // Use ic column from registrations
-        // Don't set date_of_birth - it doesn't exist in registrations
+        $student['ic_number'] = $student['ic'] ?? '';
     }
     $studentAccountId = $student['student_account_id'] ?? null;
 } else {
@@ -104,6 +115,9 @@ $invoice_stats = $stmt->fetch();
                             <i class="fas fa-user-circle fa-5x text-primary"></i>
                         </div>
                         <h4 class="mt-3 mb-1"><?php echo htmlspecialchars($student['full_name']); ?></h4>
+                        <?php if (!empty($student['chinese_name'])): ?>
+                        <p class="text-muted mb-2"><?php echo htmlspecialchars($student['chinese_name']); ?></p>
+                        <?php endif; ?>
                         <p class="text-muted">
                             <span class="badge bg-dark"><?php echo $student['student_id']; ?></span>
                             <?php if (!empty($student['student_status']) && $student['student_status'] !== 'Student 学生'): ?>
@@ -124,9 +138,15 @@ $invoice_stats = $stmt->fetch();
                                 <td><?php echo $student['student_id']; ?></td>
                             </tr>
                             <tr>
-                                <td><strong><i class="fas fa-user text-primary"></i> Full Name:</strong></td>
+                                <td><strong><i class="fas fa-user text-primary"></i> English Name:</strong></td>
                                 <td><?php echo htmlspecialchars($student['full_name']); ?></td>
                             </tr>
+                            <?php if (!empty($student['chinese_name'])): ?>
+                            <tr>
+                                <td><strong><i class="fas fa-language text-primary"></i> Chinese Name:</strong></td>
+                                <td><?php echo htmlspecialchars($student['chinese_name']); ?></td>
+                            </tr>
+                            <?php endif; ?>
                             <tr>
                                 <td><strong><i class="fas fa-envelope text-primary"></i> Email:</strong></td>
                                 <td><?php echo htmlspecialchars($student['email']); ?></td>
@@ -343,20 +363,54 @@ $my_classes = $stmt->fetchAll();
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Child's Full Name (English) *</label>
+                        <label class="form-label">English Name 英文名 *</label>
                         <input type="text" name="name_en" class="form-control" 
                                value="<?php echo htmlspecialchars($student['name_en'] ?? $student['full_name']); ?>" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">IC Number/Passport</label>
+                        <label class="form-label">Chinese Name 中文名</label>
+                        <input type="text" name="name_cn" class="form-control" 
+                               value="<?php echo htmlspecialchars($student['name_cn'] ?? ''); ?>" 
+                               placeholder="张三">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">IC Number/Passport 身份证号码</label>
                         <input type="text" name="ic" class="form-control" 
-                               value="<?php echo htmlspecialchars($student['ic'] ?? ''); ?>">
+                               value="<?php echo htmlspecialchars($student['ic'] ?? ''); ?>" 
+                               placeholder="000000-00-0000">
                         <small class="text-muted">Child's identification number</small>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">School</label>
-                        <input type="text" name="school" class="form-control" 
-                               value="<?php echo htmlspecialchars($student['school'] ?? ''); ?>">
+                        <label class="form-label">Phone Number 电话号码 *</label>
+                        <input type="tel" name="phone" class="form-control" 
+                               value="<?php echo htmlspecialchars($student['phone'] ?? ''); ?>" 
+                               placeholder="012-345 6789" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">School 学校 *</label>
+                        <select name="school" id="school-edit" class="form-select" required>
+                            <option value="">Select School...</option>
+                            <option value="SJK(C) PUAY CHAI 2" <?php echo ($student['school'] ?? '') === 'SJK(C) PUAY CHAI 2' ? 'selected' : ''; ?>>SJK(C) PUAY CHAI 2 (培才二校)</option>
+                            <option value="SJK(C) Chee Wen" <?php echo ($student['school'] ?? '') === 'SJK(C) Chee Wen' ? 'selected' : ''; ?>>SJK(C) Chee Wen</option>
+                            <option value="SJK(C) Subang" <?php echo ($student['school'] ?? '') === 'SJK(C) Subang' ? 'selected' : ''; ?>>SJK(C) Subang</option>
+                            <option value="SJK(C) Sin Ming" <?php echo ($student['school'] ?? '') === 'SJK(C) Sin Ming' ? 'selected' : ''; ?>>SJK(C) Sin Ming</option>
+                            <option value="Others" <?php 
+                                $predefined_schools = ['SJK(C) PUAY CHAI 2', 'SJK(C) Chee Wen', 'SJK(C) Subang', 'SJK(C) Sin Ming'];
+                                echo (!empty($student['school']) && !in_array($student['school'], $predefined_schools)) ? 'selected' : ''; 
+                            ?>>Others (其他)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="school-other-container" style="<?php 
+                        $predefined_schools = ['SJK(C) PUAY CHAI 2', 'SJK(C) Chee Wen', 'SJK(C) Subang', 'SJK(C) Sin Ming'];
+                        echo (empty($student['school']) || in_array($student['school'], $predefined_schools)) ? 'display: none;' : ''; 
+                    ?>">
+                        <label class="form-label">Please specify school name *</label>
+                        <input type="text" name="school_other" id="school-other-edit" class="form-control" 
+                               value="<?php 
+                                   $predefined_schools = ['SJK(C) PUAY CHAI 2', 'SJK(C) Chee Wen', 'SJK(C) Subang', 'SJK(C) Sin Ming'];
+                                   echo (!empty($student['school']) && !in_array($student['school'], $predefined_schools)) ? htmlspecialchars($student['school']) : ''; 
+                               ?>" 
+                               placeholder="Enter school name">
                     </div>
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i> Student ID and registration details cannot be changed. Contact admin for major changes.
@@ -372,6 +426,22 @@ $my_classes = $stmt->fetchAll();
         </div>
     </div>
 </div>
+
+<script>
+// Show/hide school other field for edit modal
+document.getElementById('school-edit').addEventListener('change', function() {
+    const otherContainer = document.getElementById('school-other-container');
+    const otherInput = document.getElementById('school-other-edit');
+    if (this.value === 'Others') {
+        otherContainer.style.display = 'block';
+        otherInput.required = true;
+    } else {
+        otherContainer.style.display = 'none';
+        otherInput.required = false;
+        otherInput.value = '';
+    }
+});
+</script>
 <?php endif; ?>
 
 <!-- Edit Profile Modal (For direct student login) -->
