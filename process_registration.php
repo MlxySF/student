@@ -6,6 +6,7 @@
  * UPDATED: Password is now last 4 digits of IC number
  * UPDATED: Auto-enrollment into classes based on schedule selection
  * UPDATED: Creates registration fee invoice viewable in parent portal
+ * UPDATED: Links payment receipt to invoice for admin verification
  */
 
 header('Content-Type: application/json');
@@ -239,14 +240,14 @@ function autoEnrollStudent(PDO $conn, int $studentId, string $scheduleString): a
 }
 
 // ==========================================
-// REGISTRATION FEE INVOICE CREATION
+// REGISTRATION FEE INVOICE & PAYMENT
 // ==========================================
 
 /**
- * Create a registration fee invoice for the student/parent
- * This makes the registration fee visible in the parent portal
+ * Create a registration fee invoice and payment record
+ * Links the uploaded payment receipt to the invoice
  */
-function createRegistrationFeeInvoice(PDO $conn, int $studentId, int $parentAccountId, float $amount, string $studentName): array {
+function createRegistrationInvoiceAndPayment(PDO $conn, int $studentId, int $parentAccountId, float $amount, string $studentName, array $paymentData): array {
     try {
         // Generate invoice number
         $invoiceNumber = 'INV-REG-' . date('Ym') . '-' . str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT);
@@ -283,16 +284,47 @@ function createRegistrationFeeInvoice(PDO $conn, int $studentId, int $parentAcco
         
         $invoiceId = (int)$conn->lastInsertId();
         
-        error_log("[Invoice] Created registration fee invoice: {$invoiceNumber} for student ID={$studentId}, amount={$amount}");
+        error_log("[Invoice] Created registration fee invoice: {$invoiceNumber} (ID: {$invoiceId}) for student ID={$studentId}, amount={$amount}");
+        
+        // Create payment record with the uploaded receipt
+        // Note: We don't have class_id for registration payment, so it's NULL
+        $stmt = $conn->prepare("
+            INSERT INTO payments (
+                student_id,
+                class_id,
+                invoice_id,
+                parent_account_id,
+                amount,
+                payment_month,
+                receipt_data,
+                receipt_mime_type,
+                verification_status,
+                upload_date
+            ) VALUES (?, NULL, ?, ?, ?, ?, ?, 'image/jpeg', 'pending', NOW())
+        ");
+        
+        $stmt->execute([
+            $studentId,
+            $invoiceId,
+            $parentAccountId,
+            $amount,
+            date('Y-m'),  // Current month
+            $paymentData['receipt_base64']
+        ]);
+        
+        $paymentId = (int)$conn->lastInsertId();
+        
+        error_log("[Payment] Created payment record (ID: {$paymentId}) linked to invoice {$invoiceNumber}");
         
         return [
             'success' => true,
             'invoice_id' => $invoiceId,
-            'invoice_number' => $invoiceNumber
+            'invoice_number' => $invoiceNumber,
+            'payment_id' => $paymentId
         ];
         
     } catch (PDOException $e) {
-        error_log("[Invoice] ERROR creating registration fee invoice: " . $e->getMessage());
+        error_log("[Invoice/Payment] ERROR: " . $e->getMessage());
         return [
             'success' => false,
             'error' => $e->getMessage()
@@ -443,11 +475,11 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
             <div style='background: #f8fafc; padding: 20px; border-radius: 8px; margin: 24px 0;'>
                 <h4 style='margin: 0 0 12px 0; color: #1e293b; font-size: 16px;'>📋 Next Steps:</h4>
                 <ol style='margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.8;'>
-                    <li>Your payment is under review by the academy</li>
+                    <li>Your payment receipt is under review by the academy</li>
                     <li>You'll receive approval notification via email</li>
-                    <li>After approval, login to the parent portal to view schedules, attendance, and invoices</li>
+                    <li>Login to the parent portal to view the registration invoice with your uploaded payment receipt</li>
+                    <li>After approval, the invoice status will change to "Paid"</li>
                     <li>Your child has been automatically enrolled in the selected classes</li>
-                    <li>The registration fee invoice is now visible in your parent portal</li>
                 </ol>
             </div>
         </div>
@@ -635,10 +667,21 @@ try {
               ", Skipped: " . count($enrollmentResults['skipped']));
 
     // ===============================
-    // CREATE REGISTRATION FEE INVOICE
+    // CREATE INVOICE AND LINK PAYMENT
     // ===============================
     
-    $invoiceResult = createRegistrationFeeInvoice($conn, $studentAccountId, $parentAccountId, $paymentAmount, $fullName);
+    $paymentData = [
+        'receipt_base64' => $data['payment_receipt_base64']
+    ];
+    
+    $invoiceResult = createRegistrationInvoiceAndPayment(
+        $conn, 
+        $studentAccountId, 
+        $parentAccountId, 
+        $paymentAmount, 
+        $fullName,
+        $paymentData
+    );
 
     $conn->commit();
     
@@ -670,6 +713,7 @@ try {
         'enrollment_results' => $enrollmentResults,
         'invoice_created' => $invoiceResult['success'],
         'invoice_number' => $invoiceResult['invoice_number'] ?? null,
+        'payment_id' => $invoiceResult['payment_id'] ?? null,
         'message' => $isNewParentAccount 
             ? 'Parent account created! Child registered and enrolled successfully. Check your email for parent password.' 
             : 'Child added and enrolled successfully to your parent account!',
