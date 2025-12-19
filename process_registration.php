@@ -7,7 +7,7 @@
 
 header('Content-Type: application/json');
 error_reporting(E_ALL);
-ini_set('display_errors', 0);
+ini_set('display_errors', 1); // TEMPORARILY SHOW ERRORS FOR DEBUGGING
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/error_log.txt');
 
@@ -122,7 +122,6 @@ function linkStudentToParent(PDO $conn, int $parentId, int $studentId, string $r
 
 // ===============
 // Email functions
-// (existing sendRegistrationEmail + getEmailHTMLContent kept as-is)
 // ===============
 
 function sendRegistrationEmail($toEmail, $studentName, $registrationNumber, $password, $studentStatus) {
@@ -154,19 +153,33 @@ function sendRegistrationEmail($toEmail, $studentName, $registrationNumber, $pas
     }
 }
 
-// (getEmailHTMLContent unchanged - omitted here for brevity in this snippet)
-// ...
+function getEmailHTMLContent($studentName, $registrationNumber, $email, $password, $studentStatus) {
+    return "<h1>Welcome to Wushu Sport Academy!</h1>
+    <p>Dear {$studentName},</p>
+    <p>Your registration ({$registrationNumber}) has been received!</p>
+    <p>Login: {$email}</p>
+    <p>Password: {$password}</p>
+    <p>Status: {$studentStatus}</p>";
+}
 
 // ============================
 // MAIN REGISTRATION PROCESSING
 // ============================
 
 try {
+    error_log("=== Registration Process Started ===");
+    
     $input = file_get_contents('php://input');
+    error_log("Raw input length: " . strlen($input));
+    
     $data = json_decode($input, true);
     if (!$data) {
-        throw new Exception('Invalid JSON data received');
+        $jsonError = json_last_error_msg();
+        error_log("JSON decode error: {$jsonError}");
+        throw new Exception('Invalid JSON data received: ' . $jsonError);
     }
+
+    error_log("Decoded data keys: " . implode(', ', array_keys($data)));
 
     $required = [
         'name_en', 'ic', 'age', 'school', 'status', 'phone', 'email',
@@ -177,32 +190,48 @@ try {
 
     foreach ($required as $field) {
         if (!isset($data[$field]) || (is_string($data[$field]) && trim($data[$field]) === '')) {
+            error_log("Missing field: {$field}");
             throw new Exception("Missing or empty required field: {$field}");
         }
     }
 
+    error_log("All required fields present");
+
     $host = 'localhost';
     $dbname = 'mlxysf_student_portal';
     $username = 'mlxysf_student_portal';
-    $password = 'YAjv86kdSAPpw';
+    $password_db = 'YAjv86kdSAPpw';
 
-    $conn = new PDO("mysql:host={$host};dbname={$dbname};charset=utf8mb4", $username, $password);
+    error_log("Connecting to database...");
+    $conn = new PDO("mysql:host={$host};dbname={$dbname};charset=utf8mb4", $username, $password_db);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    error_log("Database connected successfully");
 
     $conn->beginTransaction();
+    error_log("Transaction started");
 
     $email = trim($data['email']);
+    error_log("Processing registration for email: {$email}");
 
-    // Existing logic: prevent duplicate non-rejected registrations for same email
+    // Check for existing registration
     $stmt = $conn->prepare("SELECT id, payment_status, student_account_id FROM registrations WHERE email = ? ORDER BY id DESC LIMIT 1");
     $stmt->execute([$email]);
     $existingRegistration = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($existingRegistration) {
+        error_log("Found existing registration: ID={$existingRegistration['id']}, Status={$existingRegistration['payment_status']}");
+    } else {
+        error_log("No existing registration found");
+    }
 
     $existingStudent = null;
     if (!$existingRegistration || $existingRegistration['payment_status'] === 'rejected') {
         $stmt = $conn->prepare("SELECT id, student_id FROM students WHERE email = ? LIMIT 1");
         $stmt->execute([$email]);
         $existingStudent = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($existingStudent) {
+            error_log("Found existing student: ID={$existingStudent['id']}");
+        }
     }
 
     $isReregistration = false;
@@ -213,7 +242,9 @@ try {
         $isReregistration = true;
         $oldRegistrationId = (int)$existingRegistration['id'];
         $oldStudentAccountId = (int)$existingRegistration['student_account_id'];
+        error_log("Reregistration detected: Old Reg ID={$oldRegistrationId}, Old Student ID={$oldStudentAccountId}");
     } elseif ($existingStudent || ($existingRegistration && $existingRegistration['payment_status'] !== 'rejected')) {
+        error_log("Email already registered (not rejected)");
         throw new Exception('Email already registered. Please use a different email address.');
     }
 
@@ -223,8 +254,9 @@ try {
     $stmt->execute([$year]);
     $count = (int)$stmt->fetchColumn();
     $regNumber = 'WSA' . $year . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+    error_log("Generated registration number: {$regNumber}");
 
-    // Student account password (child or independent student)
+    // Student account password
     $generatedPassword = generateRandomPassword();
     $hashedPassword    = password_hash($generatedPassword, PASSWORD_DEFAULT);
 
@@ -233,32 +265,44 @@ try {
     $phone        = trim($data['phone']);
     $studentStatus = trim($data['status']);
 
+    error_log("Student details - Name: {$fullName}, Phone: {$phone}, Status: {$studentStatus}");
+
     // ===============================
-    // NEW: Parent account resolution
+    // Parent account resolution
     // ===============================
 
     $hasExistingParentAccount = !empty($data['has_parent_account']);
     $parentLoginPassword      = $data['parent_password_login'] ?? null;
+
+    error_log("Has existing parent account: " . ($hasExistingParentAccount ? 'YES' : 'NO'));
 
     // Build parent data from form
     $parentData = [
         'name'  => trim($data['parent_name']),
         'email' => isset($data['parent_email']) && $data['parent_email'] !== ''
             ? trim($data['parent_email'])
-            : trim($data['email']), // fallback: use student email if no separate parent email
+            : trim($data['email']),
         'phone' => $data['parent_phone'] ?? $phone,
         'ic'    => trim($data['parent_ic']),
     ];
 
-    $parentAccountInfo = findOrCreateParentAccount(
-        $conn,
-        $parentData,
-        $hasExistingParentAccount ? $parentLoginPassword : null
-    );
+    error_log("Parent data - Name: {$parentData['name']}, Email: {$parentData['email']}, IC: {$parentData['ic']}");
+
+    try {
+        $parentAccountInfo = findOrCreateParentAccount(
+            $conn,
+            $parentData,
+            $hasExistingParentAccount ? $parentLoginPassword : null
+        );
+        error_log("Parent account resolved - ID: {$parentAccountInfo['id']}, Is New: " . ($parentAccountInfo['is_new'] ? 'YES' : 'NO'));
+    } catch (Exception $e) {
+        error_log("Error in findOrCreateParentAccount: " . $e->getMessage());
+        throw $e;
+    }
 
     $parentAccountId    = $parentAccountInfo['id'];
     $isNewParentAccount = $parentAccountInfo['is_new'];
-    $parentPlainPassword = $parentAccountInfo['plain_password']; // only for new parent
+    $parentPlainPassword = $parentAccountInfo['plain_password'];
 
     // ======================
     // Create / update student
@@ -267,6 +311,7 @@ try {
     $studentAccountId = null;
 
     if ($isReregistration && $oldStudentAccountId) {
+        error_log("Updating existing student account ID: {$oldStudentAccountId}");
         $stmt = $conn->prepare("UPDATE students 
             SET student_id = ?, full_name = ?, email = ?, phone = ?, password = ?, student_status = ?
             WHERE id = ?");
@@ -280,7 +325,9 @@ try {
             $oldStudentAccountId,
         ]);
         $studentAccountId = $oldStudentAccountId;
+        error_log("Student account updated successfully");
     } else {
+        error_log("Creating new student account");
         $stmt = $conn->prepare("INSERT INTO students
             (student_id, full_name, email, phone, password, student_status, created_at)
             VALUES (?, ?, ?, ?, ?, ?, NOW())");
@@ -293,10 +340,18 @@ try {
             $studentStatus,
         ]);
         $studentAccountId = (int)$conn->lastInsertId();
+        error_log("Student account created with ID: {$studentAccountId}");
     }
 
-    // Link student to parent (Stage 3 core)
-    linkStudentToParent($conn, $parentAccountId, $studentAccountId, 'guardian');
+    // Link student to parent
+    error_log("Linking student {$studentAccountId} to parent {$parentAccountId}");
+    try {
+        linkStudentToParent($conn, $parentAccountId, $studentAccountId, 'guardian');
+        error_log("Student linked to parent successfully");
+    } catch (Exception $e) {
+        error_log("Error linking student to parent: " . $e->getMessage());
+        throw $e;
+    }
 
     // ==========================
     // Insert / update registration
@@ -332,6 +387,7 @@ try {
     ];
 
     if ($isReregistration && $oldRegistrationId) {
+        error_log("Updating existing registration ID: {$oldRegistrationId}");
         $sql = "UPDATE registrations SET
             registration_number = :reg_num,
             name_cn = :name_cn,
@@ -367,7 +423,9 @@ try {
         $stmt = $conn->prepare($sql);
         $commonRegFields[':old_reg_id'] = $oldRegistrationId;
         $stmt->execute($commonRegFields);
+        error_log("Registration updated successfully");
     } else {
+        error_log("Creating new registration record");
         $sql = "INSERT INTO registrations (
             registration_number, name_cn, name_en, ic, age, school, status,
             phone, email, level, events, schedule, parent_name, parent_ic,
@@ -386,12 +444,18 @@ try {
 
         $stmt = $conn->prepare($sql);
         $stmt->execute($commonRegFields);
+        error_log("Registration record created successfully");
     }
 
     $conn->commit();
+    error_log("Transaction committed successfully");
 
-    // For now, keep sending student login email (can later switch to parent email template)
+    // Send email
+    error_log("Sending registration email to {$email}");
     $emailSent = sendRegistrationEmail($email, $fullName, $regNumber, $generatedPassword, $studentStatus);
+    error_log("Email sent: " . ($emailSent ? 'SUCCESS' : 'FAILED'));
+
+    error_log("=== Registration Process Completed Successfully ===");
 
     echo json_encode([
         'success' => true,
@@ -408,17 +472,37 @@ try {
     ]);
 
 } catch (PDOException $e) {
+    error_log("=== PDO EXCEPTION ===");
+    error_log("Error Message: " . $e->getMessage());
+    error_log("Error Code: " . $e->getCode());
+    error_log("Error File: " . $e->getFile() . " Line: " . $e->getLine());
+    error_log("Stack Trace: " . $e->getTraceAsString());
+    
     if (isset($conn) && $conn->inTransaction()) {
         $conn->rollBack();
+        error_log("Transaction rolled back");
     }
-    error_log('DB error in process_registration.php: ' . $e->getMessage());
+    
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Database error.']);
+    echo json_encode([
+        'success' => false, 
+        'error' => 'Database error: ' . $e->getMessage(),
+        'details' => 'Please check error_log.txt for more details'
+    ]);
 } catch (Exception $e) {
+    error_log("=== GENERAL EXCEPTION ===");
+    error_log("Error Message: " . $e->getMessage());
+    error_log("Error File: " . $e->getFile() . " Line: " . $e->getLine());
+    error_log("Stack Trace: " . $e->getTraceAsString());
+    
     if (isset($conn) && $conn->inTransaction()) {
         $conn->rollBack();
+        error_log("Transaction rolled back");
     }
-    error_log('Error in process_registration.php: ' . $e->getMessage());
+    
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    echo json_encode([
+        'success' => false, 
+        'error' => $e->getMessage()
+    ]);
 }
