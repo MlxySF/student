@@ -1,8 +1,7 @@
 <?php
-// Student Payments Page - Upload payment receipts for classes OR invoices
-// BASE64 VERSION - Receipts stored in database
+// Student Payments Page - Updated for multi-child parent support
 
-// Get enrolled classes
+// Get enrolled classes for active student
 $stmt = $pdo->prepare("
     SELECT c.*, e.enrollment_date
     FROM enrollments e
@@ -10,7 +9,7 @@ $stmt = $pdo->prepare("
     WHERE e.student_id = ? AND e.status = 'active'
     ORDER BY c.class_code
 ");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $enrolled_classes = $stmt->fetchAll();
 
 // Get unpaid invoices for selection
@@ -21,7 +20,7 @@ $stmt = $pdo->prepare("
     WHERE i.student_id = ? AND i.status = 'unpaid'
     ORDER BY i.due_date ASC
 ");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $unpaid_invoices = $stmt->fetchAll();
 
 // Get payment history (EXCLUDING receipt_data for performance)
@@ -46,10 +45,23 @@ $stmt = $pdo->prepare("
     WHERE p.student_id = ?
     ORDER BY p.upload_date DESC
 ");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $payment_history = $stmt->fetchAll();
+
+// Get current student info
+$stmt = $pdo->prepare("SELECT full_name FROM students WHERE id = ?");
+$stmt->execute([getActiveStudentId()]);
+$current_student = $stmt->fetch();
 ?>
 
+<?php if (isParent()): ?>
+<div class="alert alert-info mb-3">
+    <i class="fas fa-info-circle"></i> Managing payments for: <strong><?php echo htmlspecialchars($current_student['full_name']); ?></strong>
+</div>
+<?php endif; ?>
+
+<!-- Rest of the file remains the same, just changed getStudentId() to getActiveStudentId() -->
+<!-- [Include all the original HTML content from line 65 onward] -->
 <!-- Upload Payment Card -->
 <div class="card mb-4">
     <div class="card-header">
@@ -261,8 +273,6 @@ $payment_history = $stmt->fetchAll();
             </div>
             <div class="modal-body">
                 <?php
-                // Fetch receipt data ONLY when modal is for this payment
-                // This prevents loading all receipts at once (performance optimization)
                 $stmt = $pdo->prepare("SELECT receipt_data, receipt_mime_type FROM payments WHERE id = ?");
                 $stmt->execute([$payment['id']]);
                 $receipt = $stmt->fetch();
@@ -270,10 +280,8 @@ $payment_history = $stmt->fetchAll();
                 if ($receipt && $receipt['receipt_data']):
                     $dataURI = base64ToDataURI($receipt['receipt_data'], $receipt['receipt_mime_type']);
 
-                    // Display based on file type
                     if (strpos($receipt['receipt_mime_type'], 'image') !== false):
                 ?>
-                    <!-- Image Receipt -->
                     <div class="text-center">
                         <img src="<?php echo $dataURI; ?>" 
                              class="img-fluid rounded" 
@@ -281,7 +289,6 @@ $payment_history = $stmt->fetchAll();
                              style="max-height: 600px;">
                     </div>
                 <?php elseif ($receipt['receipt_mime_type'] === 'application/pdf'): ?>
-                    <!-- PDF Receipt -->
                     <embed src="<?php echo $dataURI; ?>" 
                            type="application/pdf" 
                            width="100%" 
@@ -328,7 +335,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitBtn = document.getElementById('submitBtn');
     const paymentMonth = document.getElementById('paymentMonth');
 
-    // Payment type change
     paymentType.addEventListener('change', function() {
         if (this.value === 'class') {
             classSection.style.display = 'block';
@@ -355,7 +361,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Auto-fill amount when class selected
     classSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
         if (selectedOption.value) {
@@ -366,7 +371,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Auto-fill amount when invoice selected
     invoiceSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
         if (selectedOption.value) {
