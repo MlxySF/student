@@ -9,15 +9,35 @@ $selected_month = $_GET['month'] ?? date('Y-m');
 
 // Get class details for schedule restrictions
 $class_details = null;
+$date_validation_error = '';
 if ($selected_class) {
     $stmt = $pdo->prepare("SELECT * FROM classes WHERE id = ?");
     $stmt->execute([$selected_class]);
     $class_details = $stmt->fetch();
+    
+    // Validate selected date matches class schedule
+    if ($class_details && $class_details['day_of_week']) {
+        $day_map = [
+            'Monday' => 'Monday',
+            'Tuesday' => 'Tuesday',
+            'Wednesday' => 'Wednesday',
+            'Thursday' => 'Thursday',
+            'Friday' => 'Friday',
+            'Saturday' => 'Saturday',
+            'Sunday' => 'Sunday'
+        ];
+        
+        $selected_day_name = date('l', strtotime($selected_date));
+        
+        if ($selected_day_name !== $class_details['day_of_week']) {
+            $date_validation_error = "Invalid date: This class only meets on {$class_details['day_of_week']}s. The selected date ({$selected_date}) is a {$selected_day_name}.";
+        }
+    }
 }
 
 // Get students enrolled in selected class
 $enrolled_students = [];
-if ($selected_class) {
+if ($selected_class && empty($date_validation_error)) {
     $stmt = $pdo->prepare("
         SELECT s.id, s.student_id, s.full_name, a.status as attendance_status, a.notes
         FROM enrollments e
@@ -80,15 +100,21 @@ $recent_attendance = $stmt->fetchAll();
     <div class="card-header">
         <i class="fas fa-filter"></i> Mark Attendance - Filter
         <?php if ($class_details && $class_details['day_of_week']): ?>
-            <span class="badge bg-primary ms-2"><?php echo $class_details['day_of_week']; ?>s Only</span>
+            <span class="badge bg-primary ms-2">Only <?php echo $class_details['day_of_week']; ?>s Allowed</span>
         <?php endif; ?>
     </div>
     <div class="card-body">
-        <form method="GET" class="row g-3" id="filterForm">
+        <?php if ($date_validation_error): ?>
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i> <?php echo $date_validation_error; ?>
+            </div>
+        <?php endif; ?>
+        
+        <form method="GET" class="row g-3" id="filterForm" onsubmit="return validateDate()">
             <input type="hidden" name="page" value="attendance">
             <div class="col-md-4">
-                <label class="form-label">Select Class</label>
-                <select name="class_id" id="classSelect" class="form-control" onchange="this.form.submit()">
+                <label class="form-label">Select Class *</label>
+                <select name="class_id" id="classSelect" class="form-control" required>
                     <option value="">-- Select Class --</option>
                     <?php foreach($all_classes as $c): ?>
                     <option value="<?php echo $c['id']; ?>" 
@@ -103,9 +129,10 @@ $recent_attendance = $stmt->fetchAll();
                 </select>
             </div>
             <div class="col-md-4">
-                <label class="form-label">Select Date</label>
-                <input type="date" name="date" id="dateSelect" class="form-control" value="<?php echo $selected_date; ?>" onchange="this.form.submit()">
-                <small class="text-muted" id="dateHint"></small>
+                <label class="form-label">Select Date *</label>
+                <input type="date" name="date" id="dateSelect" class="form-control" value="<?php echo $selected_date; ?>" required>
+                <small class="text-danger" id="dateError" style="display:none;"></small>
+                <small class="text-primary" id="dateHint"></small>
             </div>
             <div class="col-md-2">
                 <label class="form-label">&nbsp;</label>
@@ -118,10 +145,12 @@ $recent_attendance = $stmt->fetchAll();
 </div>
 
 <script>
-// Restrict date selection based on class day
+// Strict date validation based on class schedule
 const classSelect = document.getElementById('classSelect');
 const dateSelect = document.getElementById('dateSelect');
 const dateHint = document.getElementById('dateHint');
+const dateError = document.getElementById('dateError');
+const filterForm = document.getElementById('filterForm');
 
 const dayMap = {
     'Monday': 1,
@@ -133,46 +162,93 @@ const dayMap = {
     'Sunday': 0
 };
 
+let currentClassDay = null;
+let currentDayNumber = null;
+
 function updateDateRestriction() {
     const selectedOption = classSelect.options[classSelect.selectedIndex];
     const classDay = selectedOption.getAttribute('data-day');
     
+    currentClassDay = classDay;
+    currentDayNumber = classDay ? dayMap[classDay] : null;
+    
     if (classDay && dayMap.hasOwnProperty(classDay)) {
-        const dayNumber = dayMap[classDay];
-        dateHint.textContent = `Only ${classDay}s can be selected for this class`;
-        dateHint.style.color = '#0d6efd';
+        dateHint.textContent = `⚠️ Only ${classDay}s can be selected for this class`;
+        dateHint.style.display = 'block';
+        dateError.style.display = 'none';
         
-        // Add validation on date change
-        dateSelect.addEventListener('change', function() {
-            const selectedDate = new Date(this.value);
-            const selectedDayOfWeek = selectedDate.getDay();
-            
-            if (selectedDayOfWeek !== dayNumber) {
-                alert(`This class only meets on ${classDay}s. Please select a ${classDay}.`);
-                // Find next valid date
-                const today = new Date();
-                let nextValidDate = new Date(today);
-                
-                // Find next occurrence of the class day
-                while (nextValidDate.getDay() !== dayNumber) {
-                    nextValidDate.setDate(nextValidDate.getDate() + 1);
-                }
-                
-                this.value = nextValidDate.toISOString().split('T')[0];
-            }
-        });
+        // Validate current date
+        if (dateSelect.value) {
+            validateCurrentDate();
+        }
     } else {
         dateHint.textContent = '';
+        dateHint.style.display = 'none';
+        dateError.style.display = 'none';
     }
 }
 
+function validateCurrentDate() {
+    if (!currentClassDay || !dateSelect.value) {
+        return true;
+    }
+    
+    const selectedDate = new Date(dateSelect.value + 'T00:00:00');
+    const selectedDayOfWeek = selectedDate.getDay();
+    
+    if (selectedDayOfWeek !== currentDayNumber) {
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const selectedDayName = dayNames[selectedDayOfWeek];
+        
+        dateError.textContent = `❌ Invalid: Selected date is a ${selectedDayName}. This class only meets on ${currentClassDay}s.`;
+        dateError.style.display = 'block';
+        dateSelect.classList.add('is-invalid');
+        return false;
+    } else {
+        dateError.style.display = 'none';
+        dateSelect.classList.remove('is-invalid');
+        return true;
+    }
+}
+
+function validateDate() {
+    if (!currentClassDay) {
+        // No day restriction, allow submission
+        return true;
+    }
+    
+    if (!dateSelect.value) {
+        alert('Please select a date.');
+        return false;
+    }
+    
+    if (!validateCurrentDate()) {
+        alert(`Invalid date selected. This class only meets on ${currentClassDay}s. Please select a valid ${currentClassDay}.`);
+        return false;
+    }
+    
+    return true;
+}
+
 if (classSelect && dateSelect) {
-    classSelect.addEventListener('change', updateDateRestriction);
-    updateDateRestriction(); // Run on page load
+    classSelect.addEventListener('change', function() {
+        updateDateRestriction();
+    });
+    
+    dateSelect.addEventListener('change', function() {
+        validateCurrentDate();
+    });
+    
+    dateSelect.addEventListener('input', function() {
+        validateCurrentDate();
+    });
+    
+    // Run on page load
+    updateDateRestriction();
 }
 </script>
 
-<?php if ($selected_class && count($enrolled_students) > 0): ?>
+<?php if ($selected_class && count($enrolled_students) > 0 && empty($date_validation_error)): ?>
 <!-- Bulk Attendance Form -->
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -286,6 +362,10 @@ if (classSelect && dateSelect) {
 </div>
 <?php endforeach; ?>
 
+<?php elseif($selected_class && $date_validation_error): ?>
+<div class="alert alert-warning">
+    <i class="fas fa-exclamation-triangle"></i> <strong>Cannot mark attendance:</strong> Please select a valid <?php echo $class_details['day_of_week']; ?> date for this class.
+</div>
 <?php elseif($selected_class): ?>
 <div class="alert alert-info">
     <i class="fas fa-info-circle"></i> No students enrolled in this class.
