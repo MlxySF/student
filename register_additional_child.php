@@ -1,22 +1,20 @@
 <?php
 /**
- * register_additional_child.php
- * Stage 3: Simplified registration form for parents to add additional children
- * Only available to logged-in parent users
+ * register_additional_child.php - Register Additional Child for Existing Parents
+ * Stage 3: Allows logged-in parents to register more children
  */
 
 session_start();
-require_once 'includes/config.php';
-require_once 'includes/functions.php';
+require_once 'config/database.php';
 require_once 'includes/auth_helper.php';
 
-// Check if user is logged in as parent
+// Check if user is logged in and is a parent
 if (!isLoggedIn() || !isParent()) {
-    header('Location: index.php?error=access_denied');
+    header('Location: index.php?page=login&error=parent_only');
     exit;
 }
 
-// Get parent info
+// Get parent information
 $parentId = getUserId();
 $stmt = $pdo->prepare("SELECT * FROM parent_accounts WHERE id = ?");
 $stmt->execute([$parentId]);
@@ -29,286 +27,435 @@ if (!$parentInfo) {
 // Get existing children count
 $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM parent_child_relationships WHERE parent_id = ?");
 $stmt->execute([$parentId]);
-$childrenCount = $stmt->fetch()['count'];
-
-include 'includes/header.php';
+$existingChildrenCount = $stmt->fetch()['count'];
 ?>
 
-<div class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <!-- Header -->
-            <div class="card mb-4 border-0 shadow-sm">
-                <div class="card-body text-center py-4" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; border-radius: 8px;">
-                    <i class="fas fa-user-plus fa-3x mb-3"></i>
-                    <h2 class="mb-2">Register Additional Child</h2>
-                    <p class="mb-0">Add another child to your parent account</p>
-                </div>
-            </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Additional Child - Wushu Sport Academy</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #7c3aed;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 0;
+        }
+        
+        .registration-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 25px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 12px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.4);
+        }
+        
+        .parent-info-box {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-left: 5px solid var(--primary-color);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .required::after {
+            content: ' *';
+            color: red;
+        }
+        
+        .signature-pad {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <div class="container registration-container">
+        <!-- Back Button -->
+        <div class="mb-3">
+            <a href="index.php?page=dashboard" class="btn btn-light">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
 
-            <!-- Parent Info Card -->
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="fas fa-user"></i> Parent Information</h5>
-                </div>
-                <div class="card-body">
+        <!-- Registration Card -->
+        <div class="card animate__animated animate__fadeIn">
+            <div class="card-header">
+                <h3 class="mb-0"><i class="fas fa-user-plus"></i> Register Additional Child</h3>
+                <p class="mb-0 mt-2 opacity-75">Add another child to your parent account</p>
+            </div>
+            
+            <div class="card-body p-4">
+                <!-- Parent Info Display -->
+                <div class="parent-info-box mb-4">
+                    <h5 class="mb-3"><i class="fas fa-user-check"></i> Parent Account Information</h5>
                     <div class="row">
-                        <div class="col-md-6 mb-2">
-                            <strong>Parent Name:</strong><br>
-                            <?php echo htmlspecialchars($parentInfo['full_name']); ?>
+                        <div class="col-md-6">
+                            <p class="mb-2"><strong>Name:</strong> <?php echo htmlspecialchars($parentInfo['full_name']); ?></p>
+                            <p class="mb-2"><strong>Email:</strong> <?php echo htmlspecialchars($parentInfo['email']); ?></p>
                         </div>
-                        <div class="col-md-6 mb-2">
-                            <strong>Parent Email:</strong><br>
-                            <?php echo htmlspecialchars($parentInfo['email']); ?>
-                        </div>
-                        <div class="col-md-6 mb-2">
-                            <strong>Parent Phone:</strong><br>
-                            <?php echo htmlspecialchars($parentInfo['phone']); ?>
-                        </div>
-                        <div class="col-md-6 mb-2">
-                            <strong>Existing Children:</strong><br>
-                            <span class="badge bg-primary"><?php echo $childrenCount; ?> child(ren)</span>
+                        <div class="col-md-6">
+                            <p class="mb-2"><strong>Phone:</strong> <?php echo htmlspecialchars($parentInfo['phone']); ?></p>
+                            <p class="mb-2"><strong>Existing Children:</strong> <span class="badge bg-primary"><?php echo $existingChildrenCount; ?></span></p>
                         </div>
                     </div>
+                    <p class="text-muted small mb-0 mt-2">
+                        <i class="fas fa-info-circle"></i> The new child will be linked to this parent account.
+                    </p>
                 </div>
-            </div>
 
-            <!-- Registration Form -->
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="fas fa-child"></i> New Child Information</h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
-                        <strong>Note:</strong> This child will be automatically linked to your parent account. 
-                        Fill in the child's information below and submit the registration with payment proof.
+                <!-- Registration Form -->
+                <form id="additionalChildForm" enctype="multipart/form-data">
+                    <input type="hidden" name="is_additional_child" value="1">
+                    <input type="hidden" name="parent_account_id" value="<?php echo $parentId; ?>">
+                    <input type="hidden" name="parent_name" value="<?php echo htmlspecialchars($parentInfo['full_name']); ?>">
+                    <input type="hidden" name="parent_email" value="<?php echo htmlspecialchars($parentInfo['email']); ?>">
+                    <input type="hidden" name="parent_phone" value="<?php echo htmlspecialchars($parentInfo['phone']); ?>">
+                    <input type="hidden" name="parent_ic" value="<?php echo htmlspecialchars($parentInfo['ic_number'] ?? ''); ?>">
+
+                    <h5 class="mb-3 mt-4"><i class="fas fa-child"></i> Child Information</h5>
+
+                    <!-- Child Name -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label required">Full Name (English)</label>
+                            <input type="text" class="form-control" name="name_en" required placeholder="e.g. John Smith">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Full Name (Chinese)</label>
+                            <input type="text" class="form-control" name="name_cn" placeholder="e.g. 李明 (Optional)">
+                        </div>
                     </div>
 
-                    <form id="additionalChildForm" method="POST" enctype="multipart/form-data">
-                        <input type="hidden" name="mode" value="additional_child">
-                        <input type="hidden" name="parent_id" value="<?php echo $parentId; ?>">
-                        <input type="hidden" name="parent_email" value="<?php echo htmlspecialchars($parentInfo['email']); ?>">
-                        <input type="hidden" name="parent_name" value="<?php echo htmlspecialchars($parentInfo['full_name']); ?>">
-                        <input type="hidden" name="parent_phone" value="<?php echo htmlspecialchars($parentInfo['phone']); ?>">
-                        <input type="hidden" name="parent_ic" value="<?php echo htmlspecialchars($parentInfo['ic_number']); ?>">
-
-                        <!-- Child's Full Name -->
-                        <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-user"></i> Child's Full Name (English) <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="name_en" required placeholder="e.g. John Tan Wei Ming">
+                    <!-- IC & Age -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label required">IC Number / Birth Cert</label>
+                            <input type="text" class="form-control" name="ic" required placeholder="e.g. 050101-01-0123">
                         </div>
-
-                        <!-- Child's Chinese Name (Optional) -->
-                        <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-language"></i> Child's Chinese Name (Optional)</label>
-                            <input type="text" class="form-control" name="name_cn" placeholder="e.g. 陈伟明">
+                        <div class="col-md-6">
+                            <label class="form-label required">Age</label>
+                            <input type="number" class="form-control" name="age" required min="4" max="18" placeholder="e.g. 10">
                         </div>
+                    </div>
 
-                        <!-- Child's IC Number -->
-                        <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-id-card"></i> Child's IC/Passport Number <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="ic" required placeholder="e.g. 120101-01-1234">
+                    <!-- Email & Phone -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label required">Child's Email</label>
+                            <input type="email" class="form-control" name="email" required placeholder="child@example.com">
+                            <small class="text-muted">For child's portal login</small>
                         </div>
-
-                        <div class="row">
-                            <!-- Age -->
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label"><i class="fas fa-birthday-cake"></i> Age <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="age" required min="5" max="18" placeholder="e.g. 10">
-                            </div>
-
-                            <!-- Date of Birth -->
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label"><i class="fas fa-calendar"></i> Date of Birth <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" name="date_of_birth" required>
-                            </div>
+                        <div class="col-md-6">
+                            <label class="form-label required">Child's Phone</label>
+                            <input type="tel" class="form-control" name="phone" required placeholder="01X-XXX XXXX">
                         </div>
+                    </div>
 
-                        <!-- School -->
-                        <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-school"></i> School <span class="text-danger">*</span></label>
+                    <!-- School & Status -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label required">School</label>
                             <input type="text" class="form-control" name="school" required placeholder="e.g. SJKC Puchong">
                         </div>
-
-                        <!-- Student Status -->
-                        <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-user-tag"></i> Student Status <span class="text-danger">*</span></label>
+                        <div class="col-md-6">
+                            <label class="form-label required">Student Status</label>
                             <select class="form-select" name="status" required>
-                                <option value="">-- Select Status --</option>
+                                <option value="">Select Status</option>
                                 <option value="Normal Student 普通学员">Normal Student 普通学员</option>
                                 <option value="State Team 州队">State Team 州队</option>
                                 <option value="Backup Team 后备队">Backup Team 后备队</option>
                             </select>
                         </div>
+                    </div>
 
-                        <!-- Contact Info -->
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label"><i class="fas fa-envelope"></i> Child's Email <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" name="email" required placeholder="child@email.com">
-                                <small class="text-muted">Child's login email (must be unique)</small>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label"><i class="fas fa-phone"></i> Child's Phone</label>
-                                <input type="text" class="form-control" name="phone" placeholder="012-345-6789">
-                            </div>
+                    <!-- Events & Level -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label required">Events</label>
+                            <input type="text" class="form-control" name="events" required placeholder="e.g. Taolu, Sanda">
                         </div>
-
-                        <!-- Events Participating -->
-                        <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-trophy"></i> Events Participating <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="events" required placeholder="e.g. Changquan, Nanquan">
+                        <div class="col-md-6">
+                            <label class="form-label">Level</label>
+                            <input type="text" class="form-control" name="level" placeholder="e.g. Beginner, Intermediate">
                         </div>
+                    </div>
 
-                        <!-- Training Schedule -->
-                        <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-calendar-alt"></i> Preferred Training Schedule <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="schedule" required placeholder="e.g. Monday & Wednesday 7-9pm">
+                    <!-- Schedule -->
+                    <div class="mb-3">
+                        <label class="form-label required">Class Schedule</label>
+                        <textarea class="form-control" name="schedule" rows="2" required placeholder="e.g. Monday & Wednesday 6pm-8pm"></textarea>
+                    </div>
+
+                    <!-- Class Count -->
+                    <div class="mb-3">
+                        <label class="form-label required">Number of Classes per Month</label>
+                        <input type="number" class="form-control" name="class_count" required min="1" max="30" value="8">
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h5 class="mb-3"><i class="fas fa-credit-card"></i> Payment Information</h5>
+
+                    <!-- Payment Amount & Date -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label required">Payment Amount (RM)</label>
+                            <input type="number" class="form-control" name="payment_amount" required step="0.01" min="0" placeholder="e.g. 200.00">
                         </div>
-
-                        <!-- Number of Classes -->
-                        <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-list-ol"></i> Number of Classes per Week <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" name="class_count" required min="1" max="7" value="2">
+                        <div class="col-md-6">
+                            <label class="form-label required">Payment Date</label>
+                            <input type="date" class="form-control" name="payment_date" required value="<?php echo date('Y-m-d'); ?>">
                         </div>
+                    </div>
 
-                        <!-- Payment Information -->
-                        <hr class="my-4">
-                        <h5 class="mb-3"><i class="fas fa-credit-card"></i> Payment Information</h5>
+                    <!-- Payment Receipt -->
+                    <div class="mb-3">
+                        <label class="form-label required">Payment Receipt</label>
+                        <input type="file" class="form-control" name="payment_receipt" required accept="image/*,.pdf">
+                        <small class="text-muted">Upload bank transfer receipt or payment proof</small>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Payment Amount (RM) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="payment_amount" required min="0" step="0.01" placeholder="e.g. 150.00">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Payment Date <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" name="payment_date" required>
-                            </div>
-                        </div>
+                    <hr class="my-4">
 
-                        <!-- Payment Receipt -->
-                        <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-receipt"></i> Payment Receipt <span class="text-danger">*</span></label>
-                            <input type="file" class="form-control" name="payment_receipt" required accept="image/*,.pdf">
-                            <small class="text-muted">Upload payment proof (Image or PDF)</small>
-                        </div>
+                    <h5 class="mb-3"><i class="fas fa-signature"></i> Parent Signature</h5>
 
-                        <!-- Form Date and Signature Placeholders -->
-                        <input type="hidden" name="form_date" id="form_date">
-                        <input type="hidden" name="signature_base64" value="parent_signed">
-                        <input type="hidden" name="signed_pdf_base64" value="auto_generated">
-
-                        <!-- Submit Button -->
-                        <div class="d-grid gap-2 mt-4">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-paper-plane"></i> Submit Registration
+                    <!-- Signature Canvas -->
+                    <div class="mb-3">
+                        <label class="form-label required">Parent/Guardian Signature</label>
+                        <canvas id="signatureCanvas" class="signature-pad" width="600" height="200"></canvas>
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="clearSignature">
+                                <i class="fas fa-eraser"></i> Clear Signature
                             </button>
-                            <a href="index.php?page=dashboard" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left"></i> Back to Dashboard
-                            </a>
                         </div>
-                    </form>
-                </div>
-            </div>
+                        <input type="hidden" name="signature_base64" id="signatureData">
+                    </div>
 
-            <!-- Help Text -->
-            <div class="card mt-4 bg-light border-0">
-                <div class="card-body">
-                    <h6><i class="fas fa-question-circle"></i> Need Help?</h6>
-                    <p class="mb-0 small text-muted">
-                        If you encounter any issues, please contact admin at <strong>admin@wushusportacademy.com</strong> or call <strong>+60 12-345 6789</strong>.
-                    </p>
-                </div>
+                    <!-- Form Date -->
+                    <div class="mb-3">
+                        <label class="form-label required">Form Date</label>
+                        <input type="date" class="form-control" name="form_date" required value="<?php echo date('Y-m-d'); ?>">
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <i class="fas fa-paper-plane"></i> Submit Registration
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
+
+        <!-- Success/Error Messages -->
+        <div id="messageContainer" class="mt-3"></div>
     </div>
-</div>
 
-<script>
-// Set form date to today
-document.getElementById('form_date').value = new Date().toISOString().split('T')[0];
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <script>
+        // Signature Pad Implementation
+        const canvas = document.getElementById('signatureCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
 
-// Form submission handler
-document.getElementById('additionalChildForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const submitBtn = this.querySelector('button[type=submit]');
-    const originalText = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
-    
-    try {
-        const formData = new FormData(this);
-        
-        // Convert payment receipt to base64
-        const receiptFile = formData.get('payment_receipt');
-        if (receiptFile && receiptFile.size > 0) {
-            const receiptBase64 = await fileToBase64(receiptFile);
-            formData.delete('payment_receipt');
-            
-            // Prepare JSON data for API
-            const jsonData = {
-                mode: 'additional_child',
-                has_parent_account: true,
-                parent_email: formData.get('parent_email'),
-                parent_name: formData.get('parent_name'),
-                parent_phone: formData.get('parent_phone'),
-                parent_ic: formData.get('parent_ic'),
-                name_en: formData.get('name_en'),
-                name_cn: formData.get('name_cn') || '',
-                ic: formData.get('ic'),
-                age: parseInt(formData.get('age')),
-                date_of_birth: formData.get('date_of_birth'),
-                school: formData.get('school'),
-                status: formData.get('status'),
-                email: formData.get('email'),
-                phone: formData.get('phone') || formData.get('parent_phone'),
-                events: formData.get('events'),
-                schedule: formData.get('schedule'),
-                class_count: parseInt(formData.get('class_count')),
-                payment_amount: parseFloat(formData.get('payment_amount')),
-                payment_date: formData.get('payment_date'),
-                payment_receipt_base64: receiptBase64,
-                form_date: formData.get('form_date'),
-                signature_base64: formData.get('signature_base64'),
-                signed_pdf_base64: formData.get('signed_pdf_base64')
-            };
-            
-            const response = await fetch('process_registration.php', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(jsonData)
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch events for mobile
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
             });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                alert('✅ Success! Child registration submitted successfully.\n\nRegistration Number: ' + result.registration_number + '\nStudent ID: ' + result.student_id + '\n\nThe child has been linked to your parent account. Please check your email for login credentials.');
-                window.location.href = 'index.php?page=dashboard';
-            } else {
-                throw new Error(result.error || 'Registration failed');
-            }
-        } else {
-            throw new Error('Please upload payment receipt');
+            canvas.dispatchEvent(mouseEvent);
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            const mouseEvent = new MouseEvent('mouseup', {});
+            canvas.dispatchEvent(mouseEvent);
+        });
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
         }
-    } catch (error) {
-        alert('❌ Error: ' + error.message);
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
-    }
-});
 
-// Helper: Convert file to base64
-function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-}
-</script>
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+        }
 
-<?php include 'includes/footer.php'; ?>
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        document.getElementById('clearSignature').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        // Form Submission
+        document.getElementById('additionalChildForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            try {
+                // Get signature
+                const signatureData = canvas.toDataURL('image/png');
+                document.getElementById('signatureData').value = signatureData;
+
+                // Prepare form data
+                const formData = new FormData(e.target);
+                
+                // Handle file upload
+                const receiptFile = formData.get('payment_receipt');
+                if (receiptFile) {
+                    const receiptBase64 = await fileToBase64(receiptFile);
+                    formData.set('payment_receipt_base64', receiptBase64);
+                }
+
+                // Generate simple PDF (signed form)
+                const pdfBase64 = generateSimplePDF(formData);
+                formData.set('signed_pdf_base64', pdfBase64);
+
+                // Convert FormData to JSON
+                const jsonData = {};
+                formData.forEach((value, key) => {
+                    if (key !== 'payment_receipt') {
+                        jsonData[key] = value;
+                    }
+                });
+
+                // Submit to backend
+                const response = await fetch('process_registration.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(jsonData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage('success', 'Registration Successful!', 
+                        `Child registered successfully! Student ID: ${result.student_id}`);
+                    setTimeout(() => {
+                        window.location.href = 'index.php?page=dashboard';
+                    }, 2000);
+                } else {
+                    showMessage('danger', 'Registration Failed', result.error || 'Unknown error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Registration';
+                }
+            } catch (error) {
+                showMessage('danger', 'Error', 'An error occurred: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Registration';
+            }
+        });
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function generateSimplePDF(formData) {
+            // Simple placeholder - in production, generate proper PDF
+            const data = {
+                child_name: formData.get('name_en'),
+                parent: formData.get('parent_name'),
+                date: formData.get('form_date')
+            };
+            return 'data:application/pdf;base64,' + btoa(JSON.stringify(data));
+        }
+
+        function showMessage(type, title, message) {
+            const container = document.getElementById('messageContainer');
+            container.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <strong>${title}</strong> ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
