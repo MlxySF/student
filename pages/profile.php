@@ -1,10 +1,30 @@
 <?php
 // Student Profile Page - Updated for multi-child parent support
+// FIXED: Use registrations table for parent portal
 
 // Get student information using active student ID
-$stmt = $pdo->prepare("SELECT * FROM students WHERE id = ?");
-$stmt->execute([getActiveStudentId()]);
-$student = $stmt->fetch();
+if (isParent()) {
+    $stmt = $pdo->prepare("SELECT r.*, s.id as student_account_id FROM registrations r LEFT JOIN students s ON r.student_account_id = s.id WHERE r.id = ?");
+    $stmt->execute([getActiveStudentId()]);
+    $student = $stmt->fetch();
+    if ($student) {
+        $student['full_name'] = $student['name_en'];
+        $student['student_id'] = $student['registration_number'];
+        $student['date_of_birth'] = $student['child_dob'];
+        $student['ic_number'] = $student['child_ic'];
+    }
+    $studentAccountId = $student['student_account_id'] ?? null;
+} else {
+    $stmt = $pdo->prepare("SELECT * FROM students WHERE id = ?");
+    $stmt->execute([getActiveStudentId()]);
+    $student = $stmt->fetch();
+    $studentAccountId = getActiveStudentId();
+}
+
+if (!$student) {
+    echo '<div class="alert alert-danger">Error: Student data not found.</div>';
+    exit;
+}
 
 // Get enrolled classes count
 $stmt = $pdo->prepare("
@@ -12,7 +32,7 @@ $stmt = $pdo->prepare("
     FROM enrollments 
     WHERE student_id = ? AND status = 'active'
 ");
-$stmt->execute([getActiveStudentId()]);
+$stmt->execute([$studentAccountId]);
 $enrollment_stats = $stmt->fetch();
 
 // Get payment statistics
@@ -24,7 +44,7 @@ $stmt = $pdo->prepare("
     FROM payments 
     WHERE student_id = ?
 ");
-$stmt->execute([getActiveStudentId()]);
+$stmt->execute([$studentAccountId]);
 $payment_stats = $stmt->fetch();
 
 // Get invoice statistics
@@ -36,7 +56,7 @@ $stmt = $pdo->prepare("
     FROM invoices 
     WHERE student_id = ?
 ");
-$stmt->execute([getActiveStudentId()]);
+$stmt->execute([$studentAccountId]);
 $invoice_stats = $stmt->fetch();
 ?>
 
@@ -63,7 +83,7 @@ $invoice_stats = $stmt->fetch();
                         <h4 class="mt-3 mb-1"><?php echo htmlspecialchars($student['full_name']); ?></h4>
                         <p class="text-muted">
                             <span class="badge bg-dark"><?php echo $student['student_id']; ?></span>
-                            <?php if (!empty($student['student_status'])): ?>
+                            <?php if (!empty($student['student_status']) && $student['student_status'] !== 'Student 学生'): ?>
                             <br><span class="badge <?php 
                                 echo (strpos($student['student_status'], 'State Team') !== false) ? 'bg-success' : 
                                      ((strpos($student['student_status'], 'Backup Team') !== false) ? 'bg-warning' : 'bg-info');
@@ -88,10 +108,12 @@ $invoice_stats = $stmt->fetch();
                                 <td><strong><i class="fas fa-envelope text-primary"></i> Email:</strong></td>
                                 <td><?php echo htmlspecialchars($student['email']); ?></td>
                             </tr>
+                            <?php if (!empty($student['phone'])): ?>
                             <tr>
                                 <td><strong><i class="fas fa-phone text-primary"></i> Phone:</strong></td>
                                 <td><?php echo htmlspecialchars($student['phone']); ?></td>
                             </tr>
+                            <?php endif; ?>
                             <?php if (!empty($student['ic_number'])): ?>
                             <tr>
                                 <td><strong><i class="fas fa-id-card text-primary"></i> IC Number:</strong></td>
@@ -101,7 +123,7 @@ $invoice_stats = $stmt->fetch();
                             <?php if (!empty($student['date_of_birth'])): ?>
                             <tr>
                                 <td><strong><i class="fas fa-birthday-cake text-primary"></i> Date of Birth:</strong></td>
-                                <td><?php echo formatDate($student['date_of_birth']); ?> (Age: <?php echo $student['age'] ?? 'N/A'; ?>)</td>
+                                <td><?php echo formatDate($student['date_of_birth']); ?> <?php if (!empty($student['age'])): ?>(Age: <?php echo $student['age']; ?>)<?php endif; ?></td>
                             </tr>
                             <?php endif; ?>
                             <?php if (!empty($student['school'])): ?>
@@ -153,7 +175,7 @@ $invoice_stats = $stmt->fetch();
                             <i class="fas fa-book text-primary"></i>
                             <strong>Enrolled Classes</strong>
                         </div>
-                        <span class="badge bg-primary"><?php echo $enrollment_stats['class_count']; ?></span>
+                        <span class="badge bg-primary"><?php echo $enrollment_stats['class_count'] ?? 0; ?></span>
                     </div>
                 </div>
 
@@ -163,7 +185,7 @@ $invoice_stats = $stmt->fetch();
                             <i class="fas fa-credit-card text-success"></i>
                             <strong>Total Payments</strong>
                         </div>
-                        <span class="badge bg-success"><?php echo $payment_stats['total_payments']; ?></span>
+                        <span class="badge bg-success"><?php echo $payment_stats['total_payments'] ?? 0; ?></span>
                     </div>
                 </div>
 
@@ -173,7 +195,7 @@ $invoice_stats = $stmt->fetch();
                             <i class="fas fa-check-circle text-success"></i>
                             <strong>Verified Payments</strong>
                         </div>
-                        <span class="badge bg-success"><?php echo $payment_stats['verified_payments']; ?></span>
+                        <span class="badge bg-success"><?php echo $payment_stats['verified_payments'] ?? 0; ?></span>
                     </div>
                 </div>
 
@@ -183,7 +205,7 @@ $invoice_stats = $stmt->fetch();
                             <i class="fas fa-money-bill text-info"></i>
                             <strong>Total Paid</strong>
                         </div>
-                        <strong class="text-success"><?php echo formatCurrency($payment_stats['total_paid']); ?></strong>
+                        <strong class="text-success"><?php echo formatCurrency($payment_stats['total_paid'] ?? 0); ?></strong>
                     </div>
                 </div>
 
@@ -195,7 +217,7 @@ $invoice_stats = $stmt->fetch();
                             <i class="fas fa-file-invoice text-warning"></i>
                             <strong>Unpaid Invoices</strong>
                         </div>
-                        <span class="badge bg-warning"><?php echo $invoice_stats['unpaid_invoices']; ?></span>
+                        <span class="badge bg-warning"><?php echo $invoice_stats['unpaid_invoices'] ?? 0; ?></span>
                     </div>
                 </div>
 
@@ -205,7 +227,7 @@ $invoice_stats = $stmt->fetch();
                             <i class="fas fa-file-invoice text-success"></i>
                             <strong>Paid Invoices</strong>
                         </div>
-                        <span class="badge bg-success"><?php echo $invoice_stats['paid_invoices']; ?></span>
+                        <span class="badge bg-success"><?php echo $invoice_stats['paid_invoices'] ?? 0; ?></span>
                     </div>
                 </div>
             </div>
@@ -218,14 +240,16 @@ $invoice_stats = $stmt->fetch();
             <div class="card-body">
                 <p class="mb-2"><strong>Account Status:</strong> <span class="badge bg-success">Active</span></p>
                 <p class="mb-2"><strong>Account Type:</strong> 
-                    <?php if ($student['student_type'] === 'child' && $student['parent_account_id']): ?>
+                    <?php if (isParent()): ?>
                         <span class="badge bg-info">Managed by Parent</span>
                     <?php else: ?>
                         <span class="badge bg-primary">Independent</span>
                     <?php endif; ?>
                 </p>
                 <p class="mb-2"><strong>Member Since:</strong> <?php echo formatDate($student['created_at']); ?></p>
+                <?php if (!empty($student['updated_at'])): ?>
                 <p class="mb-0"><strong>Last Updated:</strong> <?php echo formatDateTime($student['updated_at']); ?></p>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -240,7 +264,7 @@ $stmt = $pdo->prepare("
     WHERE e.student_id = ?
     ORDER BY e.enrollment_date DESC
 ");
-$stmt->execute([getActiveStudentId()]);
+$stmt->execute([$studentAccountId]);
 $my_classes = $stmt->fetchAll();
 ?>
 
@@ -314,7 +338,7 @@ $my_classes = $stmt->fetchAll();
                     <div class="mb-3">
                         <label class="form-label">Phone</label>
                         <input type="text" name="phone" class="form-control" 
-                               value="<?php echo htmlspecialchars($student['phone']); ?>" required>
+                               value="<?php echo htmlspecialchars($student['phone'] ?? ''); ?>" required>
                     </div>
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i> Your Student ID cannot be changed.
