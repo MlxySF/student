@@ -259,19 +259,21 @@ function getActiveStudentData($pdo) {
 /**
  * Get student ID string (e.g., WSA2025-0001) for active context
  */
-function getStudentId() {
-    if (isStudent()) {
-        return $_SESSION['student_id'] ?? null;
-    } else if (isParent()) {
-        $children = getParentChildren();
-        $activeId = getActiveStudentId();
-        foreach ($children as $child) {
-            if ($child['id'] == $activeId) {
-                return $child['student_id'];
+if (!function_exists('getStudentId')) {
+    function getStudentId() {
+        if (isStudent()) {
+            return $_SESSION['student_id'] ?? null;
+        } else if (isParent()) {
+            $children = getParentChildren();
+            $activeId = getActiveStudentId();
+            foreach ($children as $child) {
+                if ($child['id'] == $activeId) {
+                    return $child['student_id'];
+                }
             }
         }
+        return null;
     }
-    return null;
 }
 
 /**
