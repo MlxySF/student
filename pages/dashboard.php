@@ -1,23 +1,48 @@
 <?php
 // pages/dashboard.php - Updated for multi-child parent support
-// Get student information using context-aware function
-$stmt = $pdo->prepare("SELECT * FROM students WHERE id = ?");
-$stmt->execute([getActiveStudentId()]);
-$student = $stmt->fetch();
+// FIXED: Use registrations table instead of students table for parent portal
+
+// Get student information - check if it's from registrations (parent portal) or students table
+if (isParent()) {
+    // For parents, get data from registrations table
+    $stmt = $pdo->prepare("SELECT * FROM registrations WHERE id = ?");
+    $stmt->execute([getActiveStudentId()]);
+    $student = $stmt->fetch();
+    
+    // Map registration fields to student-like structure for compatibility
+    if ($student) {
+        $student['full_name'] = $student['name_en'];
+        $student['student_id'] = $student['registration_number'];
+        // Email, phone already exist in registrations
+    }
+} else {
+    // For direct student login (legacy), get from students table
+    $stmt = $pdo->prepare("SELECT * FROM students WHERE id = ?");
+    $stmt->execute([getActiveStudentId()]);
+    $student = $stmt->fetch();
+}
+
+if (!$student) {
+    echo '<div class="alert alert-danger">Error: Student data not found. Please contact support.</div>';
+    exit;
+}
+
+// Get the student account ID for queries (if parent portal, use student_account_id from registration)
+$studentAccountId = isParent() ? $student['student_account_id'] : getActiveStudentId();
 
 // Get enrolled classes count
 $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM enrollments WHERE student_id = ? AND status = 'active'");
-$stmt->execute([getActiveStudentId()]);
+$stmt->execute([$studentAccountId]);
 $classesCount = $stmt->fetch()['count'];
 
 // Get unpaid invoices count
 $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM invoices WHERE student_id = ? AND status IN ('unpaid', 'overdue')");
-$stmt->execute([getActiveStudentId()]);
+$stmt->execute([$studentAccountId]);
 $unpaidInvoicesCount = $stmt->fetch()['count'];
 
 // Get pending payments count
 $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM payments WHERE student_id = ? AND verification_status = 'pending'");
-$stmt->execute([getActiveStudentId()]);
+$stmt->execute([$studentAccountId]);
 $pendingPaymentsCount = $stmt->fetch()['count'];
 
 // Get total attendance percentage
@@ -28,7 +53,7 @@ $stmt = $pdo->prepare("
     FROM attendance 
     WHERE student_id = ?
 ");
-$stmt->execute([getActiveStudentId()]);
+$stmt->execute([$studentAccountId]);
 $attendanceData = $stmt->fetch();
 $attendancePercentage = $attendanceData['total'] > 0 
     ? round(($attendanceData['present'] / $attendanceData['total']) * 100) 
@@ -45,7 +70,7 @@ $stmt = $pdo->prepare("
     ORDER BY i.created_at DESC
     LIMIT 5
 ");
-$stmt->execute([getActiveStudentId()]);
+$stmt->execute([$studentAccountId]);
 $recentInvoices = $stmt->fetchAll();
 
 // Get upcoming classes (enrolled active classes)
@@ -60,7 +85,7 @@ $stmt = $pdo->prepare("
     ORDER BY c.class_name
     LIMIT 5
 ");
-$stmt->execute([getActiveStudentId()]);
+$stmt->execute([$studentAccountId]);
 $enrolledClasses = $stmt->fetchAll();
 
 // Get recent attendance records (last 10)
@@ -75,36 +100,42 @@ $stmt = $pdo->prepare("
     ORDER BY a.attendance_date DESC
     LIMIT 10
 ");
-$stmt->execute([getActiveStudentId()]);
+$stmt->execute([$studentAccountId]);
 $recentAttendance = $stmt->fetchAll();
 
 // For parents: Get summary of all children
 $allChildrenSummary = [];
 if (isParent()) {
     foreach (getParentChildren() as $child) {
-        $childId = $child['id'];
+        $regId = $child['id']; // Registration ID
+        
+        // Get student account ID from registration
+        $stmt = $pdo->prepare("SELECT student_account_id FROM registrations WHERE id = ?");
+        $stmt->execute([$regId]);
+        $reg = $stmt->fetch();
+        $childStudentId = $reg['student_account_id'];
         
         // Get child's unpaid invoices
         $stmt = $pdo->prepare("SELECT COUNT(*) as count, COALESCE(SUM(amount), 0) as total FROM invoices WHERE student_id = ? AND status IN ('unpaid', 'overdue')");
-        $stmt->execute([$childId]);
+        $stmt->execute([$childStudentId]);
         $invoiceData = $stmt->fetch();
         
         // Get child's attendance rate
         $stmt = $pdo->prepare("SELECT COUNT(*) as total, SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present FROM attendance WHERE student_id = ?");
-        $stmt->execute([$childId]);
+        $stmt->execute([$childStudentId]);
         $attData = $stmt->fetch();
         $attRate = $attData['total'] > 0 ? round(($attData['present'] / $attData['total']) * 100) : 0;
         
         // Get child's enrolled classes count
         $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM enrollments WHERE student_id = ? AND status = 'active'");
-        $stmt->execute([$childId]);
+        $stmt->execute([$childStudentId]);
         $classCount = $stmt->fetch()['count'];
         
         $allChildrenSummary[] = [
-            'id' => $childId,
+            'id' => $regId,
             'name' => $child['full_name'],
-            'student_id' => $child['student_id'],
-            'status' => $child['student_status'],
+            'student_id' => $child['registration_number'],
+            'status' => $child['student_status'] ?? '',
             'unpaid_count' => $invoiceData['count'],
             'unpaid_total' => $invoiceData['total'],
             'attendance_rate' => $attRate,
@@ -123,7 +154,7 @@ if (isParent()) {
             <p class="mb-0 text-muted">Register additional children and manage all your children's accounts from one place.</p>
         </div>
         <div class="col-md-4 text-md-end mt-3 mt-md-0">
-            <a href="register.php" class="btn btn-primary btn-lg">
+            <a href="pages/register.php" class="btn btn-primary btn-lg">
                 <i class="fas fa-user-plus"></i> Register Additional Child
             </a>
         </div>
@@ -285,13 +316,15 @@ if (isParent()) {
                 <p class="text-muted mb-2">
                     <i class="fas fa-envelope"></i> <strong>Email:</strong> <?php echo htmlspecialchars($student['email']); ?>
                 </p>
+                <?php if (!empty($student['phone'])): ?>
                 <p class="text-muted mb-2">
                     <i class="fas fa-phone"></i> <strong>Phone:</strong> <?php echo htmlspecialchars($student['phone']); ?>
                 </p>
+                <?php endif; ?>
                 <p class="text-muted mb-0">
                     <i class="fas fa-id-badge"></i> <strong>Student ID:</strong> <?php echo htmlspecialchars($student['student_id']); ?>
                 </p>
-                <?php if (!empty($student['student_status'])): ?>
+                <?php if (!empty($student['student_status']) && $student['student_status'] !== 'Student 学生'): ?>
                 <p class="text-muted mb-0">
                     <i class="fas fa-user-tag"></i> <strong>Status:</strong> 
                     <span class="badge 
@@ -472,8 +505,8 @@ if (isParent()) {
                         <i class="fas fa-exclamation-circle"></i> Pay Unpaid Invoices (<?php echo $unpaidInvoicesCount; ?>)
                     </a>
                     <?php endif; ?>
-                    <a href="?page=payments" class="btn btn-primary">
-                        <i class="fas fa-credit-card"></i> Make a Payment
+                    <a href="?page=invoices" class="btn btn-primary">
+                        <i class="fas fa-credit-card"></i> View Invoices
                     </a>
                     <a href="?page=attendance" class="btn btn-info">
                         <i class="fas fa-calendar-check"></i> Check Attendance
