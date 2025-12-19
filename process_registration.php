@@ -476,9 +476,9 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
                 <h4 style='margin: 0 0 12px 0; color: #1e293b; font-size: 16px;'>📋 Next Steps:</h4>
                 <ol style='margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.8;'>
                     <li>Your payment receipt is under review by the academy</li>
-                    <li>You'll receive approval notification via email</li>
+                    <li>You will receive approval notification via email</li>
                     <li>Login to the parent portal to view the registration invoice with your uploaded payment receipt</li>
-                    <li>After approval, the invoice status will change to "Paid"</li>
+                    <li>After approval, the invoice status will change to Paid</li>
                     <li>Your child has been automatically enrolled in the selected classes</li>
                 </ol>
             </div>
