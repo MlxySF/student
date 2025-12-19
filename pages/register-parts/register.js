@@ -38,7 +38,6 @@
         // Call updateEventAvailability after a short delay to ensure DOM is fully loaded
         setTimeout(function() {
             updateEventAvailability();
-            console.log('Event availability initialized');
         }, 100);
     });
 
@@ -64,7 +63,7 @@
     }
 
     // ========================================
-    // EVENT AVAILABILITY - DISABLE BASIC EVENTS FOR STATE/BACKUP TEAM
+    // EVENT AVAILABILITY - HIDE BASIC SECTION FOR STATE/BACKUP TEAM
     // ========================================
     function updateEventAvailability() {
         const statusRadios = document.getElementsByName('status');
@@ -76,85 +75,25 @@
                 break;
             }
         }
-
-        console.log('Current status:', selectedStatus);
         
         const isStateOrBackupTeam = selectedStatus === 'State Team 州队' || selectedStatus === 'Backup Team 后备队';
         
-        console.log('Is State or Backup Team:', isStateOrBackupTeam);
-        
-        // Get all event checkboxes
-        const eventCheckboxes = document.querySelectorAll('input[name="evt"]');
-        
-        console.log('Total event checkboxes found:', eventCheckboxes.length);
-        
-        let basicEventsCount = 0;
-        
-        eventCheckboxes.forEach(checkbox => {
-            const eventValue = checkbox.value;
-            
-            // Check if event starts with "基础" (Basic)
-            if (eventValue.startsWith('基础')) {
-                basicEventsCount++;
-                const label = checkbox.closest('label');
-                
-                if (isStateOrBackupTeam) {
-                    // Disable basic events for State Team and Backup Team
-                    checkbox.disabled = true;
-                    checkbox.checked = false; // Uncheck if previously checked
-                    
-                    // Visual styling for disabled state
-                    if (label) {
-                        label.style.opacity = '0.5';
-                        label.style.cursor = 'not-allowed';
-                        label.style.pointerEvents = 'none';
-                        label.style.backgroundColor = '#f1f5f9';
-                    }
-                    
-                    console.log('Disabled:', eventValue);
-                } else {
-                    // Enable basic events for regular students
-                    checkbox.disabled = false;
-                    
-                    // Reset visual styling
-                    if (label) {
-                        label.style.opacity = '1';
-                        label.style.cursor = 'pointer';
-                        label.style.pointerEvents = 'auto';
-                        label.style.backgroundColor = '';
-                    }
-                    
-                    console.log('Enabled:', eventValue);
-                }
-            }
-        });
-        
-        console.log('Basic events processed:', basicEventsCount);
-        
-        // Add informational message for State/Backup Team
+        // Find the Basic (基础) section - it has border-slate-700 class
         const basicSection = document.querySelector('.border-l-4.border-slate-700');
+        
         if (basicSection) {
-            // Remove existing message if any
-            const existingMessage = basicSection.querySelector('.state-team-message');
-            if (existingMessage) {
-                existingMessage.remove();
-            }
-            
-            // Add message for State/Backup Team
             if (isStateOrBackupTeam) {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'state-team-message bg-red-50 border-l-4 border-red-500 p-3 mt-3 rounded-r-lg';
-                messageDiv.style.marginTop = '12px';
-                messageDiv.innerHTML = `
-                    <p class="text-sm text-red-800 leading-relaxed font-semibold">
-                        <i class="fas fa-ban mr-2"></i>
-                        注意：州队和后备队不允许选择基础项目。
-                    </p>
-                    <p class="text-sm text-red-700 leading-relaxed mt-1">
-                        <strong>Note:</strong> State Team and Backup Team cannot select Basic level events.
-                    </p>
-                `;
-                basicSection.appendChild(messageDiv);
+                // Hide the entire Basic section for State/Backup Team
+                basicSection.style.display = 'none';
+                
+                // Uncheck all Basic event checkboxes
+                const basicCheckboxes = basicSection.querySelectorAll('input[name="evt"]');
+                basicCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+            } else {
+                // Show the Basic section for regular students
+                basicSection.style.display = 'block';
             }
         }
     }
