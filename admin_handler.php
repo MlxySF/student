@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'config.php';
+require_once 'send_approval_email.php'; // Include email function
 
 // Log all POST requests to a file for debugging
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -71,8 +72,16 @@ if ($action === 'verify_registration') {
     try {
         $pdo->beginTransaction();
         
-        // Get registration details including student_account_id
-        $stmt = $pdo->prepare("SELECT id, registration_number, name_en, payment_status, student_account_id FROM registrations WHERE id = ?");
+        // Get registration details including parent info and password
+        $stmt = $pdo->prepare("
+            SELECT 
+                r.id, r.registration_number, r.name_en, r.email, r.status,
+                r.payment_status, r.student_account_id, r.parent_account_id,
+                pa.password as parent_password
+            FROM registrations r
+            LEFT JOIN parent_accounts pa ON r.parent_account_id = pa.id
+            WHERE r.id = ?
+        ");
         $stmt->execute([$regId]);
         $registration = $stmt->fetch(PDO::FETCH_ASSOC);
         
@@ -85,6 +94,7 @@ if ($action === 'verify_registration') {
         }
         
         $studentAccountId = $registration['student_account_id'];
+        $parentAccountId = $registration['parent_account_id'];
         $adminId = $_SESSION['admin_id'] ?? null;
         
         // 1. Update registration status to approved
@@ -134,8 +144,39 @@ if ($action === 'verify_registration') {
             }
         }
         
+        // 4. Check if this is the first child for this parent (to send password)
+        $isFirstChild = false;
+        if ($parentAccountId) {
+            $countStmt = $pdo->prepare("
+                SELECT COUNT(*) as child_count 
+                FROM registrations 
+                WHERE parent_account_id = ? 
+                AND payment_status = 'approved'
+            ");
+            $countStmt->execute([$parentAccountId]);
+            $result = $countStmt->fetch(PDO::FETCH_ASSOC);
+            $isFirstChild = ($result['child_count'] == 1);
+        }
+        
+        // Commit all database changes first
         $pdo->commit();
         
+        // 5. Send approval email to parent
+        $emailSent = false;
+        try {
+            $emailSent = sendApprovalEmail(
+                $registration['email'],
+                $registration['name_en'],
+                $registration['registration_number'],
+                $registration['status'],
+                $registration['parent_password'],
+                $isFirstChild
+            );
+        } catch (Exception $e) {
+            error_log("[verify_registration] Email sending failed: " . $e->getMessage());
+        }
+        
+        // Build success message
         $message = "Registration {$registration['registration_number']} approved successfully!";
         if ($invoicesUpdated > 0) {
             $message .= " Invoice marked as PAID.";
@@ -143,8 +184,13 @@ if ($action === 'verify_registration') {
         if ($paymentsUpdated > 0) {
             $message .= " Payment verified.";
         }
+        if ($emailSent) {
+            $message .= " Approval email sent to parent.";
+        } else {
+            $message .= " (Email notification failed - please contact parent manually)";
+        }
         
-        error_log("[Approve] Reg#{$registration['registration_number']}: invoices=$invoicesUpdated, payments=$paymentsUpdated");
+        error_log("[Approve] Reg#{$registration['registration_number']}: invoices=$invoicesUpdated, payments=$paymentsUpdated, email=" . ($emailSent ? 'sent' : 'failed'));
         $_SESSION['success'] = $message;
         
     } catch (Exception $e) {
