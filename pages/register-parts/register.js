@@ -28,11 +28,13 @@
             radio.addEventListener('change', function() {
                 updateStatusRadioStyle();
                 updateScheduleAvailability();
+                updateEventAvailability(); // Add this line to update event availability
             });
         });
         
         updateStatusRadioStyle();
         updateScheduleAvailability();
+        updateEventAvailability(); // Add this line to set initial event availability
     });
 
     // ========================================
@@ -54,6 +56,83 @@
                 option.style.fontWeight = 'normal';
             }
         });
+    }
+
+    // ========================================
+    // EVENT AVAILABILITY - NEW FUNCTION
+    // ========================================
+    function updateEventAvailability() {
+        const statusRadios = document.getElementsByName('status');
+        let selectedStatus = 'Student 学生';
+        for (const radio of statusRadios) {
+            if (radio.checked) {
+                selectedStatus = radio.value;
+                break;
+            }
+        }
+
+        const isStateOrBackupTeam = selectedStatus === 'State Team 州队' || selectedStatus === 'Backup Team 后备队';
+        
+        // Get all event checkboxes
+        const eventCheckboxes = document.querySelectorAll('input[name="evt"]');
+        
+        eventCheckboxes.forEach(checkbox => {
+            const eventValue = checkbox.value;
+            
+            // Check if event starts with "基础" (Basic)
+            if (eventValue.startsWith('基础')) {
+                const label = checkbox.closest('label');
+                
+                if (isStateOrBackupTeam) {
+                    // Disable basic events for State Team and Backup Team
+                    checkbox.disabled = true;
+                    checkbox.checked = false; // Uncheck if previously checked
+                    
+                    // Visual styling for disabled state
+                    if (label) {
+                        label.style.opacity = '0.4';
+                        label.style.cursor = 'not-allowed';
+                        label.style.pointerEvents = 'none';
+                    }
+                } else {
+                    // Enable basic events for regular students
+                    checkbox.disabled = false;
+                    
+                    // Reset visual styling
+                    if (label) {
+                        label.style.opacity = '1';
+                        label.style.cursor = 'pointer';
+                        label.style.pointerEvents = 'auto';
+                    }
+                }
+            }
+        });
+        
+        // Add informational message for State/Backup Team
+        const basicSection = document.querySelector('.border-l-4.border-slate-700');
+        if (basicSection) {
+            // Remove existing message if any
+            const existingMessage = basicSection.querySelector('.state-team-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+            
+            // Add message for State/Backup Team
+            if (isStateOrBackupTeam) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'state-team-message bg-red-50 border-l-4 border-red-500 p-3 mt-3 rounded-r-lg';
+                messageDiv.innerHTML = `
+                    <p class="text-xs text-red-800 leading-relaxed">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        <strong>注意：</strong> 州队和后备队不允许选择基础项目。
+                    </p>
+                    <p class="text-xs text-red-700 leading-relaxed mt-1">
+                        <strong>Note:</strong> State Team and Backup Team cannot select Basic level events.
+                    </p>
+                `;
+                basicSection.appendChild(messageDiv);
+            }
+        }
     }
 
     // ========================================
