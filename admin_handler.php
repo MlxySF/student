@@ -73,9 +73,10 @@ if ($action === 'verify_registration') {
         $pdo->beginTransaction();
         
         // Get registration details including parent IC to generate parent password
+        // FIXED: Use student_status column instead of status
         $stmt = $pdo->prepare("
             SELECT 
-                r.id, r.registration_number, r.name_en, r.email, r.status,
+                r.id, r.registration_number, r.name_en, r.email, r.student_status,
                 r.payment_status, r.student_account_id, r.parent_account_id,
                 r.is_additional_child,
                 r.parent_ic,
@@ -175,7 +176,7 @@ if ($action === 'verify_registration') {
                 $registration['email'],
                 $registration['name_en'],
                 $registration['registration_number'],
-                $registration['status'],
+                $registration['student_status'],  // FIXED: Use student_status
                 $parentPlainPassword,  // Send PARENT'S password (last 4 of PARENT IC)
                 $isFirstChild
             );

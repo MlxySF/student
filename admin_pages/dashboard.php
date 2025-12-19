@@ -56,7 +56,7 @@ try {
 }
 
 try {
-    // Get recent registrations
+    // Get recent registrations - USE student_status column
     $stmt = $pdo->query("
         SELECT * FROM registrations 
         ORDER BY created_at DESC 
@@ -205,8 +205,8 @@ $statusDisplayMap = [
                         <tbody>
                             <?php if (!empty($recentRegistrations)): ?>
                                 <?php foreach ($recentRegistrations as $reg): 
-                                    // Get display status with Chinese
-                                    $regStatus = $reg['status'];
+                                    // FIXED: Use student_status column instead of status
+                                    $regStatus = $reg['student_status'];
                                     $displayRegStatus = isset($statusDisplayMap[$regStatus]) ? $statusDisplayMap[$regStatus] : $regStatus;
                                 ?>
                                 <tr>
