@@ -72,12 +72,15 @@ if ($action === 'verify_registration') {
     try {
         $pdo->beginTransaction();
         
-        // Get registration details including parent info and password
+        // Get registration details including parent info
+        // IMPORTANT: Get password_generated (plain text) from registrations table, NOT hashed password from parent_accounts
         $stmt = $pdo->prepare("
             SELECT 
                 r.id, r.registration_number, r.name_en, r.email, r.status,
                 r.payment_status, r.student_account_id, r.parent_account_id,
-                pa.password as parent_password
+                r.password_generated as parent_plain_password,
+                r.is_additional_child,
+                pa.ic_number as parent_ic
             FROM registrations r
             LEFT JOIN parent_accounts pa ON r.parent_account_id = pa.id
             WHERE r.id = ?
@@ -96,6 +99,15 @@ if ($action === 'verify_registration') {
         $studentAccountId = $registration['student_account_id'];
         $parentAccountId = $registration['parent_account_id'];
         $adminId = $_SESSION['admin_id'] ?? null;
+        
+        // Calculate plain text password from parent IC if not stored
+        $parentPlainPassword = $registration['parent_plain_password'];
+        if (empty($parentPlainPassword) && !empty($registration['parent_ic'])) {
+            // Generate password from last 4 digits of IC
+            $parentIcClean = str_replace('-', '', $registration['parent_ic']);
+            $parentPlainPassword = substr($parentIcClean, -4);
+            error_log("[verify_registration] Generated password from parent IC: {$parentPlainPassword}");
+        }
         
         // 1. Update registration status to approved
         $stmt = $pdo->prepare("UPDATE registrations SET payment_status = 'approved' WHERE id = ?");
@@ -145,18 +157,10 @@ if ($action === 'verify_registration') {
         }
         
         // 4. Check if this is the first child for this parent (to send password)
-        $isFirstChild = false;
-        if ($parentAccountId) {
-            $countStmt = $pdo->prepare("
-                SELECT COUNT(*) as child_count 
-                FROM registrations 
-                WHERE parent_account_id = ? 
-                AND payment_status = 'approved'
-            ");
-            $countStmt->execute([$parentAccountId]);
-            $result = $countStmt->fetch(PDO::FETCH_ASSOC);
-            $isFirstChild = ($result['child_count'] == 1);
-        }
+        // Use is_additional_child column - if 0, it's the first child
+        $isFirstChild = ($registration['is_additional_child'] == 0);
+        
+        error_log("[verify_registration] IsFirstChild: " . ($isFirstChild ? 'YES' : 'NO') . ", PlainPassword: " . ($parentPlainPassword ?? 'NULL'));
         
         // Commit all database changes first
         $pdo->commit();
@@ -169,7 +173,7 @@ if ($action === 'verify_registration') {
                 $registration['name_en'],
                 $registration['registration_number'],
                 $registration['status'],
-                $registration['parent_password'],
+                $parentPlainPassword,  // Send PLAIN TEXT password, not hashed
                 $isFirstChild
             );
         } catch (Exception $e) {
