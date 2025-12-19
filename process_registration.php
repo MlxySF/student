@@ -7,6 +7,7 @@
  * UPDATED: Auto-enrollment into classes based on schedule selection
  * UPDATED: Creates registration fee invoice with attached payment receipt
  * UPDATED: Receipt stored in invoice for parent download access
+ * FIXED: Use registration_number instead of registration_id
  */
 
 header('Content-Type: application/json');
@@ -247,7 +248,7 @@ function autoEnrollStudent(PDO $conn, int $studentId, string $scheduleString): a
  * Create a registration fee invoice with payment receipt attached
  * Receipt is stored in the invoice record for parent to download
  */
-function createRegistrationInvoiceWithReceipt(PDO $conn, int $studentId, int $parentAccountId, float $amount, string $studentName, int $registrationId, string $receiptBase64, string $paymentDate): array {
+function createRegistrationInvoiceWithReceipt(PDO $conn, int $studentId, int $parentAccountId, float $amount, string $studentName, string $registrationNumber, string $receiptBase64, string $paymentDate): array {
     try {
         // Generate invoice number
         $invoiceNumber = 'INV-REG-' . date('Ym') . '-' . str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT);
@@ -269,7 +270,7 @@ function createRegistrationInvoiceWithReceipt(PDO $conn, int $studentId, int $pa
                 amount,
                 due_date,
                 status,
-                registration_id,
+                registration_number,
                 payment_receipt,
                 payment_date,
                 created_at
@@ -283,14 +284,14 @@ function createRegistrationInvoiceWithReceipt(PDO $conn, int $studentId, int $pa
             $description,
             $amount,
             $dueDate,
-            $registrationId,
+            $registrationNumber,
             $receiptBase64,
             $paymentDate
         ]);
         
         $invoiceId = (int)$conn->lastInsertId();
         
-        error_log("[Invoice] Created registration fee invoice: {$invoiceNumber} (ID: {$invoiceId}) with payment receipt attached");
+        error_log("[Invoice] Created registration fee invoice: {$invoiceNumber} (ID: {$invoiceId}) with payment receipt attached, linked to registration: {$registrationNumber}");
         
         return [
             'success' => true,
@@ -631,7 +632,7 @@ try {
     ]);
     
     $registrationId = (int)$conn->lastInsertId();
-    error_log("[Registration] Created registration record ID={$registrationId}");
+    error_log("[Registration] Created registration record ID={$registrationId}, Number={$regNumber}");
 
     // ===============================
     // AUTO-ENROLL INTO CLASSES
@@ -656,7 +657,7 @@ try {
         $parentAccountId, 
         $paymentAmount, 
         $fullName,
-        $registrationId,
+        $regNumber,  // Pass registration NUMBER not ID
         $receiptBase64,
         $paymentDate
     );
