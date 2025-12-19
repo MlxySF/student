@@ -3,17 +3,33 @@
 $filter_month = isset($_GET['filter_month']) ? trim($_GET['filter_month']) : '';
 $filter_type = isset($_GET['filter_type']) ? trim($_GET['filter_type']) : '';
 
-// Convert month input (2025-12) to database format (Dec 2025)
+// Parse the filter_month to handle year-only or year-month format
+$filter_year = '';
 $filter_month_formatted = '';
+$is_year_only = false;
+
 if ($filter_month) {
-    $filter_month_formatted = date('M Y', strtotime($filter_month . '-01'));
+    // Check if it's just a year (4 digits) or year-month format
+    if (preg_match('/^\d{4}$/', $filter_month)) {
+        // Year only (e.g., "2025")
+        $filter_year = $filter_month;
+        $is_year_only = true;
+    } elseif (preg_match('/^\d{4}-\d{2}$/', $filter_month)) {
+        // Year-month format (e.g., "2025-12")
+        $filter_month_formatted = date('M Y', strtotime($filter_month . '-01'));
+    }
 }
 
 // Build WHERE clauses for single-table queries
 $where_conditions = [];
 $params = [];
 
-if ($filter_month_formatted) {
+if ($is_year_only) {
+    // Filter by year only - match any month containing the year
+    $where_conditions[] = "TRIM(payment_month) LIKE ?";
+    $params[] = '%' . $filter_year;
+} elseif ($filter_month_formatted) {
+    // Filter by specific month
     $where_conditions[] = "TRIM(payment_month) = ?";
     $params[] = $filter_month_formatted;
 }
@@ -29,7 +45,12 @@ $where_clause = count($where_conditions) > 0 ? " AND " . implode(" AND ", $where
 $where_conditions_join = [];
 $params_join = [];
 
-if ($filter_month_formatted) {
+if ($is_year_only) {
+    // Filter by year only - match any month containing the year
+    $where_conditions_join[] = "TRIM(i.payment_month) LIKE ?";
+    $params_join[] = '%' . $filter_year;
+} elseif ($filter_month_formatted) {
+    // Filter by specific month
     $where_conditions_join[] = "TRIM(i.payment_month) = ?";
     $params_join[] = $filter_month_formatted;
 }
@@ -154,8 +175,9 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
             </div>
             
             <div class="col-md-3">
-                <label class="form-label"><i class="fas fa-calendar"></i> Payment Month</label>
-                <input type="month" name="filter_month" class="form-control" value="<?php echo htmlspecialchars($filter_month); ?>">
+                <label class="form-label"><i class="fas fa-calendar"></i> Year or Month</label>
+                <input type="text" name="filter_month" class="form-control" value="<?php echo htmlspecialchars($filter_month); ?>" placeholder="2025 or 2025-12">
+                <small class="text-muted">Enter year (e.g., 2025) or year-month (e.g., 2025-12)</small>
             </div>
             
             <div class="col-md-3">
@@ -177,7 +199,9 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                 <?php if ($filter_type): ?>
                     <span class="badge bg-primary ms-2"><?php echo ucfirst(str_replace('_', ' ', $filter_type)); ?></span>
                 <?php endif; ?>
-                <?php if ($filter_month_formatted): ?>
+                <?php if ($is_year_only): ?>
+                    <span class="badge bg-primary ms-2">Year: <?php echo htmlspecialchars($filter_year); ?> (All Months)</span>
+                <?php elseif ($filter_month_formatted): ?>
                     <span class="badge bg-primary ms-2"><?php echo htmlspecialchars($filter_month_formatted); ?></span>
                 <?php endif; ?>
                 <div class="small text-muted mt-1">Found <?php echo count($all_invoices); ?> invoice(s)</div>
