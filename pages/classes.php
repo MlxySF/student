@@ -1,12 +1,21 @@
 <?php
 // Student Classes Page - Updated for multi-child parent support
 
-// Get current student info
-$stmt = $pdo->prepare("SELECT full_name FROM students WHERE id = ?");
-$stmt->execute([getActiveStudentId()]);
-$current_student = $stmt->fetch();
+// Get current student info - FIXED for parent portal
+if (isParent()) {
+    $stmt = $pdo->prepare("SELECT r.*, s.id as student_account_id FROM registrations r LEFT JOIN students s ON r.student_account_id = s.id WHERE r.id = ?");
+    $stmt->execute([getActiveStudentId()]);
+    $current_student = $stmt->fetch();
+    $current_student['full_name'] = $current_student['name_en'];
+    $studentAccountId = $current_student['student_account_id'];
+} else {
+    $stmt = $pdo->prepare("SELECT full_name FROM students WHERE id = ?");
+    $stmt->execute([getActiveStudentId()]);
+    $current_student = $stmt->fetch();
+    $studentAccountId = getActiveStudentId();
+}
 
-// Get enrolled classes using active student ID
+// Get enrolled classes using student account ID
 $stmt = $pdo->prepare("
     SELECT c.*, e.enrollment_date, e.status 
     FROM enrollments e 
@@ -14,7 +23,7 @@ $stmt = $pdo->prepare("
     WHERE e.student_id = ? 
     ORDER BY e.enrollment_date DESC
 ");
-$stmt->execute([getActiveStudentId()]);
+$stmt->execute([$studentAccountId]);
 $enrolled_classes = $stmt->fetchAll();
 ?>
 
