@@ -321,16 +321,16 @@ if (isParent()) {
                     <i class="fas fa-phone"></i> <strong>Phone:</strong> <?php echo htmlspecialchars($student['phone']); ?>
                 </p>
                 <?php endif; ?>
-                <p class="text-muted mb-0">
+                <p class="text-muted mb-2">
                     <i class="fas fa-id-badge"></i> <strong>Student ID:</strong> <?php echo htmlspecialchars($student['student_id']); ?>
                 </p>
-                <?php if (!empty($student['student_status']) && $student['student_status'] !== 'Student 学生'): ?>
+                <?php if (!empty($student['student_status'])): ?>
                 <p class="text-muted mb-0">
                     <i class="fas fa-user-tag"></i> <strong>Status:</strong> 
                     <span class="badge 
                         <?php 
-                        echo ($student['student_status'] === 'State Team 州队') ? 'bg-success' : 
-                             (($student['student_status'] === 'Backup Team 后备队') ? 'bg-warning' : 'bg-primary');
+                        echo (strpos($student['student_status'], 'State Team') !== false) ? 'bg-success' : 
+                             ((strpos($student['student_status'], 'Backup Team') !== false) ? 'bg-warning' : 'bg-info');
                         ?>">
                         <?php echo htmlspecialchars($student['student_status']); ?>
                     </span>
