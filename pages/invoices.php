@@ -4,16 +4,23 @@
 // Get filter parameters
 $filter_type = isset($_GET['filter_type']) ? $_GET['filter_type'] : '';
 $filter_month = isset($_GET['filter_month']) ? $_GET['filter_month'] : '';
+$filter_applied = isset($_GET['filter_applied']) ? $_GET['filter_applied'] : false;
 
-// Check if any filter is selected
-$has_filter = !empty($filter_type) || !empty($filter_month);
+// Check if user has clicked the search/filter button
+if (isset($_GET['page']) && $_GET['page'] === 'invoices' && 
+    (isset($_GET['filter_type']) || isset($_GET['filter_month']) || $_SERVER['REQUEST_METHOD'] === 'GET')) {
+    // Check if filter form was actually submitted (has filter parameters in URL)
+    if (array_key_exists('filter_type', $_GET) || array_key_exists('filter_month', $_GET)) {
+        $filter_applied = true;
+    }
+}
 
 // Initialize arrays
 $all_invoices = [];
 $available_months = [];
 
-// Only fetch data if filters are selected
-if ($has_filter) {
+// Fetch data if filters are applied (including "All Types" which is empty string but filter_applied is true)
+if ($filter_applied) {
     // Build SQL query - using getActiveStudentId() for multi-child support
     $sql = "
         SELECT i.*, 
@@ -27,7 +34,7 @@ if ($has_filter) {
 
     $params = [getActiveStudentId()];
 
-    // Add type filter
+    // Add type filter only if a specific type is selected
     if ($filter_type) {
         $sql .= " AND i.invoice_type = ?";
         $params[] = $filter_type;
@@ -224,7 +231,7 @@ $current_student = $stmt->fetch();
             </div>
         </form>
         
-        <?php if ($has_filter): ?>
+        <?php if ($filter_applied): ?>
             <div class="mt-3">
                 <div class="alert alert-info d-flex justify-content-between align-items-center mb-0">
                     <div>
@@ -232,9 +239,13 @@ $current_student = $stmt->fetch();
                         <strong>Active Filters:</strong>
                         <?php if ($filter_type): ?>
                             <span class="badge bg-primary ms-2"><?php echo ucfirst(str_replace('_', ' ', $filter_type)); ?></span>
+                        <?php else: ?>
+                            <span class="badge bg-primary ms-2">All Types</span>
                         <?php endif; ?>
                         <?php if ($filter_month): ?>
                             <span class="badge bg-primary ms-2"><?php echo date('F Y', strtotime($filter_month . '-01')); ?></span>
+                        <?php else: ?>
+                            <span class="badge bg-primary ms-2">All Months</span>
                         <?php endif; ?>
                     </div>
                     <a href="?page=invoices" class="btn btn-sm btn-secondary">
@@ -246,19 +257,20 @@ $current_student = $stmt->fetch();
     </div>
 </div>
 
-<?php if (!$has_filter): ?>
+<?php if (!$filter_applied): ?>
     <!-- Initial State - No Filter Selected -->
     <div class="card">
         <div class="card-body text-center py-5">
             <i class="fas fa-filter fa-4x text-primary mb-4"></i>
             <h4>Search Your Invoices</h4>
-            <p class="text-muted mb-4">Please select an invoice type or month above to view your invoices.</p>
+            <p class="text-muted mb-4">Click the "Search Invoices" button above to view your invoices.</p>
             <div class="row justify-content-center">
                 <div class="col-md-8">
                     <div class="alert alert-info text-start">
                         <strong><i class="fas fa-lightbulb"></i> Quick Tips:</strong>
                         <ul class="mb-0 mt-2">
-                            <li>Select <strong>Invoice Type</strong> to see all invoices of that category</li>
+                            <li>Leave filters empty and click Search to see <strong>all invoices</strong></li>
+                            <li>Select <strong>Invoice Type</strong> to filter by category</li>
                             <li>Select <strong>Month & Year</strong> to see invoices for a specific period</li>
                             <li>Use both filters together for more specific results</li>
                         </ul>
