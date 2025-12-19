@@ -448,7 +448,7 @@
                                     <i class="far fa-calendar mr-2 text-amber-500"></i>Wednesday 星期三 · 8:00 PM - 10:00 PM
                                 </div>
                                 <div class="text-xs text-slate-600">
-                                    <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">只有基础套路 和 太极套路</span>
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-semibold">(C 和 太极套路)</span>
                                 </div>
                             </div>
                         </label>
