@@ -114,6 +114,23 @@ if (isParent()) {
 }
 ?>
 
+<?php if (isParent()): ?>
+<!-- NEW: Register Additional Child Button (Stage 3) -->
+<div class="alert alert-info mb-4 animate__animated animate__fadeIn" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-left: 5px solid #3b82f6;">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h5 class="mb-2"><i class="fas fa-user-plus"></i> Add Another Child to Your Account</h5>
+            <p class="mb-0 text-muted">Register additional children and manage all your children's accounts from one place.</p>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            <a href="register.php?mode=additional" class="btn btn-primary btn-lg">
+                <i class="fas fa-user-plus"></i> Register Additional Child
+            </a>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <?php if (isParent() && count($allChildrenSummary) > 1): ?>
 <!-- Parent Dashboard: All Children Summary -->
 <div class="card mb-4 animate__animated animate__fadeIn" style="border-left: 5px solid #4f46e5;">
