@@ -1,9 +1,40 @@
 <?php
 // admin_pages/registrations.php - View registrations with proper status colors
 
-// Get all registrations
+// Get all registrations with explicit column selection
 $stmt = $pdo->query("
-    SELECT * FROM registrations 
+    SELECT 
+        id,
+        registration_number,
+        name_en,
+        name_cn,
+        ic,
+        age,
+        school,
+        student_status,
+        phone,
+        email,
+        level,
+        events,
+        schedule,
+        parent_name,
+        parent_ic,
+        form_date,
+        signature_base64,
+        pdf_base64,
+        payment_amount,
+        payment_date,
+        payment_receipt_base64,
+        payment_status,
+        class_count,
+        student_account_id,
+        account_created,
+        password_generated,
+        parent_account_id,
+        registration_type,
+        is_additional_child,
+        created_at
+    FROM registrations 
     ORDER BY created_at DESC
 ");
 $registrations = $stmt->fetchAll();
