@@ -170,7 +170,7 @@ function parseScheduleToClassCodes(string $scheduleString): array {
     $scheduleToClassCodeMap = [
         // Wushu Sport Academy
         'Wushu Sport Academy: Sun 10am-12pm' => 'wsa-sun-10am',
-        'Wushu Sport Academy: Sun 12pm-2pm' => 'wsa-sun-12pm',
+        'Wushu Sport Academy: Sun 1pm-3pm' => 'wsa-sun-1pm',
         'Wushu Sport Academy: Wed 8pm-10pm' => 'wsa-wed-8pm',
         
         // SJK(C) Puay Chai 2
