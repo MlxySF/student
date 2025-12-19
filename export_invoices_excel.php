@@ -70,80 +70,44 @@ $output = fopen('php://output', 'w');
 // Add UTF-8 BOM for proper Excel encoding
 fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
 
-// Define column headers based on invoice type
-if ($filter_type === 'monthly_fee') {
-    // Include class information for monthly fee invoices
-    $headers = [
-        'Invoice Number',
-        'Date Created',
-        'Student ID',
-        'Student Name',
-        'Student Email',
-        'Class Code',
-        'Class Name',
-        'Invoice Type',
-        'Description',
-        'Payment Month',
-        'Amount (RM)',
-        'Due Date',
-        'Status',
-        'Paid Date'
-    ];
-} else {
-    // Standard headers for other invoice types
-    $headers = [
-        'Invoice Number',
-        'Date Created',
-        'Student ID',
-        'Student Name',
-        'Student Email',
-        'Invoice Type',
-        'Description',
-        'Amount (RM)',
-        'Due Date',
-        'Status',
-        'Paid Date'
-    ];
-}
+// Define headers - always include class code and class name
+$headers = [
+    'Invoice Number',
+    'Date Created',
+    'Student ID',
+    'Student Name',
+    'Student Email',
+    'Class Code',
+    'Class Name',
+    'Invoice Type',
+    'Description',
+    'Payment Month',
+    'Amount (RM)',
+    'Due Date',
+    'Status',
+    'Paid Date'
+];
 
 fputcsv($output, $headers);
 
 // Write data rows
 foreach ($invoices as $invoice) {
-    if ($filter_type === 'monthly_fee') {
-        // Include class information for monthly fee invoices
-        $row = [
-            $invoice['invoice_number'],
-            date('Y-m-d H:i:s', strtotime($invoice['created_at'])),
-            $invoice['student_id'],
-            $invoice['full_name'],
-            $invoice['email'],
-            $invoice['class_code'] ?? 'N/A',
-            $invoice['class_name'] ?? 'N/A',
-            ucfirst(str_replace('_', ' ', $invoice['invoice_type'])),
-            $invoice['description'],
-            $invoice['payment_month'] ?? 'N/A',
-            number_format($invoice['amount'], 2),
-            $invoice['due_date'],
-            ucfirst($invoice['status']),
-            $invoice['paid_date'] ? date('Y-m-d H:i:s', strtotime($invoice['paid_date'])) : 'N/A'
-        ];
-    } else {
-        // Standard row for other invoice types
-        $row = [
-            $invoice['invoice_number'],
-            date('Y-m-d H:i:s', strtotime($invoice['created_at'])),
-            $invoice['student_id'],
-            $invoice['full_name'],
-            $invoice['email'],
-            ucfirst(str_replace('_', ' ', $invoice['invoice_type'])),
-            $invoice['description'],
-            number_format($invoice['amount'], 2),
-            $invoice['due_date'],
-            ucfirst($invoice['status']),
-            $invoice['paid_date'] ? date('Y-m-d H:i:s', strtotime($invoice['paid_date'])) : 'N/A'
-        ];
-    }
+    $row = [
+        $invoice['invoice_number'],
+        date('Y-m-d H:i:s', strtotime($invoice['created_at'])),
+        $invoice['student_id'],
+        $invoice['full_name'],
+        $invoice['email'],
+        $invoice['class_code'] ?? 'N/A',
+        $invoice['class_name'] ?? 'N/A',
+        ucfirst(str_replace('_', ' ', $invoice['invoice_type'])),
+        $invoice['description'],
+        $invoice['payment_month'] ?? 'N/A',
+        number_format($invoice['amount'], 2),
+        $invoice['due_date'],
+        ucfirst($invoice['status']),
+        $invoice['paid_date'] ? date('Y-m-d H:i:s', strtotime($invoice['paid_date'])) : 'N/A'
+    ];
     
     fputcsv($output, $row);
 }
