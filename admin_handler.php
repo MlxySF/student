@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $action = $_POST['action'] ?? '';
 
-// ============ REGISTRATION APPROVAL (FIXED - NO admin_notes) ============
+// ============ REGISTRATION APPROVAL (SIMPLIFIED) ============
 
 if ($action === 'verify_registration') {
     $regId = $_POST['registration_id'];
@@ -87,15 +87,9 @@ if ($action === 'verify_registration') {
         $studentAccountId = $registration['student_account_id'];
         $adminUsername = $_SESSION['admin_username'] ?? 'admin';
         
-        // 1. Update registration status to approved (NO admin_notes column)
-        $stmt = $pdo->prepare("
-            UPDATE registrations 
-            SET payment_status = 'approved',
-                approved_at = NOW(),
-                approved_by = ?
-            WHERE id = ?
-        ");
-        $stmt->execute([$adminUsername, $regId]);
+        // 1. Update registration status to approved (ONLY payment_status column)
+        $stmt = $pdo->prepare("UPDATE registrations SET payment_status = 'approved' WHERE id = ?");
+        $stmt->execute([$regId]);
         
         // 2. Auto-approve the linked registration fee invoice
         $stmt = $pdo->prepare("
@@ -131,12 +125,11 @@ if ($action === 'verify_registration') {
                     UPDATE payments 
                     SET verification_status = 'approved',
                         verified_at = NOW(),
-                        verified_by = ?,
                         admin_notes = 'Auto-approved with registration'
                     WHERE invoice_id = ? 
                       AND verification_status = 'pending'
                 ");
-                $stmt->execute([$adminUsername, $invoice['id']]);
+                $stmt->execute([$invoice['id']]);
                 $paymentsUpdated = $stmt->rowCount();
             }
         }
@@ -186,17 +179,10 @@ if ($action === 'reject_registration') {
         }
         
         $studentAccountId = $registration['student_account_id'];
-        $adminUsername = $_SESSION['admin_username'] ?? 'admin';
         
-        // 1. Update registration status to rejected (NO admin_notes column)
-        $stmt = $pdo->prepare("
-            UPDATE registrations 
-            SET payment_status = 'rejected',
-                reviewed_at = NOW(),
-                reviewed_by = ?
-            WHERE id = ?
-        ");
-        $stmt->execute([$adminUsername, $regId]);
+        // 1. Update registration status to rejected (ONLY payment_status column)
+        $stmt = $pdo->prepare("UPDATE registrations SET payment_status = 'rejected' WHERE id = ?");
+        $stmt->execute([$regId]);
         
         // 2. Cancel linked invoice
         $stmt = $pdo->prepare("
@@ -229,12 +215,11 @@ if ($action === 'reject_registration') {
                     UPDATE payments 
                     SET verification_status = 'rejected',
                         verified_at = NOW(),
-                        verified_by = ?,
                         admin_notes = 'Rejected with registration'
                     WHERE invoice_id = ? 
                       AND verification_status = 'pending'
                 ");
-                $stmt->execute([$adminUsername, $invoice['id']]);
+                $stmt->execute([$invoice['id']]);
                 $paymentsUpdated = $stmt->rowCount();
             }
         }
