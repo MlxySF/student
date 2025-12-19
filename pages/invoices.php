@@ -1,5 +1,5 @@
 <?php
-// Student Invoices & Payments Page - Unified view with required filters
+// Student Invoices & Payments Page - Updated for multi-child parent support
 
 // Get filter parameters
 $filter_type = isset($_GET['filter_type']) ? $_GET['filter_type'] : '';
@@ -14,7 +14,7 @@ $available_months = [];
 
 // Only fetch data if filters are selected
 if ($has_filter) {
-    // Build SQL query
+    // Build SQL query - using getActiveStudentId() for multi-child support
     $sql = "
         SELECT i.*, 
                c.class_code, c.class_name,
@@ -25,7 +25,7 @@ if ($has_filter) {
         LEFT JOIN payments p ON i.id = p.invoice_id
         WHERE i.student_id = ?";
 
-    $params = [getStudentId()];
+    $params = [getActiveStudentId()];
 
     // Add type filter
     if ($filter_type) {
@@ -60,7 +60,7 @@ if ($has_filter) {
 
 // Get available invoice types for this student
 $types_stmt = $pdo->prepare("SELECT DISTINCT invoice_type FROM invoices WHERE student_id = ? ORDER BY invoice_type");
-$types_stmt->execute([getStudentId()]);
+$types_stmt->execute([getActiveStudentId()]);
 $available_types = $types_stmt->fetchAll(PDO::FETCH_COLUMN);
 
 // Separate by status
@@ -130,6 +130,11 @@ function renderPagination($data) {
     echo '<a class="page-link" href="?page=invoices' . $filter_params . '&' . $param . '=' . ($current_page + 1) . '">&raquo;</a></li>';
     echo '</ul></nav>';
 }
+
+// Get current student info for display
+$stmt = $pdo->prepare("SELECT full_name FROM students WHERE id = ?");
+$stmt->execute([getActiveStudentId()]);
+$current_student = $stmt->fetch();
 ?>
 
 <style>
@@ -164,6 +169,14 @@ function renderPagination($data) {
 .receipt-image { max-width: 100%; height: auto; border-radius: 8px; border: 2px solid #e2e8f0; }
 .receipt-pdf { width: 100%; height: 500px; border: 2px solid #e2e8f0; border-radius: 8px; }
 </style>
+
+<?php if (isParent()): ?>
+<!-- Parent View Indicator -->
+<div class="alert alert-info mb-3">
+    <i class="fas fa-info-circle"></i> Viewing invoices for: <strong><?php echo htmlspecialchars($current_student['full_name']); ?></strong>
+    <span class="text-muted">(Use header dropdown to switch children)</span>
+</div>
+<?php endif; ?>
 
 <!-- Filter Form -->
 <div class="card mb-4 border-primary">
