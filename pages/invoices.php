@@ -1,5 +1,20 @@
 <?php
 // Student Invoices & Payments Page - Updated for multi-child parent support
+// FIXED: Determine student account ID properly for parent portal
+
+// Determine student account ID first
+if (isParent()) {
+    $stmt = $pdo->prepare("SELECT student_account_id, name_en FROM registrations WHERE id = ?");
+    $stmt->execute([getActiveStudentId()]);
+    $reg = $stmt->fetch();
+    $studentAccountId = $reg['student_account_id'] ?? null;
+    $current_student = ['full_name' => $reg['name_en'] ?? 'Unknown'];
+} else {
+    $studentAccountId = getActiveStudentId();
+    $stmt = $pdo->prepare("SELECT full_name FROM students WHERE id = ?");
+    $stmt->execute([$studentAccountId]);
+    $current_student = $stmt->fetch();
+}
 
 // Get filter parameters
 $filter_type = isset($_GET['filter_type']) ? $_GET['filter_type'] : '';
@@ -21,7 +36,7 @@ $available_months = [];
 
 // Fetch data if filters are applied (including "All Types" which is empty string but filter_applied is true)
 if ($filter_applied) {
-    // Build SQL query - using getActiveStudentId() for multi-child support
+    // Build SQL query - using studentAccountId for multi-child support
     $sql = "
         SELECT i.*, 
                c.class_code, c.class_name,
@@ -32,7 +47,7 @@ if ($filter_applied) {
         LEFT JOIN payments p ON i.id = p.invoice_id
         WHERE i.student_id = ?";
 
-    $params = [getActiveStudentId()];
+    $params = [$studentAccountId];
 
     // Add type filter only if a specific type is selected
     if ($filter_type) {
@@ -67,7 +82,7 @@ if ($filter_applied) {
 
 // Get available invoice types for this student
 $types_stmt = $pdo->prepare("SELECT DISTINCT invoice_type FROM invoices WHERE student_id = ? ORDER BY invoice_type");
-$types_stmt->execute([getActiveStudentId()]);
+$types_stmt->execute([$studentAccountId]);
 $available_types = $types_stmt->fetchAll(PDO::FETCH_COLUMN);
 
 // Separate by status
@@ -137,11 +152,6 @@ function renderPagination($data) {
     echo '<a class="page-link" href="?page=invoices' . $filter_params . '&' . $param . '=' . ($current_page + 1) . '">&raquo;</a></li>';
     echo '</ul></nav>';
 }
-
-// Get current student info for display
-$stmt = $pdo->prepare("SELECT full_name FROM students WHERE id = ?");
-$stmt->execute([getActiveStudentId()]);
-$current_student = $stmt->fetch();
 ?>
 
 <style>
