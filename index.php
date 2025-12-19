@@ -16,8 +16,10 @@ function redirectIfNotLoggedIn() {
 }
 
 // Get current logged-in student ID - now uses new auth system
-function getStudentId() {
-    return getActiveStudentId();
+if (!function_exists('getStudentId')) {
+    function getStudentId() {
+        return getActiveStudentId();
+    }
 }
 
 // Validate receipt file upload
