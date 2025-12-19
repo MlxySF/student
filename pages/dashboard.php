@@ -1,23 +1,23 @@
 <?php
-// pages/dashboard.php
-// Get student information
+// pages/dashboard.php - Updated for multi-child parent support
+// Get student information using context-aware function
 $stmt = $pdo->prepare("SELECT * FROM students WHERE id = ?");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $student = $stmt->fetch();
 
 // Get enrolled classes count
 $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM enrollments WHERE student_id = ? AND status = 'active'");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $classesCount = $stmt->fetch()['count'];
 
 // Get unpaid invoices count
 $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM invoices WHERE student_id = ? AND status IN ('unpaid', 'overdue')");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $unpaidInvoicesCount = $stmt->fetch()['count'];
 
 // Get pending payments count
 $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM payments WHERE student_id = ? AND verification_status = 'pending'");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $pendingPaymentsCount = $stmt->fetch()['count'];
 
 // Get total attendance percentage
@@ -28,7 +28,7 @@ $stmt = $pdo->prepare("
     FROM attendance 
     WHERE student_id = ?
 ");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $attendanceData = $stmt->fetch();
 $attendancePercentage = $attendanceData['total'] > 0 
     ? round(($attendanceData['present'] / $attendanceData['total']) * 100) 
@@ -45,7 +45,7 @@ $stmt = $pdo->prepare("
     ORDER BY i.created_at DESC
     LIMIT 5
 ");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $recentInvoices = $stmt->fetchAll();
 
 // Get upcoming classes (enrolled active classes)
@@ -60,7 +60,7 @@ $stmt = $pdo->prepare("
     ORDER BY c.class_name
     LIMIT 5
 ");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $enrolledClasses = $stmt->fetchAll();
 
 // Get recent attendance records (last 10)
@@ -75,9 +75,128 @@ $stmt = $pdo->prepare("
     ORDER BY a.attendance_date DESC
     LIMIT 10
 ");
-$stmt->execute([getStudentId()]);
+$stmt->execute([getActiveStudentId()]);
 $recentAttendance = $stmt->fetchAll();
+
+// For parents: Get summary of all children
+$allChildrenSummary = [];
+if (isParent()) {
+    foreach (getParentChildren() as $child) {
+        $childId = $child['id'];
+        
+        // Get child's unpaid invoices
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count, COALESCE(SUM(amount), 0) as total FROM invoices WHERE student_id = ? AND status IN ('unpaid', 'overdue')");
+        $stmt->execute([$childId]);
+        $invoiceData = $stmt->fetch();
+        
+        // Get child's attendance rate
+        $stmt = $pdo->prepare("SELECT COUNT(*) as total, SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present FROM attendance WHERE student_id = ?");
+        $stmt->execute([$childId]);
+        $attData = $stmt->fetch();
+        $attRate = $attData['total'] > 0 ? round(($attData['present'] / $attData['total']) * 100) : 0;
+        
+        // Get child's enrolled classes count
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM enrollments WHERE student_id = ? AND status = 'active'");
+        $stmt->execute([$childId]);
+        $classCount = $stmt->fetch()['count'];
+        
+        $allChildrenSummary[] = [
+            'id' => $childId,
+            'name' => $child['full_name'],
+            'student_id' => $child['student_id'],
+            'status' => $child['student_status'],
+            'unpaid_count' => $invoiceData['count'],
+            'unpaid_total' => $invoiceData['total'],
+            'attendance_rate' => $attRate,
+            'classes_count' => $classCount
+        ];
+    }
+}
 ?>
+
+<?php if (isParent() && count($allChildrenSummary) > 1): ?>
+<!-- Parent Dashboard: All Children Summary -->
+<div class="card mb-4 animate__animated animate__fadeIn" style="border-left: 5px solid #4f46e5;">
+    <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white;">
+        <h5 class="mb-0"><i class="fas fa-users"></i> All Children Summary</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Child</th>
+                        <th>Student ID</th>
+                        <th>Status</th>
+                        <th>Classes</th>
+                        <th>Attendance</th>
+                        <th>Unpaid Invoices</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($allChildrenSummary as $child): ?>
+                    <tr class="<?php echo ($child['id'] == getActiveStudentId()) ? 'table-primary' : ''; ?>">
+                        <td>
+                            <strong><?php echo htmlspecialchars($child['name']); ?></strong>
+                            <?php if ($child['id'] == getActiveStudentId()): ?>
+                            <span class="badge bg-primary">Currently Viewing</span>
+                            <?php endif; ?>
+                        </td>
+                        <td><small><?php echo htmlspecialchars($child['student_id']); ?></small></td>
+                        <td>
+                            <?php if (!empty($child['status'])): ?>
+                            <span class="badge <?php 
+                                echo (strpos($child['status'], 'State Team') !== false) ? 'bg-success' : 
+                                     ((strpos($child['status'], 'Backup Team') !== false) ? 'bg-warning' : 'bg-info');
+                            ?>">
+                                <?php echo htmlspecialchars($child['status']); ?>
+                            </span>
+                            <?php else: ?>
+                            <small class="text-muted">-</small>
+                            <?php endif; ?>
+                        </td>
+                        <td><span class="badge bg-primary"><?php echo $child['classes_count']; ?> classes</span></td>
+                        <td>
+                            <span class="badge <?php echo ($child['attendance_rate'] >= 80) ? 'bg-success' : 'bg-danger'; ?>">
+                                <?php echo $child['attendance_rate']; ?>%
+                            </span>
+                        </td>
+                        <td>
+                            <?php if ($child['unpaid_count'] > 0): ?>
+                            <span class="badge bg-danger"><?php echo $child['unpaid_count']; ?> invoices</span>
+                            <small class="text-danger d-block">RM <?php echo number_format($child['unpaid_total'], 2); ?></small>
+                            <?php else: ?>
+                            <span class="badge bg-success">All Paid</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if ($child['id'] != getActiveStudentId()): ?>
+                            <a href="?page=dashboard&switch_child=<?php echo $child['id']; ?>" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            <?php else: ?>
+                            <span class="text-muted"><i class="fas fa-check"></i> Active</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+                <tfoot>
+                    <tr class="table-light">
+                        <td colspan="5" class="text-end"><strong>Total Outstanding:</strong></td>
+                        <td colspan="2">
+                            <strong class="text-danger">
+                                RM <?php echo number_format(array_sum(array_column($allChildrenSummary, 'unpaid_total')), 2); ?>
+                            </strong>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- Dashboard Statistics Cards -->
 <div class="row">
@@ -142,6 +261,9 @@ $recentAttendance = $stmt->fetchAll();
                 <h4 class="mb-3">
                     <i class="fas fa-hand-wave text-warning"></i>
                     Welcome back, <?php echo htmlspecialchars($student['full_name']); ?>!
+                    <?php if (isParent()): ?>
+                    <small class="text-muted" style="font-size: 14px;">(Parent View)</small>
+                    <?php endif; ?>
                 </h4>
                 <p class="text-muted mb-2">
                     <i class="fas fa-envelope"></i> <strong>Email:</strong> <?php echo htmlspecialchars($student['email']); ?>
@@ -355,7 +477,11 @@ $recentAttendance = $stmt->fetchAll();
             <div class="card-body">
                 <p class="mb-2">
                     <i class="fas fa-exclamation-triangle text-danger"></i>
+                    <?php if (isParent()): ?>
+                    <strong><?php echo htmlspecialchars($student['full_name']); ?></strong> has <strong><?php echo $unpaidInvoicesCount; ?> unpaid invoice(s)</strong>.
+                    <?php else: ?>
                     You have <strong><?php echo $unpaidInvoicesCount; ?> unpaid invoice(s)</strong>.
+                    <?php endif; ?>
                 </p>
                 <p class="text-muted small mb-0">
                     Please make payment as soon as possible to avoid service interruption.
@@ -391,5 +517,10 @@ $recentAttendance = $stmt->fetchAll();
 
 .opacity-50 {
     opacity: 0.5;
+}
+
+.table-primary {
+    background-color: rgba(79, 70, 229, 0.1);
+    border-left: 4px solid #4f46e5;
 }
 </style>
