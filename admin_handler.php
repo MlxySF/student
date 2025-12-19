@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $action = $_POST['action'] ?? '';
 
-// ============ REGISTRATION APPROVAL (FIXED - DIRECT DB) ============
+// ============ REGISTRATION APPROVAL (FIXED - NO admin_notes) ============
 
 if ($action === 'verify_registration') {
     $regId = $_POST['registration_id'];
@@ -87,11 +87,10 @@ if ($action === 'verify_registration') {
         $studentAccountId = $registration['student_account_id'];
         $adminUsername = $_SESSION['admin_username'] ?? 'admin';
         
-        // 1. Update registration status to approved
+        // 1. Update registration status to approved (NO admin_notes column)
         $stmt = $pdo->prepare("
             UPDATE registrations 
             SET payment_status = 'approved',
-                admin_notes = 'Approved by admin',
                 approved_at = NOW(),
                 approved_by = ?
             WHERE id = ?
@@ -189,11 +188,10 @@ if ($action === 'reject_registration') {
         $studentAccountId = $registration['student_account_id'];
         $adminUsername = $_SESSION['admin_username'] ?? 'admin';
         
-        // 1. Update registration status to rejected
+        // 1. Update registration status to rejected (NO admin_notes column)
         $stmt = $pdo->prepare("
             UPDATE registrations 
             SET payment_status = 'rejected',
-                admin_notes = 'Rejected by admin',
                 reviewed_at = NOW(),
                 reviewed_by = ?
             WHERE id = ?
