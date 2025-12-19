@@ -1,6 +1,29 @@
 <?php
 // Student Profile Page - Updated for multi-child parent support
-// FIXED: Use registrations table for parent portal
+// FIXED: Remove child_dob and child_ic (don't exist), use ic column, allow parent editing
+
+// Handle profile update for parents
+if (isParent() && isset($_POST['action']) && $_POST['action'] === 'update_child_profile') {
+    $registration_id = getActiveStudentId();
+    $name_en = trim($_POST['name_en']);
+    $ic = trim($_POST['ic']);
+    $school = trim($_POST['school']);
+    
+    try {
+        $stmt = $pdo->prepare("UPDATE registrations SET name_en = ?, ic = ?, school = ?, updated_at = NOW() WHERE id = ?");
+        $stmt->execute([$name_en, $ic, $school, $registration_id]);
+        
+        echo '<div class="alert alert-success alert-dismissible fade show" role="alert">';
+        echo '<i class="fas fa-check-circle"></i> Child profile updated successfully!';
+        echo '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        echo '</div>';
+    } catch (Exception $e) {
+        echo '<div class="alert alert-danger alert-dismissible fade show" role="alert">';
+        echo '<i class="fas fa-exclamation-triangle"></i> Error updating profile: ' . htmlspecialchars($e->getMessage());
+        echo '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        echo '</div>';
+    }
+}
 
 // Get student information using active student ID
 if (isParent()) {
@@ -10,8 +33,8 @@ if (isParent()) {
     if ($student) {
         $student['full_name'] = $student['name_en'];
         $student['student_id'] = $student['registration_number'];
-        $student['date_of_birth'] = $student['child_dob'];
-        $student['ic_number'] = $student['child_ic'];
+        $student['ic_number'] = $student['ic'] ?? ''; // Use ic column from registrations
+        // Don't set date_of_birth - it doesn't exist in registrations
     }
     $studentAccountId = $student['student_account_id'] ?? null;
 } else {
@@ -63,7 +86,7 @@ $invoice_stats = $stmt->fetch();
 <?php if (isParent()): ?>
 <div class="alert alert-info mb-3">
     <i class="fas fa-info-circle"></i> Viewing profile for: <strong><?php echo htmlspecialchars($student['full_name']); ?></strong>
-    <span class="text-muted">(Parent View - Some fields may be read-only)</span>
+    <span class="text-muted">(You can edit your child's profile)</span>
 </div>
 <?php endif; ?>
 
@@ -116,14 +139,8 @@ $invoice_stats = $stmt->fetch();
                             <?php endif; ?>
                             <?php if (!empty($student['ic_number'])): ?>
                             <tr>
-                                <td><strong><i class="fas fa-id-card text-primary"></i> IC Number:</strong></td>
+                                <td><strong><i class="fas fa-id-card text-primary"></i> IC/Passport:</strong></td>
                                 <td><?php echo htmlspecialchars($student['ic_number']); ?></td>
-                            </tr>
-                            <?php endif; ?>
-                            <?php if (!empty($student['date_of_birth'])): ?>
-                            <tr>
-                                <td><strong><i class="fas fa-birthday-cake text-primary"></i> Date of Birth:</strong></td>
-                                <td><?php echo formatDate($student['date_of_birth']); ?> <?php if (!empty($student['age'])): ?>(Age: <?php echo $student['age']; ?>)<?php endif; ?></td>
                             </tr>
                             <?php endif; ?>
                             <?php if (!empty($student['school'])): ?>
@@ -144,20 +161,20 @@ $invoice_stats = $stmt->fetch();
                     </table>
                 </div>
 
-                <?php if (!isParent()): ?>
                 <div class="text-center mt-4">
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                        <i class="fas fa-edit"></i> Edit Profile
-                    </button>
-                    <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
-                        <i class="fas fa-key"></i> Change Password
-                    </button>
+                    <?php if (isParent()): ?>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editChildProfileModal">
+                            <i class="fas fa-edit"></i> Edit Child Profile
+                        </button>
+                    <?php else: ?>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                            <i class="fas fa-edit"></i> Edit Profile
+                        </button>
+                        <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                            <i class="fas fa-key"></i> Change Password
+                        </button>
+                    <?php endif; ?>
                 </div>
-                <?php else: ?>
-                <div class="alert alert-warning mt-3">
-                    <i class="fas fa-lock"></i> Profile editing is disabled in parent view. Student must login to edit their own profile.
-                </div>
-                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -313,7 +330,51 @@ $my_classes = $stmt->fetchAll();
     </div>
 </div>
 
-<!-- Edit Profile Modal - Only show if not parent -->
+<!-- Edit Child Profile Modal (For Parents) -->
+<?php if (isParent()): ?>
+<div class="modal fade" id="editChildProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="">
+                <input type="hidden" name="action" value="update_child_profile">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-edit"></i> Edit Child Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Child's Full Name (English) *</label>
+                        <input type="text" name="name_en" class="form-control" 
+                               value="<?php echo htmlspecialchars($student['name_en'] ?? $student['full_name']); ?>" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">IC Number/Passport</label>
+                        <input type="text" name="ic" class="form-control" 
+                               value="<?php echo htmlspecialchars($student['ic'] ?? ''); ?>">
+                        <small class="text-muted">Child's identification number</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">School</label>
+                        <input type="text" name="school" class="form-control" 
+                               value="<?php echo htmlspecialchars($student['school'] ?? ''); ?>">
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Student ID and registration details cannot be changed. Contact admin for major changes.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- Edit Profile Modal (For direct student login) -->
 <?php if (!isParent()): ?>
 <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
