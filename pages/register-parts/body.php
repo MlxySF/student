@@ -89,6 +89,17 @@
                         <p class="text-xs text-slate-400">Format: 012-345 6789 or 011-2345 6789</p>
                     </div>
 
+                    <!-- REMARK FOR ADDITIONAL CHILDREN -->
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-3 mb-2 rounded-r-lg">
+                            <p class="text-xs text-blue-800 leading-relaxed">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                <strong>Registering another child?</strong> Use the <strong>same parent email</strong> to link all your children under one parent account.
+                            </p>
+                            <p class="text-xs text-blue-700 leading-relaxed mt-1">
+                                <strong>注册另一个孩子？</strong>使用<strong>相同的家长电邮</strong>将所有孩子连接到一个家长账户。
+                            </p>
+                        </div>
+
                     <div class="space-y-2">
                         <label class="text-xs font-bold text-slate-500 uppercase">Parent's Email 家长邮箱 *</label>
                         <div class="relative">
