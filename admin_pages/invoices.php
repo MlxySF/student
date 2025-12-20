@@ -139,74 +139,130 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
 ?>
 
 <style>
+/* Force proper mobile display with !important to override DataTables CSS */
 @media (max-width: 768px) {
     .hide-mobile { display: none !important; }
-    .table-responsive .table thead { display: none; }
-    .table-responsive .table, .table-responsive .table tbody { display: block; }
-    .table-responsive .table tbody tr {
-        display: block; 
-        background: #ffffff; 
-        border-radius: 10px;
-        margin-bottom: 12px; 
-        padding: 12px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
-        border: 1px solid #e5e7eb;
-        width: 100%;
-    }
-    .table-responsive .table tbody tr:hover {
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        transform: translateY(-2px); 
-        transition: all 0.2s ease;
-    }
-    .table-responsive .table tbody tr td {
-        display: block; 
-        border: none; 
-        padding: 6px 0; 
-        text-align: left !important;
-        word-wrap: break-word;
-        white-space: normal;
-        width: 100%;
-    }
-    .table-responsive .table tbody tr td:first-child {
-        font-size: 16px; 
-        font-weight: bold; 
-        padding-bottom: 10px;
-        border-bottom: 2px solid #f0f0f0; 
-        margin-bottom: 10px;
-    }
-    .invoice-actions-cell .btn-group {
-        width: 100%; 
-        display: flex; 
-        justify-content: flex-end; 
-        gap: 6px; 
-        margin-top: 10px;
-        flex-wrap: wrap;
-    }
-    .invoice-actions-cell .btn { 
-        padding: 8px 12px; 
-        font-size: 14px;
+    
+    /* Hide DataTables controls on mobile */
+    .table-responsive .dataTables_wrapper .dataTables_length,
+    .table-responsive .dataTables_wrapper .dataTables_filter,
+    .table-responsive .dataTables_wrapper .dataTables_info,
+    .table-responsive .dataTables_wrapper .dataTables_paginate {
+        display: none !important;
     }
     
-    /* Fix text display on mobile */
+    /* Force table to be block layout */
+    .table-responsive .table,
+    .table-responsive .dataTable {
+        display: block !important;
+        width: 100% !important;
+    }
+    
+    .table-responsive .table thead,
+    .table-responsive .dataTable thead { 
+        display: none !important; 
+    }
+    
+    .table-responsive .table tbody,
+    .table-responsive .dataTable tbody { 
+        display: block !important;
+        width: 100% !important;
+    }
+    
+    .table-responsive .table tbody tr,
+    .table-responsive .dataTable tbody tr {
+        display: block !important; 
+        background: #ffffff !important; 
+        border-radius: 10px !important;
+        margin-bottom: 12px !important; 
+        padding: 12px !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important; 
+        border: 1px solid #e5e7eb !important;
+        width: 100% !important;
+    }
+    
+    .table-responsive .table tbody tr:hover,
+    .table-responsive .dataTable tbody tr:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+        transform: translateY(-2px) !important; 
+        transition: all 0.2s ease !important;
+    }
+    
+    /* Force all table cells to be blocks with proper text wrapping */
+    .table-responsive .table tbody tr td,
+    .table-responsive .dataTable tbody tr td {
+        display: block !important; 
+        border: none !important; 
+        padding: 6px 0 !important; 
+        text-align: left !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        white-space: normal !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    .table-responsive .table tbody tr td:first-child,
+    .table-responsive .dataTable tbody tr td:first-child {
+        font-size: 16px !important; 
+        font-weight: bold !important; 
+        padding-bottom: 10px !important;
+        border-bottom: 2px solid #f0f0f0 !important; 
+        margin-bottom: 10px !important;
+    }
+    
+    /* Force proper text display for ALL content inside cells */
+    .table-responsive .table tbody tr td *,
+    .table-responsive .dataTable tbody tr td * {
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        white-space: normal !important;
+        max-width: 100% !important;
+    }
+    
     .table-responsive .table tbody tr td div,
-    .table-responsive .table tbody tr td span {
-        display: inline-block;
-        word-break: normal;
-        white-space: normal;
+    .table-responsive .table tbody tr td span,
+    .table-responsive .table tbody tr td strong,
+    .table-responsive .dataTable tbody tr td div,
+    .table-responsive .dataTable tbody tr td span,
+    .table-responsive .dataTable tbody tr td strong {
+        display: inline !important;
+        word-break: normal !important;
+        white-space: normal !important;
     }
     
     /* Make badges display inline properly */
-    .table-responsive .table tbody tr td .badge {
-        display: inline-block;
-        margin: 2px 4px 2px 0;
+    .table-responsive .table tbody tr td .badge,
+    .table-responsive .dataTable tbody tr td .badge {
+        display: inline-block !important;
+        margin: 2px 4px 2px 0 !important;
+        white-space: nowrap !important;
+    }
+    
+    .invoice-actions-cell .btn-group {
+        width: 100% !important; 
+        display: flex !important; 
+        justify-content: flex-end !important; 
+        gap: 6px !important; 
+        margin-top: 10px !important;
+        flex-wrap: wrap !important;
+    }
+    
+    .invoice-actions-cell .btn { 
+        padding: 8px 12px !important; 
+        font-size: 14px !important;
     }
 }
 
 @media (min-width: 769px) {
-    .table-responsive .table { display: table !important; }
-    .table-responsive .table tbody { display: table-row-group !important; }
-    .table-responsive .table tbody tr { display: table-row !important; }
-    .table-responsive .table tbody tr td { display: table-cell !important; }
+    .table-responsive .table,
+    .table-responsive .dataTable { display: table !important; }
+    .table-responsive .table tbody,
+    .table-responsive .dataTable tbody { display: table-row-group !important; }
+    .table-responsive .table tbody tr,
+    .table-responsive .dataTable tbody tr { display: table-row !important; }
+    .table-responsive .table tbody tr td,
+    .table-responsive .dataTable tbody tr td { display: table-cell !important; }
 }
 
 .receipt-image { max-width: 100%; height: auto; border-radius: 8px; border: 2px solid #e2e8f0; }
