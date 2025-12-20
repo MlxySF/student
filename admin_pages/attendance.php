@@ -65,7 +65,7 @@ $stmt = $pdo->query("
     JOIN students s ON a.student_id = s.id
     JOIN classes c ON a.class_id = c.id
     ORDER BY a.attendance_date DESC, a.marked_at DESC
-    LIMIT 50
+    LIMIT 500
 ");
 $recent_attendance = $stmt->fetchAll();
 ?>
@@ -406,7 +406,7 @@ if (classSelect && dateSelect) {
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table table-hover data-table">
                 <thead>
                     <tr>
                         <th>Date</th>
