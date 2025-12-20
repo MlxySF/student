@@ -15,6 +15,7 @@
  * UPDATED: Changed form_date to record both date and time (DATETIME format)
  * UPDATED: Added admin email notification for new registrations
  * UPDATED: Added payment_date column to payments INSERT - user can specify when payment was actually made
+ * FIXED: Duplicate parent_id bug - now ensures unique parent code generation with retry logic
  */
 
 header('Content-Type: application/json');
@@ -122,14 +123,56 @@ function stripDataURIPrefix(string $base64Data): string {
 
 // ==========================================
 // Parent account helper functions
+// FIXED: Robust parent code generation with uniqueness check
 // ==========================================
 
 function generateParentCode(PDO $conn): string {
     $year = date('Y');
-    $stmt = $conn->prepare("SELECT COUNT(*) FROM parent_accounts WHERE YEAR(created_at) = ?");
-    $stmt->execute([$year]);
-    $count = (int)$stmt->fetchColumn();
-    return 'PAR-' . $year . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+    $maxAttempts = 100; // Safety limit
+    
+    for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+        // Get the highest number currently in use for this year
+        $stmt = $conn->prepare("
+            SELECT parent_id 
+            FROM parent_accounts 
+            WHERE parent_id LIKE ? 
+            ORDER BY parent_id DESC 
+            LIMIT 1
+        ");
+        $stmt->execute(["PAR-{$year}-%"]);
+        $lastCode = $stmt->fetchColumn();
+        
+        if ($lastCode) {
+            // Extract the number from PAR-2025-0002 format
+            $parts = explode('-', $lastCode);
+            $lastNumber = isset($parts[2]) ? (int)$parts[2] : 0;
+            $newNumber = $lastNumber + 1;
+        } else {
+            // First parent this year
+            $newNumber = 1;
+        }
+        
+        $newCode = 'PAR-' . $year . '-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+        
+        // Double-check this code doesn't exist
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM parent_accounts WHERE parent_id = ?");
+        $stmt->execute([$newCode]);
+        $exists = (int)$stmt->fetchColumn();
+        
+        if ($exists === 0) {
+            error_log("[ParentCode] Generated unique code: {$newCode} (attempt {$attempt})");
+            return $newCode;
+        }
+        
+        error_log("[ParentCode] WARNING: Code {$newCode} already exists, retrying... (attempt {$attempt})");
+        // Small delay to prevent race conditions
+        usleep(10000); // 10ms
+    }
+    
+    // Fallback: use timestamp if all else fails
+    $fallbackCode = 'PAR-' . $year . '-' . str_pad(time() % 10000, 4, '0', STR_PAD_LEFT);
+    error_log("[ParentCode] WARNING: Using fallback code {$fallbackCode} after {$maxAttempts} attempts");
+    return $fallbackCode;
 }
 
 function findOrCreateParentAccount(PDO $conn, array $parentData): array {
@@ -150,34 +193,43 @@ function findOrCreateParentAccount(PDO $conn, array $parentData): array {
         ];
     }
 
-    // Create new parent account
+    // Create new parent account with unique code
     $parentCode = generateParentCode($conn);
     $plainPassword = generatePasswordFromIC($parentData['ic']);
     $hash = password_hash($plainPassword, PASSWORD_DEFAULT);
 
-    $stmt = $conn->prepare("INSERT INTO parent_accounts
-        (parent_id, full_name, email, phone, ic_number, password, status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, 'active', NOW())");
+    try {
+        $stmt = $conn->prepare("INSERT INTO parent_accounts
+            (parent_id, full_name, email, phone, ic_number, password, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, 'active', NOW())");
 
-    $stmt->execute([
-        $parentCode,
-        trim($parentData['name']),
-        $email,
-        trim($parentData['phone'] ?? ''),
-        trim($parentData['ic'] ?? ''),
-        $hash,
-    ]);
+        $stmt->execute([
+            $parentCode,
+            trim($parentData['name']),
+            $email,
+            trim($parentData['phone'] ?? ''),
+            trim($parentData['ic'] ?? ''),
+            $hash,
+        ]);
 
-    $parentId = (int)$conn->lastInsertId();
+        $parentId = (int)$conn->lastInsertId();
 
-    error_log("[Parent] Created NEW parent account ID={$parentId}, code={$parentCode}, email={$email}, password={$plainPassword}");
+        error_log("[Parent] Created NEW parent account ID={$parentId}, code={$parentCode}, email={$email}, password={$plainPassword}");
 
-    return [
-        'id' => $parentId,
-        'parent_id' => $parentCode,
-        'is_new' => true,
-        'plain_password' => $plainPassword,
-    ];
+        return [
+            'id' => $parentId,
+            'parent_id' => $parentCode,
+            'is_new' => true,
+            'plain_password' => $plainPassword,
+        ];
+    } catch (PDOException $e) {
+        // If still gets duplicate error, log and re-throw
+        if ($e->getCode() == 23000) { // Integrity constraint violation
+            error_log("[Parent] CRITICAL: Duplicate parent_id {$parentCode} even after uniqueness check! Error: " . $e->getMessage());
+            throw new Exception("System error: Unable to generate unique parent account code. Please try again.");
+        }
+        throw $e;
+    }
 }
 
 function linkStudentToParent(PDO $conn, int $parentId, int $studentId, string $relationship = 'guardian'): void {
@@ -881,7 +933,7 @@ try {
 
     $parentAccountId     = $parentAccountInfo['id'];
     $parentCode          = $parentAccountInfo['parent_id'];
-    $isNewParentAccount  = $parentAccountInfo['is_new'];
+        $isNewParentAccount  = $parentAccountInfo['is_new'];
     $parentPlainPassword = $parentAccountInfo['plain_password'];
     
     error_log("[Parent Info] ID={$parentAccountId}, Code={$parentCode}, IsNew={$isNewParentAccount}, Password=" . ($parentPlainPassword ?? 'NULL'));
