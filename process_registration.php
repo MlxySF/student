@@ -13,6 +13,7 @@
  * FIXED: Use student_status column name in registrations INSERT statement
  * FIXED: Validate form_date to prevent invalid dates like "-0001"
  * UPDATED: Changed form_date to record both date and time (DATETIME format)
+ * UPDATED: Added admin email notification for new registrations
  */
 
 header('Content-Type: application/json');
@@ -27,6 +28,10 @@ use PHPMailer\PHPMailer\Exception;
 require 'PHPMailer/Exception.php';
 require 'PHPMailer/PHPMailer.php';
 require 'PHPMailer/SMTP.php';
+
+// Admin email configuration
+define('ADMIN_EMAIL', 'chaichonghern@gmail.com');
+define('ADMIN_NAME', 'Academy Admin');
 
 // =========================
 // Helper: Generate password from IC
@@ -485,6 +490,181 @@ function sendRegistrationEmail($toEmail, $studentName, $registrationNumber, $chi
     }
 }
 
+/**
+ * Send admin notification email for new registration
+ * NEW: Notifies admin when a new student registers
+ */
+function sendAdminRegistrationNotification($registrationData) {
+    $mail = new PHPMailer(true);
+    try {
+        error_log("[Admin Email] Sending registration notification to " . ADMIN_EMAIL);
+        
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'chaichonghern@gmail.com';
+        $mail->Password   = 'kyyj elhp dkdw gvki';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+
+        $mail->setFrom('noreply@wushusportacademy.com', 'Wushu Portal System');
+        $mail->addAddress(ADMIN_EMAIL, ADMIN_NAME);
+        $mail->addReplyTo($registrationData['parent_email'], $registrationData['parent_name']);
+
+        $mail->isHTML(true);
+        $mail->CharSet = 'UTF-8';
+        $mail->Subject = '🔔 New Registration: ' . $registrationData['student_name'] . ' - ' . $registrationData['registration_number'];
+        $mail->Body    = getAdminRegistrationEmailHTML($registrationData);
+        $mail->AltBody = "New Registration: {$registrationData['student_name']} ({$registrationData['registration_number']})";
+
+        $mail->send();
+        error_log("[Admin Email] Successfully sent registration notification");
+        return true;
+    } catch (Exception $e) {
+        error_log("[Admin Email] Error: {$mail->ErrorInfo}");
+        return false;
+    }
+}
+
+function getAdminRegistrationEmailHTML($data) {
+    $classesHtml = '';
+    if (!empty($data['classes'])) {
+        $classesHtml = '<ul style="margin: 8px 0; padding-left: 20px;">';
+        foreach ($data['classes'] as $class) {
+            $classesHtml .= "<li>{$class['class_name']} (Code: {$class['class_code']})</li>";
+        }
+        $classesHtml .= '</ul>';
+    }
+    
+    $html = "<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>New Registration Alert</title>
+</head>
+<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5;'>
+    <div style='max-width: 650px; margin: 20px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+        <div style='background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 30px 24px; text-align: center;'>
+            <h1 style='margin: 0 0 8px 0; font-size: 28px; font-weight: 700;'>🔔 New Student Registration</h1>
+            <p style='margin: 0; font-size: 14px; opacity: 0.95;'>Requires Admin Review</p>
+        </div>
+        
+        <div style='padding: 32px 24px; background: white;'>
+            <div style='background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 8px; margin-bottom: 24px;'>
+                <p style='margin: 0; font-weight: 600; color: #92400e; font-size: 15px;'>⚠️ Action Required: Payment Verification</p>
+                <p style='margin: 8px 0 0 0; font-size: 13px; color: #92400e;'>A new student has registered with payment receipt attached. Please review and verify.</p>
+            </div>
+            
+            <div style='background: #f8fafc; border-radius: 8px; padding: 20px; margin-bottom: 24px;'>
+                <h3 style='margin: 0 0 16px 0; color: #1e293b; font-size: 18px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;'>👶 Student Information</h3>
+                <table style='width: 100%; border-collapse: collapse;'>
+                    <tr>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; width: 40%;'>Registration Number:</td>
+                        <td style='padding: 8px 0; color: #1e293b; font-weight: 600;'>{$data['registration_number']}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>Student Name:</td>
+                        <td style='padding: 8px 0; color: #1e293b;'>{$data['student_name']}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>IC Number:</td>
+                        <td style='padding: 8px 0; color: #1e293b;'>{$data['ic']}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>Age:</td>
+                        <td style='padding: 8px 0; color: #1e293b;'>{$data['age']} years old</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>School:</td>
+                        <td style='padding: 8px 0; color: #1e293b;'>{$data['school']}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>Student Status:</td>
+                        <td style='padding: 8px 0;'><span style='background: #dbeafe; padding: 4px 12px; border-radius: 4px; font-size: 13px; font-weight: 600; color: #1e40af;'>{$data['student_status']}</span></td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div style='background: #f0fdf4; border-radius: 8px; padding: 20px; margin-bottom: 24px;'>
+                <h3 style='margin: 0 0 16px 0; color: #166534; font-size: 18px; border-bottom: 2px solid #bbf7d0; padding-bottom: 8px;'>👨‍👩‍👧 Parent Information</h3>
+                <table style='width: 100%; border-collapse: collapse;'>
+                    <tr>
+                        <td style='padding: 8px 0; color: #166534; font-weight: 600; width: 40%;'>Parent Name:</td>
+                        <td style='padding: 8px 0; color: #166534;'>{$data['parent_name']}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #166534; font-weight: 600;'>Parent IC:</td>
+                        <td style='padding: 8px 0; color: #166534;'>{$data['parent_ic']}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #166534; font-weight: 600;'>Parent Email:</td>
+                        <td style='padding: 8px 0; color: #166534;'><a href='mailto:{$data['parent_email']}' style='color: #059669; text-decoration: none;'>{$data['parent_email']}</a></td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #166534; font-weight: 600;'>Phone:</td>
+                        <td style='padding: 8px 0; color: #166534;'>{$data['phone']}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #166534; font-weight: 600;'>Parent Code:</td>
+                        <td style='padding: 8px 0; color: #166534;'>{$data['parent_code']}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div style='background: #eff6ff; border-radius: 8px; padding: 20px; margin-bottom: 24px;'>
+                <h3 style='margin: 0 0 16px 0; color: #1e40af; font-size: 18px; border-bottom: 2px solid #bfdbfe; padding-bottom: 8px;'>🏛️ Class Enrollment</h3>
+                <p style='margin: 0 0 8px 0; color: #1e40af; font-weight: 600;'>Schedule: {$data['schedule']}</p>
+                <p style='margin: 0 0 8px 0; color: #1e40af;'>Enrolled Classes ({$data['class_count']}):</p>
+                {$classesHtml}
+            </div>
+            
+            <div style='background: #fef2f2; border-radius: 8px; padding: 20px; margin-bottom: 24px;'>
+                <h3 style='margin: 0 0 16px 0; color: #991b1b; font-size: 18px; border-bottom: 2px solid #fecaca; padding-bottom: 8px;'>💳 Payment Information</h3>
+                <table style='width: 100%; border-collapse: collapse;'>
+                    <tr>
+                        <td style='padding: 8px 0; color: #991b1b; font-weight: 600; width: 40%;'>Total Amount:</td>
+                        <td style='padding: 8px 0; color: #991b1b; font-weight: 700; font-size: 18px;'>RM {$data['payment_amount']}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #991b1b; font-weight: 600;'>Payment Date:</td>
+                        <td style='padding: 8px 0; color: #991b1b;'>{$data['payment_date']}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #991b1b; font-weight: 600;'>Invoices Created:</td>
+                        <td style='padding: 8px 0; color: #991b1b;'>{$data['total_invoices']} invoices (RM " . number_format($data['payment_amount'] / $data['class_count'], 2) . " each)</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #991b1b; font-weight: 600;'>Payment Status:</td>
+                        <td style='padding: 8px 0;'><span style='background: #fef3c7; padding: 4px 12px; border-radius: 4px; font-size: 13px; font-weight: 600; color: #92400e;'>Pending Verification</span></td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div style='background: #f1f5f9; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px;'>
+                <p style='margin: 0 0 16px 0; font-weight: 600; color: #1e293b; font-size: 16px;'>👉 Next Steps:</p>
+                <ol style='margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.8;'>
+                    <li>Login to the <strong>Admin Portal</strong></li>
+                    <li>Go to <strong>Registrations</strong> section</li>
+                    <li>Review registration form and payment receipt</li>
+                    <li>Verify payment amount and details</li>
+                    <li>Approve or reject the registration</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div style='text-align: center; padding: 24px; background: #f8fafc; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0;'>
+            <p style='margin: 0 0 8px 0; font-weight: 600; color: #1e293b; font-size: 15px;'>Wushu Sport Academy 武术体育学院</p>
+            <p style='margin: 4px 0;'>Admin Portal System</p>
+            <p style='margin: 16px 0 0 0; font-size: 11px; color: #94a3b8;'>This is an automated notification. Generated on " . date('Y-m-d H:i:s') . "</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+    return $html;
+}
+
 function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $childPassword, $studentStatus, $isNewParent, $parentPassword) {
     // Build parent section
     $parentSection = '';
@@ -815,7 +995,7 @@ try {
     
     error_log("[Success] Reg#: {$regNumber}, Parent: {$parentCode} (ID:{$parentAccountId}), Student: {$studentAccountId}, Invoices: " . ($invoiceResult['total_invoices'] ?? 0));
 
-    // Send email with proper parameters
+    // Send email to parent with proper parameters
     $emailSent = sendRegistrationEmail(
         $parentEmail, 
         $fullName, 
@@ -825,6 +1005,33 @@ try {
         $isNewParentAccount, 
         $parentPlainPassword
     );
+    
+    // ==========================
+    // Send admin notification
+    // NEW: Notify admin about new registration
+    // ==========================
+    $adminNotificationData = [
+        'registration_number' => $regNumber,
+        'student_name' => $fullName,
+        'ic' => $childIC,
+        'age' => (int)$data['age'],
+        'school' => trim($data['school']),
+        'student_status' => $studentStatus,
+        'parent_name' => trim($data['parent_name']),
+        'parent_ic' => trim($data['parent_ic']),
+        'parent_email' => $parentEmail,
+        'phone' => $phone,
+        'parent_code' => $parentCode,
+        'schedule' => $scheduleString,
+        'class_count' => (int)$data['class_count'],
+        'classes' => $enrollmentResults['success'],
+        'payment_amount' => number_format($paymentAmount, 2),
+        'payment_date' => $data['payment_date'],
+        'total_invoices' => $invoiceResult['total_invoices'] ?? 0
+    ];
+    
+    $adminEmailSent = sendAdminRegistrationNotification($adminNotificationData);
+    error_log("[Admin Notification] Email sent: " . ($adminEmailSent ? 'YES' : 'NO'));
 
     echo json_encode([
         'success' => true,
@@ -838,6 +1045,7 @@ try {
         'is_new_parent' => $isNewParentAccount,
         'parent_password' => $isNewParentAccount ? $parentPlainPassword : null,
         'email_sent' => $emailSent,
+        'admin_notified' => $adminEmailSent,
         'enrollment_results' => $enrollmentResults,
         'invoice_created' => $invoiceResult['success'],
         'invoices' => $invoiceResult['invoices'] ?? [],
