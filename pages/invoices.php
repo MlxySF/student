@@ -1,5 +1,5 @@
 <?php
-// Student Invoices & Payments Page - Updated for multi-child parent support
+// Student Invoices & Payments Page - Updated with DataTables pagination
 // FIXED: Determine student account ID properly for parent portal
 
 // Determine student account ID first
@@ -100,59 +100,6 @@ $paid_total = array_sum(array_column($paid_invoices, 'amount'));
 $action_required_count = count($unpaid_invoices) + count($overdue_invoices);
 $action_required_total = $unpaid_total + $overdue_total;
 
-// Pagination
-$per_page = 5;
-
-function paginateInvoices($invoices, $param) {
-    global $per_page;
-    $page = isset($_GET[$param]) ? max(1, intval($_GET[$param])) : 1;
-    $total_pages = max(1, ceil(count($invoices) / $per_page));
-    $offset = ($page - 1) * $per_page;
-    return [
-        'items' => array_slice($invoices, $offset, $per_page),
-        'page' => $page,
-        'total_pages' => $total_pages,
-        'param' => $param
-    ];
-}
-
-$overdue_paginated = paginateInvoices($overdue_invoices, 'overdue_page');
-$unpaid_paginated = paginateInvoices($unpaid_invoices, 'unpaid_page');
-$pending_paginated = paginateInvoices($pending_invoices, 'pending_page');
-$paid_paginated = paginateInvoices($paid_invoices, 'paid_page');
-
-function renderPagination($data) {
-    global $filter_type, $filter_month;
-    if ($data['total_pages'] <= 1) return;
-    $current_page = $data['page'];
-    $total_pages = $data['total_pages'];
-    $param = $data['param'];
-    $range = 2;
-    $start_page = max(1, $current_page - $range);
-    $end_page = min($total_pages, $current_page + $range);
-    
-    $filter_params = '&filter_type=' . urlencode($filter_type) . '&filter_month=' . urlencode($filter_month);
-    
-    echo '<nav aria-label="Invoice pagination" class="mt-4"><ul class="pagination justify-content-center flex-wrap">';
-    echo '<li class="page-item ' . ($current_page <= 1 ? 'disabled' : '') . '">';
-    echo '<a class="page-link" href="?page=invoices' . $filter_params . '&' . $param . '=' . ($current_page - 1) . '">&laquo;</a></li>';
-    if ($start_page > 1) {
-        echo '<li class="page-item"><a class="page-link" href="?page=invoices' . $filter_params . '&' . $param . '=1">1</a></li>';
-        if ($start_page > 2) echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
-    }
-    for ($i = $start_page; $i <= $end_page; $i++) {
-        echo '<li class="page-item ' . ($i == $current_page ? 'active' : '') . '">';
-        echo '<a class="page-link" href="?page=invoices' . $filter_params . '&' . $param . '=' . $i . '">' . $i . '</a></li>';
-    }
-    if ($end_page < $total_pages) {
-        if ($end_page < $total_pages - 1) echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
-        echo '<li class="page-item"><a class="page-link" href="?page=invoices' . $filter_params . '&' . $param . '=' . $total_pages . '">' . $total_pages . '</a></li>';
-    }
-    echo '<li class="page-item ' . ($current_page >= $total_pages ? 'disabled' : '') . '">';
-    echo '<a class="page-link" href="?page=invoices' . $filter_params . '&' . $param . '=' . ($current_page + 1) . '">&raquo;</a></li>';
-    echo '</ul></nav>';
-}
-
 // Helper function to determine if invoice is for class fees or equipment/clothing
 function isClassFeeInvoice($invoice) {
     $classFeeTypes = ['monthly_fee', 'registration'];
@@ -163,6 +110,21 @@ function isClassFeeInvoice($invoice) {
 <style>
 @media (max-width: 768px) {
     .sp-hide-mobile { display: none !important; }
+    
+    /* Hide DataTables search and info on mobile for cleaner look */
+    .table-responsive .dataTables_wrapper .dataTables_filter,
+    .table-responsive .dataTables_wrapper .dataTables_info {
+        display: none !important;
+    }
+    
+    /* Keep pagination visible and centered on mobile */
+    .table-responsive .dataTables_wrapper .dataTables_length,
+    .table-responsive .dataTables_wrapper .dataTables_paginate {
+        text-align: center !important;
+        margin: 10px 0 !important;
+        width: 100% !important;
+    }
+    
     .sp-invoices-table thead { display: none; }
     .sp-invoices-table, .sp-invoices-table tbody { display: block; width: 100%; }
     .sp-invoices-table tbody tr.sp-invoice-row {
@@ -180,15 +142,15 @@ function isClassFeeInvoice($invoice) {
     }
     .sp-invoice-actions-cell .btn-group { width: 100%; display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px; }
     .sp-invoice-actions-cell .btn-group .btn, .sp-invoice-actions-cell .btn { padding: 6px 10px; font-size: 13px; margin-top: 8px; }
-    .pagination { font-size: 14px; }
-    .pagination .page-link { padding: 6px 10px; margin: 2px; }
 }
+
 @media (min-width: 769px) {
     .sp-invoices-table { display: table !important; width: 100%; }
     .sp-invoices-table tbody { display: table-row-group !important; }
     .sp-invoices-table tbody tr.sp-invoice-row { display: table-row !important; box-shadow: none; border-radius: 0; border: none; padding: 0; margin: 0; }
     .sp-invoices-table tbody tr.sp-invoice-row td { display: table-cell !important; padding: .75rem; }
 }
+
 .receipt-image { max-width: 100%; height: auto; border-radius: 8px; border: 2px solid #e2e8f0; }
 .receipt-pdf { width: 100%; height: 500px; border: 2px solid #e2e8f0; border-radius: 8px; }
 
@@ -411,10 +373,10 @@ function isClassFeeInvoice($invoice) {
             <div class="card-body">
                 <div class="alert alert-danger mb-3"><i class="fas fa-skull-crossbones"></i> <strong>URGENT:</strong> These invoices are past their due date. Please pay immediately!</div>
                 <div class="table-responsive">
-                    <table class="table sp-invoices-table">
+                    <table class="table sp-invoices-table invoice-table-overdue">
                         <thead><tr><th>Invoice #</th><th>Date</th><th>Description</th><th class="sp-hide-mobile">Class</th><th>Amount</th><th class="sp-hide-mobile">Due Date</th><th>Action</th></tr></thead>
                         <tbody>
-                            <?php foreach ($overdue_paginated['items'] as $inv): ?>
+                            <?php foreach ($overdue_invoices as $inv): ?>
                                 <tr class="sp-invoice-row table-danger">
                                     <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
                                         <div class="d-md-none text-muted small"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></div>
@@ -441,7 +403,6 @@ function isClassFeeInvoice($invoice) {
                         </tbody>
                     </table>
                 </div>
-                <?php renderPagination($overdue_paginated); ?>
             </div>
         </div>
         <?php endif; ?>
@@ -453,10 +414,10 @@ function isClassFeeInvoice($invoice) {
             <div class="card-body">
                 <div class="alert alert-warning mb-3"><i class="fas fa-info-circle"></i> These invoices need payment. Upload your receipt to complete payment.</div>
                 <div class="table-responsive">
-                    <table class="table sp-invoices-table">
+                    <table class="table sp-invoices-table invoice-table-unpaid">
                         <thead><tr><th>Invoice #</th><th>Date</th><th>Description</th><th class="sp-hide-mobile">Class</th><th>Amount</th><th class="sp-hide-mobile">Due Date</th><th>Action</th></tr></thead>
                         <tbody>
-                            <?php foreach ($unpaid_paginated['items'] as $inv): ?>
+                            <?php foreach ($unpaid_invoices as $inv): ?>
                                 <tr class="sp-invoice-row">
                                     <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
                                         <div class="d-md-none text-muted small"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></div>
@@ -482,7 +443,6 @@ function isClassFeeInvoice($invoice) {
                         </tbody>
                     </table>
                 </div>
-                <?php renderPagination($unpaid_paginated); ?>
             </div>
         </div>
         <?php endif; ?>
@@ -494,10 +454,10 @@ function isClassFeeInvoice($invoice) {
             <div class="card-body">
                 <div class="alert alert-info mb-3"><i class="fas fa-hourglass-half"></i> Payment receipts submitted. Awaiting admin verification.</div>
                 <div class="table-responsive">
-                    <table class="table sp-invoices-table">
+                    <table class="table sp-invoices-table invoice-table-pending">
                         <thead><tr><th>Invoice #</th><th>Date</th><th>Description</th><th class="sp-hide-mobile">Class</th><th>Amount</th><th class="sp-hide-mobile">Receipt Uploaded</th><th>Action</th></tr></thead>
                         <tbody>
-                            <?php foreach ($pending_paginated['items'] as $inv): ?>
+                            <?php foreach ($pending_invoices as $inv): ?>
                                 <tr class="sp-invoice-row">
                                     <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
                                         <div class="d-md-none"><span class="badge bg-info"><i class="fas fa-clock"></i> Pending</span></div>
@@ -522,7 +482,6 @@ function isClassFeeInvoice($invoice) {
                         </tbody>
                     </table>
                 </div>
-                <?php renderPagination($pending_paginated); ?>
             </div>
         </div>
         <?php endif; ?>
@@ -533,10 +492,10 @@ function isClassFeeInvoice($invoice) {
                 <span class="badge bg-light text-dark float-end"><?php echo count($paid_invoices); ?></span></div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table sp-invoices-table">
+                    <table class="table sp-invoices-table invoice-table-paid">
                         <thead><tr><th>Invoice #</th><th>Date</th><th>Description</th><th class="sp-hide-mobile">Class</th><th>Amount</th><th class="sp-hide-mobile">Paid Date</th><th>Action</th></tr></thead>
                         <tbody>
-                            <?php foreach ($paid_paginated['items'] as $inv): ?>
+                            <?php foreach ($paid_invoices as $inv): ?>
                                 <tr class="sp-invoice-row">
                                     <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
                                         <div class="d-md-none"><span class="badge bg-success">PAID</span></div>
@@ -561,7 +520,6 @@ function isClassFeeInvoice($invoice) {
                         </tbody>
                     </table>
                 </div>
-                <?php renderPagination($paid_paginated); ?>
             </div>
         </div>
         <?php endif; ?>
@@ -708,6 +666,45 @@ function isClassFeeInvoice($invoice) {
 <?php endforeach; ?>
 
 <script>
+// Initialize DataTables for each invoice section
+$(document).ready(function() {
+    // Common DataTables configuration for all invoice tables
+    const tableConfig = {
+        pageLength: 10,
+        lengthMenu: [
+            [10, 25, 50, -1],
+            ['10 rows', '25 rows', '50 rows', 'Show all']
+        ],
+        order: [[0, 'desc']],
+        language: {
+            lengthMenu: '<i class="fas fa-list"></i> Display _MENU_ per page',
+            info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+            infoEmpty: 'No entries available',
+            search: '<i class="fas fa-search"></i>',
+            searchPlaceholder: 'Search...',
+            paginate: {
+                next: '<i class="fas fa-angle-right"></i>',
+                previous: '<i class="fas fa-angle-left"></i>'
+            }
+        },
+        responsive: true
+    };
+
+    // Initialize each invoice table if it exists
+    if ($('.invoice-table-overdue').length) {
+        $('.invoice-table-overdue').DataTable(tableConfig);
+    }
+    if ($('.invoice-table-unpaid').length) {
+        $('.invoice-table-unpaid').DataTable(tableConfig);
+    }
+    if ($('.invoice-table-pending').length) {
+        $('.invoice-table-pending').DataTable(tableConfig);
+    }
+    if ($('.invoice-table-paid').length) {
+        $('.invoice-table-paid').DataTable(tableConfig);
+    }
+});
+
 function copyToClipboard(text, button) {
     navigator.clipboard.writeText(text).then(function() {
         const originalHTML = button.innerHTML;
