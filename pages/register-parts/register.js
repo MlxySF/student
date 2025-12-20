@@ -418,7 +418,11 @@
         const progressBar = document.getElementById('progress-bar');
         progressBar.style.width = `${(currentStep / 7) * 100}%`;
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // ✅ FIX: Don't auto-scroll when entering step 6 (payment page)
+        // Users need to see the calculated fees at the top
+        if (currentStep !== 6) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     }
 
     async function submitPayment() {
@@ -749,7 +753,9 @@
             updatePaymentDisplay();
             document.getElementById('payment-date').value = new Date().toISOString().split('T')[0];
             
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // ✅ FIX: Don't scroll when moving to payment page
+            // Let user see the fee calculation at the top naturally
+            // window.scrollTo({ top: 0, behavior: 'smooth' });
 
         } catch (error) {
             if (overlay) overlay.style.display = 'none';
