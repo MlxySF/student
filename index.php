@@ -617,7 +617,7 @@ $page = $_GET['page'] ?? 'login';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo SITE_NAME; ?> - Student Portal</title>
+    <title><?php echo SITE_NAME; ?> - Parent Portal</title>
 
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -1246,7 +1246,7 @@ $page = $_GET['page'] ?? 'login';
                 <img src="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png" 
                      alt="Wushu Sport Academy Logo" 
                      class="login-logo">
-                <h2>Student Portal</h2>
+                <h2>Parent Portal</h2>
                 <p class="text-muted">Sign in to your account</p>
             </div>
 
