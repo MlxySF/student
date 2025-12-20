@@ -1,0 +1,138 @@
+================================================================================
+⚠️ CRITICAL FIX REQUIRED - APPLY THIS CHANGE TO index.php IMMEDIATELY
+================================================================================
+
+ERROR BEING FIXED:
+SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a 
+child row: a foreign key constraint fails (`mlxysf_student_portal`.`payments`, 
+CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `students` 
+(`id`) ON DELETE CASCADE)
+
+================================================================================
+FILE TO EDIT: index.php
+LOCATION: Lines 519-522 (approximately)
+SECTION: "Handle Payment Upload" - inside the payment upload handler
+================================================================================
+
+STEP 1: Open index.php in your code editor
+
+STEP 2: Find this EXACT code (use Ctrl+F / Cmd+F):
+Search for: "Verify student_id exists before inserting"
+
+You should see these 4 lines:
+
+```php
+        // Verify student_id exists before inserting
+        $activeStudentId = getActiveStudentId();
+        if (!$activeStudentId) {
+            $_SESSION['error'] = "Unable to identify student account. Please log out and log in again.";
+```
+
+STEP 3: REPLACE those lines with these 7 lines:
+
+```php
+        // FIXED: Use student_account_id from POST when available (from invoice payment form)
+        // This ensures we use the actual students.id, not registration.id
+        $activeStudentId = !empty($_POST['student_account_id']) ? 
+                           intval($_POST['student_account_id']) : 
+                           getActiveStudentId();
+        
+        if (!$activeStudentId) {
+            $_SESSION['error'] = "Unable to identify student account. Please log out and log in again.";
+```
+
+STEP 4: Save the file
+
+STEP 5: Commit and push to GitHub:
+```bash
+git add index.php
+git commit -m "FIX: Payment handler uses student_account_id from POST"
+git push origin main
+```
+
+================================================================================
+WHAT THIS FIX DOES
+================================================================================
+
+BEFORE THE FIX:
+- Payment handler always uses getActiveStudentId()
+- For parent logins, this returns registration.id (e.g., 7)
+- Database rejects it because payments.student_id requires students.id (e.g., 36)
+- Result: Foreign key constraint error
+
+AFTER THE FIX:
+- Payment handler checks if student_account_id is in POST data
+- If yes: uses that value (correct students.id from invoice form)
+- If no: falls back to getActiveStudentId() (for regular uploads)
+- Result: Correct ID is always used, no more errors
+
+================================================================================
+WHY THIS WORKS
+================================================================================
+
+1. pages/invoices.php already sends student_account_id in the form (✅ DONE)
+2. index.php now reads and uses that value (⚠️ NEEDS THIS FIX)
+3. The correct students.id flows from: invoices table → form → POST → payments table
+4. Foreign key constraint is satisfied
+
+================================================================================
+VERIFICATION
+================================================================================
+
+After applying the fix:
+1. Log in as a parent
+2. Go to Invoices page
+3. Search for invoices
+4. Click "Pay" on any unpaid invoice
+5. Upload a receipt
+6. Submit
+
+Expected result: "Payment submitted successfully!" message
+No more foreign key errors!
+
+================================================================================
+CONTEXT
+================================================================================
+
+Location in file: Around line 519
+Function/Section: Handle Payment Upload (POST action = 'upload_payment')
+Before the INSERT query that inserts into the payments table
+
+The change is in this section:
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'upload_payment') {
+    ...
+    [file validation code]
+    ...
+    // Get parent_account_id if this is a child account
+    $parent_account_id = null;
+    ...
+    
+    >>> FIX GOES HERE <<<  (around line 519)
+    
+    try {
+        $stmt = $pdo->prepare("
+            INSERT INTO payments (...)
+```
+
+================================================================================
+IMPORTANT NOTES
+================================================================================
+
+- This is a ONE-LINE logic change (checking POST before getActiveStudentId)
+- The fix is NON-BREAKING (falls back to original behavior if POST is empty)
+- This fix is REQUIRED for parent accounts to upload payment receipts
+- Student accounts will continue to work as before
+
+================================================================================
+QUESTIONS?
+================================================================================
+
+If you have any issues applying this fix:
+1. Make sure you're editing the correct section (Handle Payment Upload)
+2. The line numbers might be slightly different (518-522 range)
+3. Search for the exact text: "Verify student_id exists before inserting"
+4. Don't modify any other code, just replace those 4 lines with the 7 new lines
+
+================================================================================
+STATUS: ⚠️ PENDING - NEEDS TO BE APPLIED MANUALLY
+================================================================================
