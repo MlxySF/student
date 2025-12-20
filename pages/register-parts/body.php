@@ -1,3 +1,10 @@
+<?php
+// Generate CSRF token if not exists
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));\n}
+?>
+
+
 <body>
 
 <div class="glass-card">
@@ -23,6 +30,9 @@
     <!-- Form Body -->
     <div style="padding: 32px; background: #f8fafc; max-height: 70vh; overflow-y: auto;" class="custom-scroll">
         <form id="regForm" onsubmit="return false;">
+                        <!-- CSRF Token Hidden Field -->
+            <input type="hidden" name="csrf_token" id="csrf-token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+
 
             <!-- STEP 1: Basic Info -->
             <div id="step-1" class="step-content active">
