@@ -10,11 +10,14 @@ try {
 }
 
 try {
-    // Get students by status - using student_status with explicit UTF-8 handling
+    // Get students by status - ONLY COUNT APPROVED ACCOUNTS
+    // Using account_status = 'approved' filter
     $stmt = $pdo->query("
         SELECT student_status, COUNT(*) as count 
         FROM registrations 
-        WHERE student_status IS NOT NULL AND student_status != ''
+        WHERE student_status IS NOT NULL 
+        AND student_status != ''
+        AND account_status = 'approved'
         GROUP BY student_status
     ");
     $studentsByStatus = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
@@ -152,7 +155,7 @@ $statusDisplayMap = [
     <div class="col-lg-4 mb-4">
         <div class="card">
             <div class="card-header bg-primary text-white">
-                <i class="fas fa-chart-pie"></i> Students by Status
+                <i class="fas fa-chart-pie"></i> Students by Status (Approved Only)
             </div>
             <div class="card-body">
                 <?php if (!empty($studentsByStatus)): ?>
@@ -175,7 +178,7 @@ $statusDisplayMap = [
                 <?php else: ?>
                     <div class="text-center text-muted py-3">
                         <i class="fas fa-users fa-2x mb-2"></i>
-                        <p class="mb-0">No students yet</p>
+                        <p class="mb-0">No approved students yet</p>
                     </div>
                 <?php endif; ?>
             </div>
