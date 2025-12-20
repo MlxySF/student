@@ -450,8 +450,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $parent_account_id = getUserId();
         }
         
-        // Verify student_id exists before inserting
-        $activeStudentId = getActiveStudentId();
+        // FIXED: Use student_account_id from POST when available (from invoice payment form)
+        // This ensures we use the actual students.id, not registration.id
+        $activeStudentId = !empty($_POST['student_account_id']) ? 
+                           intval($_POST['student_account_id']) : 
+                           getActiveStudentId();
+        
         if (!$activeStudentId) {
             $_SESSION['error'] = "Unable to identify student account. Please log out and log in again.";
             $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
