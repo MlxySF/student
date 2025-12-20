@@ -17,7 +17,7 @@ try {
         FROM registrations 
         WHERE student_status IS NOT NULL 
         AND student_status != ''
-        AND account_status = 'approved'
+        AND payment_status = 'approved'
         GROUP BY student_status
     ");
     $studentsByStatus = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
