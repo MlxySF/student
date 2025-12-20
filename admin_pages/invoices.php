@@ -92,12 +92,12 @@ $stmt = $pdo->prepare($sql_outstanding);
 $stmt->execute($params);
 $outstanding_amount = $stmt->fetch()['total'] ?? 0;
 
-// Get all invoices with payment information (UPDATED: Include payment_date)
+// Get all invoices with payment information - OPTIMIZED: Removed receipt_data and receipt_mime_type for performance
 $sql = "
     SELECT i.*, 
            s.student_id, s.full_name, s.email, 
            c.class_code, c.class_name,
-           p.id as payment_id, p.verification_status, p.receipt_data, p.receipt_mime_type, 
+           p.id as payment_id, p.verification_status, 
            p.upload_date, p.payment_date, p.admin_notes
     FROM invoices i
     JOIN students s ON i.student_id = s.id
@@ -173,6 +173,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
 }
 .receipt-image { max-width: 100%; height: auto; border-radius: 8px; border: 2px solid #e2e8f0; }
 .receipt-pdf { width: 100%; height: 500px; border: 2px solid #e2e8f0; border-radius: 8px; }
+.receipt-loading { text-align: center; padding: 40px; }
 </style>
 
 <!-- Filter Form -->
@@ -355,7 +356,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
         </td>
         <td class="invoice-actions-cell">
             <div class="btn-group btn-group-sm">
-                <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#viewInvoiceModal<?php echo $invoice['id']; ?>"><i class="fas fa-eye"></i></button>
+                <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#viewInvoiceModal<?php echo $invoice['id']; ?>" onclick="loadReceipt(<?php echo $invoice['id']; ?>)"><i class="fas fa-eye"></i></button>
                 <?php if ($invoice['status'] === 'paid'): ?>
                 <a href="generate_invoice_pdf.php?invoice_id=<?php echo $invoice['id']; ?>" class="btn btn-success btn-sm" target="_blank"><i class="fas fa-file-pdf"></i></a>
                 <?php endif; ?>
@@ -437,17 +438,14 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                 </table>
 
                 <h6 class="mb-3">Payment Receipt</h6>
-                <?php if (!empty($invoice['receipt_data']) && !empty($invoice['receipt_mime_type'])): ?>
-                    <?php if ($invoice['receipt_mime_type'] === 'application/pdf'): ?>
-                        <embed src="data:<?php echo $invoice['receipt_mime_type']; ?>;base64,<?php echo $invoice['receipt_data']; ?>" 
-                               type="<?php echo $invoice['receipt_mime_type']; ?>" class="receipt-pdf">
-                    <?php else: ?>
-                        <img src="data:<?php echo $invoice['receipt_mime_type']; ?>;base64,<?php echo $invoice['receipt_data']; ?>" 
-                             alt="Receipt" class="receipt-image">
-                    <?php endif; ?>
-                <?php else: ?>
-                    <div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> No receipt image available.</div>
-                <?php endif; ?>
+                <div id="receiptContainer<?php echo $invoice['id']; ?>">
+                    <div class="receipt-loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading receipt...</p>
+                    </div>
+                </div>
 
                 <?php if ($invoice['verification_status'] === 'pending'): ?>
                     <hr class="my-4">
@@ -596,3 +594,41 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
         </form>
     </div></div>
 </div>
+
+<script>
+// Track which receipts have been loaded to avoid re-fetching
+const loadedReceipts = new Set();
+
+function loadReceipt(invoiceId) {
+    // Check if already loaded
+    if (loadedReceipts.has(invoiceId)) {
+        return;
+    }
+    
+    const container = document.getElementById('receiptContainer' + invoiceId);
+    if (!container) return;
+    
+    // Fetch receipt data via AJAX
+    fetch('api/get_receipt.php?invoice_id=' + invoiceId)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mark as loaded
+                loadedReceipts.add(invoiceId);
+                
+                // Display receipt based on mime type
+                if (data.receipt_mime_type === 'application/pdf') {
+                    container.innerHTML = '<embed src="data:' + data.receipt_mime_type + ';base64,' + data.receipt_data + '" type="' + data.receipt_mime_type + '" class="receipt-pdf">';
+                } else {
+                    container.innerHTML = '<img src="data:' + data.receipt_mime_type + ';base64,' + data.receipt_data + '" alt="Receipt" class="receipt-image">';
+                }
+            } else {
+                container.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> ' + (data.error || 'No receipt available') + '</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading receipt:', error);
+            container.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Failed to load receipt. Please try again.</div>';
+        });
+}
+</script>
