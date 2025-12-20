@@ -2,8 +2,9 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Include config and new auth helper
+// Include config, security layer, and auth helper
 require_once 'config.php';
+require_once 'security.php';  // NEW: Security layer
 require_once 'auth_helper.php';
 
 // Include PHPMailer for admin notifications
@@ -256,15 +257,38 @@ function fileToBase64($file) {
 // AUTHENTICATION HANDLERS
 // ============================================================
 
-// Handle Login - UPDATED to handle rejection/pending status
+// Handle Login - WITH RATE LIMITING AND CSRF
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'login') {
-    $email = $_POST['email'];
-    $password = $_POST['password'];
+    // Verify CSRF token
+    verifyCSRF();
+    
+    // Sanitize inputs
+    $email = sanitizeEmail($_POST['email']);
+    $password = $_POST['password']; // Don't sanitize password
+    
+    // Validate email format
+    if (!isValidEmail($email)) {
+        $_SESSION['error'] = 'Invalid email format.';
+        header('Location: index.php?page=login');
+        exit;
+    }
+    
+    // Rate limiting: 5 attempts per 5 minutes
+    $identifier = $email . '_' . $_SERVER['REMOTE_ADDR'];
+    
+    if (isRateLimited($identifier, 5, 300)) {
+        $_SESSION['error'] = 'Too many login attempts. Please try again in 5 minutes.';
+        header('Location: index.php?page=login');
+        exit;
+    }
 
     // Use new unified authentication
     $authResult = authenticateUser($email, $password, $pdo);
 
     if ($authResult['success']) {
+        // Clear rate limit on successful login
+        clearRateLimit($identifier);
+        
         // Create session
         createLoginSession($authResult);
         
@@ -290,7 +314,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         switch ($errorType) {
             case 'rejected':
                 $_SESSION['error'] = $errorMessage;
-                $_SESSION['show_register_button'] = true; // Flag to show registration button
+                $_SESSION['show_register_button'] = true;
                 break;
             
             case 'pending':
@@ -322,13 +346,29 @@ if (isset($_GET['logout'])) {
 // FORM HANDLERS
 // ============================================================
 
-// Handle Profile Update
+// Handle Profile Update - WITH CSRF AND VALIDATION
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_profile') {
     redirectIfNotLoggedIn();
+    verifyCSRF();
 
-    $full_name = trim($_POST['full_name']);
-    $email = trim($_POST['email']);
-    $phone = trim($_POST['phone']);
+    // Sanitize and validate inputs
+    $full_name = sanitizeString($_POST['full_name']);
+    $email = sanitizeEmail($_POST['email']);
+    $phone = sanitizeString($_POST['phone']);
+    
+    // Validate email
+    if (!isValidEmail($email)) {
+        $_SESSION['error'] = 'Invalid email format.';
+        header('Location: index.php?page=profile');
+        exit;
+    }
+    
+    // Validate phone (optional)
+    if (!empty($phone) && !isValidPhone($phone)) {
+        $_SESSION['error'] = 'Invalid phone number format.';
+        header('Location: index.php?page=profile');
+        exit;
+    }
 
     // Check if email is already used by another student
     $stmt = $pdo->prepare("SELECT id FROM students WHERE email = ? AND id != ?");
@@ -348,13 +388,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-// Handle Password Change
+// Handle Password Change - WITH CSRF AND VALIDATION
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'change_password') {
     redirectIfNotLoggedIn();
+    verifyCSRF();
 
     $current_password = $_POST['current_password'];
     $new_password = $_POST['new_password'];
     $confirm_password = $_POST['confirm_password'];
+    
+    // Validate password strength
+    $passwordCheck = isStrongPassword($new_password, 6);
+    if (!$passwordCheck['valid']) {
+        $_SESSION['error'] = $passwordCheck['error'];
+        header('Location: index.php?page=profile');
+        exit;
+    }
 
     // Get current student or parent password
     if (isStudent()) {
@@ -367,14 +416,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     
     $user = $stmt->fetch();
 
-    if (!password_verify($current_password, $user['password'])) {
+    if (!verifyPassword($current_password, $user['password'])) {
         $_SESSION['error'] = "Current password is incorrect.";
     } elseif ($new_password !== $confirm_password) {
         $_SESSION['error'] = "New passwords do not match.";
-    } elseif (strlen($new_password) < 6) {
-        $_SESSION['error'] = "Password must be at least 6 characters.";
     } else {
-        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+        $hashed_password = hashPassword($new_password);
         
         if (isStudent()) {
             $stmt = $pdo->prepare("UPDATE students SET password = ? WHERE id = ?");
@@ -390,49 +437,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-// Handle Payment Upload
+// Handle Payment Upload - WITH CSRF AND VALIDATION
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'upload_payment') {
     redirectIfNotLoggedIn();
+    verifyCSRF();
 
     // Determine payment type
-    $invoice_id = !empty($_POST['invoice_id']) ? $_POST['invoice_id'] : null;
+    $invoice_id = !empty($_POST['invoice_id']) ? sanitizeInt($_POST['invoice_id']) : null;
     $is_invoice_payment = !empty($invoice_id);
 
     if ($invoice_id) {
-        // Invoice payment - get class_id from invoice
-        $class_id = !empty($_POST['invoice_class_id']) ? $_POST['invoice_class_id'] : null;
-        $amount = $_POST['invoice_amount'];
-        $payment_month = !empty($_POST['invoice_payment_month']) ? $_POST['invoice_payment_month'] : date('M Y');
+        // Invoice payment
+        $class_id = !empty($_POST['invoice_class_id']) ? sanitizeInt($_POST['invoice_class_id']) : null;
+        $amount = sanitizeFloat($_POST['invoice_amount']);
+        $payment_month = sanitizeString($_POST['invoice_payment_month'] ?? date('M Y'));
         $notes = '';
 
-        // FIX: Only check for class enrollment if the invoice has a class_id
-        // Some invoices (registration, misc fees) don't have a class_id and that's OK
         if (!$class_id) {
-            // Try to get from student's first active enrollment (for backward compatibility)
             $stmt = $pdo->prepare("SELECT class_id FROM enrollments WHERE student_id = ? AND status = 'active' LIMIT 1");
             $stmt->execute([getActiveStudentId()]);
             $enrollment = $stmt->fetch();
-            
-            // If found, use it; otherwise leave as NULL (which is valid for some invoices)
             $class_id = $enrollment ? $enrollment['class_id'] : null;
         }
-
-        // REMOVED: The enrollment check that was blocking NULL class_id
-        // Invoices without class_id (like registration fees) can now proceed
-        
     } else {
-        // Regular payment (not from invoice)
-        $class_id = $_POST['class_id'];
-        $amount = $_POST['amount'];
-        $payment_month = $_POST['payment_month'];
-        $notes = $_POST['notes'] ?? '';
+        // Regular payment
+        $class_id = sanitizeInt($_POST['class_id']);
+        $amount = sanitizeFloat($_POST['amount']);
+        $payment_month = sanitizeString($_POST['payment_month']);
+        $notes = sanitizeString($_POST['notes'] ?? '');
+    }
+    
+    // Validate amount
+    if (!isValidAmount($amount)) {
+        $_SESSION['error'] = 'Invalid payment amount.';
+        $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
+        header('Location: index.php?page=' . $redirect_page);
+        exit;
     }
 
     if (isset($_FILES['receipt']) && $_FILES['receipt']['error'] === 0) {
-        $validation = validateReceiptFile($_FILES['receipt']);
-
-        if (!$validation['valid']) {
-            $_SESSION['error'] = $validation['error'];
+        // Use security.php validation
+        $fileValidation = isValidFileUpload($_FILES['receipt']);
+        
+        if (!$fileValidation['valid']) {
+            $_SESSION['error'] = $fileValidation['error'];
             $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
             header('Location: index.php?page=' . $redirect_page);
             exit;
@@ -447,9 +495,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             exit;
         }
 
-        $ext = pathinfo($_FILES['receipt']['name'], PATHINFO_EXTENSION);
-        // FIX: Use getActiveStudentId() consistently instead of getStudentId()
-        $filename = 'receipt_' . getActiveStudentId() . '_' . time() . '.' . $ext;
+        // Generate secure filename
+        $secureFilename = generateSecureFilename($_FILES['receipt']['name']);
+        if (!$secureFilename) {
+            $_SESSION['error'] = 'Invalid file type.';
+            $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
+            header('Location: index.php?page=' . $redirect_page);
+            exit;
+        }
+        
+        $filename = $secureFilename;
 
         // Get parent_account_id if this is a child account
         $parent_account_id = null;
@@ -460,8 +515,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $parent_account_id = getUserId();
         }
         
-        // FIXED: Use student_account_id from POST when available (from invoice payment form)
-        // This ensures we use the actual students.id, not registration.id
         $activeStudentId = !empty($_POST['student_account_id']) ? 
                            intval($_POST['student_account_id']) : 
                            getActiveStudentId();
@@ -492,7 +545,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
             $success = $stmt->execute([
                 $activeStudentId, 
-                $class_id,  // Can be NULL for non-class-specific invoices
+                $class_id,
                 $amount, 
                 $payment_month, 
                 $filename,
@@ -505,23 +558,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             ]);
 
             if ($success) {
-                // Update invoice status if this is an invoice payment
                 if ($invoice_id) {
                     $update = $pdo->prepare("UPDATE invoices SET status = 'pending' WHERE id = ?");
                     $update->execute([$invoice_id]);
                 }
                 
-                // ==========================
                 // Send admin notification email
-                // NEW: Notify admin about payment upload
-                // ==========================
-                
-                // Get student info
                 $stmt = $pdo->prepare("SELECT full_name, student_id FROM students WHERE id = ?");
                 $stmt->execute([$activeStudentId]);
                 $student = $stmt->fetch();
                 
-                // Get class info (if exists)
                 $class_code = 'N/A';
                 $class_name = 'No Class Assigned';
                 if ($class_id) {
@@ -534,7 +580,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     }
                 }
                 
-                // Get invoice info if applicable
                 $invoice_number = '';
                 $invoice_description = '';
                 if ($invoice_id) {
@@ -545,7 +590,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $invoice_description = $invoice['description'] ?? '';
                 }
                 
-                // Get parent info if applicable
                 $parent_name = '';
                 $parent_email = '';
                 if ($parent_account_id) {
@@ -556,7 +600,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $parent_email = $parent['email'] ?? '';
                 }
                 
-                // Format file size
                 $file_size = $receiptData['size'];
                 if ($file_size < 1024) {
                     $file_size_formatted = $file_size . ' B';
@@ -737,7 +780,6 @@ $page = $_GET['page'] ?? 'login';
             gap: 15px;
         }
 
-        /* Child Selector for Parents */
         .child-selector {
             background: rgba(255,255,255,0.15);
             padding: 8px 15px;
@@ -973,7 +1015,6 @@ $page = $_GET['page'] ?? 'login';
             font-weight: 700;
         }
 
-        /* NEW: Logo styling for login page */
         .login-logo {
             width: 120px;
             height: 120px;
@@ -1005,7 +1046,6 @@ $page = $_GET['page'] ?? 'login';
             border-color: rgba(0,0,0,0.1) !important;
         }
 
-        /* ✨ NEW: Reload Button Styles */
         .page-header {
             display: flex;
             align-items: center;
@@ -1242,14 +1282,12 @@ $page = $_GET['page'] ?? 'login';
 </head>
 <body<?php echo ($page !== 'login') ? ' class="logged-in"' : ''; ?>>
 
-<!-- ✨ NEW: Reload Toast Notification -->
 <div class="reload-toast" id="reloadToast">
     <i class="fas fa-check-circle text-success"></i>
     <span>Data refreshed successfully!</span>
 </div>
 
 <?php if ($page === 'login'): ?>
-    <!-- Login Page -->
     <div class="login-container animate__animated animate__fadeIn">
         <div class="login-card">
             <div class="text-center mb-4">
@@ -1284,6 +1322,7 @@ $page = $_GET['page'] ?? 'login';
             <?php endif; ?>
 
             <form method="POST" action="">
+                <?php echo csrfField(); ?>
                 <input type="hidden" name="action" value="login">
                 <div class="mb-3">
                     <label class="form-label"><i class="fas fa-envelope"></i> Email</label>
@@ -1315,7 +1354,6 @@ $page = $_GET['page'] ?? 'login';
 <?php else: ?>
     <?php redirectIfNotLoggedIn(); ?>
 
-    <!-- Fixed Top Header -->
     <div class="top-header">
         <div class="header-left">
             <button class="header-menu-btn" id="menuToggle">
@@ -1334,7 +1372,6 @@ $page = $_GET['page'] ?? 'login';
 
         <div class="header-right">
             <?php if (isParent()): ?>
-                <!-- Child Selector for Parents -->
                 <div class="child-selector">
                     <i class="fas fa-child"></i>
                     <span>Viewing:</span>
@@ -1360,10 +1397,8 @@ $page = $_GET['page'] ?? 'login';
         </div>
     </div>
 
-    <!-- Sidebar Overlay -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <!-- Sidebar Navigation -->
     <div class="sidebar" id="sidebar">
         <nav class="nav flex-column">
             <a class="nav-link <?php echo $page === 'dashboard' ? 'active' : ''; ?>" href="?page=dashboard">
@@ -1394,9 +1429,7 @@ $page = $_GET['page'] ?? 'login';
         </nav>
     </div>
 
-    <!-- Content Area -->
     <div class="content-area">
-        <!-- ✨ NEW: Page Header with Reload Button -->
         <div class="page-header">
             <h3 class="mb-0">
                 <i class="fas fa-<?php 
@@ -1435,7 +1468,6 @@ $page = $_GET['page'] ?? 'login';
         <?php endif; ?>
 
         <?php
-        // Include pages
         $pages_dir = 'pages/';
         switch($page) {
             case 'dashboard':
@@ -1477,26 +1509,21 @@ $page = $_GET['page'] ?? 'login';
     </div>
 <?php endif; ?>
 
-<!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // ✨ NEW: Reload Page Data Function
     function reloadPageData() {
         const reloadBtn = document.querySelector('.btn-reload');
         const reloadIcon = reloadBtn.querySelector('i');
         const reloadToast = document.getElementById('reloadToast');
         
-        // Add loading state
         reloadBtn.classList.add('loading');
         reloadBtn.disabled = true;
         
-        // Reload the page without cache
         setTimeout(function() {
             window.location.href = window.location.href.split('#')[0] + '&_t=' + new Date().getTime();
         }, 300);
         
-        // Show toast notification
         setTimeout(function() {
             reloadToast.classList.add('show');
             setTimeout(function() {
