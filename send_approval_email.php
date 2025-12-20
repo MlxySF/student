@@ -87,7 +87,7 @@ function getApprovalEmailHTML($parentEmail, $studentName, $registrationNumber, $
     } else {
         $loginSection = "
         <div style='background: #e0f2fe; border-left: 4px solid #0ea5e9; padding: 16px; margin: 24px 0; border-radius: 8px;'>
-            <p style='margin: 0; color: #075985; font-size: 14px;'>🔐 <strong>Login to Parent Portal:</strong> Use your existing parent email and password to view all your children.</p>
+            <p style='margin: 0; color: #075985; font-size: 14px;'>🔐 <strong>Login to Parent Portal:</strong> Use your existing parent email and password (parent's IC last 4 digit number) to view all your children.</p>
         </div>
         ";
     }
