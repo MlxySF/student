@@ -237,6 +237,11 @@ $page = $_GET['page'] ?? 'login';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - <?php echo SITE_NAME; ?></title>
     
+    <!-- Google Fonts: Inter (English) + Noto Sans SC (Chinese) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -254,9 +259,15 @@ $page = $_GET['page'] ?? 'login';
             --info-color: #06b6d4;
         }
 
+        * {
+            font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #f8fafc;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         /* Fixed Top Header */
@@ -340,6 +351,7 @@ $page = $_GET['page'] ?? 'login';
         .school-logo .logo-subtitle {
             font-size: 12px;
             opacity: 0.9;
+            font-weight: 500;
         }
 
         .header-right {
@@ -381,6 +393,7 @@ $page = $_GET['page'] ?? 'login';
         .header-user-role {
             font-size: 11px;
             opacity: 0.9;
+            font-weight: 500;
         }
 
         .sidebar-overlay {
@@ -420,6 +433,7 @@ $page = $_GET['page'] ?? 'login';
             display: flex;
             align-items: center;
             gap: 12px;
+            font-weight: 500;
         }
 
         .admin-sidebar .nav-link:hover,
@@ -484,7 +498,7 @@ $page = $_GET['page'] ?? 'login';
         .stat-content h3 {
             margin: 0;
             font-size: 32px;
-            font-weight: bold;
+            font-weight: 700;
             color: #1e293b;
         }
 
@@ -492,6 +506,7 @@ $page = $_GET['page'] ?? 'login';
             margin: 0;
             color: #64748b;
             font-size: 14px;
+            font-weight: 500;
         }
 
         .table {
@@ -523,6 +538,10 @@ $page = $_GET['page'] ?? 'login';
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             max-width: 450px;
             width: 100%;
+        }
+
+        .login-card h2 {
+            font-weight: 700;
         }
 
         /* ✨ NEW: Reload Button Styles */
