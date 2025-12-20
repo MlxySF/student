@@ -81,13 +81,13 @@ $stmt = $pdo->prepare($sql_outstanding);
 $stmt->execute($params);
 $outstanding_amount = $stmt->fetch()['total'] ?? 0;
 
-// Get all invoices with payment information
+// Get all invoices with payment information (UPDATED: Include payment_date)
 $sql = "
     SELECT i.*, 
            s.student_id, s.full_name, s.email, 
            c.class_code, c.class_name,
            p.id as payment_id, p.verification_status, p.receipt_data, p.receipt_mime_type, 
-           p.upload_date, p.admin_notes
+           p.upload_date, p.payment_date, p.admin_notes
     FROM invoices i
     JOIN students s ON i.student_id = s.id
     LEFT JOIN classes c ON i.class_id = c.id
@@ -289,6 +289,9 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
             <?php endif; ?>
             <?php if ($has_payment): ?>
                 <div class="d-md-none"><span class="badge bg-info"><i class="fas fa-receipt"></i> Payment Uploaded</span></div>
+                <?php if (!empty($invoice['payment_date'])): ?>
+                    <div class="d-md-none"><span class="badge bg-success"><i class="fas fa-calendar-check"></i> Paid: <?php echo formatDate($invoice['payment_date']); ?></span></div>
+                <?php endif; ?>
             <?php endif; ?>
         </td>
         <td class="hide-mobile"><?php echo formatDate($invoice['created_at']); ?></td>
@@ -307,6 +310,9 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
             <span class="badge bg-<?php echo $status_badge; ?>"><i class="fas fa-<?php echo $status_icon; ?>"></i> <?php echo $status_text; ?></span>
             <?php if ($has_payment): ?>
                 <br><span class="badge bg-info mt-1"><i class="fas fa-receipt"></i> Receipt</span>
+                <?php if (!empty($invoice['payment_date'])): ?>
+                    <br><span class="badge bg-success mt-1"><i class="fas fa-calendar-check"></i> <?php echo formatDate($invoice['payment_date']); ?></span>
+                <?php endif; ?>
             <?php endif; ?>
         </td>
         <td class="invoice-actions-cell">
@@ -371,6 +377,12 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                 <hr class="my-4">
                 <h6 class="mb-3"><i class="fas fa-receipt"></i> Payment Information</h6>
                 <table class="table table-bordered">
+                    <?php if (!empty($invoice['payment_date'])): ?>
+                    <tr>
+                        <th width="30%" class="bg-success text-white"><i class="fas fa-calendar-check"></i> Payment Date (Actual)</th>
+                        <td class="fw-bold text-success"><?php echo formatDate($invoice['payment_date']); ?></td>
+                    </tr>
+                    <?php endif; ?>
                     <tr><th width="30%">Upload Date</th><td><?php echo formatDateTime($invoice['upload_date']); ?></td></tr>
                     <tr><th>Verification Status</th><td>
                         <?php if ($invoice['verification_status'] === 'verified'): ?>
@@ -414,6 +426,11 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                                 <option value="rejected">✗ Rejected - Decline Payment</option>
                             </select>
                         </div>
+                        <?php if (!empty($invoice['payment_date'])): ?>
+                        <div class="alert alert-success">
+                            <i class="fas fa-calendar-check"></i> <strong>Payment Date:</strong> <?php echo formatDate($invoice['payment_date']); ?>
+                        </div>
+                        <?php endif; ?>
                         <div class="alert alert-info"><i class="fas fa-info-circle"></i> Approving will automatically mark invoice as PAID.</div>
                         <div class="mb-3">
                             <label class="form-label">Admin Notes (Optional)</label>
