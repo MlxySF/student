@@ -984,6 +984,76 @@ $page = $_GET['page'] ?? 'login';
             border-color: rgba(0,0,0,0.1) !important;
         }
 
+        /* ✨ NEW: Reload Button Styles */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-reload {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-reload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+            color: white;
+        }
+
+        .btn-reload i {
+            transition: transform 0.6s;
+        }
+
+        .btn-reload.loading i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .reload-toast {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .reload-toast.show {
+            display: flex;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
         @media (min-width: 769px) {
             .header-menu-btn {
                 display: none;
@@ -1073,6 +1143,17 @@ $page = $_GET['page'] ?? 'login';
             .modal-dialog {
                 margin: 10px;
             }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .btn-reload {
+                width: 100%;
+                justify-content: center;
+            }
         }
 
         @media (max-width: 480px) {
@@ -1129,10 +1210,23 @@ $page = $_GET['page'] ?? 'login';
                 padding: 6px 12px;
                 font-size: 13px;
             }
+
+            .reload-toast {
+                top: 70px;
+                right: 10px;
+                left: 10px;
+                font-size: 14px;
+            }
         }
     </style>
 </head>
 <body<?php echo ($page !== 'login') ? ' class="logged-in"' : ''; ?>>
+
+<!-- ✨ NEW: Reload Toast Notification -->
+<div class="reload-toast" id="reloadToast">
+    <i class="fas fa-check-circle text-success"></i>
+    <span>Data refreshed successfully!</span>
+</div>
 
 <?php if ($page === 'login'): ?>
     <!-- Login Page -->
@@ -1281,18 +1375,27 @@ $page = $_GET['page'] ?? 'login';
 
     <!-- Content Area -->
     <div class="content-area">
-        <h3 class="mb-4">
-            <i class="fas fa-<?php 
-                echo $page === 'dashboard' ? 'home' : 
-                    ($page === 'invoices' ? 'file-invoice-dollar' :
-                    ($page === 'attendance' ? 'calendar-check' : 
-                    ($page === 'classes' ? 'chalkboard-teacher' : 'user'))); 
-            ?>"></i>
-            <?php echo ucfirst($page); ?>
-            <?php if (isParent()): ?>
-                <small class="text-muted" style="font-size: 16px;">- <?php echo htmlspecialchars(getActiveStudentName()); ?></small>
+        <!-- ✨ NEW: Page Header with Reload Button -->
+        <div class="page-header">
+            <h3 class="mb-0">
+                <i class="fas fa-<?php 
+                    echo $page === 'dashboard' ? 'home' : 
+                        ($page === 'invoices' ? 'file-invoice-dollar' :
+                        ($page === 'attendance' ? 'calendar-check' : 
+                        ($page === 'classes' ? 'chalkboard-teacher' : 'user'))); 
+                ?>"></i>
+                <?php echo ucfirst($page); ?>
+                <?php if (isParent()): ?>
+                    <small class="text-muted" style="font-size: 16px;">- <?php echo htmlspecialchars(getActiveStudentName()); ?></small>
+                <?php endif; ?>
+            </h3>
+            <?php if ($page !== 'dashboard'): ?>
+            <button class="btn btn-reload" onclick="reloadPageData()">
+                <i class="fas fa-sync-alt"></i>
+                <span>Refresh Data</span>
+            </button>
             <?php endif; ?>
-        </h3>
+        </div>
 
         <?php if (isset($_SESSION['success'])): ?>
             <div class="alert alert-success alert-dismissible fade show animate__animated animate__fadeInDown" role="alert">
@@ -1357,8 +1460,29 @@ $page = $_GET['page'] ?? 'login';
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // REMOVED: Auto-dismiss timeout for alerts
-    // Alerts now only close when user clicks the X button
+    // ✨ NEW: Reload Page Data Function
+    function reloadPageData() {
+        const reloadBtn = document.querySelector('.btn-reload');
+        const reloadIcon = reloadBtn.querySelector('i');
+        const reloadToast = document.getElementById('reloadToast');
+        
+        // Add loading state
+        reloadBtn.classList.add('loading');
+        reloadBtn.disabled = true;
+        
+        // Reload the page without cache
+        setTimeout(function() {
+            window.location.href = window.location.href.split('#')[0] + '&_t=' + new Date().getTime();
+        }, 300);
+        
+        // Show toast notification
+        setTimeout(function() {
+            reloadToast.classList.add('show');
+            setTimeout(function() {
+                reloadToast.classList.remove('show');
+            }, 2000);
+        }, 400);
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
         const menuToggle = document.getElementById('menuToggle');
