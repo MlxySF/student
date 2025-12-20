@@ -369,9 +369,12 @@
     }
 
     // ========================================
-    // STEP NAVIGATION
+    // STEP NAVIGATION - FIXED: Scroll to top at START
     // ========================================
     function changeStep(dir) {
+        // ✨ SCROLL TO TOP FIRST (especially important for mobile)
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
         if (dir === 1 && !validateStep(currentStep)) {
             return;
         }
@@ -417,8 +420,6 @@
 
         const progressBar = document.getElementById('progress-bar');
         progressBar.style.width = `${(currentStep / 7) * 100}%`;
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     async function submitPayment() {
