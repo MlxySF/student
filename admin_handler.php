@@ -2,6 +2,7 @@
 session_start();
 require_once 'config.php';
 require_once 'send_approval_email.php'; // Include email function
+require_once 'send_rejection_email.php'; // Include rejection email function
 
 // Log all POST requests to a file for debugging
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -215,12 +216,13 @@ if ($action === 'verify_registration') {
 
 if ($action === 'reject_registration') {
     $regId = $_POST['registration_id'];
+    $rejectReason = $_POST['reject_reason'] ?? ''; // Optional admin notes
     
     try {
         $pdo->beginTransaction();
         
-        // Get registration details
-        $stmt = $pdo->prepare("SELECT id, registration_number, name_en, payment_status, student_account_id FROM registrations WHERE id = ?");
+        // Get registration details INCLUDING EMAIL for notification
+        $stmt = $pdo->prepare("SELECT id, registration_number, name_en, email, payment_status, student_account_id FROM registrations WHERE id = ?");
         $stmt->execute([$regId]);
         $registration = $stmt->fetch(PDO::FETCH_ASSOC);
         
@@ -268,17 +270,33 @@ if ($action === 'reject_registration') {
                     UPDATE payments 
                     SET verification_status = 'rejected',
                         verified_date = NOW(),
-                        admin_notes = 'Rejected with registration'
+                        admin_notes = ?
                     WHERE invoice_id = ? 
                       AND verification_status = 'pending'
                 ");
-                $stmt->execute([$invoice['id']]);
+                $adminNotes = !empty($rejectReason) ? $rejectReason : 'Rejected with registration';
+                $stmt->execute([$adminNotes, $invoice['id']]);
                 $paymentsUpdated = $stmt->rowCount();
             }
         }
         
+        // Commit all database changes
         $pdo->commit();
         
+        // 4. Send rejection email to parent
+        $emailSent = false;
+        try {
+            $emailSent = sendRejectionEmail(
+                $registration['email'],
+                $registration['name_en'],
+                $registration['registration_number'],
+                $rejectReason
+            );
+        } catch (Exception $e) {
+            error_log("[reject_registration] Email sending failed: " . $e->getMessage());
+        }
+        
+        // Build success message
         $message = "Registration {$registration['registration_number']} rejected.";
         if ($invoicesUpdated > 0) {
             $message .= " Invoice cancelled.";
@@ -286,8 +304,13 @@ if ($action === 'reject_registration') {
         if ($paymentsUpdated > 0) {
             $message .= " Payment rejected.";
         }
+        if ($emailSent) {
+            $message .= " Rejection notification sent to parent.";
+        } else {
+            $message .= " (Email notification failed - please contact parent manually)";
+        }
         
-        error_log("[Reject] Reg#{$registration['registration_number']}: invoices=$invoicesUpdated, payments=$paymentsUpdated");
+        error_log("[Reject] Reg#{$registration['registration_number']}: invoices=$invoicesUpdated, payments=$paymentsUpdated, email=" . ($emailSent ? 'sent' : 'failed'));
         $_SESSION['success'] = $message;
         
     } catch (Exception $e) {
