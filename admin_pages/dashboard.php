@@ -2,8 +2,10 @@
 // admin_pages/dashboard.php - ULTRA-SAFE VERSION WITH ERROR HANDLING
 
 try {
-    // Get total students
-    $totalStudents = $pdo->query("SELECT COUNT(*) FROM students")->fetchColumn();
+    // Get total students - ONLY COUNT APPROVED ACCOUNTS
+    $totalStudents = $pdo->query(
+        "SELECT COUNT(*) FROM registrations WHERE account_status = 'approved'"
+    )->fetchColumn();
 } catch (PDOException $e) {
     $totalStudents = 0;
     error_log("Error counting students: " . $e->getMessage());
@@ -11,13 +13,13 @@ try {
 
 try {
     // Get students by status - ONLY COUNT APPROVED ACCOUNTS
-    // Using account_status = 'approved' filter
+    // Using account_status = 'approved' filter (NOT payment_status)
     $stmt = $pdo->query("
         SELECT student_status, COUNT(*) as count 
         FROM registrations 
         WHERE student_status IS NOT NULL 
         AND student_status != ''
-        AND payment_status = 'approved'
+        AND account_status = 'approved'
         GROUP BY student_status
     ");
     $studentsByStatus = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
@@ -97,7 +99,7 @@ $statusDisplayMap = [
 ?>
 
 <div class="row">
-    <!-- Total Students -->
+    <!-- Total Students (Approved Only) -->
     <div class="col-md-6 col-lg-3">
         <div class="stat-card">
             <div class="stat-icon bg-primary">
@@ -105,7 +107,7 @@ $statusDisplayMap = [
             </div>
             <div class="stat-content">
                 <h3><?php echo $totalStudents; ?></h3>
-                <p>Total Students</p>
+                <p>Approved Students</p>
             </div>
         </div>
     </div>
