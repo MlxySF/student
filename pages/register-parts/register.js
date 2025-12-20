@@ -393,6 +393,35 @@
         element.classList.toggle('active');
     }
 
+function validateStep5() {
+    const termsCheckbox = document.getElementById('terms-agreement');
+    
+    if (!termsCheckbox.checked) {
+        alert('Please agree to the Terms and Conditions before proceeding.\n请先同意条款与条件才能继续。');
+        termsCheckbox.focus();
+        // Add visual feedback
+        termsCheckbox.parentElement.parentElement.classList.add('shake-animation');
+        setTimeout(() => {
+            termsCheckbox.parentElement.parentElement.classList.remove('shake-animation');
+        }, 500);
+        return false;
+    }
+    return true;
+}
+
+const style = document.createElement('style');
+style.textContent = `
+    .shake-animation {
+        animation: shake 0.5s;
+    }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+`;
+document.head.appendChild(style);
+
     // ========================================
     // STEP NAVIGATION - FIXED WITH AGGRESSIVE SCROLL
     // ========================================
@@ -401,7 +430,11 @@
             return;
         }
         
-        if (dir === 1 && currentStep === 5) {
+        if (dir === 1 && currentStep === 5 && !validateStep5()) {
+            return;
+        }
+        
+        if (dir === 1 && currentStep === 5 && validateStep5()) {
             submitAndGeneratePDF();
             return;
         }
@@ -841,7 +874,7 @@
         document.getElementById('pdf-status').innerText = status;
         document.getElementById('pdf-phone').innerText = phone;
         document.getElementById('pdf-email').innerText = email;
-        document.getElementById('pdf-level').innerText = level;
+        //document.getElementById('pdf-level').innerText = level;
         document.getElementById('pdf-events').innerText = events;
         document.getElementById('pdf-schedule').innerText = schedule;
         document.getElementById('pdf-parent-name').innerText = parent;
