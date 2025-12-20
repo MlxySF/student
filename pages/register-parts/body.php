@@ -925,228 +925,226 @@
 </div>
 
 <!-- HIDDEN PDF TEMPLATE - PAGE 1 -->
-<div id="pdf-template-page1" style="width: 794px; padding: 34px 40px 24px 40px; background: #ffffff; position: fixed; top: -10000px; left: -10000px; visibility: hidden; pointer-events: none; color: #111827; font-family: 'Noto Sans SC', sans-serif;">
-    
+<div id="pdf-template-page1" style="width: 794px; padding: 40px; background: #ffffff; position: fixed; top: -10000px; left: -10000px; visibility: hidden; pointer-events: none; color: #111827; font-family: 'Noto Sans SC', sans-serif;">
     <img src="/assets/WSP Letter.png" style="width: 100%; margin-bottom: 12px;" alt="Letterhead">
-    
-    <h1 style="text-align: center; font-size: 24px; font-weight: 800; margin-top: 6px; margin-bottom: 4px; line-height: 1.2;">OFFICIAL WUSHU REGISTRATION 2026</h1>
-    <p style="text-align: center; font-size: 12px; color: #6b7280; margin-bottom: 22px;">Legal Binding Document · This form confirms participation in Wushu Sports Academy programmes.</p>
+    <h1 style="text-align:center; font-size:24px; font-weight:800; margin-top:6px;">OFFICIAL WUSHU REGISTRATION 2026</h1>
+    <p style="text-align:center; font-size:13px; color:#6b7280; margin-bottom:24px;">Legal Binding Document · This form confirms participation in Wushu Sports Academy programmes.</p>
 
-    <div style="margin-bottom: 20px;">
-        <div style="background: #e5e7eb; padding: 7px 12px; font-weight: 700; font-size: 13px; text-transform: uppercase;">STUDENT INFORMATION 学员资料</div>
-        <div style="border: 1px solid #e5e7eb; border-top: none; padding: 10px 12px; font-size: 12.5px; line-height: 1.6;">
-            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">Full Name 姓名:</span><span style="font-weight: 500; color: #111827;" id="pdf-name"></span></div>
-            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">IC Number 身份证:</span><span style="font-weight: 500; color: #111827;" id="pdf-ic"></span></div>
-            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">Age (2026) 年龄:</span><span style="font-weight: 500; color: #111827;" id="pdf-age"></span></div>
-            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">School 学校:</span><span style="font-weight: 500; color: #111827;" id="pdf-school"></span></div>
-            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">Status 身份:</span><span style="font-weight: 500; color: #111827;" id="pdf-status"></span></div>
+    <div style="margin-bottom:22px;">
+        <div style="background:#e5e7eb; padding:7px 12px; font-weight:700; font-size:13px; text-transform:uppercase;">STUDENT DETAILS / 学员资料</div>
+        <div style="border:1px solid #e5e7eb; border-top:none; padding:10px 12px; font-size:13px; line-height:1.5;">
+            <div style="margin-bottom:5px;"><span style="font-weight:600; color:#6b7280; display:inline-block; width:140px;">Name 姓名:</span> <span style="font-weight:500; color:#111827;" id="pdf-name"></span></div>
+            <div style="margin-bottom:5px;"><span style="font-weight:600; color:#6b7280; display:inline-block; width:140px;">IC No 身份证:</span> <span style="font-weight:500; color:#111827;" id="pdf-ic"></span></div>
+            <div style="margin-bottom:5px;"><span style="font-weight:600; color:#6b7280; display:inline-block; width:140px;">Age 年龄:</span> <span style="font-weight:500; color:#111827;" id="pdf-age"></span></div>
+            <div style="margin-bottom:5px;"><span style="font-weight:600; color:#6b7280; display:inline-block; width:140px;">School 学校:</span> <span style="font-weight:500; color:#111827;" id="pdf-school"></span></div>
+            <div style="margin-bottom:5px;"><span style="font-weight:600; color:#6b7280; display:inline-block; width:140px;">Status 身份:</span> <span style="font-weight:500; color:#111827;" id="pdf-status"></span></div>
         </div>
     </div>
 
-    <div style="margin-bottom: 20px;">
-        <div style="background: #e5e7eb; padding: 7px 12px; font-weight: 700; font-size: 13px; text-transform: uppercase;">CONTACT 联系方式</div>
-        <div style="border: 1px solid #e5e7eb; border-top: none; padding: 10px 12px; font-size: 12.5px; line-height: 1.6;">
-            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">Phone 电话:</span><span style="font-weight: 500; color: #111827;" id="pdf-phone"></span></div>
-            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">Email 邮箱:</span><span style="font-weight: 500; color: #111827;" id="pdf-email"></span></div>
+    <div style="margin-bottom:22px;">
+        <div style="background:#e5e7eb; padding:7px 12px; font-weight:700; font-size:13px; text-transform:uppercase;">CONTACT & EVENTS / 联系与项目</div>
+        <div style="border:1px solid #e5e7eb; border-top:none; padding:10px 12px; font-size:13px; line-height:1.5;">
+            <div style="margin-bottom:5px;"><span style="font-weight:600; color:#6b7280; display:inline-block; width:140px;">Phone 电话:</span> <span style="font-weight:500; color:#111827;" id="pdf-phone"></span></div>
+            <div style="margin-bottom:5px;"><span style="font-weight:600; color:#6b7280; display:inline-block; width:140px;">Email 邮箱:</span> <span style="font-weight:500; color:#111827;" id="pdf-email"></span></div>
+            <div style="margin-bottom:5px;"><span style="font-weight:600; color:#6b7280; display:inline-block; width:140px;">Events 项目:</span> <span style="font-weight:500; color:#111827;" id="pdf-events"></span></div>
+            <div style="margin-bottom:5px;"><span style="font-weight:600; color:#6b7280; display:inline-block; width:140px;">Schedule 时间:</span> <span style="font-weight:500; color:#111827;" id="pdf-schedule"></span></div>
         </div>
     </div>
 
-    <div style="margin-bottom: 20px;">
-        <div style="background: #e5e7eb; padding: 7px 12px; font-weight: 700; font-size: 13px; text-transform: uppercase;">TRAINING DETAILS 训练详情</div>
-        <div style="border: 1px solid #e5e7eb; border-top: none; padding: 10px 12px; font-size: 12.5px; line-height: 1.6;">
-            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">Level 级别:</span><span style="font-weight: 500; color: #111827;" id="pdf-level"></span></div>
-            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">Events 项目:</span><span style="font-weight: 500; color: #111827;" id="pdf-events"></span></div>
-            <div style="margin-bottom: 5px;"><span style="font-weight: 600; color: #6b7280; display: inline-block; width: 140px;">Schedule 时间:</span><span style="font-weight: 500; color: #111827;" id="pdf-schedule"></span></div>
+    <div style="margin-bottom:22px;">
+        <div style="background:#e5e7eb; padding:7px 12px; font-weight:700; font-size:13px; text-transform:uppercase;">DECLARATION & SIGNATURE / 声明与签名</div>
+        <div style="border:1px solid #e5e7eb; border-top:none; padding:10px 12px; font-size:13px; line-height:1.5;">
+            <p style="font-size:13px; margin-bottom:12px;">
+                I hereby confirm that all information provided is accurate. I have read and agreed to the
+                Terms & Conditions, Fee Policy, and Athlete Code of Conduct. I understand that Wushu is a
+                high-intensity sport and agree to bear the risks involved.
+            </p>
+            <div style="border:1px solid #d1d5db; padding:8px; width:340px; height:130px; position:relative; margin-bottom:10px;">
+                <img id="pdf-sig-img" style="max-width:100%; max-height:100%; object-fit:contain;">
+            </div>
+            <p style="font-size:13px; font-weight:600; margin-bottom:4px;">
+                Parent / Guardian Name: <span id="pdf-parent-name"></span>
+            </p>
+            <p style="font-size:13px; font-weight:600; margin-bottom:4px;">
+                Parent / Guardian IC No.: <span id="pdf-parent-ic"></span>
+            </p>
+            <p style="font-size:12px; margin-top:2px;">
+                Date: <span id="pdf-date"></span>
+            </p>
         </div>
     </div>
 
-    <div style="border: 2px solid #374151; padding: 14px; border-radius: 6px; background: #f9fafb;">
-        <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 700; color: #111827;">PARENT / GUARDIAN DECLARATION 家长/监护人声明</h3>
-        <p style="font-size: 12px; line-height: 1.55; margin: 0 0 9px 0; color: #374151;">
-            I hereby confirm that all information provided is accurate. I have read and agree to all terms and conditions outlined by Wushu Sports Academy.
-        </p>
-        <p style="font-size: 12px; line-height: 1.55; margin: 0 0 13px 0; color: #374151;">
-            本人确认以上所有资料属实。本人已阅读并同意武术体育学院的所有条款与条件。
-        </p>
-        <div style="margin-top: 11px; padding-top: 11px; border-top: 1px solid #d1d5db;">
-            <p style="font-size: 12px; margin: 4px 0; color: #111827;"><strong>Parent Name 家长姓名:</strong> <span id="pdf-parent-name"></span></p>
-            <p style="font-size: 12px; margin: 4px 0; color: #111827;"><strong>Parent IC 家长身份证:</strong> <span id="pdf-parent-ic"></span></p>
-            <p style="font-size: 12px; margin: 4px 0; color: #111827;"><strong>Date 日期:</strong> <span id="pdf-date"></span></p>
-            <p style="font-size: 12px; margin: 10px 0 4px 0; color: #111827;"><strong>Signature 签名:</strong></p>
-            <img id="pdf-sig-img" src="" style="max-width: 220px; max-height: 95px; border: 1px solid #d1d5db; padding: 4px; background: white; display: block;">
-        </div>
-    </div>
+    <p style="font-size:12px; color:#4b5563; margin-top:14px; text-align:justify; line-height:1.6;">
+        <strong>NOTES / 备注：</strong>
+        Fees are non-refundable and must be paid by the 10th of every month. Strict discipline and punctuality
+        are required at all times. The Academy reserves the right to adjust training schedules and venues when
+        necessary. 学费概不退还，并须在每月10号前缴清。学员必须严守纪律与守时；学院保留在有需要时调整训练时间及地点的权利。
+    </p>
 </div>
 
 
 <!-- HIDDEN PDF TEMPLATE - PAGE 2 -->
-<div id="pdf-template-page2" style="width: 794px; padding: 34px 40px 22px 40px; background: #ffffff; position: fixed; top: -10000px; left: -10000px; visibility: hidden; pointer-events: none; color: #111827; font-family: 'Noto Sans SC', sans-serif;">
-    
+<div id="pdf-template-page2" style="width: 794px; padding: 40px; background: #ffffff; position: fixed; top: -10000px; left: -10000px; visibility: hidden; pointer-events: none; color: #111827; font-family: Arial, sans-serif;">
     <img src="/assets/WSP Letter.png" style="width: 100%; margin-bottom: 12px;" alt="Letterhead">
-    
-    <h1 style="text-align: center; font-size: 24px; font-weight: 800; margin-top: 6px; margin-bottom: 4px; line-height: 1.2;">TERMS & CONDITIONS</h1>
-    <p style="text-align: center; font-size: 12px; color: #6b7280; margin-bottom: 18px;">条款与条件 · Agreed and Signed by Parent/Guardian</p>
+    <h1 style="text-align:center; font-size:24px; font-weight:800; margin-top:6px; font-family: 'Noto Sans SC', sans-serif;">TERMS & CONDITIONS</h1>
+    <p style="text-align:center; font-size:13px; color:#6b7280; margin-bottom:16px; font-family: 'Noto Sans SC', sans-serif;">条款与条件 · Agreed and Signed by Parent/Guardian</p>
 
-    <p style="font-size: 12px; margin-bottom: 12px; color: #111827; line-height: 1.4; font-weight: 600;">The parent/guardian has read, understood, and agreed to the following terms:</p>
-
-    <table style="width: 100%; margin-bottom: 14px; border-collapse: collapse; font-size: 11px; line-height: 1.5;">
-        <tr>
-            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
-                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">1</div>
-            </td>
-            <td style="padding-bottom: 6.5px; line-height: 1.5;">
-                <strong style="color: #111827; font-size: 11px;">本人（学员/家长/监护人）确认上述资料属实。</strong><br>
-                <span style="color: #6b7280; font-size: 10.5px;">I, the student/parent/guardian, confirm that all information provided above is true and correct.</span>
-            </td>
-        </tr>
-        <tr>
-            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
-                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">2</div>
-            </td>
-            <td style="padding-bottom: 6.5px; line-height: 1.5;">
-                <strong style="color: #111827; font-size: 11px;">本人明白武术是一项剧烈运动，并愿意自行承担训练期间可能发生的意外风险。</strong><br>
-                <span style="color: #6b7280; font-size: 10.5px;">I understand that Wushu is a high‑intensity sport and agree to bear any risk of injury during training.</span>
-            </td>
-        </tr>
-        <tr>
-            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
-                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">3</div>
-            </td>
-            <td style="padding-bottom: 6.5px; line-height: 1.5;">
-                <strong style="color: #111827; font-size: 11px;">学院有权在必要时调整训练时间或地点，并将提前通知。</strong><br>
-                <span style="color: #6b7280; font-size: 10.5px;">The Academy reserves the right to adjust training times or venues when necessary and will notify in advance.</span>
-            </td>
-        </tr>
-        <tr>
-            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
-                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">4</div>
-            </td>
-            <td style="padding-bottom: 6.5px; line-height: 1.5;">
-                <strong style="color: #111827; font-size: 11px;">学费一经缴付，概不退还（Non‑refundable）。</strong><br>
-                <span style="color: #6b7280; font-size: 10.5px;">Fees paid are strictly non‑refundable under all circumstances.</span>
-            </td>
-        </tr>
-        <tr>
-            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
-                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">5</div>
-            </td>
-            <td style="padding-bottom: 6.5px; line-height: 1.5;">
-                <strong style="color: #111827; font-size: 11px;">本人同意遵守学院及教练的所有指示与安排。</strong><br>
-                <span style="color: #6b7280; font-size: 10.5px;">I agree to follow all instructions, rules, and arrangements set by the Academy and coaches.</span>
-            </td>
-        </tr>
-        <tr>
-            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
-                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">6</div>
-            </td>
-            <td style="padding-bottom: 6.5px; line-height: 1.5;">
-                <strong style="color: #111827; font-size: 11px;">只限于本院通知取消课程，将会另行安排补课，家长不允许自行取消课程。</strong><br>
-                <span style="color: #6b7280; font-size: 10.5px;">Replacement classes are only provided when the Academy cancels a session; parents may not cancel classes on their own.</span>
-            </td>
-        </tr>
-        <tr>
-            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
-                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">7</div>
-            </td>
-            <td style="padding-bottom: 6.5px; line-height: 1.5;">
-                <strong style="color: #111827; font-size: 11px;">如学员因病或其他原因无法出席训练，必须向行政与教练申请请假；未经许可的缺席将被记录。</strong><br>
-                <span style="color: #6b7280; font-size: 10.5px;">If the student cannot attend due to sickness or other reasons, leave must be applied for with admin and coach; unapproved absences will be recorded.</span>
-            </td>
-        </tr>
-        <tr>
-            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
-                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">8</div>
-            </td>
-            <td style="padding-bottom: 6.5px; line-height: 1.5;">
-                <strong style="color: #111827; font-size: 11px;">州队及后备队必须出席所有训练，保持良好态度，接受严格训练与训导。</strong><br>
-                <span style="color: #6b7280; font-size: 10.5px;">State‑team and reserve athletes must attend all training, maintain good attitude, and accept strict training and discipline.</span>
-            </td>
-        </tr>
-        <tr>
-            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
-                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">9</div>
-            </td>
-            <td style="padding-bottom: 6.5px; line-height: 1.5;">
-                <strong style="color: #111827; font-size: 11px;">如因脚受伤、扭伤或生病，请勿勉强出席训练，后果自负。</strong><br>
-                <span style="color: #6b7280; font-size: 10.5px;">Students with injuries or illness should not attend training; any consequences are at their own risk.</span>
-            </td>
-        </tr>
-        <tr>
-            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
-                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">10</div>
-            </td>
-            <td style="padding-bottom: 6.5px; line-height: 1.5;">
-                <strong style="color: #111827; font-size: 11px;">本院不负责学员及家长的任何贵重财物。</strong><br>
-                <span style="color: #6b7280; font-size: 10.5px;">The Academy is not responsible for any valuables belonging to students or parents.</span>
-            </td>
-        </tr>
-        <tr>
-            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
-                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">11</div>
-            </td>
-            <td style="padding-bottom: 6.5px; line-height: 1.5;">
-                <strong style="color: #111827; font-size: 11px;">不允许打架、吵架、态度恶劣或不配合训练，否则将被取消州队及学员资格。</strong><br>
-                <span style="color: #6b7280; font-size: 10.5px;">Fighting, quarrelling, poor attitude, or refusing to cooperate with training may result in removal from the state team and the Academy.</span>
-            </td>
-        </tr>
-        <tr>
-            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
-                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">12</div>
-            </td>
-            <td style="padding-bottom: 6.5px; line-height: 1.5;">
-                <strong style="color: #111827; font-size: 11px;">训练期间不允许吃食物，只能在休息时间喝水。</strong><br>
-                <span style="color: #6b7280; font-size: 10.5px;">Eating is not allowed during training; only drinking water during breaks is permitted.</span>
-            </td>
-        </tr>
-        <tr>
-            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
-                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">13</div>
-            </td>
-            <td style="padding-bottom: 6.5px; line-height: 1.5;">
-                <strong style="color: #111827; font-size: 11px;">家长不允许干涉教练所安排的专业训练计划及纪律管理。</strong><br>
-                <span style="color: #6b7280; font-size: 10.5px;">Parents are not allowed to interfere with professional training plans or discipline set by the coaches.</span>
-            </td>
-        </tr>
-        <tr>
-            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
-                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">14</div>
-            </td>
-            <td style="padding-bottom: 6.5px; line-height: 1.5;">
-                <strong style="color: #111827; font-size: 11px;">家长必须准时载送孩子往返训练地点，并自行负责交通安全。</strong><br>
-                <span style="color: #6b7280; font-size: 10.5px;">Parents must send and pick up their children on time and are fully responsible for transport safety.</span>
-            </td>
-        </tr>
-        <tr>
-            <td style="vertical-align: top; width: 32px; padding-right: 10px; padding-bottom: 6.5px;">
-                <div style="width: 23px; height: 23px; border-radius: 50%; background: #111827; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">15</div>
-            </td>
-            <td style="padding-bottom: 6.5px; line-height: 1.5;">
-                <strong style="color: #111827; font-size: 11px;">训练过程中，学员可能被录影或拍照作为宣传用途，如家长不允许，须以书面通知本院。</strong><br>
-                <span style="color: #6b7280; font-size: 10.5px;">Training sessions may be recorded or photographed for publicity; parents who do not consent must inform the Academy in writing.</span>
-            </td>
-        </tr>
-    </table>
-
-    <div style="border: 2px solid #374151; padding: 14px; margin-top: 16px; border-radius: 6px; background: #f9fafb;">
-        <h3 style="margin: 0 0 10px 0; font-size: 13.5px; font-weight: 700; color: #111827;">LEGAL ACKNOWLEDGEMENT / 法律声明</h3>
-        <p style="font-size: 11px; line-height: 1.5; margin: 0 0 9px 0; color: #374151;">
-            By signing this document, the parent/guardian acknowledges that they have read, understood, and agreed to all 15 terms and conditions listed above.
+    <div style="font-size: 11px; line-height: 1.5; color: #111827; font-family: 'Noto Sans SC', sans-serif;">
+        <p style="margin-bottom: 10px; font-weight: 600; color: #1e293b; font-size: 12px;">
+            The parent/guardian has read, understood, and agreed to the following terms:
         </p>
-        <p style="font-size: 11px; line-height: 1.5; margin: 0 0 12px 0; color: #374151;">
-            家长/监护人签署此文件，即表示已阅读、理解并同意上述所有15项条款与条件。
-        </p>
-        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #d1d5db;">
-            <p style="font-size: 11.5px; margin: 4px 0; color: #111827;"><strong>Signed by:</strong> <span id="pdf-parent-name-2"></span> (<span id="pdf-parent-ic-2"></span>)</p>
-            <p style="font-size: 11.5px; margin: 4px 0; color: #111827;"><strong>Date:</strong> <span id="pdf-date-2"></span></p>
+
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="width: 30px; padding: 0 8px 8px 0;">
+                    <div style="width: 24px; height: 24px; background: #1e293b; border-radius: 50%; color: white; font-weight: 700; font-size: 12px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; line-height: 10px;">1</div>
+                </td>
+                <td style="padding: 0 0 8px 0;">
+                    <p style="margin: 0 0 2px 0; font-weight: 600; font-size: 11px; line-height: 1.4;">本人（学员/家长/监护人）确认上述资料属实。</p>
+                    <p style="margin: 0; color: #4b5563; font-size: 10px; line-height: 1.4;">I, the student/parent/guardian, confirm that all information provided above is true and correct.</p>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 30px; padding: 0 8px 8px 0;">
+                    <div style="width: 24px; height: 24px; background: #1e293b; border-radius: 50%; color: white; font-weight: 700; font-size: 12px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; line-height: 10px;">2</div>
+                </td>
+                <td style="padding: 0 0 8px 0;">
+                    <p style="margin: 0 0 2px 0; font-weight: 600; font-size: 11px; line-height: 1.4;">本人明白武术是一项剧烈运动，并愿意自行承担训练期间可能发生的意外风险。</p>
+                    <p style="margin: 0; color: #4b5563; font-size: 10px; line-height: 1.4;">I understand that Wushu is a high‑intensity sport and agree to bear any risk of injury during training.</p>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 30px; padding: 0 8px 8px 0;">
+                    <div style="width: 24px; height: 24px; background: #1e293b; border-radius: 50%; color: white; font-weight: 700; font-size: 12px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; line-height: 10px;">3</div>
+                </td>
+                <td style="padding: 0 0 8px 0;">
+                    <p style="margin: 0 0 2px 0; font-weight: 600; font-size: 11px; line-height: 1.4;">学院有权在必要时调整训练时间或地点，并将提前通知。</p>
+                    <p style="margin: 0; color: #4b5563; font-size: 10px; line-height: 1.4;">The Academy reserves the right to adjust training times or venues when necessary and will notify in advance.</p>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 30px; padding: 0 8px 8px 0;">
+                    <div style="width: 24px; height: 24px; background: #1e293b; border-radius: 50%; color: white; font-weight: 700; font-size: 12px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; line-height: 10px;">4</div>
+                </td>
+                <td style="padding: 0 0 8px 0;">
+                    <p style="margin: 0 0 2px 0; font-weight: 600; font-size: 11px; line-height: 1.4;">学费一经缴付，概不退还（Non‑refundable）。</p>
+                    <p style="margin: 0; color: #4b5563; font-size: 10px; line-height: 1.4;">Fees paid are strictly non‑refundable under all circumstances.</p>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 30px; padding: 0 8px 8px 0;">
+                    <div style="width: 24px; height: 24px; background: #1e293b; border-radius: 50%; color: white; font-weight: 700; font-size: 12px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; line-height: 10px;">5</div>
+                </td>
+                <td style="padding: 0 0 8px 0;">
+                    <p style="margin: 0 0 2px 0; font-weight: 600; font-size: 11px; line-height: 1.4;">本人同意遵守学院及教练的所有指示与安排。</p>
+                    <p style="margin: 0; color: #4b5563; font-size: 10px; line-height: 1.4;">I agree to follow all instructions, rules, and arrangements set by the Academy and coaches.</p>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 30px; padding: 0 8px 8px 0;">
+                    <div style="width: 24px; height: 24px; background: #1e293b; border-radius: 50%; color: white; font-weight: 700; font-size: 12px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; line-height: 10px;">6</div>
+                </td>
+                <td style="padding: 0 0 8px 0;">
+                    <p style="margin: 0 0 2px 0; font-weight: 600; font-size: 11px; line-height: 1.4;">只限于本院通知取消课程，将会另行安排补课，家长不允许自行取消课程。</p>
+                    <p style="margin: 0; color: #4b5563; font-size: 10px; line-height: 1.4;">Replacement classes are only provided when the Academy cancels a session; parents may not cancel classes on their own.</p>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 30px; padding: 0 8px 8px 0;">
+                    <div style="width: 24px; height: 24px; background: #1e293b; border-radius: 50%; color: white; font-weight: 700; font-size: 12px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; line-height: 10px;">7</div>
+                </td>
+                <td style="padding: 0 0 8px 0;">
+                    <p style="margin: 0 0 2px 0; font-weight: 600; font-size: 11px; line-height: 1.4;">如学员因病或其他原因无法出席训练，必须向行政与教练申请请假；未经许可的缺席将被记录。</p>
+                    <p style="margin: 0; color: #4b5563; font-size: 10px; line-height: 1.4;">If the student cannot attend due to sickness or other reasons, leave must be applied for with admin and coach; unapproved absences will be recorded.</p>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 30px; padding: 0 8px 8px 0;">
+                    <div style="width: 24px; height: 24px; background: #1e293b; border-radius: 50%; color: white; font-weight: 700; font-size: 12px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; line-height: 10px;">8</div>
+                </td>
+                <td style="padding: 0 0 8px 0;">
+                    <p style="margin: 0 0 2px 0; font-weight: 600; font-size: 11px; line-height: 1.4;">州队及后备队必须出席所有训练，保持良好态度，接受严格训练与训导。</p>
+                    <p style="margin: 0; color: #4b5563; font-size: 10px; line-height: 1.4;">State‑team and reserve athletes must attend all training, maintain good attitude, and accept strict training and discipline.</p>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 30px; padding: 0 8px 8px 0;">
+                    <div style="width: 24px; height: 24px; background: #1e293b; border-radius: 50%; color: white; font-weight: 700; font-size: 12px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; line-height: 10px;">9</div>
+                </td>
+                <td style="padding: 0 0 8px 0;">
+                    <p style="margin: 0 0 2px 0; font-weight: 600; font-size: 11px; line-height: 1.4;">如因脚受伤、扭伤或生病，请勿勉强出席训练，后果自负。</p>
+                    <p style="margin: 0; color: #4b5563; font-size: 10px; line-height: 1.4;">Students with injuries or illness should not attend training; any consequences are at their own risk.</p>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 30px; padding: 0 8px 8px 0;">
+                    <div style="width: 24px; height: 24px; background: #1e293b; border-radius: 50%; color: white; font-weight: 700; font-size: 12px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; line-height: 10px;">10</div>
+                </td>
+                <td style="padding: 0 0 8px 0;">
+                    <p style="margin: 0 0 2px 0; font-weight: 600; font-size: 11px; line-height: 1.4;">本院不负责学员及家长的任何贵重财物。</p>
+                    <p style="margin: 0; color: #4b5563; font-size: 10px; line-height: 1.4;">The Academy is not responsible for any valuables belonging to students or parents.</p>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 30px; padding: 0 8px 8px 0;">
+                    <div style="width: 24px; height: 24px; background: #1e293b; border-radius: 50%; color: white; font-weight: 700; font-size: 12px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; line-height: 10px;">11</div>
+                </td>
+                <td style="padding: 0 0 8px 0;">
+                    <p style="margin: 0 0 2px 0; font-weight: 600; font-size: 11px; line-height: 1.4;">不允许打架、吵架、态度恶劣或不配合训练，否则将被取消州队及学员资格。</p>
+                    <p style="margin: 0; color: #4b5563; font-size: 10px; line-height: 1.4;">Fighting, quarrelling, poor attitude, or refusing to cooperate with training may result in removal from the state team and the Academy.</p>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 30px; padding: 0 8px 8px 0;">
+                    <div style="width: 24px; height: 24px; background: #1e293b; border-radius: 50%; color: white; font-weight: 700; font-size: 12px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; line-height: 10px;">12</div>
+                </td>
+                <td style="padding: 0 0 8px 0;">
+                    <p style="margin: 0 0 2px 0; font-weight: 600; font-size: 11px; line-height: 1.4;">训练期间不允许吃食物，只能在休息时间喝水。</p>
+                    <p style="margin: 0; color: #4b5563; font-size: 10px; line-height: 1.4;">Eating is not allowed during training; only drinking water during breaks is permitted.</p>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 30px; padding: 0 8px 8px 0;">
+                    <div style="width: 24px; height: 24px; background: #1e293b; border-radius: 50%; color: white; font-weight: 700; font-size: 12px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; line-height: 10px;">13</div>
+                </td>
+                <td style="padding: 0 0 8px 0;">
+                    <p style="margin: 0 0 2px 0; font-weight: 600; font-size: 11px; line-height: 1.4;">家长不允许干涉教练所安排的专业训练计划及纪律管理。</p>
+                    <p style="margin: 0; color: #4b5563; font-size: 10px; line-height: 1.4;">Parents are not allowed to interfere with professional training plans or discipline set by the coaches.</p>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 30px; padding: 0 8px 8px 0;">
+                    <div style="width: 24px; height: 24px; background: #1e293b; border-radius: 50%; color: white; font-weight: 700; font-size: 12px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; line-height: 10px;">14</div>
+                </td>
+                <td style="padding: 0 0 8px 0;">
+                    <p style="margin: 0 0 2px 0; font-weight: 600; font-size: 11px; line-height: 1.4;">家长必须准时载送孩子往返训练地点，并自行负责交通安全。</p>
+                    <p style="margin: 0; color: #4b5563; font-size: 10px; line-height: 1.4;">Parents must send and pick up their children on time and are fully responsible for transport safety.</p>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 30px; padding: 0 8px 8px 0;">
+                    <div style="width: 24px; height: 24px; background: #1e293b; border-radius: 50%; color: white; font-weight: 700; font-size: 12px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; line-height: 10px;">15</div>
+                </td>
+                <td style="padding: 0 0 8px 0;">
+                    <p style="margin: 0 0 2px 0; font-weight: 600; font-size: 11px; line-height: 1.4;">训练过程中，学员可能被录影或拍照作为宣传用途，如家长不允许，须以书面通知本院。</p>
+                    <p style="margin: 0; color: #4b5563; font-size: 10px; line-height: 1.4;">Training sessions may be recorded or photographed for publicity; parents who do not consent must inform the Academy in writing.</p>
+                </td>
+            </tr>
+        </table>
+
+        <div style="margin-top: 18px; padding: 14px 16px; background: #f8fafc; border: 2px solid #1e293b; border-radius: 6px;">
+            <p style="font-weight: 700; margin: 0 0 8px 0; color: #1e293b; font-size: 12px;">LEGAL ACKNOWLEDGEMENT / 法律声明</p>
+            <p style="margin: 0 0 6px 0; font-size: 10.5px; line-height: 1.5;">
+                By signing this document, the parent/guardian acknowledges that they have read, understood, and agreed to all 15 terms and conditions listed above.
+            </p>
+            <p style="color: #4b5563; font-size: 10px; margin: 0 0 10px 0; line-height: 1.5;">
+                家长/监护人签署此文件，即表示已阅读、理解并同意上述所有15项条款与条件。
+            </p>
+            <p style="margin: 0; font-weight: 600; font-size: 11px; line-height: 1.6;">
+                Signed by: <span id="pdf-parent-name-2" style="font-weight: 500;"></span> (<span id="pdf-parent-ic-2" style="font-weight: 500;"></span>)<br>
+                Date: <span id="pdf-date-2" style="font-weight: 500;"></span>
+            </p>
         </div>
-    </div>
-
-    <!-- NOTES SECTION BELOW SIGNATURE AND DECLARATION -->
-    <div style="margin-top: 18px; padding: 12px; border: 1px solid #d1d5db; border-radius: 4px; background: #f9fafb;">
-        <h4 style="margin: 0 0 8px 0; font-size: 11px; font-weight: 700; color: #111827; text-transform: uppercase;">NOTES / 备注</h4>
-        <p style="font-size: 10.5px; line-height: 1.5; margin: 0; color: #374151;">
-            <strong>Fees are non-refundable</strong> and must be paid by the 10th of every month. Strict discipline and punctuality are required at all times. The Academy reserves the right to adjust training schedules and venues when necessary. 学费概不退款，必须在每月10号前缴清。学员概不退课，并在每月10号前缴清。学院保留在有需要时调整训练时间及地点的权利。
-        </p>
     </div>
 </div>
 
