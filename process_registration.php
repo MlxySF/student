@@ -16,6 +16,7 @@
  * UPDATED: Added admin email notification for new registrations
  * UPDATED: Added payment_date column to payments INSERT - user can specify when payment was actually made
  * FIXED: Randomize student ID to prevent duplicate entry errors when deleting mid-sequence registrations
+ * UPDATED: Added duplicate name validation - check for approved/pending registrations, allow overwrite of rejected
  */
 
 header('Content-Type: application/json');
@@ -154,6 +155,38 @@ function detectMimeTypeFromBase64(string $base64Data): string {
 function stripDataURIPrefix(string $base64Data): string {
     // Remove data:image/xxx;base64, prefix if present
     return preg_replace('/^data:image\/\w+;base64,/', '', $base64Data);
+}
+
+// ==========================================
+// NEW: Check for duplicate English name
+// Returns array with status info if duplicate found
+// ==========================================
+function checkDuplicateEnglishName(PDO $conn, string $nameEn, string $currentIC): ?array {
+    // Check if name already exists with approved or pending status
+    $stmt = $conn->prepare("
+        SELECT id, registration_number, name_en, ic, payment_status, email, created_at 
+        FROM registrations 
+        WHERE LOWER(TRIM(name_en)) = LOWER(TRIM(?)) 
+        AND ic != ?
+        ORDER BY 
+            CASE payment_status 
+                WHEN 'approved' THEN 1 
+                WHEN 'pending' THEN 2 
+                WHEN 'rejected' THEN 3 
+                ELSE 4 
+            END,
+            created_at DESC
+        LIMIT 1
+    ");
+    $stmt->execute([trim($nameEn), $currentIC]);
+    $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($existing) {
+        error_log("[Duplicate Check] Found existing registration: Name={$nameEn}, Status={$existing['payment_status']}, RegNum={$existing['registration_number']}");
+        return $existing;
+    }
+    
+    return null;
 }
 
 // ==========================================
@@ -872,16 +905,53 @@ try {
 
     $parentEmail = trim($data['email']); // This is the PARENT email from the form
     $childIC = trim($data['ic']);
+    $childNameEn = trim($data['name_en']);
     
-    error_log("[Registration] Starting registration for parent email: {$parentEmail}, child IC: {$childIC}");
+    error_log("[Registration] Starting registration for parent email: {$parentEmail}, child IC: {$childIC}, name: {$childNameEn}");
 
-    // Check for duplicate CHILD (by IC), not by email
-    $stmt = $conn->prepare("SELECT id, registration_number FROM registrations WHERE ic = ? AND payment_status != 'rejected' ORDER BY id DESC LIMIT 1");
+    // ==========================================
+    // NEW: Check for duplicate English name
+    // ==========================================
+    $duplicateCheck = checkDuplicateEnglishName($conn, $childNameEn, $childIC);
+    
+    if ($duplicateCheck) {
+        $status = $duplicateCheck['payment_status'];
+        
+        if ($status === 'approved') {
+            // Don't allow registration - approved account exists
+            throw new Exception(
+                "A student with the name '{$childNameEn}' is already registered and APPROVED (Registration #: {$duplicateCheck['registration_number']}). ".                "If this is a different student, please use a slightly different English name (e.g., add middle name or initial). ".                "Contact admin at {$duplicateCheck['email']} if you need assistance."
+            );
+        } elseif ($status === 'pending') {
+            // Don't allow registration - pending account exists
+            throw new Exception(
+                "A student with the name '{$childNameEn}' already has a PENDING registration (Registration #: {$duplicateCheck['registration_number']}). ".                "Please wait for admin approval or contact the academy for assistance. Registration date: " . date('M j, Y', strtotime($duplicateCheck['created_at']))
+            );
+        } elseif ($status === 'rejected') {
+            // Allow registration - will overwrite rejected account
+            error_log("[Duplicate Override] Found rejected registration for '{$childNameEn}' (Reg#: {$duplicateCheck['registration_number']}). Allowing new registration to overwrite.");
+            
+            // Delete the rejected registration to allow fresh registration
+            $stmt = $conn->prepare("DELETE FROM registrations WHERE id = ?");
+            $stmt->execute([$duplicateCheck['id']]);
+            error_log("[Duplicate Override] Deleted rejected registration ID={$duplicateCheck['id']}");
+        }
+    }
+
+    // Check for duplicate CHILD (by IC)
+    $stmt = $conn->prepare("SELECT id, registration_number, payment_status FROM registrations WHERE ic = ? ORDER BY id DESC LIMIT 1");
     $stmt->execute([$childIC]);
     $existingChild = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($existingChild) {
-        throw new Exception('A child with this IC number (' . $childIC . ') is already registered (Reg#: ' . $existingChild['registration_number'] . '). Please check the IC number.');
+        // Allow if previous registration was rejected, otherwise block
+        if ($existingChild['payment_status'] === 'rejected') {
+            error_log("[IC Override] Found rejected registration with IC: {$childIC}. Allowing re-registration.");
+            $stmt = $conn->prepare("DELETE FROM registrations WHERE id = ?");
+            $stmt->execute([$existingChild['id']]);
+        } else {
+            throw new Exception('A child with this IC number (' . $childIC . ') is already registered (Reg#: ' . $existingChild['registration_number'] . ', Status: ' . $existingChild['payment_status'] . '). Please check the IC number.');
+        }
     }
 
     // UPDATED: Generate unique randomized registration number
@@ -892,7 +962,7 @@ try {
     $hashedPassword    = password_hash($generatedPassword, PASSWORD_DEFAULT);
 
     $studentId    = $regNumber;
-    $fullName     = trim($data['name_en']);
+    $fullName     = $childNameEn;
     $phone        = trim($data['phone']);
     $studentStatus = trim($data['status']);
     $paymentAmount = (float)$data['payment_amount'];
