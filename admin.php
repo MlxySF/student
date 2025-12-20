@@ -595,6 +595,54 @@ $page = $_GET['page'] ?? 'login';
             }
         }
 
+        /* ✨ NEW: Enhanced DataTables Pagination Styles */
+        .dataTables_wrapper .dataTables_length {
+            margin-bottom: 1rem;
+        }
+
+        .dataTables_wrapper .dataTables_length select {
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            min-width: 70px;
+            margin: 0 5px;
+        }
+
+        .dataTables_wrapper .dataTables_info {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .dataTables_wrapper .dataTables_paginate {
+            margin-top: 1rem;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            padding: 6px 12px;
+            margin: 0 2px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            color: #475569;
+            transition: all 0.2s;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         @media (min-width: 769px) {
             .header-menu-btn {
                 display: none;
@@ -1013,10 +1061,30 @@ $page = $_GET['page'] ?? 'login';
         });
     });
 
+    // ✨ ENHANCED: DataTables with customizable page length selector
     $(document).ready(function() {
         $('.data-table').DataTable({
             pageLength: 25,
-            order: [[0, 'desc']]
+            lengthMenu: [
+                [10, 25, 50, 100, -1],
+                ['10 rows', '25 rows', '50 rows', '100 rows', 'Show all']
+            ],
+            order: [[0, 'desc']],
+            language: {
+                lengthMenu: '<i class="fas fa-list"></i> Display _MENU_ per page',
+                info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+                infoEmpty: 'No entries available',
+                infoFiltered: '(filtered from _MAX_ total entries)',
+                search: '<i class="fas fa-search"></i>',
+                searchPlaceholder: 'Search...',
+                paginate: {
+                    first: '<i class="fas fa-angle-double-left"></i>',
+                    last: '<i class="fas fa-angle-double-right"></i>',
+                    next: '<i class="fas fa-angle-right"></i>',
+                    previous: '<i class="fas fa-angle-left"></i>'
+                }
+            },
+            responsive: true
         });
     });
 </script>
