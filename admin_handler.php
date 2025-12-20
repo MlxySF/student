@@ -740,10 +740,14 @@ if ($action === 'verify_payment') {
     try {
         $pdo->beginTransaction();
         
-        $stmt = $pdo->prepare("UPDATE payments SET verification_status = ?, admin_notes = ?, verified_date = NOW() WHERE id = ?");
-        $stmt->execute([$verification_status, $admin_notes, $payment_id]);
+        // Update payment status with admin info
+        $stmt = $pdo->prepare("UPDATE payments SET verification_status = ?, admin_notes = ?, verified_date = NOW(), verified_by = ? WHERE id = ?");
+        $stmt->execute([$verification_status, $admin_notes, $_SESSION['admin_id'] ?? null, $payment_id]);
+        
+        $emailSent = false;
         
         if ($verification_status === 'verified' && $invoice_id) {
+            // Mark invoice as paid
             $stmt = $pdo->prepare("UPDATE invoices SET status = 'paid', paid_date = NOW() WHERE id = ?");
             $stmt->execute([$invoice_id]);
             
@@ -752,7 +756,42 @@ if ($action === 'verify_payment') {
             $invoice = $stmt->fetch();
             
             $pdo->commit();
-            $_SESSION['success'] = "Payment verified! Invoice {$invoice['invoice_number']} marked as PAID.";
+            
+            // ✨ NEW: Send approval email with PDF receipt
+            require_once 'send_payment_approval_email.php';
+            try {
+                $emailSent = sendPaymentApprovalEmail($payment_id, 'verified', $admin_notes);
+            } catch (Exception $e) {
+                error_log("[verify_payment] Email sending failed: " . $e->getMessage());
+            }
+            
+            $message = "Payment verified! Invoice {$invoice['invoice_number']} marked as PAID.";
+            if ($emailSent) {
+                $message .= " Approval email with PDF receipt sent to parent.";
+            } else {
+                $message .= " (Email notification failed - please contact parent manually)";
+            }
+            $_SESSION['success'] = $message;
+            
+        } else if ($verification_status === 'rejected') {
+            $pdo->commit();
+            
+            // ✨ NEW: Send rejection email
+            require_once 'send_payment_approval_email.php';
+            try {
+                $emailSent = sendPaymentApprovalEmail($payment_id, 'rejected', $admin_notes);
+            } catch (Exception $e) {
+                error_log("[verify_payment] Email sending failed: " . $e->getMessage());
+            }
+            
+            $message = "Payment status updated to: Rejected";
+            if ($emailSent) {
+                $message .= " Rejection notification sent to parent.";
+            } else {
+                $message .= " (Email notification failed - please contact parent manually)";
+            }
+            $_SESSION['success'] = $message;
+            
         } else {
             $pdo->commit();
             $_SESSION['success'] = "Payment status updated to: " . ucfirst($verification_status);
