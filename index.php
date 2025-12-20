@@ -617,7 +617,12 @@ $page = $_GET['page'] ?? 'login';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo SITE_NAME; ?> - Parent Portal</title>
+    <title><?php echo SITE_NAME; ?> - Student Portal</title>
+
+    <!-- Google Fonts: Inter (English) + Noto Sans SC (Chinese) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
 
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -635,11 +640,17 @@ $page = $_GET['page'] ?? 'login';
             --warning-color: #f59e0b;
         }
 
+        * {
+            font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding-top: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         /* ============================================
@@ -726,6 +737,7 @@ $page = $_GET['page'] ?? 'login';
         .school-logo .logo-subtitle {
             font-size: 12px;
             opacity: 0.9;
+            font-weight: 500;
         }
 
         .header-right {
@@ -799,6 +811,7 @@ $page = $_GET['page'] ?? 'login';
         .header-user-role {
             font-size: 11px;
             opacity: 0.9;
+            font-weight: 500;
         }
 
         .sidebar-overlay {
@@ -839,6 +852,7 @@ $page = $_GET['page'] ?? 'login';
             display: flex;
             align-items: center;
             gap: 12px;
+            font-weight: 500;
         }
 
         .sidebar .nav-link:hover,
@@ -922,7 +936,7 @@ $page = $_GET['page'] ?? 'login';
         .stat-content h3 {
             margin: 0;
             font-size: 32px;
-            font-weight: bold;
+            font-weight: 700;
             color: #1e293b;
         }
 
@@ -930,6 +944,7 @@ $page = $_GET['page'] ?? 'login';
             margin: 0;
             color: #64748b;
             font-size: 14px;
+            font-weight: 500;
         }
 
         .badge-status {
@@ -943,6 +958,7 @@ $page = $_GET['page'] ?? 'login';
             border: none;
             padding: 10px 25px;
             border-radius: 10px;
+            font-weight: 600;
         }
 
         .btn-primary:hover {
@@ -960,6 +976,10 @@ $page = $_GET['page'] ?? 'login';
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             padding: 40px;
+        }
+
+        .login-card h2 {
+            font-weight: 700;
         }
 
         /* NEW: Logo styling for login page */
@@ -1246,7 +1266,7 @@ $page = $_GET['page'] ?? 'login';
                 <img src="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png" 
                      alt="Wushu Sport Academy Logo" 
                      class="login-logo">
-                <h2>Parent Portal</h2>
+                <h2>Student Portal</h2>
                 <p class="text-muted">Sign in to your account</p>
             </div>
 
