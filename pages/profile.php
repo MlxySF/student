@@ -48,16 +48,31 @@ if (isParent()) {
         $student['ic_number'] = $student['ic'] ?? '';
     }
     $studentAccountId = $student['student_account_id'] ?? null;
+    $registration_id = getActiveStudentId();
 } else {
     $stmt = $pdo->prepare("SELECT * FROM students WHERE id = ?");
     $stmt->execute([getActiveStudentId()]);
     $student = $stmt->fetch();
     $studentAccountId = getActiveStudentId();
+    // For direct student login, get registration record
+    $reg_stmt = $pdo->prepare("SELECT id FROM registrations WHERE student_account_id = ? LIMIT 1");
+    $reg_stmt->execute([$studentAccountId]);
+    $reg_record = $reg_stmt->fetch();
+    $registration_id = $reg_record['id'] ?? null;
 }
 
 if (!$student) {
     echo '<div class="alert alert-danger">Error: Student data not found.</div>';
     exit;
+}
+
+// Get PDF data from registrations table
+$pdf_data = null;
+if ($registration_id) {
+    $pdf_stmt = $pdo->prepare("SELECT pdf_base64 FROM registrations WHERE id = ?");
+    $pdf_stmt->execute([$registration_id]);
+    $pdf_record = $pdf_stmt->fetch();
+    $pdf_data = $pdf_record['pdf_base64'] ?? null;
 }
 
 // Get enrolled classes count
@@ -270,7 +285,7 @@ $invoice_stats = $stmt->fetch();
             </div>
         </div>
 
-        <div class="card">
+        <div class="card mb-3">
             <div class="card-header">
                 <i class="fas fa-info-circle"></i> Account Info
             </div>
@@ -289,6 +304,25 @@ $invoice_stats = $stmt->fetch();
                 <?php endif; ?>
             </div>
         </div>
+
+        <!-- Signed Agreement Card -->
+        <?php if (!empty($pdf_data)): ?>
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-file-contract"></i> Registration Agreement
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
+                    <p class="mb-3"><strong>Signed Agreement Available</strong></p>
+                    <p class="text-muted small mb-3">Download your signed registration agreement PDF</p>
+                    <button onclick="downloadSignedAgreement()" class="btn btn-success w-100">
+                        <i class="fas fa-download"></i> Download Agreement PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -520,6 +554,32 @@ document.getElementById('school-edit').addEventListener('change', function() {
         </div>
     </div>
 </div>
+<?php endif; ?>
+
+<?php if (!empty($pdf_data)): ?>
+<script>
+function downloadSignedAgreement() {
+    // Convert base64 to blob
+    const base64Data = <?php echo json_encode($pdf_data); ?>;
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/pdf' });
+    
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'Registration_Agreement_<?php echo $student['student_id']; ?>.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+}
+</script>
 <?php endif; ?>
 
 <style>
