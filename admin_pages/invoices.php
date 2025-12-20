@@ -614,8 +614,8 @@ function loadReceipt(invoiceId) {
         return;
     }
     
-    // Build correct URL path
-    const apiUrl = 'admin_pages/api/get_receipt.php?invoice_id=' + invoiceId;
+    // Build API URL - relative to the root where admin.php is located
+    const apiUrl = 'api/get_receipt.php?invoice_id=' + invoiceId;
     console.log('Fetching from URL:', apiUrl);
     
     // Fetch receipt data via AJAX
