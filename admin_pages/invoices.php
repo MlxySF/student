@@ -2,6 +2,7 @@
 // Filters - trim to handle any whitespace issues
 $filter_month = isset($_GET['filter_month']) ? trim($_GET['filter_month']) : '';
 $filter_type = isset($_GET['filter_type']) ? trim($_GET['filter_type']) : '';
+$filter_status = isset($_GET['filter_status']) ? trim($_GET['filter_status']) : '';
 
 // Parse the filter_month to handle year-only or year-month format
 $filter_year = '';
@@ -39,6 +40,11 @@ if ($filter_type) {
     $params[] = $filter_type;
 }
 
+if ($filter_status) {
+    $where_conditions[] = "status = ?";
+    $params[] = $filter_status;
+}
+
 $where_clause = count($where_conditions) > 0 ? " AND " . implode(" AND ", $where_conditions) : "";
 
 // Build WHERE clauses for JOIN queries (with table alias)
@@ -58,6 +64,11 @@ if ($is_year_only) {
 if ($filter_type) {
     $where_conditions_join[] = "i.invoice_type = ?";
     $params_join[] = $filter_type;
+}
+
+if ($filter_status) {
+    $where_conditions_join[] = "i.status = ?";
+    $params_join[] = $filter_status;
 }
 
 // Get invoice statistics
@@ -183,30 +194,45 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                 </select>
             </div>
             
+            <div class="col-md-2">
+                <label class="form-label"><i class="fas fa-info-circle"></i> Status</label>
+                <select name="filter_status" class="form-select">
+                    <option value="">All Status</option>
+                    <option value="unpaid" <?php echo $filter_status === 'unpaid' ? 'selected' : ''; ?>>Unpaid</option>
+                    <option value="pending" <?php echo $filter_status === 'pending' ? 'selected' : ''; ?>>Pending</option>
+                    <option value="paid" <?php echo $filter_status === 'paid' ? 'selected' : ''; ?>>Paid</option>
+                    <option value="overdue" <?php echo $filter_status === 'overdue' ? 'selected' : ''; ?>>Overdue</option>
+                    <option value="cancelled" <?php echo $filter_status === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                </select>
+            </div>
+            
             <div class="col-md-3">
                 <label class="form-label"><i class="fas fa-calendar"></i> Year or Month</label>
                 <input type="text" name="filter_month" class="form-control" value="<?php echo htmlspecialchars($filter_month); ?>" placeholder="2025 or 2025-12">
                 <small class="text-muted">Enter year (e.g., 2025) or year-month (e.g., 2025-12)</small>
             </div>
             
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <button type="submit" class="btn btn-primary w-100">
-                    <i class="fas fa-search"></i> Search Invoices
+                    <i class="fas fa-search"></i> Search
                 </button>
             </div>
             
-            <?php if ($filter_month || $filter_type): ?>
-            <div class="col-md-3">
-                <a href="?page=invoices" class="btn btn-secondary w-100"><i class="fas fa-times"></i> Clear Filters</a>
+            <?php if ($filter_month || $filter_type || $filter_status): ?>
+            <div class="col-md-2">
+                <a href="?page=invoices" class="btn btn-secondary w-100"><i class="fas fa-times"></i> Clear</a>
             </div>
             <?php endif; ?>
         </form>
         
-        <?php if ($filter_month || $filter_type): ?>
+        <?php if ($filter_month || $filter_type || $filter_status): ?>
             <div class="alert alert-info mt-3 mb-0">
                 <i class="fas fa-info-circle"></i> <strong>Active Filters:</strong>
                 <?php if ($filter_type): ?>
                     <span class="badge bg-primary ms-2"><?php echo ucfirst(str_replace('_', ' ', $filter_type)); ?></span>
+                <?php endif; ?>
+                <?php if ($filter_status): ?>
+                    <span class="badge bg-secondary ms-2">Status: <?php echo ucfirst($filter_status); ?></span>
                 <?php endif; ?>
                 <?php if ($is_year_only): ?>
                     <span class="badge bg-primary ms-2">Year: <?php echo htmlspecialchars($filter_year); ?> (All Months)</span>
@@ -258,6 +284,9 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
     $export_url = 'export_invoices_excel.php?';
     if ($filter_type) {
         $export_url .= 'filter_type=' . urlencode($filter_type) . '&';
+    }
+    if ($filter_status) {
+        $export_url .= 'filter_status=' . urlencode($filter_status) . '&';
     }
     if ($filter_month) {
         $export_url .= 'filter_month=' . urlencode($filter_month);
@@ -344,7 +373,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
             </div>
         <?php else: ?>
             <div class="alert alert-info"><i class="fas fa-info-circle"></i> 
-                <?php if ($filter_month || $filter_type): ?>
+                <?php if ($filter_month || $filter_type || $filter_status): ?>
                     No invoices match your selected filters. Try adjusting your search criteria.
                 <?php else: ?>
                     No invoices found. Use the filter above to search for invoices.
