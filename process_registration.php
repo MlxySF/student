@@ -11,6 +11,7 @@
  * FIXED: Strip data URI prefix, save only pure base64 to database
  * UPDATED: Split invoices by class - one invoice per registered class with class code
  * FIXED: Use student_status column name in registrations INSERT statement
+ * FIXED: Validate form_date to prevent invalid dates like "-0001"
  */
 
 header('Content-Type: application/json');
@@ -34,6 +35,39 @@ function generatePasswordFromIC(string $ic): string {
     $icClean = str_replace('-', '', $ic);
     $last4 = substr($icClean, -4);
     return $last4;
+}
+
+// =========================
+// Helper: Validate and fix form date
+// =========================
+function validateFormDate($dateString): string {
+    // If empty or invalid, use current date
+    if (empty($dateString) || trim($dateString) === '') {
+        error_log("[Date Validation] Empty form_date received, using current date");
+        return date('Y-m-d');
+    }
+    
+    // Try to parse the date
+    $timestamp = strtotime($dateString);
+    
+    // Check if date is valid and reasonable (not year -0001, not future)
+    if ($timestamp === false || $timestamp < 0 || $timestamp > time()) {
+        error_log("[Date Validation] Invalid form_date '{$dateString}', using current date");
+        return date('Y-m-d');
+    }
+    
+    // Check if year is reasonable (between 2000 and current year + 1)
+    $year = (int)date('Y', $timestamp);
+    $currentYear = (int)date('Y');
+    
+    if ($year < 2000 || $year > ($currentYear + 1)) {
+        error_log("[Date Validation] Unreasonable year {$year} in form_date '{$dateString}', using current date");
+        return date('Y-m-d');
+    }
+    
+    // Date is valid, return in proper format
+    error_log("[Date Validation] Valid form_date: {$dateString}");
+    return date('Y-m-d', $timestamp);
 }
 
 // =========================
@@ -686,8 +720,15 @@ try {
     linkStudentToParent($conn, $parentAccountId, $studentAccountId, 'guardian');
 
     // ==========================
+    // Validate and fix form_date
+    // ==========================
+    $validatedFormDate = validateFormDate($data['form_date']);
+    error_log("[Registration] Original form_date: {$data['form_date']}, Validated: {$validatedFormDate}");
+
+    // ==========================
     // Insert Registration Record
     // FIXED: Use student_status column name
+    // FIXED: Validate form_date
     // ==========================
 
     $sql = "INSERT INTO registrations (
@@ -722,7 +763,7 @@ try {
         trim($data['schedule']),
         trim($data['parent_name']),
         trim($data['parent_ic']),
-        $data['form_date'],
+        $validatedFormDate,  // Use validated form date
         $data['signature_base64'],
         $data['signed_pdf_base64'],
         $paymentAmount,
@@ -798,6 +839,7 @@ try {
         'invoice_created' => $invoiceResult['success'],
         'invoices' => $invoiceResult['invoices'] ?? [],
         'total_invoices' => $invoiceResult['total_invoices'] ?? 0,
+        'form_date_corrected' => $validatedFormDate,
         'message' => $isNewParentAccount 
             ? 'Parent account created! Child registered with ' . ($invoiceResult['total_invoices'] ?? 0) . ' invoices (one per class).' 
             : 'Child added with ' . ($invoiceResult['total_invoices'] ?? 0) . ' invoices (one per class)!',
