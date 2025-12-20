@@ -106,10 +106,6 @@ function getAdminPaymentEmailHTML($data) {
     
     $html .= "
                     <tr>
-                        <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>Class:</td>
-                        <td style='padding: 8px 0; color: #1e293b;'>{$data['class_code']} - {$data['class_name']}</td>
-                    </tr>
-                    <tr>
                         <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>Payment Month:</td>
                         <td style='padding: 8px 0; color: #1e293b;'>{$data['payment_month']}</td>
                     </tr>
@@ -393,30 +389,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $invoice_id = !empty($_POST['invoice_id']) ? $_POST['invoice_id'] : null;
     $is_invoice_payment = !empty($invoice_id);
 
-    if ($invoice_id) {
-        $class_id = !empty($_POST['invoice_class_id']) ? $_POST['invoice_class_id'] : null;
-        $amount = $_POST['invoice_amount'];
-        $payment_month = !empty($_POST['invoice_payment_month']) ? $_POST['invoice_payment_month'] : date('M Y');
-        $notes = '';
-
-        if (!$class_id) {
-            $stmt = $pdo->prepare("SELECT class_id FROM enrollments WHERE student_id = ? AND status = 'active' LIMIT 1");
-            $stmt->execute([getActiveStudentId()]);
-            $enrollment = $stmt->fetch();
-            $class_id = $enrollment ? $enrollment['class_id'] : null;
-        }
-
-        if (!$class_id) {
-            $_SESSION['error'] = "Unable to process invoice payment. Please ensure you're enrolled in at least one class.";
-            header('Location: index.php?page=invoices');
-            exit;
-        }
-    } else {
-        $class_id = $_POST['class_id'];
-        $amount = $_POST['amount'];
-        $payment_month = $_POST['payment_month'];
-        $notes = $_POST['notes'] ?? '';
-    }
+    $amount = $_POST['invoice_amount'] ?? $_POST['amount'];
+    $payment_month = !empty($_POST['invoice_payment_month']) ? $_POST['invoice_payment_month'] : ($_POST['payment_month'] ?? date('M Y'));
+    $notes = $_POST['notes'] ?? '';
 
     if (isset($_FILES['receipt']) && $_FILES['receipt']['error'] === 0) {
         $validation = validateReceiptFile($_FILES['receipt']);
@@ -438,47 +413,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         }
 
         $ext = pathinfo($_FILES['receipt']['name'], PATHINFO_EXTENSION);
-        // FIX: Use getActiveStudentId() consistently instead of getStudentId()
         $filename = 'receipt_' . getActiveStudentId() . '_' . time() . '.' . $ext;
 
-        // Get parent_account_id if this is a child account
-        $parent_account_id = null;
-        if (isStudent()) {
-            $studentData = getActiveStudentData($pdo);
-            $parent_account_id = $studentData['parent_account_id'];
-        } else if (isParent()) {
-            $parent_account_id = getUserId();
-        }
+        // Get parent_account_id
+        $parent_account_id = getUserId();
         
-        // Verify student_id exists before inserting
-        $activeStudentId = getActiveStudentId();
-        if (!$activeStudentId) {
-            $_SESSION['error'] = "Unable to identify student account. Please log out and log in again.";
+        // Get registration_id (active student)
+        $registration_id = getActiveStudentId();
+        
+        if (!$registration_id) {
+            $_SESSION['error'] = "Unable to identify student. Please log out and log in again.";
             $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
             header('Location: index.php?page=' . $redirect_page);
             exit;
         }
 
         try {
+            // NEW: Save to registration_payments table instead of payments table
             $stmt = $pdo->prepare("
-                INSERT INTO payments (
-                    student_id, 
-                    class_id, 
+                INSERT INTO registration_payments (
+                    registration_id,
+                    parent_account_id,
                     amount, 
                     payment_month, 
                     receipt_filename,
                     receipt_data,
                     receipt_mime_type,
                     receipt_size,
-                    admin_notes,
+                    notes,
                     invoice_id,
-                    parent_account_id
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    status,
+                    created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
             ");
 
             $success = $stmt->execute([
-                $activeStudentId, 
-                $class_id, 
+                $registration_id,
+                $parent_account_id,
                 $amount, 
                 $payment_month, 
                 $filename,
@@ -486,8 +457,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $receiptData['mime'],
                 $receiptData['size'],
                 $notes,
-                $invoice_id,
-                $parent_account_id
+                $invoice_id
             ]);
 
             if ($success) {
@@ -499,18 +469,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 
                 // ==========================
                 // Send admin notification email
-                // NEW: Notify admin about payment upload
                 // ==========================
                 
-                // Get student info
-                $stmt = $pdo->prepare("SELECT full_name, student_id FROM students WHERE id = ?");
-                $stmt->execute([$activeStudentId]);
+                // Get student info from registrations
+                $stmt = $pdo->prepare("SELECT registration_number, name_en FROM registrations WHERE id = ?");
+                $stmt->execute([$registration_id]);
                 $student = $stmt->fetch();
-                
-                // Get class info
-                $stmt = $pdo->prepare("SELECT class_code, class_name FROM classes WHERE id = ?");
-                $stmt->execute([$class_id]);
-                $class = $stmt->fetch();
                 
                 // Get invoice info if applicable
                 $invoice_number = '';
@@ -523,16 +487,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $invoice_description = $invoice['description'] ?? '';
                 }
                 
-                // Get parent info if applicable
-                $parent_name = '';
-                $parent_email = '';
-                if ($parent_account_id) {
-                    $stmt = $pdo->prepare("SELECT full_name, email FROM parent_accounts WHERE id = ?");
-                    $stmt->execute([$parent_account_id]);
-                    $parent = $stmt->fetch();
-                    $parent_name = $parent['full_name'] ?? '';
-                    $parent_email = $parent['email'] ?? '';
-                }
+                // Get parent info
+                $stmt = $pdo->prepare("SELECT full_name, email FROM parent_accounts WHERE id = ?");
+                $stmt->execute([$parent_account_id]);
+                $parent = $stmt->fetch();
+                $parent_name = $parent['full_name'] ?? '';
+                $parent_email = $parent['email'] ?? '';
                 
                 // Format file size
                 $file_size = $receiptData['size'];
@@ -545,10 +505,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 }
                 
                 $adminNotificationData = [
-                    'student_name' => $student['full_name'],
-                    'student_id' => $student['student_id'],
-                    'class_code' => $class['class_code'],
-                    'class_name' => $class['class_name'],
+                    'student_name' => $student['name_en'],
+                    'student_id' => $student['registration_number'],
                     'payment_month' => $payment_month,
                     'amount' => number_format($amount, 2),
                     'receipt_filename' => $filename,
@@ -569,7 +527,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     exit;
                 } else {
                     $_SESSION['success'] = "Payment uploaded successfully! Waiting for admin verification. Admin has been notified.";
-                    header('Location: index.php?page=payments');
+                    header('Location: index.php?page=invoices');
                     exit;
                 }
             } else {
@@ -577,7 +535,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             }
         } catch (PDOException $e) {
             error_log("[Payment Upload Error] " . $e->getMessage());
-            $_SESSION['error'] = "Database error: Unable to save payment. Please contact support if this persists.";
+            $_SESSION['error'] = "Database error: Unable to save payment. Error: " . $e->getMessage();
         }
     } else {
         $_SESSION['error'] = "Please select a receipt file.";
