@@ -1,8 +1,11 @@
 <?php
 // admin_pages/registrations.php - View registrations with proper status colors
 
-// Get all registrations with explicit column selection
-$stmt = $pdo->query("
+// Get filter parameter from URL, default to 'all'
+$statusFilter = isset($_GET['status']) ? $_GET['status'] : 'all';
+
+// Build SQL query based on filter
+$sql = "
     SELECT 
         id,
         registration_number,
@@ -34,10 +37,40 @@ $stmt = $pdo->query("
         registration_type,
         is_additional_child,
         created_at
-    FROM registrations 
-    ORDER BY created_at DESC
-");
+    FROM registrations
+";
+
+// Add WHERE clause if filter is not 'all'
+if ($statusFilter !== 'all') {
+    $sql .= " WHERE payment_status = :status";
+}
+
+$sql .= " ORDER BY created_at DESC";
+
+if ($statusFilter !== 'all') {
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute(['status' => $statusFilter]);
+} else {
+    $stmt = $pdo->query($sql);
+}
+
 $registrations = $stmt->fetchAll();
+
+// Count by status for badge display
+$countStmt = $pdo->query("
+    SELECT 
+        payment_status,
+        COUNT(*) as count
+    FROM registrations
+    GROUP BY payment_status
+");
+$statusCounts = [];
+while ($row = $countStmt->fetch()) {
+    $statusCounts[$row['payment_status']] = $row['count'];
+}
+
+// Calculate total
+$totalCount = array_sum($statusCounts);
 ?>
 
 <div class="card">
@@ -45,6 +78,41 @@ $registrations = $stmt->fetchAll();
         <i class="fas fa-user-plus"></i> Student Registrations
     </div>
     <div class="card-body">
+        <!-- Filter Buttons -->
+        <div class="mb-4">
+            <div class="btn-group" role="group" aria-label="Registration status filter">
+                <a href="?page=registrations&status=all" 
+                   class="btn <?php echo $statusFilter === 'all' ? 'btn-dark' : 'btn-outline-dark'; ?>">
+                    <i class="fas fa-list"></i> All
+                    <span class="badge bg-light text-dark ms-1"><?php echo $totalCount; ?></span>
+                </a>
+                <a href="?page=registrations&status=pending" 
+                   class="btn <?php echo $statusFilter === 'pending' ? 'btn-warning' : 'btn-outline-warning'; ?>">
+                    <i class="fas fa-clock"></i> Pending
+                    <span class="badge bg-light text-dark ms-1"><?php echo $statusCounts['pending'] ?? 0; ?></span>
+                </a>
+                <a href="?page=registrations&status=approved" 
+                   class="btn <?php echo $statusFilter === 'approved' ? 'btn-success' : 'btn-outline-success'; ?>">
+                    <i class="fas fa-check-circle"></i> Approved
+                    <span class="badge bg-light text-dark ms-1"><?php echo $statusCounts['approved'] ?? 0; ?></span>
+                </a>
+                <a href="?page=registrations&status=rejected" 
+                   class="btn <?php echo $statusFilter === 'rejected' ? 'btn-danger' : 'btn-outline-danger'; ?>">
+                    <i class="fas fa-times-circle"></i> Rejected
+                    <span class="badge bg-light text-dark ms-1"><?php echo $statusCounts['rejected'] ?? 0; ?></span>
+                </a>
+            </div>
+        </div>
+
+        <?php if (empty($registrations)): ?>
+        <div class="alert alert-info" role="alert">
+            <i class="fas fa-info-circle"></i> 
+            No registrations found
+            <?php if ($statusFilter !== 'all'): ?>
+                with status: <strong><?php echo ucfirst($statusFilter); ?></strong>
+            <?php endif; ?>
+        </div>
+        <?php else: ?>
         <div class="table-responsive">
             <table class="table table-striped data-table">
                 <thead>
@@ -124,6 +192,7 @@ $registrations = $stmt->fetchAll();
                 </tbody>
             </table>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 
