@@ -12,6 +12,7 @@
  * UPDATED: Split invoices by class - one invoice per registered class with class code
  * FIXED: Use student_status column name in registrations INSERT statement
  * FIXED: Validate form_date to prevent invalid dates like "-0001"
+ * UPDATED: Changed form_date to record both date and time (DATETIME format)
  */
 
 header('Content-Type: application/json');
@@ -38,22 +39,23 @@ function generatePasswordFromIC(string $ic): string {
 }
 
 // =========================
-// Helper: Validate and fix form date
+// Helper: Validate and fix form date with time
+// UPDATED: Now returns DATETIME format instead of just DATE
 // =========================
-function validateFormDate($dateString): string {
-    // If empty or invalid, use current date
+function validateFormDateTime($dateString): string {
+    // If empty or invalid, use current datetime
     if (empty($dateString) || trim($dateString) === '') {
-        error_log("[Date Validation] Empty form_date received, using current date");
-        return date('Y-m-d');
+        error_log("[DateTime Validation] Empty form_date received, using current datetime");
+        return date('Y-m-d H:i:s');
     }
     
-    // Try to parse the date
+    // Try to parse the date/datetime
     $timestamp = strtotime($dateString);
     
     // Check if date is valid and reasonable (not year -0001, not future)
     if ($timestamp === false || $timestamp < 0 || $timestamp > time()) {
-        error_log("[Date Validation] Invalid form_date '{$dateString}', using current date");
-        return date('Y-m-d');
+        error_log("[DateTime Validation] Invalid form_date '{$dateString}', using current datetime");
+        return date('Y-m-d H:i:s');
     }
     
     // Check if year is reasonable (between 2000 and current year + 1)
@@ -61,13 +63,13 @@ function validateFormDate($dateString): string {
     $currentYear = (int)date('Y');
     
     if ($year < 2000 || $year > ($currentYear + 1)) {
-        error_log("[Date Validation] Unreasonable year {$year} in form_date '{$dateString}', using current date");
-        return date('Y-m-d');
+        error_log("[DateTime Validation] Unreasonable year {$year} in form_date '{$dateString}', using current datetime");
+        return date('Y-m-d H:i:s');
     }
     
-    // Date is valid, return in proper format
-    error_log("[Date Validation] Valid form_date: {$dateString}");
-    return date('Y-m-d', $timestamp);
+    // Date is valid, return in proper datetime format
+    error_log("[DateTime Validation] Valid form_date: {$dateString}");
+    return date('Y-m-d H:i:s', $timestamp);
 }
 
 // =========================
@@ -720,15 +722,16 @@ try {
     linkStudentToParent($conn, $parentAccountId, $studentAccountId, 'guardian');
 
     // ==========================
-    // Validate and fix form_date
+    // Validate and fix form_date with time
+    // UPDATED: Now records DATETIME
     // ==========================
-    $validatedFormDate = validateFormDate($data['form_date']);
-    error_log("[Registration] Original form_date: {$data['form_date']}, Validated: {$validatedFormDate}");
+    $validatedFormDateTime = validateFormDateTime($data['form_date']);
+    error_log("[Registration] Original form_date: {$data['form_date']}, Validated: {$validatedFormDateTime}");
 
     // ==========================
     // Insert Registration Record
     // FIXED: Use student_status column name
-    // FIXED: Validate form_date
+    // FIXED: Validate form_date with time
     // ==========================
 
     $sql = "INSERT INTO registrations (
@@ -763,7 +766,7 @@ try {
         trim($data['schedule']),
         trim($data['parent_name']),
         trim($data['parent_ic']),
-        $validatedFormDate,  // Use validated form date
+        $validatedFormDateTime,  // Use validated form datetime
         $data['signature_base64'],
         $data['signed_pdf_base64'],
         $paymentAmount,
@@ -839,7 +842,7 @@ try {
         'invoice_created' => $invoiceResult['success'],
         'invoices' => $invoiceResult['invoices'] ?? [],
         'total_invoices' => $invoiceResult['total_invoices'] ?? 0,
-        'form_date_corrected' => $validatedFormDate,
+        'form_datetime_recorded' => $validatedFormDateTime,
         'message' => $isNewParentAccount 
             ? 'Parent account created! Child registered with ' . ($invoiceResult['total_invoices'] ?? 0) . ' invoices (one per class).' 
             : 'Child added with ' . ($invoiceResult['total_invoices'] ?? 0) . ' invoices (one per class)!',
