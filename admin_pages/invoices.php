@@ -265,7 +265,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
     <div class="card-body">
         <?php if (count($all_invoices) > 0): ?>
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-hover data-table">
                     <thead>
                         <tr>
                             <th>Invoice #</th><th>Date</th><th>Student</th>
