@@ -321,20 +321,11 @@ $page = $_GET['page'] ?? 'login';
         }
 
         .school-logo img {
-            height: 45px;
-            width: auto;
-            border-radius: 8px;
-        }
-
-        .school-logo .logo-placeholder {
-            width: 45px;
-            height: 45px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
+            height: 50px;
+            width: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
         .school-logo .logo-text {
@@ -542,6 +533,16 @@ $page = $_GET['page'] ?? 'login';
 
         .login-card h2 {
             font-weight: 700;
+        }
+
+        /* NEW: Logo styling for login page */
+        .login-logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            display: block;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         }
 
         /* ✨ NEW: Reload Button Styles */
@@ -775,10 +776,9 @@ $page = $_GET['page'] ?? 'login';
                 height: calc(100vh - 60px);
             }
 
-            .school-logo img,
-            .school-logo .logo-placeholder {
-                height: 38px;
-                width: 38px;
+            .school-logo img {
+                height: 42px;
+                width: 42px;
             }
 
             .header-menu-btn {
@@ -842,7 +842,9 @@ $page = $_GET['page'] ?? 'login';
     <div class="login-container">
         <div class="login-card">
             <div class="text-center mb-4">
-                <i class="fas fa-shield-halved fa-4x text-primary mb-3"></i>
+                <img src="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png" 
+                     alt="Wushu Sport Academy Logo" 
+                     class="login-logo">
                 <h2>Admin Portal</h2>
                 <p class="text-muted">Sign in to your admin account</p>
             </div>
@@ -880,9 +882,8 @@ $page = $_GET['page'] ?? 'login';
             </button>
 
             <a href="?page=dashboard" class="school-logo">
-                <div class="logo-placeholder">
-                    <i class="fas fa-shield-halved"></i>
-                </div>
+                <img src="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png" 
+                     alt="WSA Logo">
                 <div class="logo-text">
                     <span class="logo-title">Wushu Academy</span>
                     <span class="logo-subtitle">Admin Portal</span>
