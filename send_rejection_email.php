@@ -127,7 +127,7 @@ function getRejectionEmailHTML($studentName, $registrationNumber, $rejectReason)
             </div>
             
             <div style='text-align: center; margin-top: 32px;'>
-                <a href='https://yourdomain.com/pages/register.php' style='display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;'>
+                <a href='https://wushusportacademy.app.tc/student/pages/register.php' style='display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;'>
                     🔄 Register Again
                 </a>
             </div>
