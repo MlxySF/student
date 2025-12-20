@@ -478,6 +478,15 @@ $totalCount = array_sum($statusCounts);
                 </div>
             </div>
             <div class="modal-footer">
+                <?php if (!empty($reg['pdf_base64'])): ?>
+                <a href="download_registration_pdf.php?id=<?php echo $reg['id']; ?>" 
+                   class="btn btn-info" 
+                   target="_blank"
+                   title="Download signed registration agreement PDF">
+                    <i class="fas fa-file-pdf"></i> Download Agreement PDF
+                </a>
+                <?php endif; ?>
+                
                 <?php if ($reg['payment_status'] === 'pending'): ?>
                 <form method="POST" action="admin_handler.php" class="d-inline">
                     <input type="hidden" name="action" value="verify_registration">
