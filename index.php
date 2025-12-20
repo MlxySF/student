@@ -6,6 +6,180 @@ ini_set('display_errors', 1);
 require_once 'config.php';
 require_once 'auth_helper.php';
 
+// Include PHPMailer for admin notifications
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require 'PHPMailer/Exception.php';
+require 'PHPMailer/PHPMailer.php';
+require 'PHPMailer/SMTP.php';
+
+// Admin email configuration
+define('ADMIN_EMAIL', 'chaichonghern@gmail.com');
+define('ADMIN_NAME', 'Academy Admin');
+
+// ============================================================
+// EMAIL NOTIFICATION FUNCTIONS
+// ============================================================
+
+/**
+ * Send admin notification for new payment upload
+ */
+function sendAdminPaymentNotification($paymentData) {
+    $mail = new PHPMailer(true);
+    try {
+        error_log("[Admin Email] Sending payment notification to " . ADMIN_EMAIL);
+        
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'chaichonghern@gmail.com';
+        $mail->Password   = 'kyyj elhp dkdw gvki';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+
+        $mail->setFrom('noreply@wushusportacademy.com', 'Wushu Portal System');
+        $mail->addAddress(ADMIN_EMAIL, ADMIN_NAME);
+
+        $mail->isHTML(true);
+        $mail->CharSet = 'UTF-8';
+        $mail->Subject = '💳 Payment Upload: ' . $paymentData['student_name'] . ' - RM ' . $paymentData['amount'];
+        $mail->Body    = getAdminPaymentEmailHTML($paymentData);
+        $mail->AltBody = "Payment Upload: {$paymentData['student_name']} paid RM {$paymentData['amount']}";
+
+        $mail->send();
+        error_log("[Admin Email] Successfully sent payment notification");
+        return true;
+    } catch (Exception $e) {
+        error_log("[Admin Email] Error: {$mail->ErrorInfo}");
+        return false;
+    }
+}
+
+function getAdminPaymentEmailHTML($data) {
+    $paymentType = !empty($data['invoice_number']) ? 'Invoice Payment' : 'Class Fee Payment';
+    $paymentIcon = !empty($data['invoice_number']) ? '📝' : '🏫';
+    
+    $html = "<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>New Payment Upload</title>
+</head>
+<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5;'>
+    <div style='max-width: 650px; margin: 20px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+        <div style='background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 30px 24px; text-align: center;'>
+            <h1 style='margin: 0 0 8px 0; font-size: 28px; font-weight: 700;'>💳 New Payment Uploaded</h1>
+            <p style='margin: 0; font-size: 14px; opacity: 0.95;'>Pending Verification</p>
+        </div>
+        
+        <div style='padding: 32px 24px; background: white;'>
+            <div style='background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 8px; margin-bottom: 24px;'>
+                <p style='margin: 0; font-weight: 600; color: #92400e; font-size: 15px;'>⚠️ Action Required: Verify Payment Receipt</p>
+                <p style='margin: 8px 0 0 0; font-size: 13px; color: #92400e;'>A student has uploaded a payment receipt. Please verify and approve/reject.</p>
+            </div>
+            
+            <div style='background: #f8fafc; border-radius: 8px; padding: 20px; margin-bottom: 24px;'>
+                <h3 style='margin: 0 0 16px 0; color: #1e293b; font-size: 18px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;'>{$paymentIcon} {$paymentType}</h3>
+                <table style='width: 100%; border-collapse: collapse;'>
+                    <tr>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; width: 40%;'>Student Name:</td>
+                        <td style='padding: 8px 0; color: #1e293b; font-weight: 600;'>{$data['student_name']}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>Student ID:</td>
+                        <td style='padding: 8px 0; color: #1e293b;'>{$data['student_id']}</td>
+                    </tr>";
+    
+    if (!empty($data['invoice_number'])) {
+        $html .= "
+                    <tr>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>Invoice Number:</td>
+                        <td style='padding: 8px 0; color: #1e293b;'>{$data['invoice_number']}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>Invoice Description:</td>
+                        <td style='padding: 8px 0; color: #1e293b;'>{$data['invoice_description']}</td>
+                    </tr>";
+    }
+    
+    $html .= "
+                    <tr>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>Class:</td>
+                        <td style='padding: 8px 0; color: #1e293b;'>{$data['class_code']} - {$data['class_name']}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>Payment Month:</td>
+                        <td style='padding: 8px 0; color: #1e293b;'>{$data['payment_month']}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>Amount:</td>
+                        <td style='padding: 8px 0; color: #059669; font-weight: 700; font-size: 20px;'>RM {$data['amount']}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>Receipt File:</td>
+                        <td style='padding: 8px 0; color: #1e293b;'>{$data['receipt_filename']}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>File Size:</td>
+                        <td style='padding: 8px 0; color: #1e293b;'>{$data['receipt_size']}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>Upload Date:</td>
+                        <td style='padding: 8px 0; color: #1e293b;'>{$data['upload_date']}</td>
+                    </tr>
+                </table>
+            </div>";
+    
+    if (!empty($data['parent_name'])) {
+        $html .= "
+            <div style='background: #f0fdf4; border-radius: 8px; padding: 20px; margin-bottom: 24px;'>
+                <h3 style='margin: 0 0 16px 0; color: #166534; font-size: 18px; border-bottom: 2px solid #bbf7d0; padding-bottom: 8px;'>👨‍👩‍👧 Parent Information</h3>
+                <table style='width: 100%; border-collapse: collapse;'>
+                    <tr>
+                        <td style='padding: 8px 0; color: #166534; font-weight: 600; width: 40%;'>Parent Name:</td>
+                        <td style='padding: 8px 0; color: #166534;'>{$data['parent_name']}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #166534; font-weight: 600;'>Parent Email:</td>
+                        <td style='padding: 8px 0; color: #166534;'><a href='mailto:{$data['parent_email']}' style='color: #059669; text-decoration: none;'>{$data['parent_email']}</a></td>
+                    </tr>
+                </table>
+            </div>";
+    }
+    
+    $html .= "
+            <div style='background: #f1f5f9; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px;'>
+                <p style='margin: 0 0 16px 0; font-weight: 600; color: #1e293b; font-size: 16px;'>👉 Next Steps:</p>
+                <ol style='margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.8;'>
+                    <li>Login to the <strong>Admin Portal</strong></li>
+                    <li>Go to <strong>Payments</strong> section</li>
+                    <li>View the uploaded receipt</li>
+                    <li>Verify payment details match the receipt</li>
+                    <li>Approve or reject the payment</li>";
+    
+    if (!empty($data['invoice_number'])) {
+        $html .= "<li>If approved, the linked invoice will be marked as Paid</li>";
+    }
+    
+    $html .= "
+                </ol>
+            </div>
+        </div>
+        
+        <div style='text-align: center; padding: 24px; background: #f8fafc; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0;'>
+            <p style='margin: 0 0 8px 0; font-weight: 600; color: #1e293b; font-size: 15px;'>Wushu Sport Academy 武术体育学院</p>
+            <p style='margin: 4px 0;'>Admin Portal System</p>
+            <p style='margin: 16px 0 0 0; font-size: 11px; color: #94a3b8;'>This is an automated notification. Generated on " . date('Y-m-d H:i:s') . "</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+    return $html;
+}
+
 // ============================================================
 // LEGACY HELPER FUNCTIONS (for backward compatibility)
 // ============================================================
@@ -306,14 +480,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         ]);
 
         if ($success) {
+            // Update invoice status if this is an invoice payment
             if ($invoice_id) {
                 $update = $pdo->prepare("UPDATE invoices SET status = 'pending' WHERE id = ?");
                 $update->execute([$invoice_id]);
-                $_SESSION['success'] = "Payment submitted successfully! Your invoice is now pending verification.";
+            }
+            
+            // ==========================
+            // Send admin notification email
+            // NEW: Notify admin about payment upload
+            // ==========================
+            
+            // Get student info
+            $stmt = $pdo->prepare("SELECT full_name, student_id FROM students WHERE id = ?");
+            $stmt->execute([getActiveStudentId()]);
+            $student = $stmt->fetch();
+            
+            // Get class info
+            $stmt = $pdo->prepare("SELECT class_code, class_name FROM classes WHERE id = ?");
+            $stmt->execute([$class_id]);
+            $class = $stmt->fetch();
+            
+            // Get invoice info if applicable
+            $invoice_number = '';
+            $invoice_description = '';
+            if ($invoice_id) {
+                $stmt = $pdo->prepare("SELECT invoice_number, description FROM invoices WHERE id = ?");
+                $stmt->execute([$invoice_id]);
+                $invoice = $stmt->fetch();
+                $invoice_number = $invoice['invoice_number'] ?? '';
+                $invoice_description = $invoice['description'] ?? '';
+            }
+            
+            // Get parent info if applicable
+            $parent_name = '';
+            $parent_email = '';
+            if ($parent_account_id) {
+                $stmt = $pdo->prepare("SELECT full_name, email FROM parent_accounts WHERE id = ?");
+                $stmt->execute([$parent_account_id]);
+                $parent = $stmt->fetch();
+                $parent_name = $parent['full_name'] ?? '';
+                $parent_email = $parent['email'] ?? '';
+            }
+            
+            // Format file size
+            $file_size = $receiptData['size'];
+            if ($file_size < 1024) {
+                $file_size_formatted = $file_size . ' B';
+            } elseif ($file_size < 1024 * 1024) {
+                $file_size_formatted = number_format($file_size / 1024, 2) . ' KB';
+            } else {
+                $file_size_formatted = number_format($file_size / (1024 * 1024), 2) . ' MB';
+            }
+            
+            $adminNotificationData = [
+                'student_name' => $student['full_name'],
+                'student_id' => $student['student_id'],
+                'class_code' => $class['class_code'],
+                'class_name' => $class['class_name'],
+                'payment_month' => $payment_month,
+                'amount' => number_format($amount, 2),
+                'receipt_filename' => $filename,
+                'receipt_size' => $file_size_formatted,
+                'upload_date' => date('Y-m-d H:i:s'),
+                'invoice_number' => $invoice_number,
+                'invoice_description' => $invoice_description,
+                'parent_name' => $parent_name,
+                'parent_email' => $parent_email
+            ];
+            
+            $adminEmailSent = sendAdminPaymentNotification($adminNotificationData);
+            error_log("[Payment Upload] Admin notification email sent: " . ($adminEmailSent ? 'YES' : 'NO'));
+            
+            if ($invoice_id) {
+                $_SESSION['success'] = "Payment submitted successfully! Your invoice is now pending verification. Admin has been notified.";
                 header('Location: index.php?page=invoices&t=' . time());
                 exit;
             } else {
-                $_SESSION['success'] = "Payment uploaded successfully! Waiting for admin verification.";
+                $_SESSION['success'] = "Payment uploaded successfully! Waiting for admin verification. Admin has been notified.";
                 header('Location: index.php?page=payments');
                 exit;
             }
