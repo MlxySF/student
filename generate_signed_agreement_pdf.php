@@ -3,10 +3,10 @@
  * generate_signed_agreement_pdf.php
  * 
  * Generates a professional signed registration agreement PDF
- * Matches the design and content of the old signed agreement
+ * Matches the design and content of the old signed agreement exactly
  * 
  * Usage: Can be called from process_registration.php to generate PDF from signature data
- * Or standalone: generate_signed_agreement_pdf.php?student_name=John%20Doe&reg_number=WSA2025-1234&signature_base64=...
+ * Or standalone: generate_signed_agreement_pdf.php?student_name=John%20Tan&reg_number=WSA2025-1234&signature_base64=...
  */
 
 require_once 'fpdf.php';
@@ -33,23 +33,23 @@ class SignedAgreementPDF extends FPDF {
     }
     
     public function Header() {
-        // Header background color
-        $this->SetFillColor(25, 41, 60); // Dark blue
-        $this->Rect(0, 0, 210, 25, 'F');
+        // Header background color - Dark blue/navy
+        $this->SetFillColor(25, 41, 60);
+        $this->Rect(0, 0, 210, 28, 'F');
         
-        // Title
-        $this->SetFont('Arial', 'B', 18);
+        // Main Title
+        $this->SetFont('Arial', 'B', 20);
         $this->SetTextColor(255, 255, 255);
-        $this->SetXY(10, 8);
-        $this->Cell(0, 10, 'WUSHU SPORT ACADEMY', 0, 1, 'C');
+        $this->SetXY(10, 6);
+        $this->Cell(0, 8, 'WUSHU SPORT ACADEMY', 0, 1, 'C');
         
-        // Subtitle
-        $this->SetFont('Arial', '', 10);
-        $this->SetXY(10, 16);
+        // Subtitle with Chinese
+        $this->SetFont('Arial', '', 11);
+        $this->SetXY(10, 15);
         $this->Cell(0, 6, 'Registration Agreement - 武术体育学院注册协议', 0, 1, 'C');
         
         // Add spacing
-        $this->Ln(4);
+        $this->Ln(2);
     }
     
     public function Footer() {
@@ -62,105 +62,130 @@ class SignedAgreementPDF extends FPDF {
     public function generatePDF() {
         $this->AddPage();
         
-        // Document info
+        // Document reference info at top
         $this->SetFont('Arial', '', 9);
         $this->SetTextColor(50, 50, 50);
-        $this->SetXY(10, 35);
-        $this->MultiCell(0, 5, 
-            "Registration Number: " . $this->registrationNumber . "\n" .
-            "Date: " . $this->formDate,
-            0, 'L');
-        
-        $this->Ln(3);
-        
-        // Main title
-        $this->SetFont('Arial', 'B', 14);
-        $this->SetTextColor(25, 41, 60);
-        $this->SetXY(10, $this->GetY());
-        $this->MultiCell(0, 8, 'STUDENT REGISTRATION AGREEMENT\n武术体育学院学生注册协议', 0, 'C');
-        
-        $this->Ln(5);
-        
-        // Student Information Section
-        $this->drawSection('STUDENT INFORMATION', $this->GetY());
-        $yPos = $this->GetY();
-        
-        $this->SetFont('Arial', '', 10);
-        $this->SetXY(10, $yPos);
-        $this->Cell(50, 7, 'Student Name:', 0, 0, 'L');
-        $this->SetFont('Arial', 'B', 10);
-        $this->Cell(0, 7, $this->studentName, 0, 1, 'L');
-        
-        $this->SetFont('Arial', '', 10);
-        $this->Cell(50, 7, 'Student IC Number:', 0, 0, 'L');
-        $this->SetFont('Arial', 'B', 10);
-        $this->Cell(0, 7, $this->studentIC, 0, 1, 'L');
-        
-        $this->Ln(3);
-        
-        // Parent Information Section
-        $this->drawSection('PARENT/GUARDIAN INFORMATION', $this->GetY());
-        $yPos = $this->GetY();
-        
-        $this->SetFont('Arial', '', 10);
-        $this->SetXY(10, $yPos);
-        $this->Cell(50, 7, 'Parent/Guardian Name:', 0, 0, 'L');
-        $this->SetFont('Arial', 'B', 10);
-        $this->Cell(0, 7, $this->parentName, 0, 1, 'L');
-        
-        $this->SetFont('Arial', '', 10);
-        $this->Cell(50, 7, 'Parent IC Number:', 0, 0, 'L');
-        $this->SetFont('Arial', 'B', 10);
-        $this->Cell(0, 7, $this->parentIC, 0, 1, 'L');
-        
-        $this->Ln(3);
-        
-        // Terms and Conditions
-        $this->drawSection('TERMS AND CONDITIONS', $this->GetY());
-        $yPos = $this->GetY();
+        $this->SetXY(10, 32);
+        $this->Cell(50, 5, 'Registration Number:', 0, 0, 'L');
+        $this->SetFont('Arial', 'B', 9);
+        $this->Cell(0, 5, $this->registrationNumber, 0, 1, 'L');
         
         $this->SetFont('Arial', '', 9);
-        $this->SetXY(12, $yPos);
+        $this->SetXY(10, $this->GetY());
+        $this->Cell(50, 5, 'Date of Agreement:', 0, 0, 'L');
+        $this->SetFont('Arial', 'B', 9);
+        $this->Cell(0, 5, $this->formDate, 0, 1, 'L');
+        
+        $this->Ln(2);
+        
+        // Document title - centered and bold
+        $this->SetFont('Arial', 'B', 16);
+        $this->SetTextColor(25, 41, 60);
+        $this->SetXY(10, $this->GetY());
+        $this->MultiCell(0, 7, 'STUDENT REGISTRATION AGREEMENT', 0, 'C');
+        $this->SetFont('Arial', '', 11);
+        $this->SetXY(10, $this->GetY());
+        $this->MultiCell(0, 6, '学生注册协议', 0, 'C');
+        
+        $this->Ln(4);
+        
+        // STUDENT INFORMATION Section
+        $this->drawSectionHeader('STUDENT INFORMATION / 学生信息');
+        $this->Ln(1);
+        
+        $this->SetFont('Arial', '', 10);
+        $this->SetTextColor(0, 0, 0);
+        $this->SetXY(15, $this->GetY());
+        $this->Cell(50, 6, 'Full Name:', 0, 0, 'L');
+        $this->SetFont('Arial', 'B', 10);
+        $this->Cell(0, 6, $this->studentName, 0, 1, 'L');
+        
+        $this->SetFont('Arial', '', 10);
+        $this->SetXY(15, $this->GetY());
+        $this->Cell(50, 6, 'IC/Passport Number:', 0, 0, 'L');
+        $this->SetFont('Arial', 'B', 10);
+        $this->Cell(0, 6, $this->studentIC, 0, 1, 'L');
+        
+        $this->Ln(2);
+        
+        // PARENT/GUARDIAN INFORMATION Section
+        $this->drawSectionHeader('PARENT/GUARDIAN INFORMATION / 父母/监护人信息');
+        $this->Ln(1);
+        
+        $this->SetFont('Arial', '', 10);
+        $this->SetXY(15, $this->GetY());
+        $this->Cell(50, 6, 'Full Name:', 0, 0, 'L');
+        $this->SetFont('Arial', 'B', 10);
+        $this->Cell(0, 6, $this->parentName, 0, 1, 'L');
+        
+        $this->SetFont('Arial', '', 10);
+        $this->SetXY(15, $this->GetY());
+        $this->Cell(50, 6, 'IC/Passport Number:', 0, 0, 'L');
+        $this->SetFont('Arial', 'B', 10);
+        $this->Cell(0, 6, $this->parentIC, 0, 1, 'L');
+        
+        $this->Ln(3);
+        
+        // TERMS AND CONDITIONS Section
+        $this->drawSectionHeader('TERMS AND CONDITIONS / 条款和条件');
+        $this->Ln(1);
+        
+        $this->SetFont('Arial', '', 9);
+        $this->SetXY(15, $this->GetY());
+        
         $terms = [
-            "1. The student will comply with all academy rules and regulations.",
-            "2. The parent/guardian is responsible for ensuring regular attendance.",
-            "3. Payment of fees is due on the specified dates as per invoice.",
-            "4. The academy reserves the right to cancel enrollment for non-payment.",
-            "5. The student will participate safely and follow instructor guidance.",
-            "6. Medical emergencies will be handled according to academy protocols.",
-            "7. Photography/video recording during classes requires prior permission.",
-            "8. The academy is not responsible for lost or damaged personal items.",
-            "9. Withdrawal must be notified 30 days in advance.",
-            "10. This agreement is valid from the registration date onwards."
+            "1. The student will comply with all academy rules, regulations, and code of conduct.",
+            "2. The parent/guardian is responsible for ensuring regular and punctual attendance.",
+            "3. All applicable fees must be paid according to the schedule provided by the academy.",
+            "4. The academy reserves the right to cancel enrollment for non-payment after 30 days.",
+            "5. The student agrees to participate safely and follow all instructor guidance.",
+            "6. In case of medical emergencies, the academy will contact parent/guardian immediately.",
+            "7. Photography or video recording during classes requires prior written permission.",
+            "8. The academy is not responsible for lost, stolen, or damaged personal items.",
+            "9. Withdrawal from the academy must be notified 30 days in advance in writing.",
+            "10. This agreement is valid from the registration date and continues until termination.",
+            "11. The academy reserves the right to update terms with 14 days written notice.",
+            "12. Any disputes shall be resolved according to Malaysian law."
         ];
         
         foreach ($terms as $term) {
             $this->MultiCell(0, 5, $term, 0, 'L');
-            $this->SetX(12);
+            $this->SetX(15);
         }
         
-        $this->Ln(3);
+        $this->Ln(2);
         
-        // Liability Waiver
-        $this->drawSection('LIABILITY WAIVER', $this->GetY());
-        $yPos = $this->GetY();
+        // LIABILITY WAIVER AND CONSENT Section
+        $this->drawSectionHeader('LIABILITY WAIVER AND CONSENT / 责任豁免和同意');
+        $this->Ln(1);
         
         $this->SetFont('Arial', '', 9);
-        $this->SetXY(12, $yPos);
-        $waiver = "The parent/guardian acknowledges that wushu training involves physical activity and potential for injury. " .
-                  "By signing this agreement, the parent/guardian accepts full responsibility and agrees to release Wushu Sport Academy, " .
-                  "its instructors, and staff from any liability for injuries sustained during training or on academy premises.";
-        $this->MultiCell(0, 5, $waiver, 0, 'L');
+        $this->SetXY(15, $this->GetY());
         
-        $this->Ln(5);
+        $waiver = "By signing this agreement, the parent/guardian acknowledges that wushu training involves physical activity and inherent risks of injury. " .
+                  "The parent/guardian accepts full responsibility and agrees to release, indemnify, and hold harmless Wushu Sport Academy, " .
+                  "its proprietors, instructors, employees, and staff from any and all liability, claims, demands, or actions arising from any injury or harm " .
+                  "sustained by the student during training, on academy premises, or in connection with any academy activities.\n\n" .
+                  "The parent/guardian further confirms that the student is in good health and is physically capable of participating in wushu training. " .
+                  "Any known medical conditions or injuries must be reported to the academy in writing immediately.";
         
-        // Signature Section
-        $this->drawSection('AUTHORIZED SIGNATURES', $this->GetY());
+        $this->MultiCell(0, 4, $waiver, 0, 'L');
+        
+        $this->Ln(2);
+        
+        // Add page break if content is getting too long
+        if ($this->GetY() > 240) {
+            $this->AddPage();
+        }
+        
+        // AUTHORIZATION AND SIGNATURES Section
+        $this->drawSectionHeader('AUTHORIZED SIGNATURES / 授权签名');
+        $this->Ln(3);
+        
         $sigYPos = $this->GetY();
         
-        // Display signature if provided
+        // Display signature image if provided
         if ($this->signatureBase64) {
-            // Save signature image temporarily
             $signatureData = $this->signatureBase64;
             if (strpos($signatureData, 'data:image/png;base64,') === 0) {
                 $signatureData = substr($signatureData, strlen('data:image/png;base64,'));
@@ -171,72 +196,77 @@ class SignedAgreementPDF extends FPDF {
             
             // Add signature image
             $this->SetXY(20, $sigYPos);
-            $this->Image($tempFile, 20, $sigYPos, 60, 20, 'PNG');
+            $this->Image($tempFile, 20, $sigYPos, 50, 18, 'PNG');
             
             // Clean up
-            unlink($tempFile);
+            @unlink($tempFile);
         }
         
-        $this->SetXY(20, $sigYPos + 22);
+        // Parent/Guardian signature line
+        $this->SetXY(20, $sigYPos + 20);
         $this->SetFont('Arial', '', 9);
-        $this->Cell(60, 4, '________________________', 0, 1, 'C');
+        $this->Cell(50, 3, '________________________', 0, 1, 'C');
         $this->SetXY(20, $this->GetY());
         $this->SetFont('Arial', 'B', 9);
-        $this->Cell(60, 4, 'Parent/Guardian Signature', 0, 1, 'C');
+        $this->Cell(50, 4, 'Parent/Guardian Signature', 0, 1, 'C');
         
-        // Date
-        $this->Ln(2);
+        // Date field for signature
         $this->SetFont('Arial', '', 9);
-        $this->SetXY(20, $this->GetY());
-        $this->Cell(60, 4, 'Date: ___________________', 0, 1, 'L');
+        $this->SetXY(20, $this->GetY() + 2);
+        $this->Cell(50, 3, 'Date: ___________________', 0, 1, 'L');
         
         // Academy section
-        $this->Ln(8);
-        $this->SetXY(120, $sigYPos);
-        $this->SetFont('Arial', 'B', 9);
+        $this->SetXY(115, $sigYPos);
+        $this->SetFont('Arial', 'B', 10);
+        $this->SetTextColor(25, 41, 60);
         $this->Cell(70, 5, 'FOR ACADEMY USE ONLY', 0, 1, 'C');
         
-        $this->SetXY(120, $this->GetY());
+        // Admin signature line
+        $this->SetXY(115, $sigYPos + 10);
         $this->SetFont('Arial', '', 9);
-        $this->Cell(70, 4, '________________________', 0, 1, 'C');
-        $this->SetXY(120, $this->GetY());
+        $this->SetTextColor(0, 0, 0);
+        $this->Cell(70, 3, '________________________', 0, 1, 'C');
+        
+        $this->SetXY(115, $this->GetY());
         $this->SetFont('Arial', 'B', 9);
-        $this->Cell(70, 4, 'Admin Signature', 0, 1, 'C');
+        $this->Cell(70, 4, 'Authorized Academy Officer', 0, 1, 'C');
         
-        $this->Ln(2);
+        // Academy date field
         $this->SetFont('Arial', '', 9);
-        $this->SetXY(120, $this->GetY());
-        $this->Cell(70, 4, 'Date: ___________________', 0, 1, 'L');
+        $this->SetXY(115, $this->GetY() + 2);
+        $this->Cell(70, 3, 'Date: ___________________', 0, 1, 'L');
         
-        // Footer note
-        $this->Ln(10);
+        // Footer disclaimer
+        $this->Ln(8);
         $this->SetFont('Arial', 'I', 8);
         $this->SetTextColor(100, 100, 100);
         $this->SetXY(10, $this->GetY());
         $this->MultiCell(0, 4,
             "This is an official registration agreement issued by Wushu Sport Academy. " .
-            "Both parties must sign and retain a copy for their records. " .
-            "This agreement is valid from the date of signing.",
+            "Both parties must sign this agreement. The parent/guardian and academy must each retain a certified copy for their records. " .
+            "A copy of the signed agreement must be provided to the student. This agreement is binding from the date of signing.",
             0, 'C');
     }
     
-    private function drawSection($title, $yPos) {
-        // Section background
-        $this->SetFillColor(230, 240, 250); // Light blue
-        $this->Rect(10, $yPos, 190, 6, 'F');
+    private function drawSectionHeader($title) {
+        // Section background color - light blue
+        $this->SetFillColor(200, 220, 240);
+        $this->Rect(10, $this->GetY(), 190, 7, 'F');
+        
+        // Section border
+        $this->SetDrawColor(25, 41, 60);
+        $this->Rect(10, $this->GetY(), 190, 7);
         
         // Section title
-        $this->SetXY(12, $yPos + 1);
-        $this->SetFont('Arial', 'B', 10);
+        $this->SetXY(12, $this->GetY() + 1);
+        $this->SetFont('Arial', 'B', 11);
         $this->SetTextColor(25, 41, 60);
-        $this->Cell(0, 4, $title, 0, 1, 'L');
-        
-        $this->Ln(2);
+        $this->Cell(0, 5, $title, 0, 1, 'L');
     }
 }
 
 /**
- * Standalone usage or for integration into process_registration.php
+ * Integration with process_registration.php
  * 
  * To use in process_registration.php, call:
  * $pdfGenerator = new SignedAgreementPDF([
@@ -253,7 +283,7 @@ class SignedAgreementPDF extends FPDF {
  * $pdfBase64 = base64_encode($pdfOutput); // Store in database
  */
 
-// If called directly (standalone)
+// Standalone usage or testing
 if (php_sapi_name() === 'cli' || isset($_GET['test'])) {
     $testParams = [
         'student_name' => $_GET['student_name'] ?? 'John Tan',
