@@ -42,6 +42,31 @@
     });
 
     // ========================================
+    // SCROLL TO TOP HELPER FUNCTION
+    // ========================================
+    function scrollToTop() {
+        // Method 1: Scroll the form container (with class custom-scroll)
+        const formContainer = document.querySelector('.custom-scroll');
+        if (formContainer) {
+            formContainer.scrollTop = 0; // Instant scroll
+            formContainer.scrollTo({ top: 0, behavior: 'auto' }); // Force instant
+        }
+        
+        // Method 2: Scroll window
+        window.scrollTo({ top: 0, behavior: 'auto' });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        
+        // Method 3: Try again after a tiny delay to ensure DOM has updated
+        setTimeout(() => {
+            if (formContainer) {
+                formContainer.scrollTop = 0;
+            }
+            window.scrollTo({ top: 0, behavior: 'auto' });
+        }, 50);
+    }
+
+    // ========================================
     // STATUS RADIO STYLING
     // ========================================
     function updateStatusRadioStyle() {
@@ -369,7 +394,7 @@
     }
 
     // ========================================
-    // STEP NAVIGATION - FIXED: Scroll FORM CONTAINER to top
+    // STEP NAVIGATION - FIXED WITH AGGRESSIVE SCROLL
     // ========================================
     function changeStep(dir) {
         if (dir === 1 && !validateStep(currentStep)) {
@@ -418,13 +443,8 @@
         const progressBar = document.getElementById('progress-bar');
         progressBar.style.width = `${(currentStep / 7) * 100}%`;
 
-        // ✨ SCROLL THE FORM CONTAINER (not window) - IMPORTANT FOR MOBILE!
-        const formContainer = document.querySelector('.custom-scroll');
-        if (formContainer) {
-            formContainer.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-        // Also scroll window in case
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // ✨ FORCE SCROLL TO TOP - Multiple attempts
+        scrollToTop();
     }
 
     async function submitPayment() {
@@ -528,12 +548,8 @@
                 document.getElementById('btn-prev').disabled = true;
                 document.getElementById('btn-next').style.display = 'none';
                 
-                // Scroll form container to top
-                const formContainer = document.querySelector('.custom-scroll');
-                if (formContainer) {
-                    formContainer.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                // Force scroll to top
+                scrollToTop();
                 
                 Swal.fire({
                     icon: 'success',
@@ -760,12 +776,8 @@
             updatePaymentDisplay();
             document.getElementById('payment-date').value = new Date().toISOString().split('T')[0];
             
-            // Scroll form container to top
-            const formContainer = document.querySelector('.custom-scroll');
-            if (formContainer) {
-                formContainer.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Force scroll to top
+            scrollToTop();
 
         } catch (error) {
             if (overlay) overlay.style.display = 'none';
