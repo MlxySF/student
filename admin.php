@@ -1064,7 +1064,7 @@ $page = $_GET['page'] ?? 'login';
     // ✨ ENHANCED: DataTables with customizable page length selector
     $(document).ready(function() {
         $('.data-table').DataTable({
-            pageLength: 25,
+            pageLength: 10,
             lengthMenu: [
                 [10, 25, 50, 100, -1],
                 ['10 rows', '25 rows', '50 rows', '100 rows', 'Show all']
