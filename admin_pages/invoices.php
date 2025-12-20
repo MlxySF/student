@@ -114,7 +114,16 @@ $stmt->execute($params_join);
 $all_invoices = $stmt->fetchAll();
 
 // Get students and classes for creating invoices
-$all_students = $pdo->query("SELECT id, student_id, full_name, email FROM students ORDER BY full_name")->fetchAll();
+// FIXED: Exclude rejected registrations from student dropdown
+$all_students = $pdo->query("
+    SELECT s.id, s.student_id, s.full_name, s.email 
+    FROM students s
+    LEFT JOIN registrations r ON s.id = r.student_account_id
+    WHERE r.registration_status != 'rejected' OR r.registration_status IS NULL
+    GROUP BY s.id
+    ORDER BY s.full_name
+")->fetchAll();
+
 $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER BY class_code")->fetchAll();
 ?>
 
@@ -497,6 +506,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                             <option value="<?php echo $student['id']; ?>"><?php echo htmlspecialchars($student['full_name']); ?> (<?php echo htmlspecialchars($student['student_id']); ?>)</option>
                         <?php endforeach; ?>
                     </select>
+                    <small class="text-muted">Only approved students are shown</small>
                 </div>
                 <div class="mb-3"><label class="form-label">Invoice Type *</label>
                     <select name="invoice_type" class="form-select" required>
