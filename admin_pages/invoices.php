@@ -143,12 +143,18 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
 @media (max-width: 768px) {
     .hide-mobile { display: none !important; }
     
-    /* Hide DataTables controls on mobile */
+    /* Hide DataTables search and info on mobile (but keep pagination) */
     .table-responsive .dataTables_wrapper .dataTables_length,
     .table-responsive .dataTables_wrapper .dataTables_filter,
-    .table-responsive .dataTables_wrapper .dataTables_info,
-    .table-responsive .dataTables_wrapper .dataTables_paginate {
+    .table-responsive .dataTables_wrapper .dataTables_info {
         display: none !important;
+    }
+    
+    /* Keep pagination visible and centered on mobile */
+    .table-responsive .dataTables_wrapper .dataTables_paginate {
+        text-align: center !important;
+        margin-top: 15px !important;
+        width: 100% !important;
     }
     
     /* Force table to be block layout */
