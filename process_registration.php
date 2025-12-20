@@ -14,6 +14,7 @@
  * FIXED: Validate form_date to prevent invalid dates like "-0001"
  * UPDATED: Changed form_date to record both date and time (DATETIME format)
  * UPDATED: Added admin email notification for new registrations
+ * UPDATED: Added payment_date column to payments INSERT - user can specify when payment was actually made
  */
 
 header('Content-Type: application/json');
@@ -218,6 +219,7 @@ function parseScheduleToClassCodes(string $scheduleString): array {
         // SJK(C) Puay Chai 2
         'SJK(C) Puay Chai 2: Tue 8pm-10pm' => 'pc2-tue-8pm',
         'SJK(C) Puay Chai 2: Wed 8pm-10pm' => 'pc2-wed-8pm',
+        'SJK(C) Puay Chai 2: Fri 8pm-10pm' => 'pc2-fri-8pm',
         
         // Stadium Chinwoo
         'Stadium Chinwoo: Sun 2pm-4pm' => 'chinwoo-sun-2pm',
@@ -329,12 +331,14 @@ function autoEnrollStudent(PDO $conn, int $studentId, string $scheduleString): a
 // ==========================================
 // REGISTRATION FEE INVOICES & PAYMENTS
 // UPDATED: Create one invoice per class
+// UPDATED: Added payment_date to payments INSERT
 // ==========================================
 
 /**
  * Create registration fee invoices - ONE PER CLASS
  * Links the uploaded payment receipt to each invoice
  * Splits total registration fee equally across all classes
+ * UPDATED: Now stores user-specified payment_date
  */
 function createRegistrationInvoicesAndPayments(PDO $conn, int $studentId, int $parentAccountId, float $totalAmount, string $studentName, array $enrolledClasses, array $paymentData): array {
     try {
@@ -398,7 +402,7 @@ function createRegistrationInvoicesAndPayments(PDO $conn, int $studentId, int $p
             // Strip data URI prefix to get pure base64
             $pureBase64Receipt = stripDataURIPrefix($paymentData['receipt_base64']);
             
-            // Create payment record linked to this invoice and class
+            // UPDATED: Create payment record with payment_date
             $stmt = $conn->prepare("
                 INSERT INTO payments (
                     student_id,
@@ -407,11 +411,12 @@ function createRegistrationInvoicesAndPayments(PDO $conn, int $studentId, int $p
                     parent_account_id,
                     amount,
                     payment_month,
+                    payment_date,
                     receipt_data,
                     receipt_mime_type,
                     verification_status,
                     upload_date
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
             ");
             
             $stmt->execute([
@@ -421,13 +426,14 @@ function createRegistrationInvoicesAndPayments(PDO $conn, int $studentId, int $p
                 $parentAccountId,
                 $amountPerClass,
                 date('Y-m'),
+                $paymentData['payment_date'], // User-specified payment date
                 $pureBase64Receipt,
                 $receiptMimeType
             ]);
             
             $paymentId = (int)$conn->lastInsertId();
             
-            error_log("[Payment] Created payment record (ID: {$paymentId}) linked to invoice {$invoiceNumber}");
+            error_log("[Payment] Created payment record (ID: {$paymentId}) linked to invoice {$invoiceNumber}, payment_date={$paymentData['payment_date']}");
             
             $results[] = [
                 'invoice_id' => $invoiceId,
@@ -858,6 +864,7 @@ try {
     $phone        = trim($data['phone']);
     $studentStatus = trim($data['status']);
     $paymentAmount = (float)$data['payment_amount'];
+    $paymentDate   = trim($data['payment_date']); // User-specified payment date
 
     // ===============================
     // Find or Create Parent Account
@@ -950,7 +957,7 @@ try {
         $data['signature_base64'],
         $data['signed_pdf_base64'],
         $paymentAmount,
-        $data['payment_date'],
+        $paymentDate, // User-specified payment date
         $data['payment_receipt_base64'],
         (int)$data['class_count'],
         $studentAccountId,
@@ -974,10 +981,12 @@ try {
 
     // ===============================
     // CREATE INVOICES (ONE PER CLASS) AND LINK PAYMENTS
+    // UPDATED: Now passes payment_date to function
     // ===============================
     
     $paymentData = [
-        'receipt_base64' => $data['payment_receipt_base64']
+        'receipt_base64' => $data['payment_receipt_base64'],
+        'payment_date' => $paymentDate // Pass user-specified payment date
     ];
     
     // Use the new function that creates one invoice per class
@@ -993,7 +1002,7 @@ try {
 
     $conn->commit();
     
-    error_log("[Success] Reg#: {$regNumber}, Parent: {$parentCode} (ID:{$parentAccountId}), Student: {$studentAccountId}, Invoices: " . ($invoiceResult['total_invoices'] ?? 0));
+    error_log("[Success] Reg#: {$regNumber}, Parent: {$parentCode} (ID:{$parentAccountId}), Student: {$studentAccountId}, Invoices: " . ($invoiceResult['total_invoices'] ?? 0) . ", Payment Date: {$paymentDate}");
 
     // Send email to parent with proper parameters
     $emailSent = sendRegistrationEmail(
@@ -1026,7 +1035,7 @@ try {
         'class_count' => (int)$data['class_count'],
         'classes' => $enrollmentResults['success'],
         'payment_amount' => number_format($paymentAmount, 2),
-        'payment_date' => $data['payment_date'],
+        'payment_date' => $paymentDate, // Include payment date in notification
         'total_invoices' => $invoiceResult['total_invoices'] ?? 0
     ];
     
@@ -1051,6 +1060,7 @@ try {
         'invoices' => $invoiceResult['invoices'] ?? [],
         'total_invoices' => $invoiceResult['total_invoices'] ?? 0,
         'form_datetime_recorded' => $validatedFormDateTime,
+        'payment_date' => $paymentDate,
         'message' => $isNewParentAccount 
             ? 'Parent account created! Child registered with ' . ($invoiceResult['total_invoices'] ?? 0) . ' invoices (one per class).' 
             : 'Child added with ' . ($invoiceResult['total_invoices'] ?? 0) . ' invoices (one per class)!',
