@@ -974,9 +974,44 @@
     function updatePaymentDisplay() {
         const { classCount, totalFee } = calculateFees();
         
+        // Get selected schedules
+        const scheduleCheckboxes = document.querySelectorAll('input[name="sch"]:checked');
+        const selectedClasses = Array.from(scheduleCheckboxes).map(cb => cb.value);
+        
+        // Update class count
         document.getElementById('payment-class-count').innerText = classCount;
+        
+        // Create a list of selected classes to display
+        let classListHTML = '';
+        if (selectedClasses.length > 0) {
+            classListHTML = '<div style="margin-top: 8px; padding: 8px; background: #f8fafc; border-radius: 6px; border-left: 3px solid #7c3aed;">';
+            classListHTML += '<div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 4px; text-transform: uppercase;">📅 Selected Classes:</div>';
+            selectedClasses.forEach((cls, index) => {
+                classListHTML += `<div style="font-size: 12px; color: #1e293b; padding: 3px 0;">• ${cls}</div>`;
+            });
+            classListHTML += '</div>';
+        }
+        
+        // Find the parent container and update it
+        const classCountElement = document.getElementById('payment-class-count');
+        const parentDiv = classCountElement.closest('.flex.justify-between.items-center');
+        
+        // Remove any existing class list
+        const existingList = parentDiv.parentElement.querySelector('.selected-classes-list');
+        if (existingList) existingList.remove();
+        
+        // Add the new class list after the count div
+        if (classListHTML) {
+            const listContainer = document.createElement('div');
+            listContainer.className = 'selected-classes-list';
+            listContainer.innerHTML = classListHTML;
+            parentDiv.parentElement.insertBefore(listContainer, parentDiv.nextSibling);
+        }
+        
+        // Update total
         document.getElementById('payment-total').innerText = `RM ${totalFee}`;
         
+        // Update status
         const statusRadios = document.getElementsByName('status');
         let status = '';
         for (const radio of statusRadios) {
