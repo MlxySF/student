@@ -3,9 +3,10 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Dec 20, 2025 at 10:14 AM
+-- Generation Time: Dec 20, 2025 at 06:16 PM (UPDATED)
 -- Server version: 10.11.14-MariaDB
 -- PHP Version: 8.1.34
+-- UPDATED: Added payment_date column to payments table
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -158,6 +159,7 @@ CREATE TABLE `parent_child_relationships` (
 
 --
 -- Table structure for table `payments`
+-- UPDATED: Added payment_date column
 --
 
 CREATE TABLE `payments` (
@@ -168,6 +170,7 @@ CREATE TABLE `payments` (
   `parent_account_id` int(11) DEFAULT NULL COMMENT 'Parent who made the payment',
   `amount` decimal(10,2) NOT NULL,
   `payment_month` varchar(20) NOT NULL COMMENT 'Format: YYYY-MM or text',
+  `payment_date` date DEFAULT NULL COMMENT 'Actual date when payment was made',
   `receipt_filename` varchar(255) DEFAULT NULL,
   `receipt_data` longtext DEFAULT NULL COMMENT 'Base64 encoded receipt image/PDF',
   `receipt_mime_type` varchar(50) DEFAULT NULL COMMENT 'e.g., image/jpeg, application/pdf',
@@ -381,6 +384,7 @@ ALTER TABLE `parent_child_relationships`
 
 --
 -- Indexes for table `payments`
+-- UPDATED: Added index for payment_date
 --
 ALTER TABLE `payments`
   ADD PRIMARY KEY (`id`),
@@ -391,6 +395,7 @@ ALTER TABLE `payments`
   ADD KEY `idx_parent_account_id` (`parent_account_id`),
   ADD KEY `idx_verification_status` (`verification_status`),
   ADD KEY `idx_payment_month` (`payment_month`),
+  ADD KEY `idx_payment_date` (`payment_date`),
   ADD KEY `idx_upload_date` (`upload_date`);
 
 --
