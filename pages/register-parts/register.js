@@ -369,12 +369,9 @@
     }
 
     // ========================================
-    // STEP NAVIGATION - FIXED: Scroll to top at START
+    // STEP NAVIGATION - FIXED: Scroll FORM CONTAINER to top
     // ========================================
     function changeStep(dir) {
-        // ✨ SCROLL TO TOP FIRST (especially important for mobile)
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        
         if (dir === 1 && !validateStep(currentStep)) {
             return;
         }
@@ -420,6 +417,14 @@
 
         const progressBar = document.getElementById('progress-bar');
         progressBar.style.width = `${(currentStep / 7) * 100}%`;
+
+        // ✨ SCROLL THE FORM CONTAINER (not window) - IMPORTANT FOR MOBILE!
+        const formContainer = document.querySelector('.custom-scroll');
+        if (formContainer) {
+            formContainer.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        // Also scroll window in case
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     async function submitPayment() {
@@ -523,6 +528,11 @@
                 document.getElementById('btn-prev').disabled = true;
                 document.getElementById('btn-next').style.display = 'none';
                 
+                // Scroll form container to top
+                const formContainer = document.querySelector('.custom-scroll');
+                if (formContainer) {
+                    formContainer.scrollTo({ top: 0, behavior: 'smooth' });
+                }
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 
                 Swal.fire({
@@ -750,6 +760,11 @@
             updatePaymentDisplay();
             document.getElementById('payment-date').value = new Date().toISOString().split('T')[0];
             
+            // Scroll form container to top
+            const formContainer = document.querySelector('.custom-scroll');
+            if (formContainer) {
+                formContainer.scrollTo({ top: 0, behavior: 'smooth' });
+            }
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
         } catch (error) {
