@@ -962,6 +962,16 @@ $page = $_GET['page'] ?? 'login';
             padding: 40px;
         }
 
+        /* NEW: Logo styling for login page */
+        .login-logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            display: block;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
         .btn-outline-primary {
             border: 2px solid var(--primary-color);
             color: var(--primary-color);
@@ -1233,7 +1243,9 @@ $page = $_GET['page'] ?? 'login';
     <div class="login-container animate__animated animate__fadeIn">
         <div class="login-card">
             <div class="text-center mb-4">
-                <i class="fas fa-graduation-cap fa-4x text-primary mb-3"></i>
+                <img src="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png" 
+                     alt="Wushu Sport Academy Logo" 
+                     class="login-logo">
                 <h2>Student Portal</h2>
                 <p class="text-muted">Sign in to your account</p>
             </div>
