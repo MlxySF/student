@@ -144,25 +144,62 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
     .table-responsive .table thead { display: none; }
     .table-responsive .table, .table-responsive .table tbody { display: block; }
     .table-responsive .table tbody tr {
-        display: block; background: #ffffff; border-radius: 10px;
-        margin-bottom: 12px; padding: 12px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); border: 1px solid #e5e7eb;
+        display: block; 
+        background: #ffffff; 
+        border-radius: 10px;
+        margin-bottom: 12px; 
+        padding: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
+        border: 1px solid #e5e7eb;
+        width: 100%;
     }
     .table-responsive .table tbody tr:hover {
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        transform: translateY(-2px); transition: all 0.2s ease;
+        transform: translateY(-2px); 
+        transition: all 0.2s ease;
     }
     .table-responsive .table tbody tr td {
-        display: block; border: none; padding: 4px 0; text-align: left !important;
+        display: block; 
+        border: none; 
+        padding: 6px 0; 
+        text-align: left !important;
+        word-wrap: break-word;
+        white-space: normal;
+        width: 100%;
     }
     .table-responsive .table tbody tr td:first-child {
-        font-size: 15px; font-weight: bold; padding-bottom: 8px;
-        border-bottom: 1px solid #f0f0f0; margin-bottom: 8px;
+        font-size: 16px; 
+        font-weight: bold; 
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f0f0f0; 
+        margin-bottom: 10px;
     }
     .invoice-actions-cell .btn-group {
-        width: 100%; display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px;
+        width: 100%; 
+        display: flex; 
+        justify-content: flex-end; 
+        gap: 6px; 
+        margin-top: 10px;
+        flex-wrap: wrap;
     }
-    .invoice-actions-cell .btn { padding: 8px 12px; }
+    .invoice-actions-cell .btn { 
+        padding: 8px 12px; 
+        font-size: 14px;
+    }
+    
+    /* Fix text display on mobile */
+    .table-responsive .table tbody tr td div,
+    .table-responsive .table tbody tr td span {
+        display: inline-block;
+        word-break: normal;
+        white-space: normal;
+    }
+    
+    /* Make badges display inline properly */
+    .table-responsive .table tbody tr td .badge {
+        display: inline-block;
+        margin: 2px 4px 2px 0;
+    }
 }
 
 @media (min-width: 769px) {
@@ -171,6 +208,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
     .table-responsive .table tbody tr { display: table-row !important; }
     .table-responsive .table tbody tr td { display: table-cell !important; }
 }
+
 .receipt-image { max-width: 100%; height: auto; border-radius: 8px; border: 2px solid #e2e8f0; }
 .receipt-pdf { width: 100%; height: 500px; border: 2px solid #e2e8f0; border-radius: 8px; }
 .receipt-loading { text-align: center; padding: 40px; }
