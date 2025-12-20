@@ -1,38 +1,48 @@
 <?php
-// Student Profile Page - Updated for multi-child parent support
-// FIXED: Enable phone, Chinese name editing, and school dropdown for parents
+// Student Profile Page - SECURED with CSRF and validation
 
-// Handle profile update for parents
+// Handle profile update for parents - WITH CSRF AND VALIDATION
 if (isParent() && isset($_POST['action']) && $_POST['action'] === 'update_child_profile') {
+    verifyCSRF(); // CSRF protection
+    
     $registration_id = getActiveStudentId();
-    $name_en = trim($_POST['name_en']);
-    $name_cn = trim($_POST['name_cn']);
-    $ic = trim($_POST['ic']);
-    $phone = trim($_POST['phone']);
-    $school = trim($_POST['school']);
-    $school_other = isset($_POST['school_other']) ? trim($_POST['school_other']) : '';
     
-    // If school is "Others", use the custom input
-    if ($school === 'Others' && !empty($school_other)) {
-        $school = $school_other;
-    }
+    // Sanitize inputs
+    $name_en = sanitizeString($_POST['name_en']);
+    $name_cn = sanitizeString($_POST['name_cn']);
+    $ic = sanitizeString($_POST['ic']);
+    $phone = sanitizeString($_POST['phone']);
+    $school = sanitizeString($_POST['school']);
+    $school_other = isset($_POST['school_other']) ? sanitizeString($_POST['school_other']) : '';
     
-    try {
-        $stmt = $pdo->prepare("UPDATE registrations SET name_en = ?, name_cn = ?, ic = ?, phone = ?, school = ?, updated_at = NOW() WHERE id = ?");
-        $stmt->execute([$name_en, $name_cn, $ic, $phone, $school, $registration_id]);
-        
-        echo '<div class="alert alert-success alert-dismissible fade show" role="alert">';
-        echo '<i class="fas fa-check-circle"></i> Child profile updated successfully!';
-        echo '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
-        echo '</div>';
-        
-        // Reload updated data
-        $_GET['updated'] = '1';
-    } catch (Exception $e) {
+    // Validate phone
+    if (!isValidPhone($phone)) {
         echo '<div class="alert alert-danger alert-dismissible fade show" role="alert">';
-        echo '<i class="fas fa-exclamation-triangle"></i> Error updating profile: ' . htmlspecialchars($e->getMessage());
+        echo '<i class="fas fa-exclamation-triangle"></i> Invalid phone number format.';
         echo '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
         echo '</div>';
+    } else {
+        // If school is "Others", use the custom input
+        if ($school === 'Others' && !empty($school_other)) {
+            $school = $school_other;
+        }
+        
+        try {
+            $stmt = $pdo->prepare("UPDATE registrations SET name_en = ?, name_cn = ?, ic = ?, phone = ?, school = ?, updated_at = NOW() WHERE id = ?");
+            $stmt->execute([$name_en, $name_cn, $ic, $phone, $school, $registration_id]);
+            
+            echo '<div class="alert alert-success alert-dismissible fade show" role="alert">';
+            echo '<i class="fas fa-check-circle"></i> Child profile updated successfully!';
+            echo '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+            echo '</div>';
+            
+            $_GET['updated'] = '1';
+        } catch (Exception $e) {
+            echo '<div class="alert alert-danger alert-dismissible fade show" role="alert">';
+            echo '<i class="fas fa-exclamation-triangle"></i> Error updating profile: ' . e($e->getMessage());
+            echo '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+            echo '</div>';
+        }
     }
 }
 
@@ -54,7 +64,6 @@ if (isParent()) {
     $stmt->execute([getActiveStudentId()]);
     $student = $stmt->fetch();
     $studentAccountId = getActiveStudentId();
-    // For direct student login, get registration record
     $reg_stmt = $pdo->prepare("SELECT id FROM registrations WHERE student_account_id = ? LIMIT 1");
     $reg_stmt->execute([$studentAccountId]);
     $reg_record = $reg_stmt->fetch();
@@ -76,11 +85,7 @@ if ($registration_id) {
 }
 
 // Get enrolled classes count
-$stmt = $pdo->prepare("
-    SELECT COUNT(*) as class_count 
-    FROM enrollments 
-    WHERE student_id = ? AND status = 'active'
-");
+$stmt = $pdo->prepare("SELECT COUNT(*) as class_count FROM enrollments WHERE student_id = ? AND status = 'active'");
 $stmt->execute([$studentAccountId]);
 $enrollment_stats = $stmt->fetch();
 
@@ -90,8 +95,7 @@ $stmt = $pdo->prepare("
         COUNT(*) as total_payments,
         SUM(CASE WHEN verification_status = 'verified' THEN 1 ELSE 0 END) as verified_payments,
         SUM(CASE WHEN verification_status = 'verified' THEN amount ELSE 0 END) as total_paid
-    FROM payments 
-    WHERE student_id = ?
+    FROM payments WHERE student_id = ?
 ");
 $stmt->execute([$studentAccountId]);
 $payment_stats = $stmt->fetch();
@@ -102,8 +106,7 @@ $stmt = $pdo->prepare("
         COUNT(*) as total_invoices,
         SUM(CASE WHEN status = 'unpaid' THEN 1 ELSE 0 END) as unpaid_invoices,
         SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) as paid_invoices
-    FROM invoices 
-    WHERE student_id = ?
+    FROM invoices WHERE student_id = ?
 ");
 $stmt->execute([$studentAccountId]);
 $invoice_stats = $stmt->fetch();
@@ -111,13 +114,12 @@ $invoice_stats = $stmt->fetch();
 
 <?php if (isParent()): ?>
 <div class="alert alert-info mb-3">
-    <i class="fas fa-info-circle"></i> Viewing profile for: <strong><?php echo htmlspecialchars($student['full_name']); ?></strong>
+    <i class="fas fa-info-circle"></i> Viewing profile for: <strong><?php echo e($student['full_name']); ?></strong>
     <span class="text-muted">(You can edit your child's profile)</span>
 </div>
 <?php endif; ?>
 
 <div class="row">
-    <!-- Profile Information Card -->
     <div class="col-md-8 mb-4">
         <div class="card">
             <div class="card-header">
@@ -129,17 +131,17 @@ $invoice_stats = $stmt->fetch();
                         <div class="profile-avatar">
                             <i class="fas fa-user-circle fa-5x text-primary"></i>
                         </div>
-                        <h4 class="mt-3 mb-1"><?php echo htmlspecialchars($student['full_name']); ?></h4>
+                        <h4 class="mt-3 mb-1"><?php echo e($student['full_name']); ?></h4>
                         <?php if (!empty($student['chinese_name'])): ?>
-                        <p class="text-muted mb-2"><?php echo htmlspecialchars($student['chinese_name']); ?></p>
+                        <p class="text-muted mb-2"><?php echo e($student['chinese_name']); ?></p>
                         <?php endif; ?>
                         <p class="text-muted">
-                            <span class="badge bg-dark"><?php echo $student['student_id']; ?></span>
+                            <span class="badge bg-dark"><?php echo e($student['student_id']); ?></span>
                             <?php if (!empty($student['student_status'])): ?>
                             <br><span class="badge <?php 
                                 echo (strpos($student['student_status'], 'State Team') !== false) ? 'bg-success' : 
                                      ((strpos($student['student_status'], 'Backup Team') !== false) ? 'bg-warning' : 'bg-info');
-                            ?>"><?php echo htmlspecialchars($student['student_status']); ?></span>
+                            ?>"><?php echo e($student['student_status']); ?></span>
                             <?php endif; ?>
                         </p>
                     </div>
@@ -150,38 +152,38 @@ $invoice_stats = $stmt->fetch();
                         <tbody>
                             <tr>
                                 <td width="30%"><strong><i class="fas fa-id-card text-primary"></i> Student ID:</strong></td>
-                                <td><?php echo $student['student_id']; ?></td>
+                                <td><?php echo e($student['student_id']); ?></td>
                             </tr>
                             <tr>
                                 <td><strong><i class="fas fa-user text-primary"></i> English Name:</strong></td>
-                                <td><?php echo htmlspecialchars($student['full_name']); ?></td>
+                                <td><?php echo e($student['full_name']); ?></td>
                             </tr>
                             <?php if (!empty($student['chinese_name'])): ?>
                             <tr>
                                 <td><strong><i class="fas fa-language text-primary"></i> Chinese Name:</strong></td>
-                                <td><?php echo htmlspecialchars($student['chinese_name']); ?></td>
+                                <td><?php echo e($student['chinese_name']); ?></td>
                             </tr>
                             <?php endif; ?>
                             <tr>
                                 <td><strong><i class="fas fa-envelope text-primary"></i> Email:</strong></td>
-                                <td><?php echo htmlspecialchars($student['email']); ?></td>
+                                <td><?php echo e($student['email']); ?></td>
                             </tr>
                             <?php if (!empty($student['phone'])): ?>
                             <tr>
                                 <td><strong><i class="fas fa-phone text-primary"></i> Phone:</strong></td>
-                                <td><?php echo htmlspecialchars($student['phone']); ?></td>
+                                <td><?php echo e($student['phone']); ?></td>
                             </tr>
                             <?php endif; ?>
                             <?php if (!empty($student['ic_number'])): ?>
                             <tr>
                                 <td><strong><i class="fas fa-id-card text-primary"></i> IC/Passport:</strong></td>
-                                <td><?php echo htmlspecialchars($student['ic_number']); ?></td>
+                                <td><?php echo e($student['ic_number']); ?></td>
                             </tr>
                             <?php endif; ?>
                             <?php if (!empty($student['school'])): ?>
                             <tr>
                                 <td><strong><i class="fas fa-school text-primary"></i> School:</strong></td>
-                                <td><?php echo htmlspecialchars($student['school']); ?></td>
+                                <td><?php echo e($student['school']); ?></td>
                             </tr>
                             <?php endif; ?>
                             <tr>
@@ -214,71 +216,44 @@ $invoice_stats = $stmt->fetch();
         </div>
     </div>
 
-    <!-- Statistics Card -->
     <div class="col-md-4 mb-4">
         <div class="card mb-3">
-            <div class="card-header">
-                <i class="fas fa-chart-bar"></i> Statistics
-            </div>
+            <div class="card-header"><i class="fas fa-chart-bar"></i> Statistics</div>
             <div class="card-body">
                 <div class="stat-item mb-3">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="fas fa-book text-primary"></i>
-                            <strong>Enrolled Classes</strong>
-                        </div>
+                        <div><i class="fas fa-book text-primary"></i> <strong>Enrolled Classes</strong></div>
                         <span class="badge bg-primary"><?php echo $enrollment_stats['class_count'] ?? 0; ?></span>
                     </div>
                 </div>
-
                 <div class="stat-item mb-3">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="fas fa-credit-card text-success"></i>
-                            <strong>Total Payments</strong>
-                        </div>
+                        <div><i class="fas fa-credit-card text-success"></i> <strong>Total Payments</strong></div>
                         <span class="badge bg-success"><?php echo $payment_stats['total_payments'] ?? 0; ?></span>
                     </div>
                 </div>
-
                 <div class="stat-item mb-3">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="fas fa-check-circle text-success"></i>
-                            <strong>Verified Payments</strong>
-                        </div>
+                        <div><i class="fas fa-check-circle text-success"></i> <strong>Verified Payments</strong></div>
                         <span class="badge bg-success"><?php echo $payment_stats['verified_payments'] ?? 0; ?></span>
                     </div>
                 </div>
-
                 <div class="stat-item mb-3">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="fas fa-money-bill text-info"></i>
-                            <strong>Total Paid</strong>
-                        </div>
+                        <div><i class="fas fa-money-bill text-info"></i> <strong>Total Paid</strong></div>
                         <strong class="text-success"><?php echo formatCurrency($payment_stats['total_paid'] ?? 0); ?></strong>
                     </div>
                 </div>
-
                 <hr>
-
                 <div class="stat-item mb-3">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="fas fa-file-invoice text-warning"></i>
-                            <strong>Unpaid Invoices</strong>
-                        </div>
+                        <div><i class="fas fa-file-invoice text-warning"></i> <strong>Unpaid Invoices</strong></div>
                         <span class="badge bg-warning"><?php echo $invoice_stats['unpaid_invoices'] ?? 0; ?></span>
                     </div>
                 </div>
-
                 <div class="stat-item">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="fas fa-file-invoice text-success"></i>
-                            <strong>Paid Invoices</strong>
-                        </div>
+                        <div><i class="fas fa-file-invoice text-success"></i> <strong>Paid Invoices</strong></div>
                         <span class="badge bg-success"><?php echo $invoice_stats['paid_invoices'] ?? 0; ?></span>
                     </div>
                 </div>
@@ -286,9 +261,7 @@ $invoice_stats = $stmt->fetch();
         </div>
 
         <div class="card mb-3">
-            <div class="card-header">
-                <i class="fas fa-info-circle"></i> Account Info
-            </div>
+            <div class="card-header"><i class="fas fa-info-circle"></i> Account Info</div>
             <div class="card-body">
                 <p class="mb-2"><strong>Account Status:</strong> <span class="badge bg-success">Active</span></p>
                 <p class="mb-2"><strong>Account Type:</strong> 
@@ -305,12 +278,9 @@ $invoice_stats = $stmt->fetch();
             </div>
         </div>
 
-        <!-- Signed Agreement Card -->
         <?php if (!empty($pdf_data)): ?>
         <div class="card">
-            <div class="card-header bg-success text-white">
-                <i class="fas fa-file-contract"></i> Registration Agreement
-            </div>
+            <div class="card-header bg-success text-white"><i class="fas fa-file-contract"></i> Registration Agreement</div>
             <div class="card-body">
                 <div class="text-center">
                     <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
@@ -326,41 +296,26 @@ $invoice_stats = $stmt->fetch();
     </div>
 </div>
 
-<!-- My Classes -->
 <?php
-$stmt = $pdo->prepare("
-    SELECT c.*, e.enrollment_date, e.status
-    FROM enrollments e
-    JOIN classes c ON e.class_id = c.id
-    WHERE e.student_id = ?
-    ORDER BY e.enrollment_date DESC
-");
+$stmt = $pdo->prepare("SELECT c.*, e.enrollment_date, e.status FROM enrollments e JOIN classes c ON e.class_id = c.id WHERE e.student_id = ? ORDER BY e.enrollment_date DESC");
 $stmt->execute([$studentAccountId]);
 $my_classes = $stmt->fetchAll();
 ?>
 
 <div class="card">
-    <div class="card-header">
-        <i class="fas fa-book"></i> Enrolled Classes
-    </div>
+    <div class="card-header"><i class="fas fa-book"></i> Enrolled Classes</div>
     <div class="card-body">
         <?php if ($my_classes): ?>
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
-                        <tr>
-                            <th>Class Code</th>
-                            <th>Class Name</th>
-                            <th>Monthly Fee</th>
-                            <th>Enrollment Date</th>
-                            <th>Status</th>
-                        </tr>
+                        <tr><th>Class Code</th><th>Class Name</th><th>Monthly Fee</th><th>Enrollment Date</th><th>Status</th></tr>
                     </thead>
                     <tbody>
                         <?php foreach($my_classes as $class): ?>
                             <tr>
-                                <td><span class="badge bg-primary"><?php echo $class['class_code']; ?></span></td>
-                                <td><?php echo htmlspecialchars($class['class_name']); ?></td>
+                                <td><span class="badge bg-primary"><?php echo e($class['class_code']); ?></span></td>
+                                <td><?php echo e($class['class_name']); ?></td>
                                 <td><strong><?php echo formatCurrency($class['monthly_fee']); ?></strong></td>
                                 <td><?php echo formatDateTime($class['enrollment_date']); ?></td>
                                 <td>
@@ -384,12 +339,13 @@ $my_classes = $stmt->fetchAll();
     </div>
 </div>
 
-<!-- Edit Child Profile Modal (For Parents) -->
+<!-- MODAL 1: Edit Child Profile (Parents) - WITH CSRF -->
 <?php if (isParent()): ?>
 <div class="modal fade" id="editChildProfileModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <form method="POST" action="">
+                <?php echo csrfField(); ?>
                 <input type="hidden" name="action" value="update_child_profile">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="fas fa-edit"></i> Edit Child Profile</h5>
@@ -398,27 +354,20 @@ $my_classes = $stmt->fetchAll();
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">English Name 英文名 *</label>
-                        <input type="text" name="name_en" class="form-control" 
-                               value="<?php echo htmlspecialchars($student['name_en'] ?? $student['full_name']); ?>" required>
+                        <input type="text" name="name_en" class="form-control" value="<?php echo ea($student['name_en'] ?? $student['full_name']); ?>" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Chinese Name 中文名</label>
-                        <input type="text" name="name_cn" class="form-control" 
-                               value="<?php echo htmlspecialchars($student['name_cn'] ?? ''); ?>" 
-                               placeholder="张三">
+                        <input type="text" name="name_cn" class="form-control" value="<?php echo ea($student['name_cn'] ?? ''); ?>" placeholder="张三">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">IC Number/Passport 身份证号码</label>
-                        <input type="text" name="ic" class="form-control" 
-                               value="<?php echo htmlspecialchars($student['ic'] ?? ''); ?>" 
-                               placeholder="000000-00-0000">
+                        <input type="text" name="ic" class="form-control" value="<?php echo ea($student['ic'] ?? ''); ?>" placeholder="000000-00-0000">
                         <small class="text-muted">Child's identification number</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Phone Number 电话号码 *</label>
-                        <input type="tel" name="phone" class="form-control" 
-                               value="<?php echo htmlspecialchars($student['phone'] ?? ''); ?>" 
-                               placeholder="012-345 6789" required>
+                        <input type="tel" name="phone" class="form-control" value="<?php echo ea($student['phone'] ?? ''); ?>" placeholder="012-345 6789" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">School 学校 *</label>
@@ -439,22 +388,16 @@ $my_classes = $stmt->fetchAll();
                         echo (empty($student['school']) || in_array($student['school'], $predefined_schools)) ? 'display: none;' : ''; 
                     ?>">
                         <label class="form-label">Please specify school name *</label>
-                        <input type="text" name="school_other" id="school-other-edit" class="form-control" 
-                               value="<?php 
-                                   $predefined_schools = ['SJK(C) PUAY CHAI 2', 'SJK(C) Chee Wen', 'SJK(C) Subang', 'SJK(C) Sin Ming'];
-                                   echo (!empty($student['school']) && !in_array($student['school'], $predefined_schools)) ? htmlspecialchars($student['school']) : ''; 
-                               ?>" 
-                               placeholder="Enter school name">
+                        <input type="text" name="school_other" id="school-other-edit" class="form-control" value="<?php 
+                            $predefined_schools = ['SJK(C) PUAY CHAI 2', 'SJK(C) Chee Wen', 'SJK(C) Subang', 'SJK(C) Sin Ming'];
+                            echo (!empty($student['school']) && !in_array($student['school'], $predefined_schools)) ? ea($student['school']) : ''; 
+                        ?>" placeholder="Enter school name">
                     </div>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> Student ID and registration details cannot be changed. Contact admin for major changes.
-                    </div>
+                    <div class="alert alert-info"><i class="fas fa-info-circle"></i> Student ID cannot be changed. Contact admin for major changes.</div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Save Changes
-                    </button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
                 </div>
             </form>
         </div>
@@ -462,7 +405,6 @@ $my_classes = $stmt->fetchAll();
 </div>
 
 <script>
-// Show/hide school other field for edit modal
 document.getElementById('school-edit').addEventListener('change', function() {
     const otherContainer = document.getElementById('school-other-container');
     const otherInput = document.getElementById('school-other-edit');
@@ -478,12 +420,13 @@ document.getElementById('school-edit').addEventListener('change', function() {
 </script>
 <?php endif; ?>
 
-<!-- Edit Profile Modal (For direct student login) -->
+<!-- MODAL 2: Edit Profile (Direct Student) - WITH CSRF -->
 <?php if (!isParent()): ?>
 <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <form method="POST" action="">
+                <?php echo csrfField(); ?>
                 <input type="hidden" name="action" value="update_profile">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="fas fa-edit"></i> Edit Profile</h5>
@@ -492,38 +435,33 @@ document.getElementById('school-edit').addEventListener('change', function() {
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Full Name</label>
-                        <input type="text" name="full_name" class="form-control" 
-                               value="<?php echo htmlspecialchars($student['full_name']); ?>" required>
+                        <input type="text" name="full_name" class="form-control" value="<?php echo ea($student['full_name']); ?>" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Email</label>
-                        <input type="email" name="email" class="form-control" 
-                               value="<?php echo htmlspecialchars($student['email']); ?>" required>
+                        <input type="email" name="email" class="form-control" value="<?php echo ea($student['email']); ?>" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Phone</label>
-                        <input type="text" name="phone" class="form-control" 
-                               value="<?php echo htmlspecialchars($student['phone'] ?? ''); ?>" required>
+                        <input type="text" name="phone" class="form-control" value="<?php echo ea($student['phone'] ?? ''); ?>" required>
                     </div>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> Your Student ID cannot be changed.
-                    </div>
+                    <div class="alert alert-info"><i class="fas fa-info-circle"></i> Your Student ID cannot be changed.</div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Save Changes
-                    </button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
+<!-- MODAL 3: Change Password - WITH CSRF -->
 <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <form method="POST" action="">
+                <?php echo csrfField(); ?>
                 <input type="hidden" name="action" value="change_password">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="fas fa-key"></i> Change Password</h5>
@@ -546,9 +484,7 @@ document.getElementById('school-edit').addEventListener('change', function() {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Update Password
-                    </button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Update Password</button>
                 </div>
             </form>
         </div>
@@ -559,7 +495,6 @@ document.getElementById('school-edit').addEventListener('change', function() {
 <?php if (!empty($pdf_data)): ?>
 <script>
 function downloadSignedAgreement() {
-    // Convert base64 to blob
     const base64Data = <?php echo json_encode($pdf_data); ?>;
     const byteCharacters = atob(base64Data);
     const byteNumbers = new Array(byteCharacters.length);
@@ -568,12 +503,10 @@ function downloadSignedAgreement() {
     }
     const byteArray = new Uint8Array(byteNumbers);
     const blob = new Blob([byteArray], { type: 'application/pdf' });
-    
-    // Create download link
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'Registration_Agreement_<?php echo $student['student_id']; ?>.pdf';
+    link.download = 'Registration_Agreement_<?php echo e($student['student_id']); ?>.pdf';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -583,12 +516,6 @@ function downloadSignedAgreement() {
 <?php endif; ?>
 
 <style>
-.stat-item {
-    padding: 10px;
-    border-radius: 8px;
-    background: #f8f9fa;
-}
-.profile-avatar {
-    display: inline-block;
-}
+.stat-item { padding: 10px; border-radius: 8px; background: #f8f9fa; }
+.profile-avatar { display: inline-block; }
 </style>
