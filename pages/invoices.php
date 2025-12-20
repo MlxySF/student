@@ -675,6 +675,7 @@ function isClassFeeInvoice($invoice) {
         
         <hr><h6><i class="fas fa-upload"></i> Upload Payment Receipt</h6>
         <form method="POST" action="index.php?page=payments" enctype="multipart/form-data">
+          <?php echo csrfField(); ?>
           <input type="hidden" name="action" value="upload_payment">
           <input type="hidden" name="invoice_id" value="<?php echo $inv['id']; ?>">
           <input type="hidden" name="student_account_id" value="<?php echo $studentAccountId; ?>">
