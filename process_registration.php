@@ -15,6 +15,7 @@
  * UPDATED: Changed form_date to record both date and time (DATETIME format)
  * UPDATED: Added admin email notification for new registrations
  * UPDATED: Added payment_date column to payments INSERT - user can specify when payment was actually made
+ * FIXED: Randomize student ID to prevent duplicate entry errors when deleting mid-sequence registrations
  */
 
 header('Content-Type: application/json');
@@ -42,6 +43,41 @@ function generatePasswordFromIC(string $ic): string {
     $icClean = str_replace('-', '', $ic);
     $last4 = substr($icClean, -4);
     return $last4;
+}
+
+// =========================
+// Helper: Generate unique randomized registration number
+// UPDATED: Uses random 4-digit suffix to prevent duplicate ID errors
+// =========================
+function generateUniqueRegistrationNumber(PDO $conn): string {
+    $year = date('Y');
+    $maxAttempts = 100; // Prevent infinite loop
+    $attempt = 0;
+    
+    while ($attempt < $maxAttempts) {
+        // Generate random 4-digit number (1000-9999)
+        $randomSuffix = str_pad(mt_rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+        $regNumber = 'WSA' . $year . '-' . $randomSuffix;
+        
+        // Check if this registration number already exists
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM registrations WHERE registration_number = ?");
+        $stmt->execute([$regNumber]);
+        $count = (int)$stmt->fetchColumn();
+        
+        if ($count === 0) {
+            error_log("[Reg Number] Generated unique random registration number: {$regNumber}");
+            return $regNumber;
+        }
+        
+        $attempt++;
+        error_log("[Reg Number] Collision detected for {$regNumber}, retrying... (attempt {$attempt})");
+    }
+    
+    // Fallback: use timestamp-based unique suffix if random fails
+    $fallbackSuffix = substr(str_replace('.', '', microtime(true)), -4);
+    $regNumber = 'WSA' . $year . '-' . $fallbackSuffix;
+    error_log("[Reg Number] Using fallback timestamp-based number: {$regNumber}");
+    return $regNumber;
 }
 
 // =========================
@@ -848,12 +884,8 @@ try {
         throw new Exception('A child with this IC number (' . $childIC . ') is already registered (Reg#: ' . $existingChild['registration_number'] . '). Please check the IC number.');
     }
 
-    // Generate registration number
-    $year = date('Y');
-    $stmt = $conn->prepare("SELECT COUNT(*) FROM registrations WHERE YEAR(created_at) = ?");
-    $stmt->execute([$year]);
-    $count = (int)$stmt->fetchColumn();
-    $regNumber = 'WSA' . $year . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+    // UPDATED: Generate unique randomized registration number
+    $regNumber = generateUniqueRegistrationNumber($conn);
 
     // Student account password (last 4 digits of child's IC)
     $generatedPassword = generatePasswordFromIC($childIC);
