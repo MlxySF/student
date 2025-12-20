@@ -614,22 +614,41 @@ $page = $_GET['page'] ?? 'login';
             }
         }
 
-        /* ✨ NEW: Enhanced DataTables Pagination Styles */
+        /* ✨ FIXED: DataTables Pagination Dropdown - Prevent Arrow Overlap */
         .dataTables_wrapper .dataTables_length {
             margin-bottom: 1rem;
         }
 
         .dataTables_wrapper .dataTables_length select {
-            padding: 5px 10px;
+            padding: 5px 30px 5px 10px !important;
             border-radius: 6px;
             border: 1px solid #cbd5e1;
-            min-width: 70px;
-            margin: 0 5px;
+            min-width: 90px;
+            margin: 0 8px;
+            background-color: white;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23475569' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 12px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .dataTables_wrapper .dataTables_length label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            color: #475569;
         }
 
         .dataTables_wrapper .dataTables_info {
             color: #64748b;
             font-size: 14px;
+            font-weight: 500;
         }
 
         .dataTables_wrapper .dataTables_paginate {
@@ -644,6 +663,7 @@ $page = $_GET['page'] ?? 'login';
             background: white;
             color: #475569;
             transition: all 0.2s;
+            font-weight: 500;
         }
 
         .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
