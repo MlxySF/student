@@ -546,6 +546,7 @@ function renderPagination($data) {
         <form method="POST" action="index.php?page=payments" enctype="multipart/form-data">
           <input type="hidden" name="action" value="upload_payment">
           <input type="hidden" name="invoice_id" value="<?php echo $inv['id']; ?>">
+          <input type="hidden" name="student_account_id" value="<?php echo $studentAccountId; ?>">
           <input type="hidden" name="invoice_class_id" value="<?php echo $inv['class_id']; ?>">
           <input type="hidden" name="invoice_amount" value="<?php echo $inv['amount']; ?>">
           <input type="hidden" name="invoice_payment_month" value="<?php echo date('M Y'); ?>">
