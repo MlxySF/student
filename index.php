@@ -104,11 +104,16 @@ function getAdminPaymentEmailHTML($data) {
                     </tr>";
     }
     
-    $html .= "
+    // Only show class if it exists
+    if (!empty($data['class_name'])) {
+        $html .= "
                     <tr>
                         <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>Class:</td>
                         <td style='padding: 8px 0; color: #1e293b;'>{$data['class_code']} - {$data['class_name']}</td>
-                    </tr>
+                    </tr>";
+    }
+    
+    $html .= "
                     <tr>
                         <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>Payment Month:</td>
                         <td style='padding: 8px 0; color: #1e293b;'>{$data['payment_month']}</td>
@@ -394,24 +399,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $is_invoice_payment = !empty($invoice_id);
 
     if ($invoice_id) {
+        // Invoice payment - get class_id from invoice
         $class_id = !empty($_POST['invoice_class_id']) ? $_POST['invoice_class_id'] : null;
         $amount = $_POST['invoice_amount'];
         $payment_month = !empty($_POST['invoice_payment_month']) ? $_POST['invoice_payment_month'] : date('M Y');
         $notes = '';
 
+        // FIX: Only check for class enrollment if the invoice has a class_id
+        // Some invoices (registration, misc fees) don't have a class_id and that's OK
         if (!$class_id) {
+            // Try to get from student's first active enrollment (for backward compatibility)
             $stmt = $pdo->prepare("SELECT class_id FROM enrollments WHERE student_id = ? AND status = 'active' LIMIT 1");
             $stmt->execute([getActiveStudentId()]);
             $enrollment = $stmt->fetch();
+            
+            // If found, use it; otherwise leave as NULL (which is valid for some invoices)
             $class_id = $enrollment ? $enrollment['class_id'] : null;
         }
 
-        if (!$class_id) {
-            $_SESSION['error'] = "Unable to process invoice payment. Please ensure you're enrolled in at least one class.";
-            header('Location: index.php?page=invoices');
-            exit;
-        }
+        // REMOVED: The enrollment check that was blocking NULL class_id
+        // Invoices without class_id (like registration fees) can now proceed
+        
     } else {
+        // Regular payment (not from invoice)
         $class_id = $_POST['class_id'];
         $amount = $_POST['amount'];
         $payment_month = $_POST['payment_month'];
@@ -482,7 +492,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
             $success = $stmt->execute([
                 $activeStudentId, 
-                $class_id, 
+                $class_id,  // Can be NULL for non-class-specific invoices
                 $amount, 
                 $payment_month, 
                 $filename,
@@ -511,10 +521,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $stmt->execute([$activeStudentId]);
                 $student = $stmt->fetch();
                 
-                // Get class info
-                $stmt = $pdo->prepare("SELECT class_code, class_name FROM classes WHERE id = ?");
-                $stmt->execute([$class_id]);
-                $class = $stmt->fetch();
+                // Get class info (if exists)
+                $class_code = 'N/A';
+                $class_name = 'No Class Assigned';
+                if ($class_id) {
+                    $stmt = $pdo->prepare("SELECT class_code, class_name FROM classes WHERE id = ?");
+                    $stmt->execute([$class_id]);
+                    $class = $stmt->fetch();
+                    if ($class) {
+                        $class_code = $class['class_code'];
+                        $class_name = $class['class_name'];
+                    }
+                }
                 
                 // Get invoice info if applicable
                 $invoice_number = '';
@@ -551,8 +569,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $adminNotificationData = [
                     'student_name' => $student['full_name'],
                     'student_id' => $student['student_id'],
-                    'class_code' => $class['class_code'],
-                    'class_name' => $class['class_name'],
+                    'class_code' => $class_code,
+                    'class_name' => $class_name,
                     'payment_month' => $payment_month,
                     'amount' => number_format($amount, 2),
                     'receipt_filename' => $filename,
