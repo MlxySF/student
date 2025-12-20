@@ -80,7 +80,9 @@ function getRejectionEmailHTML($studentName, $registrationNumber, $rejectReason)
     <div style='max-width: 600px; margin: 20px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
         <!-- Header -->
         <div style='background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 40px 24px; text-align: center;'>
-            <div style='width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 48px;'>❌</div>
+            <div style='width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 16px; position: relative;'>
+                <div style='position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 48px; line-height: 1;'>❌</div>
+            </div>
             <h1 style='margin: 0 0 8px 0; font-size: 28px; font-weight: 700;'>Registration Not Approved</h1>
             <p style='margin: 0; font-size: 16px; opacity: 0.95;'>注册未通过 · Not Approved</p>
         </div>
