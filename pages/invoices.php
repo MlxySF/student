@@ -152,6 +152,12 @@ function renderPagination($data) {
     echo '<a class="page-link" href="?page=invoices' . $filter_params . '&' . $param . '=' . ($current_page + 1) . '">&raquo;</a></li>';
     echo '</ul></nav>';
 }
+
+// Helper function to determine if invoice is for class fees or equipment/clothing
+function isClassFeeInvoice($invoice) {
+    $classFeeTypes = ['monthly_fee', 'registration'];
+    return in_array($invoice['invoice_type'], $classFeeTypes);
+}
 ?>
 
 <style>
@@ -185,6 +191,88 @@ function renderPagination($data) {
 }
 .receipt-image { max-width: 100%; height: auto; border-radius: 8px; border: 2px solid #e2e8f0; }
 .receipt-pdf { width: 100%; height: 500px; border: 2px solid #e2e8f0; border-radius: 8px; }
+
+/* Bank Details Styles */
+.bank-details-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 20px;
+    color: white;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.bank-details-card.equipment-bank {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+
+.bank-details-card h6 {
+    font-weight: 700;
+    margin-bottom: 16px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bank-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.bank-info-row:last-child {
+    border-bottom: none;
+}
+
+.bank-info-label {
+    font-size: 13px;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+.bank-info-value {
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.copy-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.copy-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.bank-note {
+    background: rgba(255, 255, 255, 0.15);
+    border-left: 3px solid rgba(255, 255, 255, 0.5);
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 12px;
+    font-size: 13px;
+}
+
+.bank-note i {
+    margin-right: 6px;
+}
 </style>
 
 <?php if (isParent()): ?>
@@ -542,6 +630,61 @@ function renderPagination($data) {
           <div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Receipt not available.</div>
         <?php endif; ?>
       <?php elseif (in_array($inv['status'], ['unpaid', 'overdue'])): ?>
+        <!-- Show Bank Details based on invoice type -->
+        <?php if (isClassFeeInvoice($inv)): ?>
+          <!-- Bank Details for Class Fees -->
+          <div class="bank-details-card">
+            <h6><i class="fas fa-university"></i> Bank Details for Class Fees</h6>
+            <div class="bank-info-row">
+              <span class="bank-info-label">Bank Name</span>
+              <span class="bank-info-value">Maybank</span>
+            </div>
+            <div class="bank-info-row">
+              <span class="bank-info-label">Account Name</span>
+              <span class="bank-info-value">Wushu Sport Academy</span>
+            </div>
+            <div class="bank-info-row">
+              <span class="bank-info-label">Account Number</span>
+              <span class="bank-info-value">
+                562123456789
+                <button class="copy-btn" onclick="copyToClipboard('562123456789', this)">
+                  <i class="fas fa-copy"></i> Copy
+                </button>
+              </span>
+            </div>
+            <div class="bank-note">
+              <i class="fas fa-info-circle"></i>
+              <strong>Note:</strong> Please use this bank account for class fees, registration fees, and monthly payments only.
+            </div>
+          </div>
+        <?php else: ?>
+          <!-- Bank Details for Equipment & Clothing -->
+          <div class="bank-details-card equipment-bank">
+            <h6><i class="fas fa-shopping-cart"></i> Bank Details for Equipment & Clothing</h6>
+            <div class="bank-info-row">
+              <span class="bank-info-label">Bank Name</span>
+              <span class="bank-info-value">CIMB Bank</span>
+            </div>
+            <div class="bank-info-row">
+              <span class="bank-info-label">Account Name</span>
+              <span class="bank-info-value">Wushu Equipment Store</span>
+            </div>
+            <div class="bank-info-row">
+              <span class="bank-info-label">Account Number</span>
+              <span class="bank-info-value">
+                8001234567890
+                <button class="copy-btn" onclick="copyToClipboard('8001234567890', this)">
+                  <i class="fas fa-copy"></i> Copy
+                </button>
+              </span>
+            </div>
+            <div class="bank-note">
+              <i class="fas fa-info-circle"></i>
+              <strong>Note:</strong> Please use this bank account for equipment, uniforms, and clothing purchases only.
+            </div>
+          </div>
+        <?php endif; ?>
+        
         <hr><h6><i class="fas fa-upload"></i> Upload Payment Receipt</h6>
         <form method="POST" action="index.php?page=payments" enctype="multipart/form-data">
           <input type="hidden" name="action" value="upload_payment">
@@ -563,3 +706,20 @@ function renderPagination($data) {
   </div></div>
 </div>
 <?php endforeach; ?>
+
+<script>
+function copyToClipboard(text, button) {
+    navigator.clipboard.writeText(text).then(function() {
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        button.style.background = 'rgba(16, 185, 129, 0.3)';
+        
+        setTimeout(function() {
+            button.innerHTML = originalHTML;
+            button.style.background = 'rgba(255, 255, 255, 0.2)';
+        }, 2000);
+    }).catch(function(err) {
+        alert('Failed to copy: ' + err);
+    });
+}
+</script>
