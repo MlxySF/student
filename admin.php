@@ -789,6 +789,44 @@ $page = $_GET['page'] ?? 'login';
             background: linear-gradient(135deg, #f59e0b, #d97706);
             color: white;
         }
+        
+        /* ✨ NEW: Bulk Delete Styles */
+        .bulk-checkbox {
+            display: none;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .bulk-actions {
+            display: none;
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn-bulk-delete {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-bulk-delete:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3);
+        }
+        
+        .btn-bulk-delete:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body<?php echo ($page !== 'login') ? ' class="logged-in"' : ''; ?>>
@@ -990,6 +1028,8 @@ $page = $_GET['page'] ?? 'login';
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<!-- ✨ NEW: Bulk Delete Script -->
+<script src="admin.js"></script>
 
 <script>
     // ✨ NEW: Reload Page Data Function
