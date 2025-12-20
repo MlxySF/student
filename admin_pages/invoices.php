@@ -600,18 +600,33 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
 const loadedReceipts = new Set();
 
 function loadReceipt(invoiceId) {
+    console.log('Loading receipt for invoice:', invoiceId);
+    
     // Check if already loaded
     if (loadedReceipts.has(invoiceId)) {
+        console.log('Receipt already loaded for invoice:', invoiceId);
         return;
     }
     
     const container = document.getElementById('receiptContainer' + invoiceId);
-    if (!container) return;
+    if (!container) {
+        console.error('Receipt container not found for invoice:', invoiceId);
+        return;
+    }
+    
+    // Build correct URL path
+    const apiUrl = 'admin_pages/api/get_receipt.php?invoice_id=' + invoiceId;
+    console.log('Fetching from URL:', apiUrl);
     
     // Fetch receipt data via AJAX
-    fetch('api/get_receipt.php?invoice_id=' + invoiceId)
-        .then(response => response.json())
+    fetch(apiUrl)
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Response data:', data);
+            
             if (data.success) {
                 // Mark as loaded
                 loadedReceipts.add(invoiceId);
@@ -622,7 +637,9 @@ function loadReceipt(invoiceId) {
                 } else {
                     container.innerHTML = '<img src="data:' + data.receipt_mime_type + ';base64,' + data.receipt_data + '" alt="Receipt" class="receipt-image">';
                 }
+                console.log('Receipt displayed successfully');
             } else {
+                console.error('API error:', data.error);
                 container.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> ' + (data.error || 'No receipt available') + '</div>';
             }
         })
