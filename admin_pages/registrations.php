@@ -1,5 +1,5 @@
 <?php
-// admin_pages/registrations.php - View registrations with proper status colors and BULK DELETE
+// admin_pages/registrations.php - View registrations with proper status colors
 
 // Get filter parameter from URL, default to 'all'
 $statusFilter = isset($_GET['status']) ? $_GET['status'] : 'all';
@@ -102,22 +102,6 @@ $totalCount = array_sum($statusCounts);
                     <span class="badge bg-light text-dark ms-1"><?php echo $statusCounts['rejected'] ?? 0; ?></span>
                 </a>
             </div>
-            
-            <!-- ✨ NEW: Bulk Select Button -->
-            <button id="bulkSelectBtn-registrations" class="btn btn-primary ms-2">
-                <i class="fas fa-check-square"></i> Select
-            </button>
-        </div>
-        
-        <!-- ✨ NEW: Bulk Actions Bar -->
-        <div id="bulkActions-registrations" class="bulk-actions">
-            <div class="d-flex align-items-center gap-3">
-                <input type="checkbox" id="selectAll-registrations" class="bulk-checkbox form-check-input">
-                <label for="selectAll-registrations" class="form-check-label fw-bold mb-0">Select All</label>
-                <button id="bulkDeleteBtn-registrations" class="btn btn-bulk-delete" disabled>
-                    <i class="fas fa-trash-alt"></i> Delete Selected
-                </button>
-            </div>
         </div>
 
         <?php if (empty($registrations)): ?>
@@ -133,7 +117,6 @@ $totalCount = array_sum($statusCounts);
             <table class="table table-striped data-table">
                 <thead>
                     <tr>
-                        <th style="width: 40px;"><!-- Checkbox column --></th>
                         <th>Reg #</th>
                         <th>Name</th>
                         <th>Email</th>
@@ -148,9 +131,6 @@ $totalCount = array_sum($statusCounts);
                 <tbody>
                     <?php foreach ($registrations as $reg): ?>
                     <tr>
-                        <td>
-                            <input type="checkbox" class="bulk-checkbox bulk-checkbox-registrations form-check-input" value="<?php echo $reg['id']; ?>">
-                        </td>
                         <td><strong><?php echo htmlspecialchars($reg['registration_number']); ?></strong></td>
                         <td>
                             <?php echo htmlspecialchars($reg['name_en']); ?>
