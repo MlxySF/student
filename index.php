@@ -1054,6 +1054,12 @@ $page = $_GET['page'] ?? 'login';
             }
         }
 
+        /* FIXED: Lower the error icon in rejected registration alert */
+        .alert-danger i.fa-exclamation-triangle {
+            vertical-align: middle;
+            margin-top: -2px;
+        }
+
         @media (min-width: 769px) {
             .header-menu-btn {
                 display: none;
