@@ -710,6 +710,23 @@
                             </button>
                         </div>
                     </div>
+                    <!-- MANDATORY AGREEMENT CHECKBOX -->
+    <div class="bg-amber-50 border-2 border-amber-400 rounded-xl p-4 mb-6 mt-8">
+        <label class="flex items-start gap-3 cursor-pointer group">
+            <input type="checkbox" id="terms-agreement" class="w-5 h-5 mt-1 text-amber-600 border-2 border-amber-400 rounded focus:ring-2 focus:ring-amber-500 cursor-pointer" required>
+            <div class="flex-1">
+                <p class="font-bold text-slate-800 text-sm mb-1 group-hover:text-amber-700 transition-colors">
+                    <i class="fas fa-check-circle text-amber-600"></i> I agree to the Terms and Conditions *
+                </p>
+                <p class="text-xs text-slate-700 leading-relaxed">
+                    本人已阅读并同意上述所有条款与条件，包括学费政策、运动员守则及免责声明。
+                </p>
+                <p class="text-xs text-slate-600 leading-relaxed mt-1">
+                    I have read and agree to all the above terms and conditions, including the fee policy, code of conduct, and disclaimer.
+                </p>
+            </div>
+        </label>
+    </div>
                 </div>
             </div>
             
@@ -946,6 +963,7 @@
         <div style="border:1px solid #e5e7eb; border-top:none; padding:10px 12px; font-size:13px; line-height:1.5;">
             <div style="margin-bottom:5px;"><span style="font-weight:600; color:#6b7280; display:inline-block; width:140px;">Phone 电话:</span> <span style="font-weight:500; color:#111827;" id="pdf-phone"></span></div>
             <div style="margin-bottom:5px;"><span style="font-weight:600; color:#6b7280; display:inline-block; width:140px;">Email 邮箱:</span> <span style="font-weight:500; color:#111827;" id="pdf-email"></span></div>
+            <!--<div style="margin-bottom:5px;"><span style="font-weight:600; color:#6b7280; display:inline-block; width:140px;">Level 等级:</span> <span style="font-weight:500; color:#111827;" id="pdf-level"></span></div>-->
             <div style="margin-bottom:5px;"><span style="font-weight:600; color:#6b7280; display:inline-block; width:140px;">Events 项目:</span> <span style="font-weight:500; color:#111827;" id="pdf-events"></span></div>
             <div style="margin-bottom:5px;"><span style="font-weight:600; color:#6b7280; display:inline-block; width:140px;">Schedule 时间:</span> <span style="font-weight:500; color:#111827;" id="pdf-schedule"></span></div>
         </div>
