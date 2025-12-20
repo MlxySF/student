@@ -1320,12 +1320,8 @@ $page = $_GET['page'] ?? 'login';
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    setTimeout(() => {
-        document.querySelectorAll('.content-area > .alert').forEach(alert => {
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
-        });
-    }, 7000);
+    // REMOVED: Auto-dismiss timeout for alerts
+    // Alerts now only close when user clicks the X button
 
     document.addEventListener('DOMContentLoaded', function() {
         const menuToggle = document.getElementById('menuToggle');
