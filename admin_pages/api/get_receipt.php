@@ -9,12 +9,12 @@ session_start();
 header('Content-Type: application/json');
 
 // Check if config file exists
-if (!file_exists('../../includes/config.php')) {
+if (!file_exists('../../config.php')) {
     echo json_encode(['error' => 'Configuration file not found']);
     exit;
 }
 
-require_once '../../includes/config.php';
+require_once '../../config.php';
 
 // Check if admin is logged in
 if (!isset($_SESSION['admin_id'])) {
