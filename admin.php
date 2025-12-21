@@ -1,5 +1,6 @@
 <?php
 // admin.php - Complete Admin Panel
+ob_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -14,10 +15,16 @@ function isAdminLoggedIn() {
 // Redirect if not logged in
 function redirectIfNotAdmin() {
     if (!isAdminLoggedIn()) {
+        // Use JavaScript redirect as fallback if headers already sent
+        if (headers_sent()) {
+            echo '<script>window.location.href = "admin.php?page=login";</script>';
+            exit;
+        }
         header('Location: admin.php?page=login');
         exit;
     }
 }
+
 
 // Safety stub function: This should NOT be used in admin context
 // Defined here only to prevent "undefined function" errors if accidentally called
@@ -1130,3 +1137,4 @@ $page = $_GET['page'] ?? 'login';
 </script>
 </body>
 </html>
+<?php ob_end_flush(); ?>
