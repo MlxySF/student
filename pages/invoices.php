@@ -674,7 +674,7 @@ function isClassFeeInvoice($invoice) {
         <?php endif; ?>
         
         <hr><h6><i class="fas fa-upload"></i> Upload Payment Receipt</h6>
-        <form method="POST" action="index.php?page=payments" enctype="multipart/form-data">
+        <form method="POST" action="?page=invoices" enctype="multipart/form-data">
           <?php echo csrfField(); ?>
           <input type="hidden" name="action" value="upload_payment">
           <input type="hidden" name="invoice_id" value="<?php echo $inv['id']; ?>">
@@ -682,11 +682,24 @@ function isClassFeeInvoice($invoice) {
           <input type="hidden" name="invoice_class_id" value="<?php echo $inv['class_id']; ?>">
           <input type="hidden" name="invoice_amount" value="<?php echo $inv['amount']; ?>">
           <input type="hidden" name="invoice_payment_month" value="<?php echo date('M Y'); ?>">
-          <div class="mb-3">
-            <label class="form-label">Receipt (Image/PDF) *</label>
-            <input type="file" name="receipt" class="form-control" accept="image/*,.pdf" required>
-            <div class="form-text">Max 5MB | JPG, PNG, PDF</div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label"><i class="fas fa-calendar-day"></i> Payment Date *</label>
+              <input type="date" name="payment_date" class="form-control" 
+                     value="<?php echo date('Y-m-d'); ?>" 
+                     max="<?php echo date('Y-m-d'); ?>" 
+                     required>
+              <div class="form-text">Date on your payment receipt</div>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+              <label class="form-label"><i class="fas fa-receipt"></i> Receipt (Image/PDF) *</label>
+              <input type="file" name="receipt" class="form-control" accept="image/*,.pdf" required>
+              <div class="form-text">Max 5MB | JPG, PNG, PDF</div>
+            </div>
           </div>
+          
           <button type="submit" class="btn btn-success"><i class="fas fa-upload"></i> Submit Payment</button>
         </form>
       <?php endif; ?>
