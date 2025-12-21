@@ -242,7 +242,7 @@ $page = $_GET['page'] ?? 'login';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - <?php echo SITE_NAME; ?></title>
+    <title><?php echo SITE_NAME; ?> - Admin Panel</title>
     
     <!-- Google Fonts: Inter (English) + Noto Sans SC (Chinese) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
