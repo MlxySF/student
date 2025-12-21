@@ -334,18 +334,3 @@ function getFullFilePath($relativePath) {
 function isAllowedExtension($extension) {
     return in_array(strtolower($extension), ALLOWED_EXTENSIONS);
 }
-
-/**
- * Get human-readable file size
- * 
- * @param int $bytes File size in bytes
- * @return string Formatted file size
- */
-function formatFileSize($bytes) {
-    if ($bytes >= 1048576) {
-        return number_format($bytes / 1048576, 2) . ' MB';
-    } elseif ($bytes >= 1024) {
-        return number_format($bytes / 1024, 2) . ' KB';
-    }
-    return $bytes . ' bytes';
-}
