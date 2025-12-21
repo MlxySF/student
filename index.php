@@ -3,10 +3,11 @@ ob_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Include config, security layer, and auth helper
+// Include config, security layer, auth helper, and file helper
 require_once 'config.php';
-require_once 'security.php';  // NEW: Security layer
+require_once 'security.php';
 require_once 'auth_helper.php';
+require_once 'file_helper.php'; // NEW: File storage helper
 
 // Include PHPMailer for admin notifications
 use PHPMailer\PHPMailer\PHPMailer;
@@ -106,7 +107,6 @@ function getAdminPaymentEmailHTML($data) {
                     </tr>";
     }
     
-    // Only show class if it exists
     if (!empty($data['class_name'])) {
         $html .= "
                     <tr>
@@ -191,90 +191,32 @@ function getAdminPaymentEmailHTML($data) {
 // LEGACY HELPER FUNCTIONS (for backward compatibility)
 // ============================================================
 
-// Check if student is logged in and redirect if not
 function redirectIfNotLoggedIn() {
     requireLogin();
 }
 
-// Get current logged-in student ID - now uses new auth system
 if (!function_exists('getStudentId')) {
     function getStudentId() {
         return getActiveStudentId();
     }
 }
 
-// Validate receipt file upload
-function validateReceiptFile($file) {
-    $result = ['valid' => false, 'error' => ''];
-
-    // Check file size (max 5MB)
-    $maxSize = 5 * 1024 * 1024; // 5MB in bytes
-    if ($file['size'] > $maxSize) {
-        $result['error'] = 'File size must be less than 5MB.';
-        return $result;
-    }
-
-    // Check file type
-    $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
-    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-    $mimeType = finfo_file($finfo, $file['tmp_name']);
-    finfo_close($finfo);
-
-    if (!in_array($mimeType, $allowedTypes)) {
-        $result['error'] = 'Only JPG, PNG, and PDF files are allowed.';
-        return $result;
-    }
-
-    $result['valid'] = true;
-    return $result;
-}
-
-// Convert file to base64 for database storage
-function fileToBase64($file) {
-    if (!file_exists($file['tmp_name'])) {
-        return false;
-    }
-
-    $fileData = file_get_contents($file['tmp_name']);
-    if ($fileData === false) {
-        return false;
-    }
-
-    $base64 = base64_encode($fileData);
-
-    // Get MIME type
-    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-    $mimeType = finfo_file($finfo, $file['tmp_name']);
-    finfo_close($finfo);
-
-    return [
-        'data' => $base64,
-        'mime' => $mimeType,
-        'size' => $file['size']
-    ];
-}
-
 // ============================================================
 // AUTHENTICATION HANDLERS
 // ============================================================
 
-// Handle Login - WITH RATE LIMITING AND CSRF
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'login') {
-    // Verify CSRF token
     verifyCSRF();
     
-    // Sanitize inputs
     $email = sanitizeEmail($_POST['email']);
-    $password = $_POST['password']; // Don't sanitize password
+    $password = $_POST['password'];
     
-    // Validate email format
     if (!isValidEmail($email)) {
         $_SESSION['error'] = 'Invalid email format.';
         header('Location: index.php?page=login');
         exit;
     }
     
-    // Rate limiting: 5 attempts per 5 minutes
     $identifier = $email . '_' . $_SERVER['REMOTE_ADDR'];
     
     if (isRateLimited($identifier, 5, 300)) {
@@ -283,17 +225,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         exit;
     }
 
-    // Use new unified authentication
     $authResult = authenticateUser($email, $password, $pdo);
 
     if ($authResult['success']) {
-        // Clear rate limit on successful login
         clearRateLimit($identifier);
-        
-        // Create session
         createLoginSession($authResult);
         
-        // Set legacy session variables for backward compatibility
         $userData = $authResult['user_data'];
         $userType = $authResult['user_type'];
         
@@ -301,14 +238,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $_SESSION['student_id'] = $userData['id'];
             $_SESSION['student_name'] = $userData['full_name'];
         } else if ($userType === 'parent') {
-            // For parents, set the first child as the active student
             $_SESSION['student_name'] = $authResult['children'][0]['full_name'] ?? 'Parent';
         }
         
         header('Location: index.php?page=dashboard');
         exit;
     } else {
-        // Login failed - display appropriate error message
         $errorType = $authResult['error'] ?? 'unknown';
         $errorMessage = $authResult['message'] ?? 'An error occurred during login.';
         
@@ -338,7 +273,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
-// Handle Logout - use new function
 if (isset($_GET['logout'])) {
     logoutUser();
 }
@@ -347,31 +281,26 @@ if (isset($_GET['logout'])) {
 // FORM HANDLERS
 // ============================================================
 
-// Handle Profile Update - WITH CSRF AND VALIDATION
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_profile') {
     redirectIfNotLoggedIn();
     verifyCSRF();
 
-    // Sanitize and validate inputs
     $full_name = sanitizeString($_POST['full_name']);
     $email = sanitizeEmail($_POST['email']);
     $phone = sanitizeString($_POST['phone']);
     
-    // Validate email
     if (!isValidEmail($email)) {
         $_SESSION['error'] = 'Invalid email format.';
         header('Location: index.php?page=profile');
         exit;
     }
     
-    // Validate phone (optional)
     if (!empty($phone) && !isValidPhone($phone)) {
         $_SESSION['error'] = 'Invalid phone number format.';
         header('Location: index.php?page=profile');
         exit;
     }
 
-    // Check if email is already used by another student
     $stmt = $pdo->prepare("SELECT id FROM students WHERE email = ? AND id != ?");
     $stmt->execute([$email, getActiveStudentId()]);
 
@@ -389,7 +318,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-// Handle Password Change - WITH CSRF AND VALIDATION
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'change_password') {
     redirectIfNotLoggedIn();
     verifyCSRF();
@@ -398,7 +326,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $new_password = $_POST['new_password'];
     $confirm_password = $_POST['confirm_password'];
     
-    // Validate password strength
     $passwordCheck = isStrongPassword($new_password, 6);
     if (!$passwordCheck['valid']) {
         $_SESSION['error'] = $passwordCheck['error'];
@@ -406,7 +333,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         exit;
     }
 
-    // Get current student or parent password
     if (isStudent()) {
         $stmt = $pdo->prepare("SELECT password FROM students WHERE id = ?");
         $stmt->execute([getUserId()]);
@@ -438,17 +364,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-// Handle Payment Upload - WITH CSRF AND VALIDATION
+// Handle Payment Upload - NOW USING FILE STORAGE
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'upload_payment') {
     redirectIfNotLoggedIn();
     verifyCSRF();
 
-    // Determine payment type
     $invoice_id = !empty($_POST['invoice_id']) ? sanitizeInt($_POST['invoice_id']) : null;
     $is_invoice_payment = !empty($invoice_id);
+    $payment_date = !empty($_POST['payment_date']) ? sanitizeString($_POST['payment_date']) : date('Y-m-d');
 
     if ($invoice_id) {
-        // Invoice payment
         $class_id = !empty($_POST['invoice_class_id']) ? sanitizeInt($_POST['invoice_class_id']) : null;
         $amount = sanitizeFloat($_POST['invoice_amount']);
         $payment_month = sanitizeString($_POST['invoice_payment_month'] ?? date('M Y'));
@@ -461,14 +386,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $class_id = $enrollment ? $enrollment['class_id'] : null;
         }
     } else {
-        // Regular payment
         $class_id = sanitizeInt($_POST['class_id']);
         $amount = sanitizeFloat($_POST['amount']);
         $payment_month = sanitizeString($_POST['payment_month']);
         $notes = sanitizeString($_POST['notes'] ?? '');
     }
     
-    // Validate amount
     if (!isValidAmount($amount)) {
         $_SESSION['error'] = 'Invalid payment amount.';
         $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
@@ -477,7 +400,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 
     if (isset($_FILES['receipt']) && $_FILES['receipt']['error'] === 0) {
-        // Use security.php validation
         $fileValidation = isValidFileUpload($_FILES['receipt']);
         
         if (!$fileValidation['valid']) {
@@ -487,35 +409,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             exit;
         }
 
-        $receiptData = fileToBase64($_FILES['receipt']);
-
-        if ($receiptData === false) {
-            $_SESSION['error'] = "Failed to process receipt file.";
-            $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
-            header('Location: index.php?page=' . $redirect_page);
-            exit;
-        }
-
-        // Generate secure filename
-        $secureFilename = generateSecureFilename($_FILES['receipt']['name']);
-        if (!$secureFilename) {
-            $_SESSION['error'] = 'Invalid file type.';
-            $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
-            header('Location: index.php?page=' . $redirect_page);
-            exit;
-        }
-        
-        $filename = $secureFilename;
-
-        // Get parent_account_id if this is a child account
-        $parent_account_id = null;
-        if (isStudent()) {
-            $studentData = getActiveStudentData($pdo);
-            $parent_account_id = $studentData['parent_account_id'];
-        } else if (isParent()) {
-            $parent_account_id = getUserId();
-        }
-        
+        // USE FILE STORAGE INSTEAD OF BASE64
         $activeStudentId = !empty($_POST['student_account_id']) ? 
                            intval($_POST['student_account_id']) : 
                            getActiveStudentId();
@@ -527,16 +421,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             exit;
         }
 
+        // Save file using file_helper.php
+        $uploadResult = saveUploadedFile(
+            $_FILES['receipt'],
+            'payment_receipts',
+            'receipt',
+            $activeStudentId
+        );
+
+        if (!$uploadResult['success']) {
+            $_SESSION['error'] = "Failed to save receipt: " . $uploadResult['error'];
+            $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
+            header('Location: index.php?page=' . $redirect_page);
+            exit;
+        }
+
+        $parent_account_id = null;
+        if (isStudent()) {
+            $studentData = getActiveStudentData($pdo);
+            $parent_account_id = $studentData['parent_account_id'];
+        } else if (isParent()) {
+            $parent_account_id = getUserId();
+        }
+
         try {
             $stmt = $pdo->prepare("
                 INSERT INTO payments (
                     student_id, 
                     class_id, 
                     amount, 
-                    payment_month, 
+                    payment_month,
+                    payment_date,
+                    receipt_path,
                     receipt_filename,
-                    receipt_data,
-                    receipt_mime_type,
                     receipt_size,
                     admin_notes,
                     invoice_id,
@@ -548,11 +465,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $activeStudentId, 
                 $class_id,
                 $amount, 
-                $payment_month, 
-                $filename,
-                $receiptData['data'],
-                $receiptData['mime'],
-                $receiptData['size'],
+                $payment_month,
+                $payment_date,
+                $uploadResult['path'],
+                $uploadResult['filename'],
+                $uploadResult['size'],
                 $notes,
                 $invoice_id,
                 $parent_account_id
@@ -601,14 +518,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $parent_email = $parent['email'] ?? '';
                 }
                 
-                $file_size = $receiptData['size'];
-                if ($file_size < 1024) {
-                    $file_size_formatted = $file_size . ' B';
-                } elseif ($file_size < 1024 * 1024) {
-                    $file_size_formatted = number_format($file_size / 1024, 2) . ' KB';
-                } else {
-                    $file_size_formatted = number_format($file_size / (1024 * 1024), 2) . ' MB';
-                }
+                $file_size_formatted = formatFileSize($uploadResult['size']);
                 
                 $adminNotificationData = [
                     'student_name' => $student['full_name'],
@@ -617,7 +527,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     'class_name' => $class_name,
                     'payment_month' => $payment_month,
                     'amount' => number_format($amount, 2),
-                    'receipt_filename' => $filename,
+                    'receipt_filename' => $uploadResult['filename'],
                     'receipt_size' => $file_size_formatted,
                     'upload_date' => date('Y-m-d H:i:s'),
                     'invoice_number' => $invoice_number,
@@ -639,9 +549,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     exit;
                 }
             } else {
+                // Delete uploaded file if database insert fails
+                deleteFile($uploadResult['path']);
                 $_SESSION['error'] = "Failed to save payment record.";
             }
         } catch (PDOException $e) {
+            // Delete uploaded file on error
+            deleteFile($uploadResult['path']);
             error_log("[Payment Upload Error] " . $e->getMessage());
             $_SESSION['error'] = "Database error: Unable to save payment. Please contact support if this persists.";
         }
@@ -663,21 +577,16 @@ $page = $_GET['page'] ?? 'login';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo SITE_NAME; ?> - Parent Portal</title>
     
-    <!-- ✨ NEW: Favicon -->
     <link rel="icon" type="image/png" href="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png">
     <link rel="shortcut icon" type="image/png" href="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png">
     <link rel="apple-touch-icon" href="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png">
 
-    <!-- Google Fonts: Inter (English) + Noto Sans SC (Chinese) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
 
-    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Animate.css -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
 
     <style>
@@ -1517,6 +1426,9 @@ $page = $_GET['page'] ?? 'login';
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
 <script>
     function reloadPageData() {
         const reloadBtn = document.querySelector('.btn-reload');
