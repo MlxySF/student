@@ -23,6 +23,8 @@
         
         document.getElementById('school').addEventListener('change', toggleOtherSchool);
         
+        document.getElementById('password-type').addEventListener('change', togglePasswordField);
+        
         const statusRadios = document.querySelectorAll('.status-radio');
         statusRadios.forEach(radio => {
             radio.addEventListener('change', function() {
@@ -65,6 +67,32 @@
             window.scrollTo({ top: 0, behavior: 'auto' });
         }, 50);
     }
+    
+    // ========================================
+// PASSWORD SELECTION TOGGLE
+// ========================================
+function togglePasswordField() {
+    const passwordType = document.getElementById('password-type').value;
+    const customPasswordContainer = document.getElementById('custom-password-container');
+    const customPasswordConfirmContainer = document.getElementById('custom-password-confirm-container');
+    const customPasswordInput = document.getElementById('custom-password');
+    const customPasswordConfirmInput = document.getElementById('custom-password-confirm');
+    
+    if (passwordType === 'custom') {
+        customPasswordContainer.classList.remove('hidden');
+        customPasswordConfirmContainer.classList.remove('hidden');
+        customPasswordInput.required = true;
+        customPasswordConfirmInput.required = true;
+    } else {
+        customPasswordContainer.classList.add('hidden');
+        customPasswordConfirmContainer.classList.add('hidden');
+        customPasswordInput.required = false;
+        customPasswordConfirmInput.required = false;
+        customPasswordInput.value = '';
+        customPasswordConfirmInput.value = '';
+    }
+}
+
 
     // ========================================
     // STATUS RADIO STYLING
@@ -505,6 +533,8 @@ document.head.appendChild(style);
                 form_date: registrationData.date,
                 signature_base64: registrationData.signature,
                 signed_pdf_base64: registrationData.pdfBase64,
+                password_type: registrationData.passwordType,
+                custom_password: registrationData.customPassword,
                 payment_amount: totalFee,
                 payment_date: paymentDate,
                 payment_receipt_base64: receiptBase64,
@@ -640,18 +670,41 @@ document.head.appendChild(style);
         }
 
         if (step === 2) {
-            const phone = document.getElementById('phone').value.trim();
-            const email = document.getElementById('email').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const passwordType = document.getElementById('password-type').value;
 
-            if (!phone || phone.length < 12) {
-                Swal.fire('Error', 'Please enter a valid phone number', 'error');
-                return false;
-            }
-            if (!email || !email.includes('@')) {
-                Swal.fire('Error', 'Please enter a valid email address', 'error');
-                return false;
-            }
+    if (!phone || phone.length < 12) {
+        Swal.fire('Error', 'Please enter a valid phone number', 'error');
+        return false;
+    }
+    if (!email || !email.includes('@')) {
+        Swal.fire('Error', 'Please enter a valid email address', 'error');
+        return false;
+    }
+    
+    // Password validation
+    if (!passwordType) {
+        Swal.fire('Error', 'Please select a password option\n请选择密码选项', 'error');
+        return false;
+    }
+    
+    if (passwordType === 'custom') {
+        const customPassword = document.getElementById('custom-password').value;
+        const customPasswordConfirm = document.getElementById('custom-password-confirm').value;
+        
+        if (customPassword.length < 6) {
+            Swal.fire('Error', 'Password must be at least 6 characters\n密码至少需要6个字符', 'error');
+            return false;
         }
+        
+        if (customPassword !== customPasswordConfirm) {
+            Swal.fire('Error', 'Passwords do not match\n密码不匹配', 'error');
+            return false;
+        }
+    }
+}
+
 
         if (step === 3) {
             const events = document.querySelectorAll('input[name="evt"]:checked');
@@ -758,6 +811,8 @@ document.head.appendChild(style);
             const parentName = document.getElementById('parent-name').value;
             const parentIC = document.getElementById('parent-ic').value;
             const formDate = document.getElementById('today-date').value;
+            const passwordType = document.getElementById('password-type').value;
+            const customPassword = passwordType === 'custom' ? document.getElementById('custom-password').value : null;
 
             if (!hasSigned) {
                 if (overlay) overlay.style.display = 'none';
@@ -789,7 +844,9 @@ document.head.appendChild(style);
                 parentIC: parentIC,
                 date: formDate,
                 signature: signatureBase64,
-                pdfBase64: pdfBase64
+                pdfBase64: pdfBase64,
+                passwordType: passwordType,
+                customPassword: customPassword
             };
 
             if (overlay) overlay.style.display = 'none';
@@ -844,6 +901,10 @@ document.head.appendChild(style);
         
         const phone = document.getElementById('phone').value;
         const email = document.getElementById('email').value;
+        // Get password selection data
+const passwordType = document.getElementById('password-type').value;
+const customPassword = passwordType === 'custom' ? document.getElementById('custom-password').value : null;
+
         
         const levelRadios = document.getElementsByName('lvl');
         let level = '';
