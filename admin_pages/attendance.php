@@ -302,7 +302,9 @@ if (classSelect && dateSelect) {
         <?php endif; ?>
     </div>
     <div class="card-body">
-        <form method="POST" action="admin_handler.php" id="bulkAttendanceForm">
+        <div id="saveMessage" class="alert" style="display: none;"></div>
+        
+        <form method="POST" id="bulkAttendanceForm">
             <input type="hidden" name="action" value="bulk_attendance">
             <input type="hidden" name="class_id" value="<?php echo $selected_class; ?>">
             <input type="hidden" name="attendance_date" value="<?php echo $selected_date; ?>">
@@ -314,7 +316,7 @@ if (classSelect && dateSelect) {
                             <th>Student ID</th>
                             <th>Full Name</th>
                             <th>Status</th>
-                            <th>Notes</th>
+                            <th>Notes/Remarks</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -333,9 +335,7 @@ if (classSelect && dateSelect) {
                                 </select>
                             </td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#noteModal<?php echo $s['id']; ?>">
-                                    <i class="fas fa-sticky-note"></i>
-                                </button>
+                                <textarea name="notes[<?php echo $s['id']; ?>]" class="form-control form-control-sm" rows="1" placeholder="Optional notes..."><?php echo htmlspecialchars($s['notes'] ?? ''); ?></textarea>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -344,54 +344,65 @@ if (classSelect && dateSelect) {
             </div>
 
             <div class="text-end">
-                <button type="submit" class="btn btn-success btn-lg">
-                    <i class="fas fa-save"></i> Save Attendance
+                <button type="submit" class="btn btn-success btn-lg" id="saveBtn">
+                    <i class="fas fa-save"></i> Save All Attendance & Notes
                 </button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Note Modals (OUTSIDE the main form) -->
-<?php foreach($enrolled_students as $s): 
-    $current_status = $s['attendance_status'] ?? 'present';
-?>
-<div class="modal fade" id="noteModal<?php echo $s['id']; ?>">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="POST" action="admin_handler.php">
-                <input type="hidden" name="action" value="mark_attendance">
-                <input type="hidden" name="student_id" value="<?php echo $s['id']; ?>">
-                <input type="hidden" name="class_id" value="<?php echo $selected_class; ?>">
-                <input type="hidden" name="attendance_date" value="<?php echo $selected_date; ?>">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add Note - <?php echo htmlspecialchars($s['full_name']); ?></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label>Status</label>
-                        <select name="status" class="form-control" required>
-                            <option value="present" <?php echo $current_status === 'present' ? 'selected' : ''; ?>>Present</option>
-                            <option value="absent" <?php echo $current_status === 'absent' ? 'selected' : ''; ?>>Absent</option>
-                            <option value="late" <?php echo $current_status === 'late' ? 'selected' : ''; ?>>Late</option>
-                            <option value="excused" <?php echo $current_status === 'excused' ? 'selected' : ''; ?>>Excused</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label>Notes</label>
-                        <textarea name="notes" class="form-control" rows="3"><?php echo htmlspecialchars($s['notes'] ?? ''); ?></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-<?php endforeach; ?>
+<script>
+// AJAX form submission without page reload
+document.getElementById('bulkAttendanceForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const saveBtn = document.getElementById('saveBtn');
+    const saveMessage = document.getElementById('saveMessage');
+    const formData = new FormData(this);
+    
+    // Disable button and show loading
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    saveMessage.style.display = 'none';
+    
+    // Send AJAX request
+    fetch('admin_handler.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Re-enable button
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save All Attendance & Notes';
+        
+        // Show message
+        if (data.success) {
+            saveMessage.className = 'alert alert-success';
+            saveMessage.innerHTML = '<i class="fas fa-check-circle"></i> ' + (data.message || 'Attendance saved successfully!');
+            saveMessage.style.display = 'block';
+            
+            // Hide message after 3 seconds
+            setTimeout(() => {
+                saveMessage.style.display = 'none';
+            }, 3000);
+        } else {
+            saveMessage.className = 'alert alert-danger';
+            saveMessage.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + (data.error || 'Failed to save attendance');
+            saveMessage.style.display = 'block';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save All Attendance & Notes';
+        saveMessage.className = 'alert alert-danger';
+        saveMessage.innerHTML = '<i class="fas fa-exclamation-circle"></i> Network error. Please try again.';
+        saveMessage.style.display = 'block';
+    });
+});
+</script>
 
 <?php elseif($selected_class): ?>
 <div class="alert alert-info">
