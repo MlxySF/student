@@ -259,7 +259,7 @@ $totalCount = array_sum($statusCounts);
 </div>
 <?php endforeach; ?>
 
-<!-- ✨ NEW: Rejection Reason Modal -->
+<!-- ✨ Rejection Reason Modal -->
 <?php foreach ($registrations as $reg): ?>
 <div class="modal fade" id="rejectModal<?php echo $reg['id']; ?>" tabindex="-1">
     <div class="modal-dialog">
@@ -332,6 +332,76 @@ $totalCount = array_sum($statusCounts);
         </div>
     </div>
 </div>
+<?php endforeach; ?>
+
+<!-- ✨ NEW: Re-Approve Modal for Rejected Registrations -->
+<?php foreach ($registrations as $reg): ?>
+<?php if ($reg['payment_status'] === 'rejected'): ?>
+<div class="modal fade" id="reapproveModal<?php echo $reg['id']; ?>" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-redo"></i> Re-Approve Registration
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> You are about to re-approve this previously rejected registration:
+                </div>
+                
+                <table class="table table-sm table-bordered mb-3">
+                    <tr>
+                        <th width="40%">Registration #:</th>
+                        <td><?php echo htmlspecialchars($reg['registration_number']); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Student Name:</th>
+                        <td><?php echo htmlspecialchars($reg['name_en']); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Parent Email:</th>
+                        <td><?php echo htmlspecialchars($reg['email']); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Amount:</th>
+                        <td><strong>RM <?php echo number_format($reg['payment_amount'], 2); ?></strong></td>
+                    </tr>
+                    <tr>
+                        <th>Current Status:</th>
+                        <td><span class="badge bg-danger">Rejected</span></td>
+                    </tr>
+                </table>
+                
+                <div class="alert alert-success mb-0">
+                    <strong>✅ What will happen:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Registration status → "Approved"</li>
+                        <li>Student account will be activated</li>
+                        <li>Invoice will be marked as "Paid"</li>
+                        <li>Payment will be verified</li>
+                        <li>Parent will receive approval email with login credentials</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <form method="POST" action="admin_handler.php" class="d-inline">
+                    <input type="hidden" name="action" value="reapprove_registration">
+                    <input type="hidden" name="registration_id" value="<?php echo $reg['id']; ?>">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check-circle"></i> Yes, Re-Approve Registration
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 <?php endforeach; ?>
 
 <!-- View Modals (Outside the table) -->
@@ -570,11 +640,18 @@ $totalCount = array_sum($statusCounts);
                         <i class="fas fa-check-circle"></i> Approve Payment
                     </button>
                 </form>
-                <!-- ✨ UPDATED: Open rejection modal instead of immediate rejection -->
                 <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal<?php echo $reg['id']; ?>">
                     <i class="fas fa-times-circle"></i> Reject Payment
                 </button>
                 <?php endif; ?>
+                
+                <?php if ($reg['payment_status'] === 'rejected'): ?>
+                <!-- ✨ NEW: Re-Approve Button for Rejected Registrations -->
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#reapproveModal<?php echo $reg['id']; ?>">
+                    <i class="fas fa-redo"></i> Re-Approve Registration
+                </button>
+                <?php endif; ?>
+                
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
