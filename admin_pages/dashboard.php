@@ -4,7 +4,7 @@
 try {
     // Get total students - ONLY COUNT APPROVED ACCOUNTS
     $totalStudents = $pdo->query(
-        "SELECT COUNT(*) FROM registrations WHERE account_status = 'approved'"
+        "SELECT COUNT(*) FROM registrations WHERE payment_status = 'approved'"
     )->fetchColumn();
 } catch (PDOException $e) {
     $totalStudents = 0;
@@ -13,13 +13,13 @@ try {
 
 try {
     // Get students by status - ONLY COUNT APPROVED ACCOUNTS
-    // Using account_status = 'approved' filter (NOT payment_status)
+    // Using payment_status = 'approved' filter
     $stmt = $pdo->query("
         SELECT student_status, COUNT(*) as count 
         FROM registrations 
         WHERE student_status IS NOT NULL 
         AND student_status != ''
-        AND account_status = 'approved'
+        AND payment_status = 'approved'
         GROUP BY student_status
     ");
     $studentsByStatus = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
