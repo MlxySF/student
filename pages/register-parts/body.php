@@ -117,6 +117,45 @@ if (empty($_SESSION['csrf_token'])) {
                             <input type="email" id="email" class="w-full pl-10 p-3 rounded-xl border border-slate-300 focus:border-amber-500 outline-none" placeholder="parent@example.com" required>
                         </div>
                     </div>
+                    
+                    <!-- PASSWORD SELECTION SECTION -->
+<div class="bg-purple-50 border-l-4 border-purple-500 p-4 mb-2 rounded-r-lg mt-5">
+    <p class="text-sm text-purple-800 leading-relaxed font-semibold mb-2">
+        <i class="fas fa-lock mr-1"></i> Parent Account Password Setup 家长账户密码设置
+    </p>
+    <p class="text-xs text-purple-700 leading-relaxed">
+        Choose how you want to set up your login password for the parent portal.
+        <br>选择您想要如何设置家长门户的登录密码。
+    </p>
+</div>
+
+<div class="space-y-2">
+    <label class="text-xs font-bold text-slate-500 uppercase">Password Option 密码选项 *</label>
+    <select id="password-type" class="w-full p-3 rounded-xl border border-slate-300 focus:border-amber-500 outline-none bg-white" required>
+        <option value="">Select password option...</option>
+        <option value="ic_last4">Use Parent IC Last 4 Digits (Default) 使用家长身份证最后4位</option>
+        <option value="custom">Set Custom Password 设置自定义密码</option>
+    </select>
+</div>
+
+<!-- Custom Password Input (Hidden by default) -->
+<div id="custom-password-container" class="space-y-2 hidden">
+    <label class="text-xs font-bold text-slate-500 uppercase">Custom Password 自定义密码 *</label>
+    <div class="relative">
+        <i class="fa-solid fa-key absolute left-4 top-4 text-slate-400"></i>
+        <input type="password" id="custom-password" class="w-full pl-10 p-3 rounded-xl border border-slate-300 focus:border-amber-500 outline-none" placeholder="Enter your password" minlength="6">
+    </div>
+    <p class="text-xs text-slate-400">Minimum 6 characters 至少6个字符</p>
+</div>
+
+<div id="custom-password-confirm-container" class="space-y-2 hidden">
+    <label class="text-xs font-bold text-slate-500 uppercase">Confirm Password 确认密码 *</label>
+    <div class="relative">
+        <i class="fa-solid fa-key absolute left-4 top-4 text-slate-400"></i>
+        <input type="password" id="custom-password-confirm" class="w-full pl-10 p-3 rounded-xl border border-slate-300 focus:border-amber-500 outline-none" placeholder="Confirm your password">
+    </div>
+</div>
+
 
                     <div class="space-y-2">
                         <label class="text-xs font-bold text-slate-500 uppercase">Student Status 身份 *</label>
