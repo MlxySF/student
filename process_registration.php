@@ -19,6 +19,7 @@
  * - Files now saved to uploads/ directory structure
  * - Database stores file paths instead of base64 data
  * - Uses file_helper.php for file operations
+ * FIXED 2025-12-21: Save payment_receipt_path in registrations table
  */
 
 header('Content-Type: application/json');
@@ -369,8 +370,9 @@ function autoEnrollStudent(PDO $conn, int $studentId, string $scheduleString): a
  * Links the uploaded payment receipt to each invoice
  * Splits total registration fee equally across all classes
  * UPDATED: Now saves receipt to file and stores path
+ * UPDATED: Receipt path is passed in, not created here
  */
-function createRegistrationInvoicesAndPayments(PDO $conn, int $studentId, int $parentAccountId, float $totalAmount, string $studentName, array $enrolledClasses, array $paymentData): array {
+function createRegistrationInvoicesAndPayments(PDO $conn, int $studentId, int $parentAccountId, float $totalAmount, string $studentName, array $enrolledClasses, array $paymentData, string $receiptPath): array {
     try {
         $results = [];
         $classCount = count($enrolledClasses);
@@ -383,21 +385,7 @@ function createRegistrationInvoicesAndPayments(PDO $conn, int $studentId, int $p
         $amountPerClass = round($totalAmount / $classCount, 2);
         
         error_log("[Invoice Split] Total: {$totalAmount}, Classes: {$classCount}, Per Class: {$amountPerClass}");
-        
-        // Save payment receipt to file (shared by all invoices)
-        $receiptResult = saveBase64ToFile(
-            $paymentData['receipt_base64'],
-            'payment_receipts',
-            'receipt',
-            $studentId
-        );
-        
-        if (!$receiptResult['success']) {
-            throw new Exception("Failed to save payment receipt: " . $receiptResult['error']);
-        }
-        
-        $receiptPath = $receiptResult['path'];
-        error_log("[File Save] Payment receipt saved: {$receiptPath}");
+        error_log("[Invoice] Using receipt path: {$receiptPath}");
         
         foreach ($enrolledClasses as $classData) {
             // Generate unique invoice number
@@ -990,6 +978,7 @@ try {
     // ==========================
     // SAVE FILES TO LOCAL STORAGE
     // NEW: Convert base64 to files
+    // FIXED: Save payment receipt BEFORE registration INSERT
     // ==========================
     
     // Save signature
@@ -1022,25 +1011,39 @@ try {
     $pdfPath = $pdfResult['path'];
     error_log("[File Save] PDF saved: {$pdfPath}");
     
-    // Save payment receipt (handled in createRegistrationInvoicesAndPayments)
+    // FIXED: Save payment receipt BEFORE registration INSERT
+    $receiptResult = saveBase64ToFile(
+        $data['payment_receipt_base64'],
+        'payment_receipts',
+        'receipt',
+        $studentAccountId
+    );
+    
+    if (!$receiptResult['success']) {
+        throw new Exception('Failed to save payment receipt: ' . $receiptResult['error']);
+    }
+    
+    $receiptPath = $receiptResult['path'];
+    error_log("[File Save] Payment receipt saved: {$receiptPath}");
     
     // ==========================
     // Insert Registration Record
     // UPDATED: Store file paths instead of base64
+    // FIXED: Include payment_receipt_path
     // ==========================
 
     $sql = "INSERT INTO registrations (
         registration_number, name_cn, name_en, ic, age, school, student_status,
         phone, email, level, events, schedule, parent_name, parent_ic,
         form_date, signature_path, pdf_path,
-        payment_amount, payment_date, payment_status, class_count,
+        payment_amount, payment_date, payment_receipt_path, payment_status, class_count,
         student_account_id, account_created, password_generated,
         parent_account_id, registration_type, is_additional_child, created_at
     ) VALUES (
         ?, ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?, ?,
         ?, ?, ?,
-        ?, ?, 'pending', ?,
+        ?, ?, ?, 'pending', ?,
         ?, 'yes', ?,
         ?, 'parent_managed', ?, NOW()
     )";
@@ -1066,6 +1069,7 @@ try {
         $pdfPath, // Store file path
         $paymentAmount,
         $paymentDate,
+        $receiptPath, // FIXED: Store receipt file path
         (int)$data['class_count'],
         $studentAccountId,
         $generatedPassword,
@@ -1088,11 +1092,10 @@ try {
 
     // ===============================
     // CREATE INVOICES (ONE PER CLASS) AND LINK PAYMENTS
-    // UPDATED: Saves receipt to file
+    // UPDATED: Pass receipt path to function
     // ===============================
     
     $paymentData = [
-        'receipt_base64' => $data['payment_receipt_base64'],
         'payment_date' => $paymentDate
     ];
     
@@ -1103,12 +1106,13 @@ try {
         $paymentAmount, 
         $fullName,
         $enrollmentResults['success'],
-        $paymentData
+        $paymentData,
+        $receiptPath // FIXED: Pass receipt path
     );
 
     $conn->commit();
     
-    error_log("[Success] Reg#: {$regNumber}, Parent: {$parentCode} (ID:{$parentAccountId}), Student: {$studentAccountId}, Invoices: " . ($invoiceResult['total_invoices'] ?? 0) . ", Payment Date: {$paymentDate}");
+    error_log("[Success] Reg#: {$regNumber}, Parent: {$parentCode} (ID:{$parentAccountId}), Student: {$studentAccountId}, Invoices: " . ($invoiceResult['total_invoices'] ?? 0) . ", Payment Date: {$paymentDate}, Receipt: {$receiptPath}");
 
     // Send email to parent with proper parameters
     $emailSent = sendRegistrationEmail(
@@ -1169,7 +1173,7 @@ try {
         'files_saved' => [
             'signature' => $signaturePath,
             'pdf' => $pdfPath,
-            'receipt' => $invoiceResult['receipt_path'] ?? null
+            'receipt' => $receiptPath // FIXED: Now properly saved
         ],
         'message' => $isNewParentAccount 
             ? 'Parent account created! Child registered with ' . ($invoiceResult['total_invoices'] ?? 0) . ' invoices (one per class).' 
