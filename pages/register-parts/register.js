@@ -25,6 +25,10 @@
         
         document.getElementById('password-type').addEventListener('change', togglePasswordField);
         
+        document.getElementById('email').addEventListener('input', function(e) {
+        checkParentEmail(e.target.value.trim());
+        });
+        
         const statusRadios = document.querySelectorAll('.status-radio');
         statusRadios.forEach(radio => {
             radio.addEventListener('change', function() {
@@ -92,6 +96,85 @@ function togglePasswordField() {
         customPasswordConfirmInput.value = '';
     }
 }
+
+// ========================================
+// CHECK IF PARENT EMAIL EXISTS
+// ========================================
+let isExistingParent = false;
+let emailCheckTimeout = null;
+
+async function checkParentEmail(email) {
+    // Clear previous timeout
+    if (emailCheckTimeout) {
+        clearTimeout(emailCheckTimeout);
+    }
+    
+    // Reset state
+    isExistingParent = false;
+    const existingParentInfo = document.getElementById('existing-parent-info');
+    const newParentInfo = document.getElementById('new-parent-info');
+    const passwordSelectorContainer = document.getElementById('password-selector-container');
+    const passwordTypeSelect = document.getElementById('password-type');
+    
+    // Hide all info boxes
+    existingParentInfo.classList.add('hidden');
+    newParentInfo.classList.add('hidden');
+    passwordSelectorContainer.classList.add('hidden');
+    
+    // Validate email format
+    if (!email || !email.includes('@')) {
+        return;
+    }
+    
+    // Debounce - wait 500ms after user stops typing
+    emailCheckTimeout = setTimeout(async () => {
+        try {
+            const response = await fetch(`../check_parent_email.php?email=${encodeURIComponent(email)}`);
+            const result = await response.json();
+            
+            if (result.success && result.exists) {
+                // Existing parent found
+                isExistingParent = true;
+                
+                // Show existing parent info
+                existingParentInfo.classList.remove('hidden');
+                document.getElementById('existing-parent-details').innerHTML = `
+                    <p><strong>Parent Code:</strong> ${result.parent_id}</p>
+                    <p><strong>Name:</strong> ${result.parent_name}</p>
+                    <p><strong>Registered:</strong> ${result.registered_date}</p>
+                `;
+                
+                // Hide password selector
+                passwordSelectorContainer.classList.add('hidden');
+                passwordTypeSelect.required = false;
+                
+                console.log('✅ Existing parent detected:', result.parent_id);
+                
+            } else if (result.success && !result.exists) {
+                // New parent
+                isExistingParent = false;
+                
+                // Show new parent info
+                newParentInfo.classList.remove('hidden');
+                
+                // Show password selector
+                passwordSelectorContainer.classList.remove('hidden');
+                passwordTypeSelect.required = true;
+                
+                console.log('🆕 New parent - password selection required');
+            }
+            
+        } catch (error) {
+            console.error('Error checking parent email:', error);
+            // On error, assume new parent (fail-safe)
+            isExistingParent = false;
+            newParentInfo.classList.remove('hidden');
+            passwordSelectorContainer.classList.remove('hidden');
+            passwordTypeSelect.required = true;
+        }
+    }, 500); // Wait 500ms after user stops typing
+}
+
 
 
     // ========================================
@@ -672,7 +755,6 @@ document.head.appendChild(style);
         if (step === 2) {
     const phone = document.getElementById('phone').value.trim();
     const email = document.getElementById('email').value.trim();
-    const passwordType = document.getElementById('password-type').value;
 
     if (!phone || phone.length < 12) {
         Swal.fire('Error', 'Please enter a valid phone number', 'error');
@@ -683,27 +765,32 @@ document.head.appendChild(style);
         return false;
     }
     
-    // Password validation
-    if (!passwordType) {
-        Swal.fire('Error', 'Please select a password option\n请选择密码选项', 'error');
-        return false;
-    }
-    
-    if (passwordType === 'custom') {
-        const customPassword = document.getElementById('custom-password').value;
-        const customPasswordConfirm = document.getElementById('custom-password-confirm').value;
+    // Password validation - ONLY for NEW parents
+    if (!isExistingParent) {
+        const passwordType = document.getElementById('password-type').value;
         
-        if (customPassword.length < 6) {
-            Swal.fire('Error', 'Password must be at least 6 characters\n密码至少需要6个字符', 'error');
+        if (!passwordType) {
+            Swal.fire('Error', 'Please select a password option\n请选择密码选项', 'error');
             return false;
         }
         
-        if (customPassword !== customPasswordConfirm) {
-            Swal.fire('Error', 'Passwords do not match\n密码不匹配', 'error');
-            return false;
+        if (passwordType === 'custom') {
+            const customPassword = document.getElementById('custom-password').value;
+            const customPasswordConfirm = document.getElementById('custom-password-confirm').value;
+            
+            if (customPassword.length < 6) {
+                Swal.fire('Error', 'Password must be at least 6 characters\n密码至少需要6个字符', 'error');
+                return false;
+            }
+            
+            if (customPassword !== customPasswordConfirm) {
+                Swal.fire('Error', 'Passwords do not match\n密码不匹配', 'error');
+                return false;
+            }
         }
     }
 }
+
 
 
         if (step === 3) {
@@ -811,8 +898,16 @@ document.head.appendChild(style);
             const parentName = document.getElementById('parent-name').value;
             const parentIC = document.getElementById('parent-ic').value;
             const formDate = document.getElementById('today-date').value;
-            const passwordType = document.getElementById('password-type').value;
-            const customPassword = passwordType === 'custom' ? document.getElementById('custom-password').value : null;
+            let passwordType = 'ic_last4'; // Default
+            let customPassword = null;
+
+// Only collect password data if this is a NEW parent
+if (!isExistingParent) {
+    passwordType = document.getElementById('password-type').value || 'ic_last4';
+    customPassword = passwordType === 'custom' ? document.getElementById('custom-password').value : null;
+}
+
+console.log('Password collection - isExistingParent:', isExistingParent, 'Type:', passwordType);
 
             if (!hasSigned) {
                 if (overlay) overlay.style.display = 'none';
