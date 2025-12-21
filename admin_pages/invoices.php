@@ -282,9 +282,73 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
     .table-responsive .dataTable tbody tr td { display: table-cell !important; }
 }
 
-.receipt-image { max-width: 100%; height: auto; border-radius: 8px; border: 2px solid #e2e8f0; }
-.receipt-pdf { width: 100%; height: 500px; border: 2px solid #e2e8f0; border-radius: 8px; }
-.receipt-loading { text-align: center; padding: 40px; }
+.receipt-image { 
+    max-width: 100%; 
+    height: auto; 
+    border-radius: 8px; 
+    border: 2px solid #e2e8f0; 
+}
+
+/* ✨ FIXED: Better PDF display styles */
+.receipt-pdf-container { 
+    width: 100%; 
+    min-height: 600px; 
+    border: 2px solid #e2e8f0; 
+    border-radius: 8px; 
+    overflow: hidden;
+    background: #f8fafc;
+    position: relative;
+    margin-top: 15px;
+}
+
+.receipt-pdf-iframe { 
+    width: 100%; 
+    height: 700px; 
+    border: none; 
+    display: block;
+}
+
+.pdf-download-section {
+    padding: 30px 20px;
+    text-align: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.pdf-download-section i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.9;
+}
+
+.pdf-download-section h5 {
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.pdf-download-section p {
+    margin-bottom: 20px;
+    opacity: 0.9;
+}
+
+.pdf-download-section .btn {
+    margin: 5px;
+    font-weight: 600;
+    padding: 12px 24px;
+    border: 2px solid rgba(255,255,255,0.3);
+}
+
+.pdf-download-section .btn:hover {
+    transform: scale(1.05);
+    border-color: white;
+}
+
+.receipt-loading { 
+    text-align: center; 
+    padding: 40px; 
+}
 </style>
 
 <!-- Filter Form -->
@@ -742,10 +806,30 @@ function loadReceipt(invoiceId) {
                 // Mark as loaded
                 loadedReceipts.add(invoiceId);
                 
-                // Display receipt based on mime type
+                // ✨ FIXED: Display receipt based on mime type with improved PDF handling
                 if (data.receipt_mime_type === 'application/pdf') {
-                    container.innerHTML = '<embed src="data:' + data.receipt_mime_type + ';base64,' + data.receipt_data + '" type="' + data.receipt_mime_type + '" class="receipt-pdf">';
+                    // PDF Receipt - Show download buttons AND iframe viewer
+                    const dataUrl = 'data:' + data.receipt_mime_type + ';base64,' + data.receipt_data;
+                    container.innerHTML = `
+                        <div class="pdf-download-section">
+                            <i class="fas fa-file-pdf"></i>
+                            <h5>PDF Receipt Uploaded</h5>
+                            <p>Click the buttons below to download or view the receipt</p>
+                            <a href="${dataUrl}" download="receipt-${invoiceId}.pdf" class="btn btn-light btn-lg">
+                                <i class="fas fa-download"></i> Download PDF
+                            </a>
+                            <a href="${dataUrl}" target="_blank" class="btn btn-outline-light btn-lg">
+                                <i class="fas fa-external-link-alt"></i> Open in New Tab
+                            </a>
+                        </div>
+                        <div class="receipt-pdf-container">
+                            <iframe src="${dataUrl}" class="receipt-pdf-iframe" title="Payment Receipt PDF">
+                                <p>Your browser does not support PDFs. <a href="${dataUrl}" download>Download the PDF</a></p>
+                            </iframe>
+                        </div>
+                    `;
                 } else {
+                    // Image Receipt - Display directly
                     container.innerHTML = '<img src="data:' + data.receipt_mime_type + ';base64,' + data.receipt_data + '" alt="Receipt" class="receipt-image">';
                 }
                 console.log('Receipt displayed successfully');
