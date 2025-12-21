@@ -423,7 +423,7 @@ $totalCount = array_sum($statusCounts);
                     <div class="col-md-6 mb-4">
                         <div class="card">
                             <div class="card-header bg-light">
-                                <strong><i class="fas fa-user"></i> Student Information</strong>
+                                <strong><i class="fas fa-user"></i> Information</strong>
                             </div>
                             <div class="card-body">
                                 <table class="table table-sm">
@@ -465,7 +465,7 @@ $totalCount = array_sum($statusCounts);
                                         <td><?php echo htmlspecialchars($reg['phone']); ?></td>
                                     </tr>
                                     <tr>
-                                        <th>Email:</th>
+                                        <th>Parent's Email:</th>
                                         <td><?php echo htmlspecialchars($reg['email']); ?></td>
                                     </tr>
                                     <?php if ($reg['level']): ?>
@@ -604,7 +604,7 @@ $totalCount = array_sum($statusCounts);
                     </div>
 
                     <!-- Account Information -->
-                    <div class="col-md-12 mb-4">
+                    <!-- <div class="col-md-12 mb-4">
                         <div class="card border-success">
                             <div class="card-header bg-success text-white">
                                 <strong><i class="fas fa-key"></i> Student Account Credentials</strong>
@@ -628,7 +628,7 @@ $totalCount = array_sum($statusCounts);
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
                 </div>
             </div>
             <div class="modal-footer">
