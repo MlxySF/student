@@ -61,13 +61,6 @@ if (isset($_GET['logout'])) {
     exit;
 }
 
-// ✨ CRITICAL FIX: Route verify_payment to admin_handler.php
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'verify_payment') {
-    // Pass control to admin_handler.php which has email functionality
-    require_once 'admin_handler.php';
-    exit;
-}
-
 // Handle Invoice Actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     redirectIfNotAdmin();
@@ -196,6 +189,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $_SESSION['success'] = "Invoice deleted successfully!";
         } else {
             $_SESSION['error'] = "Failed to delete invoice.";
+        }
+        
+        header('Location: admin.php?page=invoices');
+        exit;
+    }
+    
+    // VERIFY PAYMENT
+    if ($_POST['action'] === 'verify_payment') {
+        $payment_id = $_POST['payment_id'];
+        $invoice_id = $_POST['invoice_id'];
+        $verification_status = $_POST['verification_status'];
+        $admin_notes = $_POST['admin_notes'] ?? '';
+        
+        // Update payment verification
+        $stmt = $pdo->prepare("
+            UPDATE payments 
+            SET verification_status = ?, admin_notes = ? 
+            WHERE id = ?
+        ");
+        $stmt->execute([$verification_status, $admin_notes, $payment_id]);
+        
+        // If verified, update invoice status to paid
+        if ($verification_status === 'verified') {
+            $update_invoice = $pdo->prepare("
+                UPDATE invoices 
+                SET status = 'paid', paid_date = NOW() 
+                WHERE id = ?
+            ");
+            $update_invoice->execute([$invoice_id]);
+            $_SESSION['success'] = "Payment verified and invoice marked as PAID!";
+        } else {
+            // If rejected, set invoice back to unpaid
+            $update_invoice = $pdo->prepare("
+                UPDATE invoices 
+                SET status = 'unpaid' 
+                WHERE id = ?
+            ");
+            $update_invoice->execute([$invoice_id]);
+            $_SESSION['success'] = "Payment rejected!";
         }
         
         header('Location: admin.php?page=invoices');
