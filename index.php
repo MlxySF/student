@@ -1295,7 +1295,7 @@ $page = $_GET['page'] ?? 'login';
                 <img src="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png" 
                      alt="Wushu Sport Academy Logo" 
                      class="login-logo">
-                <h2>Student Portal</h2>
+                <h2>Parent Portal</h2>
                 <p class="text-muted">Sign in to your account</p>
             </div>
 
