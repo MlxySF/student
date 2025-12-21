@@ -4,7 +4,7 @@
  * Sends emails to parents/students when payment status changes
  * Includes PDF invoice receipt attachment for approved payments
  * 
- * FIXED: Now queries registrations table instead of deprecated students table
+ * FIXED: Corrected SQL query to properly join students and registrations tables
  * ADDED: Extensive debugging to troubleshoot email issues
  * 
  * Usage:
@@ -38,8 +38,8 @@ function sendPaymentApprovalEmail($paymentId, $status, $adminNotes = '') {
     error_log("========================================");
     
     try {
-        // Get payment details with registration and parent information
-        // FIXED: Query registrations table instead of students table
+        // Get payment details with student and parent information
+        // FIXED: payments.student_id references students.id (account), not registrations.id
         $sql = "
             SELECT 
                 p.id as payment_id,
@@ -48,9 +48,10 @@ function sendPaymentApprovalEmail($paymentId, $status, $adminNotes = '') {
                 p.receipt_filename,
                 p.verification_status,
                 p.invoice_id,
-                r.id as student_id,
-                r.name_en as student_name,
-                r.registration_number as student_number,
+                s.id as student_account_id,
+                s.full_name as student_name,
+                s.student_id as student_number,
+                r.name_en as registration_name,
                 c.class_name,
                 c.class_code,
                 i.invoice_number,
@@ -59,7 +60,8 @@ function sendPaymentApprovalEmail($paymentId, $status, $adminNotes = '') {
                 pa.full_name as parent_name,
                 pa.parent_id as parent_number
             FROM payments p
-            JOIN registrations r ON p.student_id = r.id
+            JOIN students s ON p.student_id = s.id
+            LEFT JOIN registrations r ON s.id = r.student_account_id
             LEFT JOIN classes c ON p.class_id = c.id
             LEFT JOIN invoices i ON p.invoice_id = i.id
             LEFT JOIN parent_accounts pa ON p.parent_account_id = pa.id
@@ -76,7 +78,7 @@ function sendPaymentApprovalEmail($paymentId, $status, $adminNotes = '') {
             error_log("[Payment Approval Email] ERROR: Payment ID {$paymentId} not found in database");
             error_log("[Payment Approval Email] This means either:");
             error_log("  1. Payment ID doesn't exist");
-            error_log("  2. Registration record is missing");
+            error_log("  2. Student account record is missing");
             error_log("  3. JOIN failed");
             return false;
         }
@@ -92,7 +94,7 @@ function sendPaymentApprovalEmail($paymentId, $status, $adminNotes = '') {
         error_log("  - Invoice Number: " . ($payment['invoice_number'] ?? 'NULL'));
         error_log("  - Class: " . ($payment['class_name'] ?? 'NULL'));
         
-        // Determine recipient email (parent email only, as students no longer have separate accounts)
+        // Determine recipient email (parent email preferred)
         $recipientEmail = $payment['parent_email'];
         $recipientName = $payment['parent_name'];
         
