@@ -11,7 +11,7 @@ define('DB_USER', 'mlxysf_student_portal');
 define('DB_PASS', 'YAjv86kdSAPpw');
 
 // Site Configuration
-define('SITE_NAME', 'Wushu Student Portal');
+define('SITE_NAME', 'Wushu Sport Academy');
 define('SITE_URL', 'https://wushusportacademy.app.tc/student/');
 
 // Connect to Database
