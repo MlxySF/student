@@ -244,6 +244,11 @@ $page = $_GET['page'] ?? 'login';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo SITE_NAME; ?> - Admin Panel</title>
     
+    <!-- ✨ NEW: Favicon -->
+    <link rel="icon" type="image/png" href="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png">
+    <link rel="shortcut icon" type="image/png" href="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png">
+    <link rel="apple-touch-icon" href="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png">
+    
     <!-- Google Fonts: Inter (English) + Noto Sans SC (Chinese) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
