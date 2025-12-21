@@ -1,4 +1,5 @@
 <?php
+ob_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -1575,3 +1576,4 @@ $page = $_GET['page'] ?? 'login';
 </script>
 </body>
 </html>
+<?php ob_end_flush(); ?>
