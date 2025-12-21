@@ -4,9 +4,11 @@
  * Sends emails to parents/students when payment status changes
  * Includes PDF invoice receipt attachment for approved payments
  * 
+ * FIXED: Now queries registrations table instead of deprecated students table
+ * 
  * Usage:
  *   require_once 'send_payment_approval_email.php';
- *   sendPaymentApprovalEmail($paymentId, 'approved', $adminNotes);
+ *   sendPaymentApprovalEmail($paymentId, 'verified', $adminNotes);
  */
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -28,7 +30,8 @@ function sendPaymentApprovalEmail($paymentId, $status, $adminNotes = '') {
     global $pdo;
     
     try {
-        // Get payment details with student and parent information
+        // Get payment details with registration and parent information
+        // FIXED: Query registrations table instead of students table
         $stmt = $pdo->prepare("
             SELECT 
                 p.id as payment_id,
@@ -37,10 +40,9 @@ function sendPaymentApprovalEmail($paymentId, $status, $adminNotes = '') {
                 p.receipt_filename,
                 p.verification_status,
                 p.invoice_id,
-                s.id as student_id,
-                s.full_name as student_name,
-                s.email as student_email,
-                s.student_id as student_number,
+                r.id as student_id,
+                r.name_en as student_name,
+                r.registration_number as student_number,
                 c.class_name,
                 c.class_code,
                 i.invoice_number,
@@ -49,7 +51,7 @@ function sendPaymentApprovalEmail($paymentId, $status, $adminNotes = '') {
                 pa.full_name as parent_name,
                 pa.parent_id as parent_number
             FROM payments p
-            JOIN students s ON p.student_id = s.id
+            JOIN registrations r ON p.student_id = r.id
             LEFT JOIN classes c ON p.class_id = c.id
             LEFT JOIN invoices i ON p.invoice_id = i.id
             LEFT JOIN parent_accounts pa ON p.parent_account_id = pa.id
@@ -63,12 +65,12 @@ function sendPaymentApprovalEmail($paymentId, $status, $adminNotes = '') {
             return false;
         }
         
-        // Determine recipient email (prefer parent, fallback to student)
-        $recipientEmail = !empty($payment['parent_email']) ? $payment['parent_email'] : $payment['student_email'];
-        $recipientName = !empty($payment['parent_name']) ? $payment['parent_name'] : $payment['student_name'];
+        // Determine recipient email (parent email only, as students no longer have separate accounts)
+        $recipientEmail = $payment['parent_email'];
+        $recipientName = $payment['parent_name'];
         
         if (empty($recipientEmail)) {
-            error_log("[Payment Approval Email] No email address found for payment ID {$paymentId}");
+            error_log("[Payment Approval Email] No parent email found for payment ID {$paymentId}");
             return false;
         }
         
