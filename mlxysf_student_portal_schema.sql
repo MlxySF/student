@@ -3,9 +3,10 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Dec 21, 2025 at 07:01 AM
+-- Generation Time: Dec 20, 2025 at 06:16 PM (UPDATED)
 -- Server version: 10.11.14-MariaDB
 -- PHP Version: 8.1.34
+-- UPDATED: Added payment_date column to payments table
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -158,6 +159,7 @@ CREATE TABLE `parent_child_relationships` (
 
 --
 -- Table structure for table `payments`
+-- UPDATED: Added payment_date column
 --
 
 CREATE TABLE `payments` (
@@ -382,6 +384,7 @@ ALTER TABLE `parent_child_relationships`
 
 --
 -- Indexes for table `payments`
+-- UPDATED: Added index for payment_date
 --
 ALTER TABLE `payments`
   ADD PRIMARY KEY (`id`),
@@ -392,8 +395,8 @@ ALTER TABLE `payments`
   ADD KEY `idx_parent_account_id` (`parent_account_id`),
   ADD KEY `idx_verification_status` (`verification_status`),
   ADD KEY `idx_payment_month` (`payment_month`),
-  ADD KEY `idx_upload_date` (`upload_date`),
-  ADD KEY `idx_payment_date` (`payment_date`);
+  ADD KEY `idx_payment_date` (`payment_date`),
+  ADD KEY `idx_upload_date` (`upload_date`);
 
 --
 -- Indexes for table `registrations`

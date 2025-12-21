@@ -729,46 +729,34 @@ function loadReceipt(invoiceId) {
     const apiUrl = 'admin_pages/api/get_receipt.php?invoice_id=' + invoiceId;
     console.log('Fetching from URL:', apiUrl);
     
-    // Fetch receipt file via AJAX as blob
+    // Fetch receipt data via AJAX
     fetch(apiUrl)
         .then(response => {
             console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers.get('Content-Type'));
-            
-            // Check if response is an error (JSON)
-            const contentType = response.headers.get('Content-Type');
-            if (contentType && contentType.includes('application/json')) {
-                // It's an error response in JSON format
-                return response.json().then(data => {
-                    throw new Error(data.error || 'Unknown error');
-                });
-            }
-            
-            // It's a file, return as blob
-            return response.blob().then(blob => {
-                return { blob: blob, contentType: contentType };
-            });
+            return response.json();
         })
         .then(data => {
-            if (data.blob) {
+            console.log('Response data:', data);
+            
+            if (data.success) {
                 // Mark as loaded
                 loadedReceipts.add(invoiceId);
                 
-                // Create object URL for the blob
-                const blobUrl = URL.createObjectURL(data.blob);
-                
                 // Display receipt based on mime type
-                if (data.contentType.includes('application/pdf')) {
-                    container.innerHTML = '<embed src="' + blobUrl + '" type="application/pdf" class="receipt-pdf">';
+                if (data.receipt_mime_type === 'application/pdf') {
+                    container.innerHTML = '<embed src="data:' + data.receipt_mime_type + ';base64,' + data.receipt_data + '" type="' + data.receipt_mime_type + '" class="receipt-pdf">';
                 } else {
-                    container.innerHTML = '<img src="' + blobUrl + '" alt="Receipt" class="receipt-image">';
+                    container.innerHTML = '<img src="data:' + data.receipt_mime_type + ';base64,' + data.receipt_data + '" alt="Receipt" class="receipt-image">';
                 }
                 console.log('Receipt displayed successfully');
+            } else {
+                console.error('API error:', data.error);
+                container.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> ' + (data.error || 'No receipt available') + '</div>';
             }
         })
         .catch(error => {
             console.error('Error loading receipt:', error);
-            container.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> ' + error.message + '</div>';
+            container.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Failed to load receipt. Please try again.</div>';
         });
 }
 </script>

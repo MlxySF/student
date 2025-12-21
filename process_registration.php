@@ -7,6 +7,8 @@
  * UPDATED: Auto-enrollment into classes based on schedule selection
  * UPDATED: Creates registration fee invoice viewable in parent portal
  * UPDATED: Links payment receipt to invoice for admin verification
+ * FIXED: Auto-detect MIME type from base64 image data
+ * FIXED: Strip data URI prefix, save only pure base64 to database
  * UPDATED: Split invoices by class - one invoice per registered class with class code
  * FIXED: Use student_status column name in registrations INSERT statement
  * FIXED: Validate form_date to prevent invalid dates like "-0001"
@@ -15,7 +17,6 @@
  * UPDATED: Added payment_date column to payments INSERT - user can specify when payment was actually made
  * FIXED: Randomize student ID to prevent duplicate entry errors when deleting mid-sequence registrations
  * UPDATED: Added duplicate name validation - check for approved/pending registrations, allow overwrite of rejected
- * ⭐ NEW: Payment receipts now saved to local files instead of database base64
  */
 
 header('Content-Type: application/json');
@@ -30,9 +31,6 @@ use PHPMailer\PHPMailer\Exception;
 require 'PHPMailer/Exception.php';
 require 'PHPMailer/PHPMailer.php';
 require 'PHPMailer/SMTP.php';
-
-// ⭐ NEW: Include file storage helper
-require_once 'file_storage_helper.php';
 
 // Admin email configuration
 define('ADMIN_EMAIL', 'chaichonghern@gmail.com');
@@ -115,6 +113,48 @@ function validateFormDateTime($dateString): string {
     // Date is valid, return in proper datetime format
     error_log("[DateTime Validation] Valid form_date: {$dateString}");
     return date('Y-m-d H:i:s', $timestamp);
+}
+
+// =========================
+// Helper: Detect MIME type from base64 image
+// =========================
+function detectMimeTypeFromBase64(string $base64Data): string {
+    // Check if it has data URI prefix
+    if (preg_match('/^data:image\/(\w+);base64,/', $base64Data, $matches)) {
+        // Extract MIME type from data URI
+        return 'image/' . $matches[1];
+    }
+    
+    // Remove data URI prefix if present for checking signature
+    $cleanBase64 = preg_replace('/^data:image\/\w+;base64,/', '', $base64Data);
+    
+    // Decode first few bytes to check file signature
+    $imageData = base64_decode(substr($cleanBase64, 0, 100));
+    
+    // Check image signatures (magic numbers)
+    if (substr($imageData, 0, 3) === "\xFF\xD8\xFF") {
+        return 'image/jpeg';
+    } elseif (substr($imageData, 0, 8) === "\x89PNG\r\n\x1A\n") {
+        return 'image/png';
+    } elseif (substr($imageData, 0, 6) === 'GIF87a' || substr($imageData, 0, 6) === 'GIF89a') {
+        return 'image/gif';
+    } elseif (substr($imageData, 0, 2) === 'BM') {
+        return 'image/bmp';
+    } elseif (substr($imageData, 0, 4) === 'RIFF' && substr($imageData, 8, 4) === 'WEBP') {
+        return 'image/webp';
+    }
+    
+    // Default to JPEG if cannot detect
+    error_log('[MIME Detection] Could not detect image type, defaulting to image/jpeg');
+    return 'image/jpeg';
+}
+
+// =========================
+// Helper: Strip data URI prefix from base64
+// =========================
+function stripDataURIPrefix(string $base64Data): string {
+    // Remove data:image/xxx;base64, prefix if present
+    return preg_replace('/^data:image\/\w+;base64,/', '', $base64Data);
 }
 
 // ==========================================
@@ -359,14 +399,15 @@ function autoEnrollStudent(PDO $conn, int $studentId, string $scheduleString): a
 
 // ==========================================
 // REGISTRATION FEE INVOICES & PAYMENTS
-// ⭐ UPDATED: Save payment receipts to local files
+// UPDATED: Create one invoice per class
+// UPDATED: Added payment_date to payments INSERT
 // ==========================================
 
 /**
  * Create registration fee invoices - ONE PER CLASS
- * ⭐ NEW: Saves payment receipts to local files instead of database
  * Links the uploaded payment receipt to each invoice
  * Splits total registration fee equally across all classes
+ * UPDATED: Now stores user-specified payment_date
  */
 function createRegistrationInvoicesAndPayments(PDO $conn, int $studentId, int $parentAccountId, float $totalAmount, string $studentName, array $enrolledClasses, array $paymentData): array {
     try {
@@ -381,27 +422,6 @@ function createRegistrationInvoicesAndPayments(PDO $conn, int $studentId, int $p
         $amountPerClass = round($totalAmount / $classCount, 2);
         
         error_log("[Invoice Split] Total: {$totalAmount}, Classes: {$classCount}, Per Class: {$amountPerClass}");
-        
-        // ⭐ NEW: Save payment receipt to local file ONCE (shared across all invoices)
-        $receiptFilename = null;
-        $receiptMimeType = null;
-        $receiptFileSize = 0;
-        
-        $receiptSaveResult = saveBase64ToFile(
-            $paymentData['receipt_base64'], 
-            PAYMENT_RECEIPTS_DIR,
-            'receipt_reg_' . $studentId . '_' . time()
-        );
-        
-        if (!$receiptSaveResult['success']) {
-            throw new Exception("Failed to save payment receipt: " . $receiptSaveResult['error']);
-        }
-        
-        $receiptFilename = $receiptSaveResult['filename'];
-        $receiptMimeType = $receiptSaveResult['mime_type'];
-        $receiptFileSize = $receiptSaveResult['size'];
-        
-        error_log("[File Storage] Saved payment receipt: {$receiptFilename} ({$receiptFileSize} bytes)");
         
         foreach ($enrolledClasses as $classData) {
             // Generate unique invoice number
@@ -445,7 +465,13 @@ function createRegistrationInvoicesAndPayments(PDO $conn, int $studentId, int $p
             
             error_log("[Invoice] Created invoice: {$invoiceNumber} (ID: {$invoiceId}) for class {$classData['class_code']}, amount={$amountPerClass}");
             
-            // ⭐ UPDATED: Create payment record with filename instead of base64 data
+            // Auto-detect MIME type from base64 data
+            $receiptMimeType = detectMimeTypeFromBase64($paymentData['receipt_base64']);
+            
+            // Strip data URI prefix to get pure base64
+            $pureBase64Receipt = stripDataURIPrefix($paymentData['receipt_base64']);
+            
+            // UPDATED: Create payment record with payment_date
             $stmt = $conn->prepare("
                 INSERT INTO payments (
                     student_id,
@@ -455,12 +481,11 @@ function createRegistrationInvoicesAndPayments(PDO $conn, int $studentId, int $p
                     amount,
                     payment_month,
                     payment_date,
-                    receipt_filename,
+                    receipt_data,
                     receipt_mime_type,
-                    receipt_size,
                     verification_status,
                     upload_date
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
             ");
             
             $stmt->execute([
@@ -471,14 +496,13 @@ function createRegistrationInvoicesAndPayments(PDO $conn, int $studentId, int $p
                 $amountPerClass,
                 date('Y-m'),
                 $paymentData['payment_date'], // User-specified payment date
-                $receiptFilename, // ⭐ Filename instead of base64
-                $receiptMimeType,
-                $receiptFileSize
+                $pureBase64Receipt,
+                $receiptMimeType
             ]);
             
             $paymentId = (int)$conn->lastInsertId();
             
-            error_log("[Payment] Created payment record (ID: {$paymentId}) with file: {$receiptFilename}, payment_date={$paymentData['payment_date']}");
+            error_log("[Payment] Created payment record (ID: {$paymentId}) linked to invoice {$invoiceNumber}, payment_date={$paymentData['payment_date']}");
             
             $results[] = [
                 'invoice_id' => $invoiceId,
@@ -486,34 +510,18 @@ function createRegistrationInvoicesAndPayments(PDO $conn, int $studentId, int $p
                 'payment_id' => $paymentId,
                 'class_code' => $classData['class_code'],
                 'class_name' => $classData['class_name'],
-                'amount' => $amountPerClass,
-                'receipt_filename' => $receiptFilename
+                'amount' => $amountPerClass
             ];
         }
         
         return [
             'success' => true,
             'invoices' => $results,
-            'total_invoices' => count($results),
-            'receipt_filename' => $receiptFilename
+            'total_invoices' => count($results)
         ];
         
     } catch (PDOException $e) {
         error_log("[Invoice/Payment] ERROR: " . $e->getMessage());
-        // If database fails, clean up the saved file
-        if (isset($receiptFilename) && $receiptFilename) {
-            deleteFile(PAYMENT_RECEIPTS_DIR . $receiptFilename);
-        }
-        return [
-            'success' => false,
-            'error' => $e->getMessage()
-        ];
-    } catch (Exception $e) {
-        error_log("[Invoice/Payment] ERROR: " . $e->getMessage());
-        // Clean up file on error
-        if (isset($receiptFilename) && $receiptFilename) {
-            deleteFile(PAYMENT_RECEIPTS_DIR . $receiptFilename);
-        }
         return [
             'success' => false,
             'error' => $e->getMessage()
@@ -559,6 +567,7 @@ function sendRegistrationEmail($toEmail, $studentName, $registrationNumber, $chi
 
 /**
  * Send admin notification email for new registration
+ * NEW: Notifies admin when a new student registers
  */
 function sendAdminRegistrationNotification($registrationData) {
     $mail = new PHPMailer(true);
@@ -1074,7 +1083,7 @@ try {
 
     // ===============================
     // CREATE INVOICES (ONE PER CLASS) AND LINK PAYMENTS
-    // ⭐ UPDATED: Now saves files locally
+    // UPDATED: Now passes payment_date to function
     // ===============================
     
     $paymentData = [
@@ -1082,7 +1091,7 @@ try {
         'payment_date' => $paymentDate // Pass user-specified payment date
     ];
     
-    // Use the new function that creates one invoice per class AND saves file locally
+    // Use the new function that creates one invoice per class
     $invoiceResult = createRegistrationInvoicesAndPayments(
         $conn, 
         $studentAccountId, 
@@ -1093,13 +1102,9 @@ try {
         $paymentData
     );
 
-    if (!$invoiceResult['success']) {
-        throw new Exception("Failed to create invoices: " . ($invoiceResult['error'] ?? 'Unknown error'));
-    }
-
     $conn->commit();
     
-    error_log("[Success] Reg#: {$regNumber}, Parent: {$parentCode} (ID:{$parentAccountId}), Student: {$studentAccountId}, Invoices: " . ($invoiceResult['total_invoices'] ?? 0) . ", Payment Date: {$paymentDate}, Receipt File: " . ($invoiceResult['receipt_filename'] ?? 'N/A'));
+    error_log("[Success] Reg#: {$regNumber}, Parent: {$parentCode} (ID:{$parentAccountId}), Student: {$studentAccountId}, Invoices: " . ($invoiceResult['total_invoices'] ?? 0) . ", Payment Date: {$paymentDate}");
 
     // Send email to parent with proper parameters
     $emailSent = sendRegistrationEmail(
@@ -1114,6 +1119,7 @@ try {
     
     // ==========================
     // Send admin notification
+    // NEW: Notify admin about new registration
     // ==========================
     $adminNotificationData = [
         'registration_number' => $regNumber,
@@ -1131,7 +1137,7 @@ try {
         'class_count' => (int)$data['class_count'],
         'classes' => $enrollmentResults['success'],
         'payment_amount' => number_format($paymentAmount, 2),
-        'payment_date' => $paymentDate,
+        'payment_date' => $paymentDate, // Include payment date in notification
         'total_invoices' => $invoiceResult['total_invoices'] ?? 0
     ];
     
@@ -1157,11 +1163,9 @@ try {
         'total_invoices' => $invoiceResult['total_invoices'] ?? 0,
         'form_datetime_recorded' => $validatedFormDateTime,
         'payment_date' => $paymentDate,
-        'receipt_saved_as_file' => true,
-        'receipt_filename' => $invoiceResult['receipt_filename'] ?? null,
         'message' => $isNewParentAccount 
-            ? 'Parent account created! Child registered with ' . ($invoiceResult['total_invoices'] ?? 0) . ' invoices (one per class). Payment receipt saved to local file.' 
-            : 'Child added with ' . ($invoiceResult['total_invoices'] ?? 0) . ' invoices (one per class)! Payment receipt saved to local file.',
+            ? 'Parent account created! Child registered with ' . ($invoiceResult['total_invoices'] ?? 0) . ' invoices (one per class).' 
+            : 'Child added with ' . ($invoiceResult['total_invoices'] ?? 0) . ' invoices (one per class)!',
     ]);
 
 } catch (PDOException $e) {

@@ -134,7 +134,7 @@ function authenticateUser($email, $password, $pdo) {
                 r.name_cn,
                 r.age,
                 r.school,
-                r.student_status,
+                r.status as student_status,
                 r.payment_status,
                 r.events,
                 r.schedule

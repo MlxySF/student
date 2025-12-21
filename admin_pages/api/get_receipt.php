@@ -1,40 +1,33 @@
 <?php
-/**
- * get_receipt.php - Secure Receipt File Serving for Admin
- * Directly serves payment receipt files with admin authentication
- */
-
-// Suppress any output before headers
+// Suppress any output before JSON
 error_reporting(0);
 ini_set('display_errors', 0);
 
 session_start();
 
-// Check if admin is logged in
-if (!isset($_SESSION['admin_id'])) {
-    http_response_code(401);
-    header('Content-Type: application/json');
-    echo json_encode(['error' => 'Unauthorized']);
-    exit;
-}
+// Set JSON header first
+header('Content-Type: application/json');
 
 // Check if config file exists
 if (!file_exists('../../config.php')) {
-    http_response_code(500);
-    header('Content-Type: application/json');
     echo json_encode(['error' => 'Configuration file not found']);
     exit;
 }
 
 require_once '../../config.php';
-require_once '../../file_storage_helper.php';
+
+// Check if admin is logged in
+if (!isset($_SESSION['admin_id'])) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Unauthorized']);
+    exit;
+}
 
 // Get invoice ID from request
 $invoice_id = isset($_GET['invoice_id']) ? intval($_GET['invoice_id']) : 0;
 
 if ($invoice_id <= 0) {
     http_response_code(400);
-    header('Content-Type: application/json');
     echo json_encode(['error' => 'Invalid invoice ID']);
     exit;
 }
@@ -42,14 +35,12 @@ if ($invoice_id <= 0) {
 try {
     // Check if PDO connection exists
     if (!isset($pdo)) {
-        http_response_code(500);
-        header('Content-Type: application/json');
         echo json_encode(['error' => 'Database connection not available']);
         exit;
     }
     
-    // Fetch receipt filename and MIME type
-    $sql = "SELECT p.receipt_filename, p.receipt_mime_type 
+    // Fetch only the receipt data for this specific invoice
+    $sql = "SELECT p.receipt_data, p.receipt_mime_type 
             FROM payments p 
             WHERE p.invoice_id = :invoice_id";
     
@@ -59,56 +50,45 @@ try {
     $payment = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$payment) {
-        http_response_code(404);
-        header('Content-Type: application/json');
         echo json_encode(['error' => 'No receipt found for this invoice']);
         exit;
     }
     
-    if (empty($payment['receipt_filename']) || empty($payment['receipt_mime_type'])) {
-        http_response_code(404);
-        header('Content-Type: application/json');
-        echo json_encode(['error' => 'Receipt file not available']);
+    if (empty($payment['receipt_data']) || empty($payment['receipt_mime_type'])) {
+        echo json_encode(['error' => 'Receipt data is empty']);
         exit;
     }
     
-    // Construct file path
-    $filepath = PAYMENT_RECEIPTS_DIR . $payment['receipt_filename'];
+    // Handle BLOB data - check if it's already base64 encoded or raw binary
+    $receipt_data = $payment['receipt_data'];
     
-    // Validate file exists
-    if (!file_exists($filepath)) {
-        http_response_code(404);
-        header('Content-Type: application/json');
-        echo json_encode(['error' => 'Receipt file not found on server']);
-        exit;
+    // If receipt_data is a resource (BLOB), read it and convert to base64
+    if (is_resource($receipt_data)) {
+        $receipt_data = stream_get_contents($receipt_data);
+        if ($receipt_data === false) {
+            echo json_encode(['error' => 'Failed to read receipt data']);
+            exit;
+        }
+        $receipt_data = base64_encode($receipt_data);
+    } 
+    // If it's binary string (not base64), encode it
+    else if (!preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $receipt_data)) {
+        $receipt_data = base64_encode($receipt_data);
     }
+    // Otherwise it's already base64, use as-is
     
-    // Validate file is readable
-    if (!is_readable($filepath)) {
-        http_response_code(500);
-        header('Content-Type: application/json');
-        echo json_encode(['error' => 'Receipt file not accessible']);
-        exit;
-    }
-    
-    // Serve the file directly
-    header('Content-Type: ' . $payment['receipt_mime_type']);
-    header('Content-Disposition: inline; filename="' . basename($payment['receipt_filename']) . '"');
-    header('Content-Length: ' . filesize($filepath));
-    header('Cache-Control: private, max-age=3600');
-    header('X-Content-Type-Options: nosniff');
-    
-    // Output file content
-    readfile($filepath);
-    exit;
+    // Return receipt data
+    echo json_encode([
+        'success' => true,
+        'receipt_data' => $receipt_data,
+        'receipt_mime_type' => $payment['receipt_mime_type']
+    ]);
     
 } catch (PDOException $e) {
     http_response_code(500);
-    header('Content-Type: application/json');
     echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
 } catch (Exception $e) {
     http_response_code(500);
-    header('Content-Type: application/json');
     echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
 }
 ?>

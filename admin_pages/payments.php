@@ -1,6 +1,5 @@
 <?php
 // Get all payments with student, class, and invoice information
-// UPDATED: Fetch receipt_filename instead of receipt_data
 $stmt = $pdo->query("
     SELECT p.*, 
            s.student_id, s.full_name, s.email, 
@@ -20,27 +19,8 @@ $all_payments = $stmt->fetchAll();
     .hide-mobile { display: none !important; }
     .table td, .table th { padding: 8px 5px; font-size: 12px; }
 }
-.receipt-image { 
-    max-width: 100%; 
-    height: auto; 
-    border-radius: 8px; 
-    border: 2px solid #e2e8f0; 
-}
-.receipt-pdf { 
-    width: 100%; 
-    height: 500px; 
-    border: 2px solid #e2e8f0; 
-    border-radius: 8px; 
-}
-.debug-info {
-    background: #fff3cd;
-    border: 1px solid #ffc107;
-    border-radius: 8px;
-    padding: 12px;
-    margin: 10px 0;
-    font-family: monospace;
-    font-size: 12px;
-}
+.receipt-image { max-width: 100%; height: auto; border-radius: 8px; border: 2px solid #e2e8f0; }
+.receipt-pdf { width: 100%; height: 500px; border: 2px solid #e2e8f0; border-radius: 8px; }
 </style>
 
 <div class="card">
@@ -161,58 +141,18 @@ $all_payments = $stmt->fetchAll();
                 </tr>
             </table>
 
-            <!-- DEBUG INFO -->
-            <div class="debug-info">
-                <strong>🐛 DEBUG INFO:</strong><br>
-                Payment ID: <?php echo $payment['id']; ?><br>
-                receipt_filename: <?php echo !empty($payment['receipt_filename']) ? htmlspecialchars($payment['receipt_filename']) : '<span style="color:red;">EMPTY/NULL</span>'; ?><br>
-                receipt_mime_type: <?php echo !empty($payment['receipt_mime_type']) ? htmlspecialchars($payment['receipt_mime_type']) : '<span style="color:red;">EMPTY/NULL</span>'; ?><br>
-                receipt_size: <?php echo !empty($payment['receipt_size']) ? number_format($payment['receipt_size']) . ' bytes' : '<span style="color:red;">EMPTY/NULL</span>'; ?><br>
-                <?php if (!empty($payment['receipt_filename'])): ?>
-                    File Path: ../uploads/payment_receipts/<?php echo htmlspecialchars($payment['receipt_filename']); ?><br>
-                    File exists: <?php echo file_exists('../uploads/payment_receipts/' . $payment['receipt_filename']) ? '<span style="color:green;">YES ✓</span>' : '<span style="color:red;">NO ✗</span>'; ?>
-                <?php endif; ?>
-            </div>
-
             <h6 class="mt-4 mb-3">Receipt Image</h6>
-            <?php if (!empty($payment['receipt_filename'])): ?>
-                <?php 
-                // UPDATED: Use serve_file.php to display receipt from local storage
-                $fileUrl = '../serve_file.php?type=payment_receipt&file=' . urlencode($payment['receipt_filename']);
-                ?>
-                <div class="alert alert-success">
-                    <strong>✓ Found local file:</strong> <?php echo htmlspecialchars($payment['receipt_filename']); ?><br>
-                    <strong>File URL:</strong> <a href="<?php echo htmlspecialchars($fileUrl); ?>" target="_blank"><?php echo htmlspecialchars($fileUrl); ?></a>
-                </div>
+            <?php if (!empty($payment['receipt_data']) && !empty($payment['receipt_mime_type'])): ?>
                 <?php if ($payment['receipt_mime_type'] === 'application/pdf'): ?>
                     <div class="alert alert-info"><i class="fas fa-file-pdf"></i> PDF Receipt</div>
-                    <iframe src="<?php echo htmlspecialchars($fileUrl); ?>" class="receipt-pdf" frameborder="0"></iframe>
-                    <div class="mt-2">
-                        <a href="<?php echo htmlspecialchars($fileUrl); ?>" target="_blank" class="btn btn-sm btn-primary">
-                            <i class="fas fa-external-link-alt"></i> Open in New Tab
-                        </a>
-                        <a href="<?php echo htmlspecialchars($fileUrl . '&download'); ?>" class="btn btn-sm btn-success">
-                            <i class="fas fa-download"></i> Download PDF
-                        </a>
-                    </div>
+                    <embed src="data:<?php echo $payment['receipt_mime_type']; ?>;base64,<?php echo $payment['receipt_data']; ?>" 
+                           type="<?php echo $payment['receipt_mime_type']; ?>" class="receipt-pdf">
                 <?php else: ?>
-                    <img src="<?php echo htmlspecialchars($fileUrl); ?>" alt="Receipt" class="receipt-image">
-                    <div class="mt-2">
-                        <a href="<?php echo htmlspecialchars($fileUrl); ?>" target="_blank" class="btn btn-sm btn-primary">
-                            <i class="fas fa-external-link-alt"></i> View Full Size
-                        </a>
-                        <a href="<?php echo htmlspecialchars($fileUrl . '&download'); ?>" class="btn btn-sm btn-success">
-                            <i class="fas fa-download"></i> Download Image
-                        </a>
-                    </div>
+                    <img src="data:<?php echo $payment['receipt_mime_type']; ?>;base64,<?php echo $payment['receipt_data']; ?>" 
+                         alt="Receipt" class="receipt-image">
                 <?php endif; ?>
             <?php else: ?>
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle"></i> <strong>Receipt data is empty</strong><br>
-                    This payment was likely uploaded before the new file storage system was implemented.<br>
-                    The database has <code>receipt_filename</code> = NULL.<br>
-                    <em>New uploads after the system update will display correctly.</em>
-                </div>
+                <div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> No receipt image available.</div>
             <?php endif; ?>
 
             <?php if (!empty($payment['admin_notes'])): ?>

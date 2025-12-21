@@ -2,11 +2,10 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Include config, security layer, file storage, and auth helper
+// Include config, security layer, and auth helper
 require_once 'config.php';
-require_once 'security.php';
+require_once 'security.php';  // NEW: Security layer
 require_once 'auth_helper.php';
-require_once 'file_storage_helper.php'; // NEW: Local file storage
 
 // Include PHPMailer for admin notifications
 use PHPMailer\PHPMailer\PHPMailer;
@@ -229,8 +228,7 @@ function validateReceiptFile($file) {
     return $result;
 }
 
-// DEPRECATED: Convert file to base64 for database storage
-// Kept for backward compatibility but no longer used
+// Convert file to base64 for database storage
 function fileToBase64($file) {
     if (!file_exists($file['tmp_name'])) {
         return false;
@@ -439,9 +437,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-// ============================================================
-// PAYMENT UPLOAD HANDLER - MODIFIED TO USE LOCAL FILE STORAGE
-// ============================================================
+// Handle Payment Upload - WITH CSRF AND VALIDATION
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'upload_payment') {
     redirectIfNotLoggedIn();
     verifyCSRF();
@@ -490,21 +486,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             exit;
         }
 
-        // === CHANGED: Save file locally instead of base64 ===
-        $savedFile = saveUploadedFile($_FILES['receipt'], PAYMENT_RECEIPTS_DIR);
+        $receiptData = fileToBase64($_FILES['receipt']);
 
-        if (!$savedFile['success']) {
-            $_SESSION['error'] = "Failed to save receipt file: " . ($savedFile['error'] ?? 'Unknown error');
+        if ($receiptData === false) {
+            $_SESSION['error'] = "Failed to process receipt file.";
             $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
             header('Location: index.php?page=' . $redirect_page);
             exit;
         }
 
-        $filename = $savedFile['filename'];
-        $mimeType = $savedFile['mime_type'];
-        $fileSize = $savedFile['size'];
-
-        error_log("[Payment Upload] File saved locally: {$filename} (Size: {$fileSize} bytes, MIME: {$mimeType})");
+        // Generate secure filename
+        $secureFilename = generateSecureFilename($_FILES['receipt']['name']);
+        if (!$secureFilename) {
+            $_SESSION['error'] = 'Invalid file type.';
+            $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
+            header('Location: index.php?page=' . $redirect_page);
+            exit;
+        }
+        
+        $filename = $secureFilename;
 
         // Get parent_account_id if this is a child account
         $parent_account_id = null;
@@ -527,7 +527,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         }
 
         try {
-            // === CHANGED: Store filename only, not base64 data ===
             $stmt = $pdo->prepare("
                 INSERT INTO payments (
                     student_id, 
@@ -535,12 +534,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     amount, 
                     payment_month, 
                     receipt_filename,
+                    receipt_data,
                     receipt_mime_type,
                     receipt_size,
                     admin_notes,
                     invoice_id,
                     parent_account_id
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
 
             $success = $stmt->execute([
@@ -548,9 +548,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $class_id,
                 $amount, 
                 $payment_month, 
-                $filename,        // Just filename, not base64
-                $mimeType,
-                $fileSize,
+                $filename,
+                $receiptData['data'],
+                $receiptData['mime'],
+                $receiptData['size'],
                 $notes,
                 $invoice_id,
                 $parent_account_id
@@ -599,13 +600,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $parent_email = $parent['email'] ?? '';
                 }
                 
-                // Format file size
-                if ($fileSize < 1024) {
-                    $file_size_formatted = $fileSize . ' B';
-                } elseif ($fileSize < 1024 * 1024) {
-                    $file_size_formatted = number_format($fileSize / 1024, 2) . ' KB';
+                $file_size = $receiptData['size'];
+                if ($file_size < 1024) {
+                    $file_size_formatted = $file_size . ' B';
+                } elseif ($file_size < 1024 * 1024) {
+                    $file_size_formatted = number_format($file_size / 1024, 2) . ' KB';
                 } else {
-                    $file_size_formatted = number_format($fileSize / (1024 * 1024), 2) . ' MB';
+                    $file_size_formatted = number_format($file_size / (1024 * 1024), 2) . ' MB';
                 }
                 
                 $adminNotificationData = [
@@ -637,13 +638,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     exit;
                 }
             } else {
-                // Database insert failed - cleanup uploaded file
-                deleteFile($savedFile['filepath']);
                 $_SESSION['error'] = "Failed to save payment record.";
             }
         } catch (PDOException $e) {
-            // Database error - cleanup uploaded file
-            deleteFile($savedFile['filepath']);
             error_log("[Payment Upload Error] " . $e->getMessage());
             $_SESSION['error'] = "Database error: Unable to save payment. Please contact support if this persists.";
         }

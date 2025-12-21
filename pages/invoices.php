@@ -1,7 +1,6 @@
 <?php
 // Student Invoices & Payments Page - Updated with DataTables pagination and status filter
 // FIXED: Determine student account ID properly for parent portal
-// UPDATED: Now displays files from local storage via serve_file.php instead of base64
 
 // Determine student account ID first
 if (isParent()) {
@@ -39,12 +38,11 @@ $available_months = [];
 // Fetch data if filters are applied (including "All Types" which is empty string but filter_applied is true)
 if ($filter_applied) {
     // Build SQL query - using studentAccountId for multi-child support
-    // UPDATED: Fetch receipt_filename instead of receipt_data
     $sql = "
         SELECT i.*, 
                c.class_code, c.class_name,
                p.id as payment_id, p.verification_status, p.upload_date,
-               p.receipt_filename, p.receipt_mime_type, p.admin_notes
+               p.receipt_data, p.receipt_mime_type, p.admin_notes
         FROM invoices i
         LEFT JOIN classes c ON i.class_id = c.id
         LEFT JOIN payments p ON i.id = p.invoice_id
@@ -165,33 +163,8 @@ function isClassFeeInvoice($invoice) {
     .sp-invoices-table tbody tr.sp-invoice-row td { display: table-cell !important; padding: .75rem; }
 }
 
-.receipt-image { 
-    max-width: 100%; 
-    height: auto; 
-    border-radius: 8px; 
-    border: 2px solid #e2e8f0; 
-}
-
-.receipt-pdf { 
-    width: 100%; 
-    height: 500px; 
-    border: 2px solid #e2e8f0; 
-    border-radius: 8px; 
-}
-
-.receipt-loading {
-    text-align: center;
-    padding: 40px;
-    color: #64748b;
-}
-
-.receipt-error {
-    padding: 20px;
-    background: #fee2e2;
-    border-left: 4px solid #dc2626;
-    border-radius: 8px;
-    color: #991b1b;
-}
+.receipt-image { max-width: 100%; height: auto; border-radius: 8px; border: 2px solid #e2e8f0; }
+.receipt-pdf { width: 100%; height: 500px; border: 2px solid #e2e8f0; border-radius: 8px; }
 
 /* Bank Details Styles */
 .bank-details-card {
@@ -635,31 +608,11 @@ function isClassFeeInvoice($invoice) {
         </table>
 
         <h6>Your Uploaded Receipt</h6>
-        <?php if (!empty($inv['receipt_filename'])): ?>
-          <?php 
-          // UPDATED: Use serve_file.php to display receipt from local storage
-          $fileUrl = 'serve_file.php?type=payment_receipt&file=' . urlencode($inv['receipt_filename']);
-          ?>
+        <?php if (!empty($inv['receipt_data'])): ?>
           <?php if ($inv['receipt_mime_type'] === 'application/pdf'): ?>
-            <iframe src="<?php echo htmlspecialchars($fileUrl); ?>" class="receipt-pdf" frameborder="0"></iframe>
-            <div class="mt-2">
-              <a href="<?php echo htmlspecialchars($fileUrl); ?>" target="_blank" class="btn btn-sm btn-primary">
-                <i class="fas fa-external-link-alt"></i> Open in New Tab
-              </a>
-              <a href="<?php echo htmlspecialchars($fileUrl . '&download'); ?>" class="btn btn-sm btn-success">
-                <i class="fas fa-download"></i> Download PDF
-              </a>
-            </div>
+            <embed src="data:<?php echo $inv['receipt_mime_type']; ?>;base64,<?php echo $inv['receipt_data']; ?>" type="<?php echo $inv['receipt_mime_type']; ?>" class="receipt-pdf">
           <?php else: ?>
-            <img src="<?php echo htmlspecialchars($fileUrl); ?>" alt="Receipt" class="receipt-image">
-            <div class="mt-2">
-              <a href="<?php echo htmlspecialchars($fileUrl); ?>" target="_blank" class="btn btn-sm btn-primary">
-                <i class="fas fa-external-link-alt"></i> View Full Size
-              </a>
-              <a href="<?php echo htmlspecialchars($fileUrl . '&download'); ?>" class="btn btn-sm btn-success">
-                <i class="fas fa-download"></i> Download Image
-              </a>
-            </div>
+            <img src="data:<?php echo $inv['receipt_mime_type']; ?>;base64,<?php echo $inv['receipt_data']; ?>" alt="Receipt" class="receipt-image">
           <?php endif; ?>
         <?php else: ?>
           <div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Receipt not available.</div>
