@@ -165,33 +165,7 @@ function isClassFeeInvoice($invoice) {
 }
 
 .receipt-image { max-width: 100%; height: auto; border-radius: 8px; border: 2px solid #e2e8f0; }
-.receipt-pdf-container { 
-    width: 100%; 
-    min-height: 500px; 
-    border: 2px solid #e2e8f0; 
-    border-radius: 8px; 
-    overflow: hidden;
-    background: #f8fafc;
-    position: relative;
-}
-.receipt-pdf-iframe { 
-    width: 100%; 
-    height: 600px; 
-    border: none; 
-    display: block;
-}
-.pdf-fallback {
-    padding: 40px 20px;
-    text-align: center;
-    background: #f1f5f9;
-    border-radius: 8px;
-    margin: 20px 0;
-}
-.pdf-fallback i {
-    font-size: 48px;
-    color: #64748b;
-    margin-bottom: 16px;
-}
+.receipt-pdf { width: 100%; height: 500px; border: 2px solid #e2e8f0; border-radius: 8px; }
 
 /* Bank Details Styles */
 .bank-details-card {
@@ -637,35 +611,8 @@ function isClassFeeInvoice($invoice) {
         <h6>Your Uploaded Receipt</h6>
         <?php if (!empty($inv['receipt_data'])): ?>
           <?php if ($inv['receipt_mime_type'] === 'application/pdf'): ?>
-            <!-- ✨ FIXED: Better PDF display with iframe and fallback download button -->
-            <div class="pdf-fallback">
-              <i class="fas fa-file-pdf"></i>
-              <h5>PDF Receipt Uploaded</h5>
-              <p class="text-muted mb-3">Click the button below to view or download your receipt</p>
-              <a href="data:<?php echo $inv['receipt_mime_type']; ?>;base64,<?php echo $inv['receipt_data']; ?>" 
-                 download="receipt-<?php echo $inv['invoice_number']; ?>.pdf" 
-                 class="btn btn-primary btn-lg me-2">
-                <i class="fas fa-download"></i> Download PDF
-              </a>
-              <a href="data:<?php echo $inv['receipt_mime_type']; ?>;base64,<?php echo $inv['receipt_data']; ?>" 
-                 target="_blank" 
-                 class="btn btn-secondary btn-lg">
-                <i class="fas fa-external-link-alt"></i> Open in New Tab
-              </a>
-            </div>
-            
-            <!-- Alternative: Try to embed PDF (may work in some browsers) -->
-            <div class="receipt-pdf-container mt-3">
-              <iframe src="data:<?php echo $inv['receipt_mime_type']; ?>;base64,<?php echo $inv['receipt_data']; ?>" 
-                      class="receipt-pdf-iframe"
-                      title="Payment Receipt PDF">
-                <p>Your browser does not support PDFs. 
-                   <a href="data:<?php echo $inv['receipt_mime_type']; ?>;base64,<?php echo $inv['receipt_data']; ?>" download>Download the PDF</a>
-                </p>
-              </iframe>
-            </div>
+            <embed src="data:<?php echo $inv['receipt_mime_type']; ?>;base64,<?php echo $inv['receipt_data']; ?>" type="<?php echo $inv['receipt_mime_type']; ?>" class="receipt-pdf">
           <?php else: ?>
-            <!-- Image receipt - works fine -->
             <img src="data:<?php echo $inv['receipt_mime_type']; ?>;base64,<?php echo $inv['receipt_data']; ?>" alt="Receipt" class="receipt-image">
           <?php endif; ?>
         <?php else: ?>
