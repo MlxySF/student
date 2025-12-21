@@ -101,44 +101,15 @@ require('fpdf.php');
 
 // Function to download and cache letterhead image
 function getLetterheadImage() {
-    $imageUrl = 'https://wushu-assets.s3.ap-southeast-1.amazonaws.com/WSP+Letter.png';
-    $tempDir = sys_get_temp_dir();
-    $cacheFile = $tempDir . '/wushu_letterhead.jpg';
+    $localPath = __DIR__ . '/cache/WSP Letter.png';
     
-    // Use cached image if exists and less than 24 hours old
-    if (file_exists($cacheFile) && (time() - filemtime($cacheFile) < 86400)) {
-        return $cacheFile;
+    if (file_exists($localPath)) {
+        return $localPath;
     }
     
-    // Download the image
-    $imageData = @file_get_contents($imageUrl);
-    if ($imageData === false) {
-        return false;
-    }
-    
-    // Create image from downloaded data
-    $image = @imagecreatefromstring($imageData);
-    if ($image === false) {
-        return false;
-    }
-    
-    // Convert to JPG for better FPDF compatibility
-    $jpgImage = imagecreatetruecolor(imagesx($image), imagesy($image));
-    
-    // Fill background with white
-    $white = imagecolorallocate($jpgImage, 255, 255, 255);
-    imagefill($jpgImage, 0, 0, $white);
-    
-    // Copy image onto white background
-    imagecopy($jpgImage, $image, 0, 0, 0, 0, imagesx($image), imagesy($image));
-    
-    // Save as JPG
-    imagejpeg($jpgImage, $cacheFile, 95);
-    imagedestroy($image);
-    imagedestroy($jpgImage);
-    
-    return $cacheFile;
+    return false; // Return false if the file does not exist
 }
+
 
 class InvoicePDF extends FPDF
 {
@@ -159,7 +130,7 @@ class InvoicePDF extends FPDF
         if (!empty($this->letterheadPath) && file_exists($this->letterheadPath)) {
             try {
                 // Place letterhead image - adjusted size and position for better look
-                $this->Image($this->letterheadPath, 10, 8, 140, 25, 'JPG');
+                $this->Image($this->letterheadPath, 10, 8, 140, 25, 'PNG');
             } catch (Exception $e) {
                 $this->createTextHeader();
             }
@@ -446,7 +417,7 @@ $pdf->SetFont('Helvetica', '', 9);
 $pdf->SetTextColor(60, 60, 60);
 $pdf->SetX(15);
 $pdf->MultiCell(180, 4.5, 
-    'Thank you for your payment. This invoice confirms your class enrollment and payment has been received and verified. Please keep this document for your records. If you have any questions, please contact our administration office.',
+    'Thank you for your payment. This invoice confirms your class enrollment or payment has been received and verified. Please keep this document for your records. If you have any questions, please contact our administration office.',
     0, 'L');
 
 $pdf->Ln(2);
@@ -460,7 +431,7 @@ $pdf->SetFont('Helvetica', '', 9);
 $pdf->SetTextColor(80, 80, 80);
 $pdf->SetX(15);
 $pdf->MultiCell(180, 4, 
-    "This invoice is a valid proof of payment and enrollment. Please retain this document for your records. Classes are non-transferable unless prior approval is obtained. Wushu Sport Academy reserves the right to modify class schedules with 7 days notice.",
+    "This invoice is a valid proof of payment or enrollment. Please retain this document for your records. Classes are non-transferable unless prior approval is obtained. Wushu Sport Academy reserves the right to modify class schedules with 7 days notice.",
     0, 'L');
 
 // ============================================================
