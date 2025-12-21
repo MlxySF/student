@@ -9,6 +9,8 @@
  * - saveUploadedFile() - Save $_FILES upload to disk
  * - deleteFile() - Remove file from disk
  * - getFileExtensionFromBase64() - Detect file type from base64
+ * - generateUniqueFilename() - Create unique filename
+ * - validateFileType() - Check if file type is allowed
  * - getFileMimeType() - Get MIME type from file
  */
 
@@ -25,16 +27,6 @@ define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
 define('ALLOWED_IMAGE_TYPES', ['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 define('ALLOWED_DOCUMENT_TYPES', ['application/pdf']);
 define('ALLOWED_EXTENSIONS', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf']);
-
-/**
- * Generate unique filename (internal use only)
- * Note: For secure filename generation, use generateSecureFilename() from security.php
- */
-function generateUniqueFilename($prefix, $identifier, $extension) {
-    $timestamp = date('YmdHis');
-    $random = substr(md5(uniqid(mt_rand(), true)), 0, 8);
-    return sprintf('%s_%s_%s_%s.%s', $prefix, $identifier, $timestamp, $random, $extension);
-}
 
 /**
  * Save base64 encoded data to a file
@@ -250,6 +242,20 @@ function deleteFile($relativePath) {
     
     error_log("[File Helper] File not found for deletion: {$relativePath}");
     return false;
+}
+
+/**
+ * Generate unique filename
+ * 
+ * @param string $prefix Prefix (e.g., 'receipt', 'signature')
+ * @param int|string $identifier Unique ID
+ * @param string $extension File extension
+ * @return string Unique filename
+ */
+function generateUniqueFilename($prefix, $identifier, $extension) {
+    $timestamp = date('YmdHis');
+    $random = substr(md5(uniqid(mt_rand(), true)), 0, 8);
+    return sprintf('%s_%s_%s_%s.%s', $prefix, $identifier, $timestamp, $random, $extension);
 }
 
 /**
