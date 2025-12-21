@@ -40,15 +40,26 @@ require 'file_helper.php'; // NEW: File management functions
 define('ADMIN_EMAIL', 'chaichonghern@gmail.com');
 define('ADMIN_NAME', 'Academy Admin');
 
-// =========================
-// Helper: Generate password from IC
-// =========================
-function generatePasswordFromIC(string $ic): string {
-    // Remove dashes and get last 4 digits
+/**
+ * Generate password: either from IC last 4 digits OR custom password
+ * @param string $ic Parent IC number
+ * @param string|null $customPassword Custom password (if provided)
+ * @param string $passwordType "ic_last4" or "custom"
+ * @return string Plain text password
+ */
+function generatePassword(string $ic, ?string $customPassword, string $passwordType): string {
+    if ($passwordType === 'custom' && !empty($customPassword)) {
+        error_log("[Password] Using CUSTOM password (length: " . strlen($customPassword) . ")");
+        return trim($customPassword);
+    }
+    
+    // Default: use last 4 digits of IC
     $icClean = str_replace('-', '', $ic);
     $last4 = substr($icClean, -4);
+    error_log("[Password] Using IC last 4 digits: {$last4}");
     return $last4;
 }
+
 
 // =========================
 // Helper: Generate unique randomized registration number
@@ -183,7 +194,12 @@ function findOrCreateParentAccount(PDO $conn, array $parentData): array {
 
     // Create new parent account
     $parentCode = generateParentCode($conn);
-    $plainPassword = generatePasswordFromIC($parentData['ic']);
+    $plainPassword = generatePassword(
+        $parentData['ic'], 
+        $parentData['custom_password'] ?? null,
+        $parentData['password_type'] ?? 'ic_last4'
+    );
+
     $hash = password_hash($plainPassword, PASSWORD_DEFAULT);
 
     $stmt = $conn->prepare("INSERT INTO parent_accounts
@@ -917,7 +933,7 @@ try {
     $regNumber = generateUniqueRegistrationNumber($conn);
 
     // Student account password (last 4 digits of child's IC)
-    $generatedPassword = generatePasswordFromIC($childIC);
+    $generatedPassword = generatePassword($childIC, null, 'ic_last4');
     $hashedPassword    = password_hash($generatedPassword, PASSWORD_DEFAULT);
 
     $studentId    = $regNumber;
@@ -933,10 +949,13 @@ try {
 
     $parentData = [
         'name'  => trim($data['parent_name']),
-        'email' => $parentEmail, // Parent email
+        'email' => $parentEmail,
         'phone' => $phone,
         'ic'    => trim($data['parent_ic']),
+        'password_type' => isset($data['password_type']) ? trim($data['password_type']) : 'ic_last4',
+        'custom_password' => isset($data['custom_password']) ? trim($data['custom_password']) : null,
     ];
+
 
     $parentAccountInfo = findOrCreateParentAccount($conn, $parentData);
 
