@@ -289,7 +289,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
     border: 2px solid #e2e8f0; 
 }
 
-/* ✨ BALANCED: Compact buttons + PDF preview */
+/* ✨ COMPACT: Just buttons, no preview */
 .receipt-actions {
     display: flex;
     gap: 10px;
@@ -300,23 +300,6 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
 .receipt-actions .btn {
     flex: 1;
     min-width: 150px;
-}
-
-.receipt-pdf-container { 
-    width: 100%; 
-    height: 600px; 
-    border: 2px solid #e2e8f0; 
-    border-radius: 8px; 
-    overflow: hidden;
-    background: #f8fafc;
-    margin-top: 15px;
-}
-
-.receipt-pdf-iframe { 
-    width: 100%; 
-    height: 100%; 
-    border: none; 
-    display: block;
 }
 
 .receipt-loading { 
@@ -780,29 +763,28 @@ function loadReceipt(invoiceId) {
                 // Mark as loaded
                 loadedReceipts.add(invoiceId);
                 
-                // ✨ BALANCED: Compact buttons + PDF iframe preview
-                const dataUrl = 'data:' + data.receipt_mime_type + ';base64,' + data.receipt_data;
-                
+                // ✨ COMPACT: Just buttons linking to actual file path
                 if (data.receipt_mime_type === 'application/pdf') {
-                    // PDF Receipt - Show buttons + iframe preview
+                    // PDF Receipt - Download button + link to actual file
+                    const downloadUrl = 'data:' + data.receipt_mime_type + ';base64,' + data.receipt_data;
+                    const fileUrl = 'uploads/' + data.receipt_path; // Direct link to file on server
+                    
                     container.innerHTML = `
                         <div class="alert alert-info">
                             <i class="fas fa-file-pdf"></i> <strong>PDF Receipt Uploaded</strong>
                         </div>
                         <div class="receipt-actions">
-                            <a href="${dataUrl}" download="receipt-invoice-${invoiceId}.pdf" class="btn btn-primary">
+                            <a href="${downloadUrl}" download="receipt-invoice-${invoiceId}.pdf" class="btn btn-primary">
                                 <i class="fas fa-download"></i> Download PDF
                             </a>
-                            <a href="${dataUrl}" target="_blank" class="btn btn-secondary">
+                            <a href="${fileUrl}" target="_blank" class="btn btn-secondary">
                                 <i class="fas fa-external-link-alt"></i> Open in New Tab
                             </a>
-                        </div>
-                        <div class="receipt-pdf-container">
-                            <iframe src="${dataUrl}" class="receipt-pdf-iframe" title="Payment Receipt PDF"></iframe>
                         </div>
                     `;
                 } else {
                     // Image Receipt - Display directly
+                    const dataUrl = 'data:' + data.receipt_mime_type + ';base64,' + data.receipt_data;
                     container.innerHTML = '<img src="' + dataUrl + '" alt="Receipt" class="receipt-image">';
                 }
                 console.log('Receipt displayed successfully');
