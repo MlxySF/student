@@ -259,6 +259,81 @@ $totalCount = array_sum($statusCounts);
 </div>
 <?php endforeach; ?>
 
+<!-- ✨ NEW: Rejection Reason Modal -->
+<?php foreach ($registrations as $reg): ?>
+<div class="modal fade" id="rejectModal<?php echo $reg['id']; ?>" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-times-circle"></i> Reject Registration
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="admin_handler.php">
+                <input type="hidden" name="action" value="reject_registration">
+                <input type="hidden" name="registration_id" value="<?php echo $reg['id']; ?>">
+                
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle"></i> You are about to reject the registration for:
+                    </div>
+                    
+                    <table class="table table-sm table-bordered mb-3">
+                        <tr>
+                            <th width="40%">Registration #:</th>
+                            <td><?php echo htmlspecialchars($reg['registration_number']); ?></td>
+                        </tr>
+                        <tr>
+                            <th>Student Name:</th>
+                            <td><?php echo htmlspecialchars($reg['name_en']); ?></td>
+                        </tr>
+                        <tr>
+                            <th>Parent Email:</th>
+                            <td><?php echo htmlspecialchars($reg['email']); ?></td>
+                        </tr>
+                    </table>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <strong>Reason for Rejection</strong> <span class="text-danger">*</span>
+                        </label>
+                        <textarea 
+                            name="reject_reason" 
+                            class="form-control" 
+                            rows="4" 
+                            required
+                            placeholder="Please explain why this registration was rejected. This will be sent to the parent via email.&#10;&#10;Example reasons:&#10;- Payment receipt is unclear/invalid&#10;- Incorrect payment amount&#10;- Required documents missing&#10;- Duplicate registration detected"></textarea>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i> This reason will be included in the rejection email sent to the parent.
+                        </small>
+                    </div>
+                    
+                    <div class="alert alert-danger mb-0">
+                        <strong>⚠️ What will happen:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Registration status will be set to "Rejected"</li>
+                            <li>Linked invoice will be cancelled</li>
+                            <li>Payment record will be rejected</li>
+                            <li>Parent will receive an email notification with your reason</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times-circle"></i> Reject & Send Email
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<?php endforeach; ?>
+
 <!-- View Modals (Outside the table) -->
 <?php foreach ($registrations as $reg): ?>
 <div class="modal fade" id="viewModal<?php echo $reg['id']; ?>" tabindex="-1">
@@ -495,13 +570,10 @@ $totalCount = array_sum($statusCounts);
                         <i class="fas fa-check-circle"></i> Approve Payment
                     </button>
                 </form>
-                <form method="POST" action="admin_handler.php" class="d-inline">
-                    <input type="hidden" name="action" value="reject_registration">
-                    <input type="hidden" name="registration_id" value="<?php echo $reg['id']; ?>">
-                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to reject this payment?')">
-                        <i class="fas fa-times-circle"></i> Reject Payment
-                    </button>
-                </form>
+                <!-- ✨ UPDATED: Open rejection modal instead of immediate rejection -->
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal<?php echo $reg['id']; ?>">
+                    <i class="fas fa-times-circle"></i> Reject Payment
+                </button>
                 <?php endif; ?>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
