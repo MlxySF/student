@@ -3,6 +3,7 @@ session_start();
 require_once 'config.php';
 require_once 'send_approval_email.php'; // Include email function
 require_once 'send_rejection_email.php'; // Include rejection email function
+require_once 'send_payment_approval_email.php'; // ✨ MOVED TO TOP - Include payment approval email
 
 // Log all POST requests to a file for debugging
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -1014,12 +1015,23 @@ if ($action === 'verify_payment') {
     $admin_notes = $_POST['admin_notes'] ?? '';
     $invoice_id = $_POST['invoice_id'] ?? null;
 
+    // ✨ DEBUG: Log the verification attempt
+    error_log("========================================");
+    error_log("[verify_payment] HANDLER CALLED");
+    error_log("[verify_payment] Payment ID: {$payment_id}");
+    error_log("[verify_payment] Status: {$verification_status}");
+    error_log("[verify_payment] Invoice ID: {$invoice_id}");
+    error_log("[verify_payment] Admin Notes: {$admin_notes}");
+    error_log("========================================");
+
     try {
         $pdo->beginTransaction();
         
         // Update payment status with admin info
         $stmt = $pdo->prepare("UPDATE payments SET verification_status = ?, admin_notes = ?, verified_date = NOW(), verified_by = ? WHERE id = ?");
         $stmt->execute([$verification_status, $admin_notes, $_SESSION['admin_id'] ?? null, $payment_id]);
+        
+        error_log("[verify_payment] Payment record updated in database");
         
         $emailSent = false;
         
@@ -1032,14 +1044,19 @@ if ($action === 'verify_payment') {
             $stmt->execute([$invoice_id]);
             $invoice = $stmt->fetch();
             
-            $pdo->commit();
+            error_log("[verify_payment] Invoice marked as paid: {$invoice['invoice_number']}");
             
-            // ✨ NEW: Send approval email with PDF receipt
-            require_once 'send_payment_approval_email.php';
+            $pdo->commit();
+            error_log("[verify_payment] Database transaction committed");
+            
+            // ✨ Send approval email with PDF receipt
+            error_log("[verify_payment] Calling sendPaymentApprovalEmail...");
             try {
                 $emailSent = sendPaymentApprovalEmail($payment_id, 'verified', $admin_notes);
+                error_log("[verify_payment] sendPaymentApprovalEmail returned: " . ($emailSent ? 'true' : 'false'));
             } catch (Exception $e) {
-                error_log("[verify_payment] Email sending failed: " . $e->getMessage());
+                error_log("[verify_payment] Exception during email: " . $e->getMessage());
+                error_log("[verify_payment] Stack trace: " . $e->getTraceAsString());
             }
             
             $message = "Payment verified! Invoice {$invoice['invoice_number']} marked as PAID.";
@@ -1052,13 +1069,16 @@ if ($action === 'verify_payment') {
             
         } else if ($verification_status === 'rejected') {
             $pdo->commit();
+            error_log("[verify_payment] Database transaction committed");
             
-            // ✨ NEW: Send rejection email
-            require_once 'send_payment_approval_email.php';
+            // ✨ Send rejection email
+            error_log("[verify_payment] Calling sendPaymentApprovalEmail for rejection...");
             try {
                 $emailSent = sendPaymentApprovalEmail($payment_id, 'rejected', $admin_notes);
+                error_log("[verify_payment] sendPaymentApprovalEmail returned: " . ($emailSent ? 'true' : 'false'));
             } catch (Exception $e) {
-                error_log("[verify_payment] Email sending failed: " . $e->getMessage());
+                error_log("[verify_payment] Exception during email: " . $e->getMessage());
+                error_log("[verify_payment] Stack trace: " . $e->getTraceAsString());
             }
             
             $message = "Payment status updated to: Rejected";
@@ -1071,13 +1091,19 @@ if ($action === 'verify_payment') {
             
         } else {
             $pdo->commit();
+            error_log("[verify_payment] Database transaction committed (no email sent)");
             $_SESSION['success'] = "Payment status updated to: " . ucfirst($verification_status);
         }
         
     } catch (Exception $e) {
         $pdo->rollBack();
+        error_log("[verify_payment] Exception in handler: " . $e->getMessage());
+        error_log("[verify_payment] Stack trace: " . $e->getTraceAsString());
         $_SESSION['error'] = "Failed to verify payment: " . $e->getMessage();
     }
+    
+    error_log("[verify_payment] Redirecting to admin.php?page=payments");
+    error_log("========================================");
     
     header('Location: admin.php?page=payments');
     exit;
