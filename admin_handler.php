@@ -74,7 +74,6 @@ if ($action === 'verify_registration') {
         $pdo->beginTransaction();
         
         // Get registration details including parent IC to generate parent password
-        // FIXED: Use student_status column instead of status
         $stmt = $pdo->prepare("
             SELECT 
                 r.id, r.registration_number, r.name_en, r.email, r.student_status,
@@ -118,7 +117,7 @@ if ($action === 'verify_registration') {
         $stmt = $pdo->prepare("UPDATE registrations SET payment_status = 'approved' WHERE id = ?");
         $stmt->execute([$regId]);
         
-        // 2. Auto-approve the linked registration fee invoice
+        // 2. Auto-approve ALL linked registration fee invoices (not just one)
         $stmt = $pdo->prepare("
             UPDATE invoices 
             SET status = 'paid',
@@ -130,23 +129,26 @@ if ($action === 'verify_registration') {
         $stmt->execute([$studentAccountId]);
         $invoicesUpdated = $stmt->rowCount();
         
-        // 3. Auto-verify linked payment records with 'verified' status
+        error_log("[verify_registration] Updated {$invoicesUpdated} invoices to paid");
+        
+        // 3. Auto-verify ALL linked payment records (FIXED: not just one)
         $paymentsUpdated = 0;
         if ($invoicesUpdated > 0) {
-            // Get the invoice ID that was just approved
+            // Get ALL invoice IDs that were just approved (not just one)
             $stmt = $pdo->prepare("
                 SELECT id FROM invoices 
                 WHERE student_id = ? 
                   AND invoice_type = 'registration' 
                   AND status = 'paid'
                 ORDER BY created_at DESC
-                LIMIT 1
             ");
             $stmt->execute([$studentAccountId]);
-            $invoice = $stmt->fetch(PDO::FETCH_ASSOC);
+            $invoices = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            if ($invoice) {
-                // Update payment to 'verified' status (not 'approved')
+            error_log("[verify_registration] Found " . count($invoices) . " paid invoices");
+            
+            // Update payments for ALL invoices (not just the first one)
+            foreach ($invoices as $invoice) {
                 $stmt = $pdo->prepare("
                     UPDATE payments 
                     SET verification_status = 'verified',
@@ -157,12 +159,16 @@ if ($action === 'verify_registration') {
                       AND verification_status = 'pending'
                 ");
                 $stmt->execute([$adminId, $invoice['id']]);
-                $paymentsUpdated = $stmt->rowCount();
+                $rowsAffected = $stmt->rowCount();
+                $paymentsUpdated += $rowsAffected;
+                
+                error_log("[verify_registration] Updated {$rowsAffected} payments for invoice ID {$invoice['id']}");
             }
+            
+            error_log("[verify_registration] Total payments updated: {$paymentsUpdated}");
         }
         
         // 4. Check if this is the first child for this parent (to send password)
-        // Use is_additional_child column - if 0, it's the first child
         $isFirstChild = ($registration['is_additional_child'] == 0);
         
         error_log("[verify_registration] IsFirstChild: " . ($isFirstChild ? 'YES' : 'NO') . ", Parent IC: {$parentIC}, PARENT Password: " . ($parentPlainPassword ?? 'NULL'));
@@ -177,8 +183,8 @@ if ($action === 'verify_registration') {
                 $registration['email'],
                 $registration['name_en'],
                 $registration['registration_number'],
-                $registration['student_status'],  // FIXED: Use student_status
-                $parentPlainPassword,  // Send PARENT'S password (last 4 of PARENT IC)
+                $registration['student_status'],
+                $parentPlainPassword,
                 $isFirstChild
             );
         } catch (Exception $e) {
@@ -188,10 +194,10 @@ if ($action === 'verify_registration') {
         // Build success message
         $message = "Registration {$registration['registration_number']} approved successfully!";
         if ($invoicesUpdated > 0) {
-            $message .= " Invoice marked as PAID.";
+            $message .= " {$invoicesUpdated} invoice(s) marked as PAID.";
         }
         if ($paymentsUpdated > 0) {
-            $message .= " Payment verified.";
+            $message .= " {$paymentsUpdated} payment(s) verified.";
         }
         if ($emailSent) {
             $message .= " Approval email sent to parent.";
@@ -199,7 +205,7 @@ if ($action === 'verify_registration') {
             $message .= " (Email notification failed - please contact parent manually)";
         }
         
-        error_log("[Approve] Reg#{$registration['registration_number']}: invoices=$invoicesUpdated, payments=$paymentsUpdated, email=" . ($emailSent ? 'sent' : 'failed'));
+        error_log("[Approve] Reg#{$registration['registration_number']}: invoices={$invoicesUpdated}, payments={$paymentsUpdated}, email=" . ($emailSent ? 'sent' : 'failed'));
         $_SESSION['success'] = $message;
         
     } catch (Exception $e) {
@@ -240,7 +246,7 @@ if ($action === 'reject_registration') {
         $stmt = $pdo->prepare("UPDATE registrations SET payment_status = 'rejected' WHERE id = ?");
         $stmt->execute([$regId]);
         
-        // 2. Cancel linked invoice
+        // 2. Cancel ALL linked invoices (not just one)
         $stmt = $pdo->prepare("
             UPDATE invoices 
             SET status = 'cancelled'
@@ -251,21 +257,27 @@ if ($action === 'reject_registration') {
         $stmt->execute([$studentAccountId]);
         $invoicesUpdated = $stmt->rowCount();
         
-        // 3. Reject linked payment records
+        error_log("[reject_registration] Cancelled {$invoicesUpdated} invoices");
+        
+        // 3. Reject ALL linked payment records (FIXED: not just one)
         $paymentsUpdated = 0;
         if ($invoicesUpdated > 0) {
+            // Get ALL cancelled invoice IDs
             $stmt = $pdo->prepare("
                 SELECT id FROM invoices 
                 WHERE student_id = ? 
                   AND invoice_type = 'registration' 
                   AND status = 'cancelled'
                 ORDER BY created_at DESC
-                LIMIT 1
             ");
             $stmt->execute([$studentAccountId]);
-            $invoice = $stmt->fetch(PDO::FETCH_ASSOC);
+            $invoices = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            if ($invoice) {
+            error_log("[reject_registration] Found " . count($invoices) . " cancelled invoices");
+            
+            // Reject payments for ALL invoices
+            foreach ($invoices as $invoice) {
+                $adminNotes = !empty($rejectReason) ? $rejectReason : 'Rejected with registration';
                 $stmt = $pdo->prepare("
                     UPDATE payments 
                     SET verification_status = 'rejected',
@@ -274,10 +286,14 @@ if ($action === 'reject_registration') {
                     WHERE invoice_id = ? 
                       AND verification_status = 'pending'
                 ");
-                $adminNotes = !empty($rejectReason) ? $rejectReason : 'Rejected with registration';
                 $stmt->execute([$adminNotes, $invoice['id']]);
-                $paymentsUpdated = $stmt->rowCount();
+                $rowsAffected = $stmt->rowCount();
+                $paymentsUpdated += $rowsAffected;
+                
+                error_log("[reject_registration] Rejected {$rowsAffected} payments for invoice ID {$invoice['id']}");
             }
+            
+            error_log("[reject_registration] Total payments rejected: {$paymentsUpdated}");
         }
         
         // Commit all database changes
@@ -299,10 +315,10 @@ if ($action === 'reject_registration') {
         // Build success message
         $message = "Registration {$registration['registration_number']} rejected.";
         if ($invoicesUpdated > 0) {
-            $message .= " Invoice cancelled.";
+            $message .= " {$invoicesUpdated} invoice(s) cancelled.";
         }
         if ($paymentsUpdated > 0) {
-            $message .= " Payment rejected.";
+            $message .= " {$paymentsUpdated} payment(s) rejected.";
         }
         if ($emailSent) {
             $message .= " Rejection notification sent to parent.";
@@ -310,7 +326,7 @@ if ($action === 'reject_registration') {
             $message .= " (Email notification failed - please contact parent manually)";
         }
         
-        error_log("[Reject] Reg#{$registration['registration_number']}: invoices=$invoicesUpdated, payments=$paymentsUpdated, email=" . ($emailSent ? 'sent' : 'failed'));
+        error_log("[Reject] Reg#{$registration['registration_number']}: invoices={$invoicesUpdated}, payments={$paymentsUpdated}, email=" . ($emailSent ? 'sent' : 'failed'));
         $_SESSION['success'] = $message;
         
     } catch (Exception $e) {
@@ -375,7 +391,7 @@ if ($action === 'reapprove_registration') {
         $stmt = $pdo->prepare("UPDATE registrations SET payment_status = 'approved' WHERE id = ?");
         $stmt->execute([$regId]);
         
-        // 2. Reactivate the cancelled invoice
+        // 2. Reactivate ALL cancelled invoices (FIXED: not just one)
         $stmt = $pdo->prepare("
             UPDATE invoices 
             SET status = 'paid',
@@ -387,21 +403,26 @@ if ($action === 'reapprove_registration') {
         $stmt->execute([$studentAccountId]);
         $invoicesUpdated = $stmt->rowCount();
         
-        // 3. Verify the rejected payment records
+        error_log("[reapprove_registration] Reactivated {$invoicesUpdated} invoices");
+        
+        // 3. Verify ALL rejected payment records (FIXED: not just one)
         $paymentsUpdated = 0;
         if ($invoicesUpdated > 0) {
+            // Get ALL reactivated invoice IDs
             $stmt = $pdo->prepare("
                 SELECT id FROM invoices 
                 WHERE student_id = ? 
                   AND invoice_type = 'registration' 
                   AND status = 'paid'
                 ORDER BY created_at DESC
-                LIMIT 1
             ");
             $stmt->execute([$studentAccountId]);
-            $invoice = $stmt->fetch(PDO::FETCH_ASSOC);
+            $invoices = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            if ($invoice) {
+            error_log("[reapprove_registration] Found " . count($invoices) . " paid invoices");
+            
+            // Verify payments for ALL invoices
+            foreach ($invoices as $invoice) {
                 $stmt = $pdo->prepare("
                     UPDATE payments 
                     SET verification_status = 'verified',
@@ -412,8 +433,13 @@ if ($action === 'reapprove_registration') {
                       AND verification_status = 'rejected'
                 ");
                 $stmt->execute([$adminId, $invoice['id']]);
-                $paymentsUpdated = $stmt->rowCount();
+                $rowsAffected = $stmt->rowCount();
+                $paymentsUpdated += $rowsAffected;
+                
+                error_log("[reapprove_registration] Verified {$rowsAffected} payments for invoice ID {$invoice['id']}");
             }
+            
+            error_log("[reapprove_registration] Total payments verified: {$paymentsUpdated}");
         }
         
         // 4. Check if this is the first child
@@ -442,10 +468,10 @@ if ($action === 'reapprove_registration') {
         // Build success message
         $message = "Registration {$registration['registration_number']} re-approved successfully!";
         if ($invoicesUpdated > 0) {
-            $message .= " Invoice reactivated and marked as PAID.";
+            $message .= " {$invoicesUpdated} invoice(s) reactivated and marked as PAID.";
         }
         if ($paymentsUpdated > 0) {
-            $message .= " Payment verified.";
+            $message .= " {$paymentsUpdated} payment(s) verified.";
         }
         if ($emailSent) {
             $message .= " Approval email sent to parent.";
@@ -453,7 +479,7 @@ if ($action === 'reapprove_registration') {
             $message .= " (Email notification failed - please contact parent manually)";
         }
         
-        error_log("[Re-Approve] Reg#{$registration['registration_number']}: invoices=$invoicesUpdated, payments=$paymentsUpdated, email=" . ($emailSent ? 'sent' : 'failed'));
+        error_log("[Re-Approve] Reg#{$registration['registration_number']}: invoices={$invoicesUpdated}, payments={$paymentsUpdated}, email=" . ($emailSent ? 'sent' : 'failed'));
         $_SESSION['success'] = $message;
         
     } catch (Exception $e) {
