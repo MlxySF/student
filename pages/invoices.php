@@ -1,6 +1,7 @@
 <?php
 // Student Invoices & Payments Page - Updated with DataTables pagination and status filter
 // FIXED: Determine student account ID properly for parent portal
+// FIXED: Use invoice's payment_month instead of current date
 
 // Determine student account ID first
 if (isParent()) {
@@ -681,7 +682,7 @@ function isClassFeeInvoice($invoice) {
           <input type="hidden" name="student_account_id" value="<?php echo $studentAccountId; ?>">
           <input type="hidden" name="invoice_class_id" value="<?php echo $inv['class_id']; ?>">
           <input type="hidden" name="invoice_amount" value="<?php echo $inv['amount']; ?>">
-          <input type="hidden" name="invoice_payment_month" value="<?php echo date('M Y'); ?>">
+          <input type="hidden" name="invoice_payment_month" value="<?php echo !empty($inv['payment_month']) ? $inv['payment_month'] : date('M Y'); ?>">
           
           <div class="row">
             <div class="col-md-6 mb-3">
