@@ -527,20 +527,33 @@ if ($action === 'delete_registration') {
             $parentAccountId = $registration['parent_account_id'] ?? $registration['student_parent_id'];
             $email = $registration['email'];
             
-            // ✨ NEW: Collect file paths for deletion
+            // ✨ NEW: Collect file paths for deletion (ADD /uploads/ PREFIX)
             $filesToDelete = [];
             if (!empty($registration['signature_path'])) {
-                $filesToDelete[] = $registration['signature_path'];
+                // Add uploads/ prefix if not already present
+                $path = $registration['signature_path'];
+                if (strpos($path, 'uploads/') !== 0) {
+                    $path = 'uploads/' . $path;
+                }
+                $filesToDelete[] = $path;
             }
             if (!empty($registration['pdf_path'])) {
-                $filesToDelete[] = $registration['pdf_path'];
+                $path = $registration['pdf_path'];
+                if (strpos($path, 'uploads/') !== 0) {
+                    $path = 'uploads/' . $path;
+                }
+                $filesToDelete[] = $path;
             }
             if (!empty($registration['payment_receipt_path'])) {
-                $filesToDelete[] = $registration['payment_receipt_path'];
+                $path = $registration['payment_receipt_path'];
+                if (strpos($path, 'uploads/') !== 0) {
+                    $path = 'uploads/' . $path;
+                }
+                $filesToDelete[] = $path;
             }
             
             error_log("[Delete Registration] Reg#: {$regNumber}, Student ID: {$studentAccountId}, Parent ID: {$parentAccountId}");
-            error_log("[Delete Registration] Files to delete: " . count($filesToDelete));
+            error_log("[Delete Registration] Files to delete: " . count($filesToDelete) . " - " . implode(', ', $filesToDelete));
             
             // Delete the registration first
             $stmt = $pdo->prepare("DELETE FROM registrations WHERE id = ?");
@@ -612,18 +625,18 @@ if ($action === 'delete_registration') {
                     // ✨ NEW: Delete files from filesystem
                     $filesDeleted = 0;
                     foreach ($filesToDelete as $filePath) {
-                        // Construct full path (files are stored relative to uploads directory)
+                        // Construct full path
                         $fullPath = __DIR__ . '/' . $filePath;
                         
                         if (file_exists($fullPath)) {
                             if (unlink($fullPath)) {
                                 $filesDeleted++;
-                                error_log("[Delete Registration] Deleted file: {$fullPath}");
+                                error_log("[Delete Registration] ✅ Deleted file: {$fullPath}");
                             } else {
-                                error_log("[Delete Registration] Failed to delete file: {$fullPath}");
+                                error_log("[Delete Registration] ❌ Failed to delete file: {$fullPath}");
                             }
                         } else {
-                            error_log("[Delete Registration] File not found: {$fullPath}");
+                            error_log("[Delete Registration] ⚠️ File not found: {$fullPath}");
                         }
                     }
                     
@@ -640,12 +653,12 @@ if ($action === 'delete_registration') {
                         if (file_exists($fullPath)) {
                             if (unlink($fullPath)) {
                                 $filesDeleted++;
-                                error_log("[Delete Registration] Deleted file: {$fullPath}");
+                                error_log("[Delete Registration] ✅ Deleted file: {$fullPath}");
                             } else {
-                                error_log("[Delete Registration] Failed to delete file: {$fullPath}");
+                                error_log("[Delete Registration] ❌ Failed to delete file: {$fullPath}");
                             }
                         } else {
-                            error_log("[Delete Registration] File not found: {$fullPath}");
+                            error_log("[Delete Registration] ⚠️ File not found: {$fullPath}");
                         }
                     }
                     
@@ -663,12 +676,12 @@ if ($action === 'delete_registration') {
                     if (file_exists($fullPath)) {
                         if (unlink($fullPath)) {
                             $filesDeleted++;
-                            error_log("[Delete Registration] Deleted file: {$fullPath}");
+                            error_log("[Delete Registration] ✅ Deleted file: {$fullPath}");
                         } else {
-                            error_log("[Delete Registration] Failed to delete file: {$fullPath}");
+                            error_log("[Delete Registration] ❌ Failed to delete file: {$fullPath}");
                         }
                     } else {
-                        error_log("[Delete Registration] File not found: {$fullPath}");
+                        error_log("[Delete Registration] ⚠️ File not found: {$fullPath}");
                     }
                 }
                 
