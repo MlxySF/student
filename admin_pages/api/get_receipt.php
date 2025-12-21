@@ -69,7 +69,7 @@ try {
     $receiptPath = $payment['receipt_path'];
     
     // Check if file exists
-    $fullPath = '../../' . $receiptPath;
+    $fullPath = '../../uploads/' . $receiptPath;
     if (!file_exists($fullPath)) {
         echo json_encode(['success' => false, 'error' => 'Receipt file not found on server: ' . $receiptPath]);
         exit;
