@@ -499,7 +499,7 @@ if ($action === 'delete_registration') {
     try {
         $pdo->beginTransaction();
         
-        // Get registration details including parent account info
+        // Get registration details including parent account info AND FILE PATHS
         $checkStmt = $pdo->prepare("
             SELECT 
                 r.id, 
@@ -507,6 +507,9 @@ if ($action === 'delete_registration') {
                 r.student_account_id, 
                 r.parent_account_id,
                 r.email,
+                r.signature_path,
+                r.pdf_path,
+                r.payment_receipt_path,
                 s.parent_account_id as student_parent_id
             FROM registrations r
             LEFT JOIN students s ON r.student_account_id = s.id
@@ -524,7 +527,20 @@ if ($action === 'delete_registration') {
             $parentAccountId = $registration['parent_account_id'] ?? $registration['student_parent_id'];
             $email = $registration['email'];
             
+            // ✨ NEW: Collect file paths for deletion
+            $filesToDelete = [];
+            if (!empty($registration['signature_path'])) {
+                $filesToDelete[] = $registration['signature_path'];
+            }
+            if (!empty($registration['pdf_path'])) {
+                $filesToDelete[] = $registration['pdf_path'];
+            }
+            if (!empty($registration['payment_receipt_path'])) {
+                $filesToDelete[] = $registration['payment_receipt_path'];
+            }
+            
             error_log("[Delete Registration] Reg#: {$regNumber}, Student ID: {$studentAccountId}, Parent ID: {$parentAccountId}");
+            error_log("[Delete Registration] Files to delete: " . count($filesToDelete));
             
             // Delete the registration first
             $stmt = $pdo->prepare("DELETE FROM registrations WHERE id = ?");
@@ -590,17 +606,73 @@ if ($action === 'delete_registration') {
                     
                     error_log("[Delete Registration] Deleted parent account: {$parentInfo['parent_id']} ({$parentInfo['full_name']})");
                     
+                    // Commit database changes before file operations
                     $pdo->commit();
-                    $_SESSION['success'] = "Registration {$regNumber} deleted successfully! Student account and parent account (no other children) have been removed.";
+                    
+                    // ✨ NEW: Delete files from filesystem
+                    $filesDeleted = 0;
+                    foreach ($filesToDelete as $filePath) {
+                        // Construct full path (files are stored relative to uploads directory)
+                        $fullPath = __DIR__ . '/' . $filePath;
+                        
+                        if (file_exists($fullPath)) {
+                            if (unlink($fullPath)) {
+                                $filesDeleted++;
+                                error_log("[Delete Registration] Deleted file: {$fullPath}");
+                            } else {
+                                error_log("[Delete Registration] Failed to delete file: {$fullPath}");
+                            }
+                        } else {
+                            error_log("[Delete Registration] File not found: {$fullPath}");
+                        }
+                    }
+                    
+                    $_SESSION['success'] = "Registration {$regNumber} deleted successfully! Student account and parent account removed. {$filesDeleted} file(s) deleted from storage.";
                 } else {
                     // Parent still has other children - keep the parent account
                     $pdo->commit();
-                    $_SESSION['success'] = "Registration {$regNumber} deleted successfully! Student account removed. Parent account retained ({$childCount} other child(ren) exist).";
+                    
+                    // ✨ NEW: Delete files from filesystem
+                    $filesDeleted = 0;
+                    foreach ($filesToDelete as $filePath) {
+                        $fullPath = __DIR__ . '/' . $filePath;
+                        
+                        if (file_exists($fullPath)) {
+                            if (unlink($fullPath)) {
+                                $filesDeleted++;
+                                error_log("[Delete Registration] Deleted file: {$fullPath}");
+                            } else {
+                                error_log("[Delete Registration] Failed to delete file: {$fullPath}");
+                            }
+                        } else {
+                            error_log("[Delete Registration] File not found: {$fullPath}");
+                        }
+                    }
+                    
+                    $_SESSION['success'] = "Registration {$regNumber} deleted successfully! Student account removed. Parent account retained ({$childCount} other child(ren) exist). {$filesDeleted} file(s) deleted from storage.";
                 }
             } else {
                 // No parent account linked
                 $pdo->commit();
-                $_SESSION['success'] = "Registration {$regNumber} and associated student account deleted successfully!";
+                
+                // ✨ NEW: Delete files from filesystem
+                $filesDeleted = 0;
+                foreach ($filesToDelete as $filePath) {
+                    $fullPath = __DIR__ . '/' . $filePath;
+                    
+                    if (file_exists($fullPath)) {
+                        if (unlink($fullPath)) {
+                            $filesDeleted++;
+                            error_log("[Delete Registration] Deleted file: {$fullPath}");
+                        } else {
+                            error_log("[Delete Registration] Failed to delete file: {$fullPath}");
+                        }
+                    } else {
+                        error_log("[Delete Registration] File not found: {$fullPath}");
+                    }
+                }
+                
+                $_SESSION['success'] = "Registration {$regNumber} and associated student account deleted successfully! {$filesDeleted} file(s) deleted from storage.";
             }
         }
     } catch (PDOException $e) {
