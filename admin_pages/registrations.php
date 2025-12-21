@@ -1,5 +1,6 @@
 <?php
 // admin_pages/registrations.php - View registrations with proper status colors
+// UPDATED 2025-12-21: Changed from base64 display to file serving
 
 // Get filter parameter from URL, default to 'all'
 $statusFilter = isset($_GET['status']) ? $_GET['status'] : 'all';
@@ -23,11 +24,11 @@ $sql = "
         parent_name,
         parent_ic,
         form_date,
-        signature_base64,
-        pdf_base64,
+        signature_path,
+        pdf_path,
         payment_amount,
         payment_date,
-        payment_receipt_base64,
+        payment_receipt_path,
         payment_status,
         class_count,
         student_account_id,
@@ -259,7 +260,7 @@ $totalCount = array_sum($statusCounts);
 </div>
 <?php endforeach; ?>
 
-<!-- ✨ Rejection Reason Modal -->
+<!-- Rejection Reason Modal -->
 <?php foreach ($registrations as $reg): ?>
 <div class="modal fade" id="rejectModal<?php echo $reg['id']; ?>" tabindex="-1">
     <div class="modal-dialog">
@@ -334,7 +335,7 @@ $totalCount = array_sum($statusCounts);
 </div>
 <?php endforeach; ?>
 
-<!-- ✨ NEW: Re-Approve Modal for Rejected Registrations -->
+<!-- Re-Approve Modal for Rejected Registrations -->
 <?php foreach ($registrations as $reg): ?>
 <?php if ($reg['payment_status'] === 'rejected'): ?>
 <div class="modal fade" id="reapproveModal<?php echo $reg['id']; ?>" tabindex="-1">
@@ -503,9 +504,13 @@ $totalCount = array_sum($statusCounts);
                                 <div class="mt-3">
                                     <strong>Parent Signature:</strong>
                                     <div class="border p-2 mt-2 bg-light text-center">
-                                        <img src="<?php echo $reg['signature_base64']; ?>" 
-                                             alt="Signature" 
-                                             style="max-width: 200px; max-height: 100px;">
+                                        <?php if (!empty($reg['signature_path'])): ?>
+                                            <img src="serve_file.php?path=<?php echo urlencode($reg['signature_path']); ?>" 
+                                                 alt="Signature" 
+                                                 style="max-width: 200px; max-height: 100px;">
+                                        <?php else: ?>
+                                            <p class="text-muted mb-0">No signature available</p>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
@@ -584,10 +589,14 @@ $totalCount = array_sum($statusCounts);
                                 <div class="mt-3">
                                     <strong>Payment Receipt:</strong>
                                     <div class="border p-2 mt-2 text-center">
-                                        <img src="<?php echo $reg['payment_receipt_base64']; ?>" 
-                                             alt="Receipt" 
-                                             class="img-fluid" 
-                                             style="max-height: 300px;">
+                                        <?php if (!empty($reg['payment_receipt_path'])): ?>
+                                            <img src="serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>" 
+                                                 alt="Payment Receipt" 
+                                                 class="img-fluid" 
+                                                 style="max-height: 300px;">
+                                        <?php else: ?>
+                                            <p class="text-muted mb-0">No receipt available</p>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
@@ -623,12 +632,12 @@ $totalCount = array_sum($statusCounts);
                 </div>
             </div>
             <div class="modal-footer">
-                <?php if (!empty($reg['pdf_base64'])): ?>
-                <a href="download_registration_pdf.php?id=<?php echo $reg['id']; ?>" 
+                <?php if (!empty($reg['pdf_path'])): ?>
+                <a href="serve_file.php?path=<?php echo urlencode($reg['pdf_path']); ?>" 
                    class="btn btn-info" 
                    target="_blank"
-                   title="Download signed registration agreement PDF">
-                    <i class="fas fa-file-pdf"></i> Download Agreement PDF
+                   title="View/Download signed registration agreement PDF">
+                    <i class="fas fa-file-pdf"></i> View Agreement PDF
                 </a>
                 <?php endif; ?>
                 
@@ -646,7 +655,6 @@ $totalCount = array_sum($statusCounts);
                 <?php endif; ?>
                 
                 <?php if ($reg['payment_status'] === 'rejected'): ?>
-                <!-- ✨ NEW: Re-Approve Button for Rejected Registrations -->
                 <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#reapproveModal<?php echo $reg['id']; ?>">
                     <i class="fas fa-redo"></i> Re-Approve Registration
                 </button>
