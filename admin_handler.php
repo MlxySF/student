@@ -4,10 +4,14 @@ require_once 'config.php';
 require_once 'send_approval_email.php'; // Include email function
 require_once 'send_rejection_email.php'; // Include rejection email function
 
+// Check if this is an AJAX request (for bulk attendance)
+$isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+
 // Log all POST requests to a file for debugging
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $log_entry = "\n=== " . date('Y-m-d H:i:s') . " ===\n";
     $log_entry .= "Action: " . ($_POST['action'] ?? 'none') . "\n";
+    $log_entry .= "Is AJAX: " . ($isAjax ? 'YES' : 'NO') . "\n";
     $log_entry .= "POST Data: " . print_r($_POST, true) . "\n";
     file_put_contents(__DIR__ . '/attendance_log.txt', $log_entry, FILE_APPEND);
 }
@@ -54,6 +58,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
 
 // Check admin login for POST requests
 if (!isAdminLoggedIn()) {
+    if ($isAjax) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+        exit;
+    }
     header('Location: admin.php?page=login');
     exit;
 }
@@ -64,6 +73,114 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $action = $_POST['action'] ?? '';
+
+// ============ ATTENDANCE - BULK UPDATE WITH NOTES (AJAX) ============
+
+if ($action === 'bulk_attendance') {
+    file_put_contents(__DIR__ . '/attendance_log.txt', "\nBULK ATTENDANCE ACTION STARTED\n", FILE_APPEND);
+    
+    $class_id = $_POST['class_id'] ?? null;
+    $attendance_date = $_POST['attendance_date'] ?? null;
+    $attendance_data = $_POST['attendance'] ?? [];
+    $notes_data = $_POST['notes'] ?? []; // NEW: Get notes from form
+
+    if (empty($attendance_data)) {
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => 'No attendance data provided']);
+            exit;
+        }
+        $_SESSION['error'] = "No attendance data provided.";
+        file_put_contents(__DIR__ . '/attendance_log.txt', "ERROR: No attendance data\n", FILE_APPEND);
+        header('Location: admin.php?page=attendance&class_id=' . $class_id . '&date=' . $attendance_date);
+        exit;
+    }
+
+    try {
+        $pdo->beginTransaction();
+        $marked_count = 0;
+        $updated_count = 0;
+        $inserted_count = 0;
+        
+        foreach ($attendance_data as $student_id => $status) {
+            $notes = $notes_data[$student_id] ?? ''; // Get notes for this student
+            
+            file_put_contents(__DIR__ . '/attendance_log.txt', "Processing student $student_id with status $status and notes: $notes\n", FILE_APPEND);
+            
+            // Validate status value
+            $valid_statuses = ['present', 'absent', 'late', 'excused'];
+            if (!in_array($status, $valid_statuses)) {
+                file_put_contents(__DIR__ . '/attendance_log.txt', "Invalid status: $status\n", FILE_APPEND);
+                continue;
+            }
+            
+            // Check if attendance record exists
+            $checkStmt = $pdo->prepare("SELECT id FROM attendance WHERE student_id = ? AND class_id = ? AND attendance_date = ?");
+            $checkStmt->execute([$student_id, $class_id, $attendance_date]);
+            $existing = $checkStmt->fetch();
+            
+            if ($existing) {
+                // Update existing record WITH NOTES
+                $updateStmt = $pdo->prepare("UPDATE attendance SET status = ?, notes = ? WHERE student_id = ? AND class_id = ? AND attendance_date = ?");
+                $updateStmt->execute([$status, $notes, $student_id, $class_id, $attendance_date]);
+                file_put_contents(__DIR__ . '/attendance_log.txt', "Updated existing record\n", FILE_APPEND);
+                $updated_count++;
+            } else {
+                // Insert new record WITH NOTES
+                $insertStmt = $pdo->prepare("INSERT INTO attendance (student_id, class_id, attendance_date, status, notes) VALUES (?, ?, ?, ?, ?)");
+                $insertStmt->execute([$student_id, $class_id, $attendance_date, $status, $notes]);
+                file_put_contents(__DIR__ . '/attendance_log.txt', "Inserted new record\n", FILE_APPEND);
+                $inserted_count++;
+            }
+            
+            $marked_count++;
+        }
+        
+        $pdo->commit();
+        file_put_contents(__DIR__ . '/attendance_log.txt', "SUCCESS: Committed transaction, marked $marked_count students (Updated: $updated_count, Inserted: $inserted_count)\n", FILE_APPEND);
+        
+        $message = "Attendance saved successfully! Marked {$marked_count} student(s)";
+        if ($updated_count > 0) {
+            $message .= " (Updated: {$updated_count})";
+        }
+        if ($inserted_count > 0) {
+            $message .= " (New: {$inserted_count})";
+        }
+        
+        // Return JSON for AJAX, redirect for normal form
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'message' => $message,
+                'marked_count' => $marked_count,
+                'updated_count' => $updated_count,
+                'inserted_count' => $inserted_count
+            ]);
+            exit;
+        }
+        
+        $_SESSION['success'] = $message;
+        
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        file_put_contents(__DIR__ . '/attendance_log.txt', "ERROR: " . $e->getMessage() . "\n", FILE_APPEND);
+        
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => 'Failed to save attendance: ' . $e->getMessage()]);
+            exit;
+        }
+        
+        $_SESSION['error'] = "Failed to save attendance: " . $e->getMessage();
+    }
+    
+    header('Location: admin.php?page=attendance&class_id=' . $class_id . '&date=' . $attendance_date);
+    exit;
+}
+
+// ... (REST OF THE FILE REMAINS UNCHANGED) ...
+// Copy all the remaining code from the original file below:
 
 // ============ REGISTRATION APPROVAL ============
 
@@ -998,7 +1115,7 @@ if ($action === 'verify_payment') {
     exit;
 }
 
-// ============ ATTENDANCE ============
+// ============ ATTENDANCE (OTHER ACTIONS) ============
 
 if ($action === 'mark_attendance') {
     $student_id = $_POST['student_id'];
@@ -1021,68 +1138,6 @@ if ($action === 'mark_attendance') {
         $_SESSION['success'] = "Attendance marked!";
     } catch (Exception $e) {
         $_SESSION['error'] = "Failed to mark attendance: " . $e->getMessage();
-    }
-    
-    header('Location: admin.php?page=attendance&class_id=' . $class_id . '&date=' . $attendance_date);
-    exit;
-}
-
-if ($action === 'bulk_attendance') {
-    file_put_contents(__DIR__ . '/attendance_log.txt', "\nBULK ATTENDANCE ACTION STARTED\n", FILE_APPEND);
-    
-    $class_id = $_POST['class_id'] ?? null;
-    $attendance_date = $_POST['attendance_date'] ?? null;
-    $attendance_data = $_POST['attendance'] ?? [];
-
-    if (empty($attendance_data)) {
-        $_SESSION['error'] = "No attendance data provided.";
-        file_put_contents(__DIR__ . '/attendance_log.txt', "ERROR: No attendance data\n", FILE_APPEND);
-        header('Location: admin.php?page=attendance&class_id=' . $class_id . '&date=' . $attendance_date);
-        exit;
-    }
-
-    try {
-        $pdo->beginTransaction();
-        $marked_count = 0;
-        
-        foreach ($attendance_data as $student_id => $status) {
-            file_put_contents(__DIR__ . '/attendance_log.txt', "Processing student $student_id with status $status\n", FILE_APPEND);
-            
-            // Validate status value
-            $valid_statuses = ['present', 'absent', 'late', 'excused'];
-            if (!in_array($status, $valid_statuses)) {
-                file_put_contents(__DIR__ . '/attendance_log.txt', "Invalid status: $status\n", FILE_APPEND);
-                continue;
-            }
-            
-            // Check if attendance record exists
-            $checkStmt = $pdo->prepare("SELECT id FROM attendance WHERE student_id = ? AND class_id = ? AND attendance_date = ?");
-            $checkStmt->execute([$student_id, $class_id, $attendance_date]);
-            $existing = $checkStmt->fetch();
-            
-            if ($existing) {
-                // Update existing record
-                $updateStmt = $pdo->prepare("UPDATE attendance SET status = ? WHERE student_id = ? AND class_id = ? AND attendance_date = ?");
-                $updateStmt->execute([$status, $student_id, $class_id, $attendance_date]);
-                file_put_contents(__DIR__ . '/attendance_log.txt', "Updated existing record\n", FILE_APPEND);
-            } else {
-                // Insert new record
-                $insertStmt = $pdo->prepare("INSERT INTO attendance (student_id, class_id, attendance_date, status) VALUES (?, ?, ?, ?)");
-                $insertStmt->execute([$student_id, $class_id, $attendance_date, $status]);
-                file_put_contents(__DIR__ . '/attendance_log.txt', "Inserted new record\n", FILE_APPEND);
-            }
-            
-            $marked_count++;
-        }
-        
-        $pdo->commit();
-        file_put_contents(__DIR__ . '/attendance_log.txt', "SUCCESS: Committed transaction, marked $marked_count students\n", FILE_APPEND);
-        $_SESSION['success'] = "Attendance saved successfully! Marked {$marked_count} student(s).";
-        
-    } catch (Exception $e) {
-        $pdo->rollBack();
-        file_put_contents(__DIR__ . '/attendance_log.txt', "ERROR: " . $e->getMessage() . "\n", FILE_APPEND);
-        $_SESSION['error'] = "Failed to save attendance: " . $e->getMessage();
     }
     
     header('Location: admin.php?page=attendance&class_id=' . $class_id . '&date=' . $attendance_date);
