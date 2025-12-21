@@ -31,15 +31,17 @@ if ($filter_type) {
     $params[] = $filter_type;
 }
 
-// Get all invoices with student and class information
+// Get all invoices with student, class, and payment information
 $sql = "
     SELECT i.invoice_number, i.created_at, i.invoice_type, i.description, 
            i.amount, i.due_date, i.status, i.paid_date, i.payment_month,
            s.student_id, s.full_name, s.email,
-           c.class_code, c.class_name
+           c.class_code, c.class_name,
+           p.payment_date
     FROM invoices i
     JOIN students s ON i.student_id = s.id
-    LEFT JOIN classes c ON i.class_id = c.id";
+    LEFT JOIN classes c ON i.class_id = c.id
+    LEFT JOIN payments p ON i.id = p.invoice_id";
 
 if (count($where_conditions) > 0) {
     $sql .= " WHERE " . implode(" AND ", $where_conditions);
@@ -70,7 +72,7 @@ $output = fopen('php://output', 'w');
 // Add UTF-8 BOM for proper Excel encoding
 fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
 
-// Define headers - always include class code and class name
+// Define headers - include payment_date column
 $headers = [
     'Invoice Number',
     'Date Created',
@@ -85,7 +87,8 @@ $headers = [
     'Amount (RM)',
     'Due Date',
     'Status',
-    'Paid Date'
+    'Paid Date',
+    'Payment Date (Actual)'
 ];
 
 fputcsv($output, $headers);
@@ -106,7 +109,8 @@ foreach ($invoices as $invoice) {
         number_format($invoice['amount'], 2),
         $invoice['due_date'],
         ucfirst($invoice['status']),
-        $invoice['paid_date'] ? date('Y-m-d H:i:s', strtotime($invoice['paid_date'])) : 'N/A'
+        $invoice['paid_date'] ? date('Y-m-d H:i:s', strtotime($invoice['paid_date'])) : 'N/A',
+        $invoice['payment_date'] ? date('Y-m-d', strtotime($invoice['payment_date'])) : 'N/A'
     ];
     
     fputcsv($output, $row);
