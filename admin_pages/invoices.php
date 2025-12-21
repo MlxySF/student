@@ -582,7 +582,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                 <?php if ($invoice['verification_status'] === 'pending'): ?>
                     <hr class="my-4">
                     <h6 class="mb-3">Verify Payment</h6>
-                    <form method="POST" action="admin_handler.php">
+                    <form method="POST" action="admin.php">
                         <input type="hidden" name="action" value="verify_payment">
                         <input type="hidden" name="payment_id" value="<?php echo $invoice['payment_id']; ?>">
                         <input type="hidden" name="invoice_id" value="<?php echo $invoice['id']; ?>">
@@ -599,7 +599,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                             <i class="fas fa-calendar-check"></i> <strong>Payment Date:</strong> <?php echo formatDate($invoice['payment_date']); ?>
                         </div>
                         <?php endif; ?>
-                        <div class="alert alert-info"><i class="fas fa-info-circle"></i> Approving will automatically mark invoice as PAID and send email to parent.</div>
+                        <div class="alert alert-info"><i class="fas fa-info-circle"></i> Approving will automatically mark invoice as PAID.</div>
                         <div class="mb-3">
                             <label class="form-label">Admin Notes (Optional)</label>
                             <textarea name="admin_notes" class="form-control" rows="3"></textarea>
