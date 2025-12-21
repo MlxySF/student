@@ -5,6 +5,7 @@
  * Includes PDF invoice receipt attachment for approved payments
  * 
  * FIXED: Now queries registrations table instead of deprecated students table
+ * ADDED: Extensive debugging to troubleshoot email issues
  * 
  * Usage:
  *   require_once 'send_payment_approval_email.php';
@@ -29,10 +30,17 @@ require 'PHPMailer/SMTP.php';
 function sendPaymentApprovalEmail($paymentId, $status, $adminNotes = '') {
     global $pdo;
     
+    error_log("========================================");
+    error_log("[Payment Approval Email] STARTING");
+    error_log("[Payment Approval Email] Payment ID: {$paymentId}");
+    error_log("[Payment Approval Email] Status: {$status}");
+    error_log("[Payment Approval Email] Admin Notes: {$adminNotes}");
+    error_log("========================================");
+    
     try {
         // Get payment details with registration and parent information
         // FIXED: Query registrations table instead of students table
-        $stmt = $pdo->prepare("
+        $sql = "
             SELECT 
                 p.id as payment_id,
                 p.amount,
@@ -56,23 +64,49 @@ function sendPaymentApprovalEmail($paymentId, $status, $adminNotes = '') {
             LEFT JOIN invoices i ON p.invoice_id = i.id
             LEFT JOIN parent_accounts pa ON p.parent_account_id = pa.id
             WHERE p.id = ?
-        ");
+        ";
+        
+        error_log("[Payment Approval Email] SQL Query: " . str_replace("\n", " ", $sql));
+        
+        $stmt = $pdo->prepare($sql);
         $stmt->execute([$paymentId]);
         $payment = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if (!$payment) {
-            error_log("[Payment Approval Email] Payment ID {$paymentId} not found");
+            error_log("[Payment Approval Email] ERROR: Payment ID {$paymentId} not found in database");
+            error_log("[Payment Approval Email] This means either:");
+            error_log("  1. Payment ID doesn't exist");
+            error_log("  2. Registration record is missing");
+            error_log("  3. JOIN failed");
             return false;
         }
+        
+        error_log("[Payment Approval Email] Payment record found:");
+        error_log("  - Student Name: " . ($payment['student_name'] ?? 'NULL'));
+        error_log("  - Student Number: " . ($payment['student_number'] ?? 'NULL'));
+        error_log("  - Parent Email: " . ($payment['parent_email'] ?? 'NULL'));
+        error_log("  - Parent Name: " . ($payment['parent_name'] ?? 'NULL'));
+        error_log("  - Amount: " . ($payment['amount'] ?? 'NULL'));
+        error_log("  - Payment Month: " . ($payment['payment_month'] ?? 'NULL'));
+        error_log("  - Invoice ID: " . ($payment['invoice_id'] ?? 'NULL'));
+        error_log("  - Invoice Number: " . ($payment['invoice_number'] ?? 'NULL'));
+        error_log("  - Class: " . ($payment['class_name'] ?? 'NULL'));
         
         // Determine recipient email (parent email only, as students no longer have separate accounts)
         $recipientEmail = $payment['parent_email'];
         $recipientName = $payment['parent_name'];
         
         if (empty($recipientEmail)) {
-            error_log("[Payment Approval Email] No parent email found for payment ID {$paymentId}");
+            error_log("[Payment Approval Email] ERROR: No parent email found for payment ID {$paymentId}");
+            error_log("[Payment Approval Email] This means:");
+            error_log("  1. parent_account_id is NULL in payments table, OR");
+            error_log("  2. Parent account doesn't exist, OR");
+            error_log("  3. Parent account email is empty");
+            error_log("[Payment Approval Email] Payment record parent_account_id field should be checked");
             return false;
         }
+        
+        error_log("[Payment Approval Email] Email will be sent to: {$recipientEmail} ({$recipientName})");
         
         // Setup email
         $mail = new PHPMailer(true);
@@ -87,53 +121,93 @@ function sendPaymentApprovalEmail($paymentId, $status, $adminNotes = '') {
         $mail->Port       = 587;
         $mail->CharSet    = 'UTF-8';
         
+        error_log("[Payment Approval Email] SMTP configured: smtp.gmail.com:587");
+        
         // Recipients
         $mail->setFrom('noreply@wushusportacademy.com', 'Wushu Sport Academy');
         $mail->addAddress($recipientEmail, $recipientName);
         $mail->addReplyTo('chaichonghern@gmail.com', 'Wushu Sport Academy');
         
+        error_log("[Payment Approval Email] Recipients set");
+        
         // Email content based on status
         $mail->isHTML(true);
         
         if ($status === 'verified') {
+            error_log("[Payment Approval Email] Preparing APPROVED email");
+            
             // APPROVED EMAIL
             $mail->Subject = '✅ Payment Approved - ' . $payment['student_name'] . ' - ' . $payment['invoice_number'];
             $mail->Body = getApprovedPaymentEmailHTML($payment, $adminNotes);
             
+            error_log("[Payment Approval Email] Subject: {$mail->Subject}");
+            error_log("[Payment Approval Email] Body length: " . strlen($mail->Body) . " characters");
+            
             // Generate and attach PDF receipt
             if ($payment['invoice_id']) {
+                error_log("[Payment Approval Email] Attempting to generate PDF receipt");
                 try {
                     $pdfContent = generateInvoiceReceiptPDF($payment);
                     if ($pdfContent) {
                         $filename = 'Payment_Receipt_' . $payment['invoice_number'] . '.pdf';
                         $mail->addStringAttachment($pdfContent, $filename, 'base64', 'application/pdf');
                         error_log("[Payment Approval Email] PDF receipt attached: {$filename}");
+                    } else {
+                        error_log("[Payment Approval Email] WARNING: PDF generation returned null");
                     }
                 } catch (Exception $e) {
-                    error_log("[Payment Approval Email] Failed to generate PDF: " . $e->getMessage());
-                    // Continue sending email without PDF
+                    error_log("[Payment Approval Email] ERROR generating PDF: " . $e->getMessage());
+                    error_log("[Payment Approval Email] Continuing without PDF attachment");
                 }
+            } else {
+                error_log("[Payment Approval Email] No invoice_id, skipping PDF generation");
             }
             
         } else if ($status === 'rejected') {
+            error_log("[Payment Approval Email] Preparing REJECTED email");
+            
             // REJECTED EMAIL
             $mail->Subject = '⚠️ Payment Verification Required - ' . $payment['student_name'];
             $mail->Body = getRejectedPaymentEmailHTML($payment, $adminNotes);
+            
+            error_log("[Payment Approval Email] Subject: {$mail->Subject}");
+            error_log("[Payment Approval Email] Body length: " . strlen($mail->Body) . " characters");
+            
         } else {
-            error_log("[Payment Approval Email] Invalid status: {$status}");
+            error_log("[Payment Approval Email] ERROR: Invalid status '{$status}' - must be 'verified' or 'rejected'");
             return false;
         }
         
         // Plain text alternative
         $mail->AltBody = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $mail->Body));
+        error_log("[Payment Approval Email] Alt body prepared (length: " . strlen($mail->AltBody) . ")");
         
         // Send email
+        error_log("[Payment Approval Email] Attempting to send email via SMTP...");
         $mail->send();
-        error_log("[Payment Approval Email] Successfully sent '{$status}' email to {$recipientEmail} for payment ID {$paymentId}");
+        
+        error_log("[Payment Approval Email] ✅ SUCCESS! Email sent to {$recipientEmail}");
+        error_log("[Payment Approval Email] Status: {$status}");
+        error_log("[Payment Approval Email] Payment ID: {$paymentId}");
+        error_log("========================================");
+        
         return true;
         
     } catch (Exception $e) {
-        error_log("[Payment Approval Email] Error: " . $e->getMessage());
+        error_log("[Payment Approval Email] ❌ EXCEPTION CAUGHT:");
+        error_log("[Payment Approval Email] Exception Type: " . get_class($e));
+        error_log("[Payment Approval Email] Message: " . $e->getMessage());
+        error_log("[Payment Approval Email] File: " . $e->getFile());
+        error_log("[Payment Approval Email] Line: " . $e->getLine());
+        
+        if (isset($mail)) {
+            error_log("[Payment Approval Email] PHPMailer Error Info: " . $mail->ErrorInfo);
+        }
+        
+        error_log("[Payment Approval Email] Stack trace:");
+        error_log($e->getTraceAsString());
+        error_log("========================================");
+        
         return false;
     }
 }
@@ -142,10 +216,24 @@ function sendPaymentApprovalEmail($paymentId, $status, $adminNotes = '') {
  * Generate PDF receipt for approved payment
  */
 function generateInvoiceReceiptPDF($payment) {
+    error_log("[PDF Generation] Starting PDF generation");
+    
+    if (!file_exists('fpdf.php')) {
+        error_log("[PDF Generation] ERROR: fpdf.php not found");
+        return null;
+    }
+    
+    if (!file_exists('generate_invoice_pdf.php')) {
+        error_log("[PDF Generation] ERROR: generate_invoice_pdf.php not found");
+        return null;
+    }
+    
     require_once 'fpdf.php';
     require_once 'generate_invoice_pdf.php';
     
     try {
+        error_log("[PDF Generation] Creating PDF_Invoice instance");
+        
         // Use existing PDF generator
         $pdf = new PDF_Invoice();
         $pdf->AddPage();
@@ -195,10 +283,14 @@ function generateInvoiceReceiptPDF($payment) {
         $pdf->SetTextColor(0, 150, 100);
         $pdf->Cell(0, 10, 'RM ' . number_format($payment['amount'], 2), 0, 1);
         
-        return $pdf->Output('S'); // Return PDF as string
+        $pdfString = $pdf->Output('S'); // Return PDF as string
+        error_log("[PDF Generation] PDF generated successfully (size: " . strlen($pdfString) . " bytes)");
+        
+        return $pdfString;
         
     } catch (Exception $e) {
-        error_log("[PDF Generation] Error: " . $e->getMessage());
+        error_log("[PDF Generation] ERROR: " . $e->getMessage());
+        error_log("[PDF Generation] Stack trace: " . $e->getTraceAsString());
         return null;
     }
 }
