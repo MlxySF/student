@@ -7,6 +7,7 @@ ini_set('display_errors', 1);
 require_once 'config.php';
 require_once 'security.php';  // NEW: Security layer
 require_once 'auth_helper.php';
+require_once 'file_helper.php';  // File storage helper
 
 // Include PHPMailer for admin notifications
 use PHPMailer\PHPMailer\PHPMailer;
@@ -123,7 +124,17 @@ function getAdminPaymentEmailHTML($data) {
                     <tr>
                         <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>Amount:</td>
                         <td style='padding: 8px 0; color: #059669; font-weight: 700; font-size: 20px;'>RM {$data['amount']}</td>
-                    </tr>
+                    </tr>";
+    
+    if (!empty($data['payment_date'])) {
+        $html .= "
+                    <tr>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>Payment Date:</td>
+                        <td style='padding: 8px 0; color: #1e293b;'>{$data['payment_date']}</td>
+                    </tr>";
+    }
+    
+    $html .= "
                     <tr>
                         <td style='padding: 8px 0; color: #64748b; font-weight: 600;'>Receipt File:</td>
                         <td style='padding: 8px 0; color: #1e293b;'>{$data['receipt_filename']}</td>
@@ -438,7 +449,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-// Handle Payment Upload - WITH CSRF AND VALIDATION
+// Handle Payment Upload - WITH CSRF, VALIDATION, AND LOCAL FILE STORAGE
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'upload_payment') {
     redirectIfNotLoggedIn();
     verifyCSRF();
@@ -468,6 +479,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $notes = sanitizeString($_POST['notes'] ?? '');
     }
     
+    // Get payment date from form (NEW)
+    $payment_date = !empty($_POST['payment_date']) ? sanitizeString($_POST['payment_date']) : null;
+    
+    // Validate payment date format (YYYY-MM-DD)
+    if ($payment_date && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $payment_date)) {
+        $_SESSION['error'] = 'Invalid payment date format.';
+        $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
+        header('Location: index.php?page=' . $redirect_page);
+        exit;
+    }
+    
     // Validate amount
     if (!isValidAmount($amount)) {
         $_SESSION['error'] = 'Invalid payment amount.';
@@ -486,26 +508,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             header('Location: index.php?page=' . $redirect_page);
             exit;
         }
-
-        $receiptData = fileToBase64($_FILES['receipt']);
-
-        if ($receiptData === false) {
-            $_SESSION['error'] = "Failed to process receipt file.";
-            $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
-            header('Location: index.php?page=' . $redirect_page);
-            exit;
-        }
-
-        // Generate secure filename
-        $secureFilename = generateSecureFilename($_FILES['receipt']['name']);
-        if (!$secureFilename) {
-            $_SESSION['error'] = 'Invalid file type.';
-            $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
-            header('Location: index.php?page=' . $redirect_page);
-            exit;
-        }
-        
-        $filename = $secureFilename;
 
         // Get parent_account_id if this is a child account
         $parent_account_id = null;
@@ -527,6 +529,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             exit;
         }
 
+        // Save file using local file storage (NEW)
+        $fileResult = saveUploadedFile(
+            $_FILES['receipt'],
+            'payment_receipts',
+            'receipt',
+            $activeStudentId
+        );
+        
+        if (!$fileResult['success']) {
+            $_SESSION['error'] = "Failed to save receipt file: " . $fileResult['error'];
+            $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
+            header('Location: index.php?page=' . $redirect_page);
+            exit;
+        }
+        
+        $receiptPath = $fileResult['path'];
+        $receiptFilename = $fileResult['filename'];
+        $receiptSize = $fileResult['size'];
+        
+        // Get MIME type
+        $mimeType = getFileMimeType($receiptPath);
+
         try {
             $stmt = $pdo->prepare("
                 INSERT INTO payments (
@@ -535,13 +559,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     amount, 
                     payment_month, 
                     receipt_filename,
-                    receipt_data,
+                    receipt_path,
                     receipt_mime_type,
                     receipt_size,
                     admin_notes,
                     invoice_id,
-                    parent_account_id
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    parent_account_id,
+                    payment_date
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
 
             $success = $stmt->execute([
@@ -549,13 +574,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $class_id,
                 $amount, 
                 $payment_month, 
-                $filename,
-                $receiptData['data'],
-                $receiptData['mime'],
-                $receiptData['size'],
+                $receiptFilename,
+                $receiptPath,
+                $mimeType,
+                $receiptSize,
                 $notes,
                 $invoice_id,
-                $parent_account_id
+                $parent_account_id,
+                $payment_date
             ]);
 
             if ($success) {
@@ -601,15 +627,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $parent_email = $parent['email'] ?? '';
                 }
                 
-                $file_size = $receiptData['size'];
-                if ($file_size < 1024) {
-                    $file_size_formatted = $file_size . ' B';
-                } elseif ($file_size < 1024 * 1024) {
-                    $file_size_formatted = number_format($file_size / 1024, 2) . ' KB';
-                } else {
-                    $file_size_formatted = number_format($file_size / (1024 * 1024), 2) . ' MB';
-                }
-                
                 $adminNotificationData = [
                     'student_name' => $student['full_name'],
                     'student_id' => $student['student_id'],
@@ -617,13 +634,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     'class_name' => $class_name,
                     'payment_month' => $payment_month,
                     'amount' => number_format($amount, 2),
-                    'receipt_filename' => $filename,
-                    'receipt_size' => $file_size_formatted,
+                    'receipt_filename' => $receiptFilename,
+                    'receipt_size' => formatFileSize($receiptSize),
                     'upload_date' => date('Y-m-d H:i:s'),
                     'invoice_number' => $invoice_number,
                     'invoice_description' => $invoice_description,
                     'parent_name' => $parent_name,
-                    'parent_email' => $parent_email
+                    'parent_email' => $parent_email,
+                    'payment_date' => $payment_date ? date('d M Y', strtotime($payment_date)) : 'Not specified'
                 ];
                 
                 $adminEmailSent = sendAdminPaymentNotification($adminNotificationData);
@@ -639,9 +657,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     exit;
                 }
             } else {
+                // Delete uploaded file on database error
+                deleteFile($receiptPath);
                 $_SESSION['error'] = "Failed to save payment record.";
             }
         } catch (PDOException $e) {
+            // Delete uploaded file on database error
+            deleteFile($receiptPath);
             error_log("[Payment Upload Error] " . $e->getMessage());
             $_SESSION['error'] = "Database error: Unable to save payment. Please contact support if this persists.";
         }
