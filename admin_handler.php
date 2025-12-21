@@ -325,6 +325,149 @@ if ($action === 'reject_registration') {
     exit;
 }
 
+// ✨ NEW: Re-Approve Rejected Registration
+if ($action === 'reapprove_registration') {
+    $regId = $_POST['registration_id'];
+    
+    try {
+        $pdo->beginTransaction();
+        
+        // Get registration details
+        $stmt = $pdo->prepare("
+            SELECT 
+                r.id, r.registration_number, r.name_en, r.email, r.student_status,
+                r.payment_status, r.student_account_id, r.parent_account_id,
+                r.is_additional_child,
+                r.parent_ic,
+                pa.ic_number as parent_ic_from_account
+            FROM registrations r
+            LEFT JOIN parent_accounts pa ON r.parent_account_id = pa.id
+            WHERE r.id = ?
+        ");
+        $stmt->execute([$regId]);
+        $registration = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$registration) {
+            throw new Exception('Registration not found');
+        }
+        
+        if ($registration['payment_status'] !== 'rejected') {
+            throw new Exception('Registration is not rejected - cannot re-approve');
+        }
+        
+        $studentAccountId = $registration['student_account_id'];
+        $parentAccountId = $registration['parent_account_id'];
+        $adminId = $_SESSION['admin_id'] ?? null;
+        
+        // Generate PARENT password from PARENT IC (last 4 digits)
+        $parentIC = $registration['parent_ic'] ?? $registration['parent_ic_from_account'];
+        $parentPlainPassword = null;
+        
+        if (!empty($parentIC)) {
+            $parentIcClean = str_replace('-', '', $parentIC);
+            $parentPlainPassword = substr($parentIcClean, -4);
+            error_log("[reapprove_registration] Generated PARENT password from parent IC: {$parentPlainPassword}");
+        } else {
+            error_log("[reapprove_registration] WARNING: Parent IC not found!");
+        }
+        
+        // 1. Update registration status from rejected to approved
+        $stmt = $pdo->prepare("UPDATE registrations SET payment_status = 'approved' WHERE id = ?");
+        $stmt->execute([$regId]);
+        
+        // 2. Reactivate the cancelled invoice
+        $stmt = $pdo->prepare("
+            UPDATE invoices 
+            SET status = 'paid',
+                paid_date = NOW()
+            WHERE student_id = ? 
+              AND invoice_type = 'registration' 
+              AND status = 'cancelled'
+        ");
+        $stmt->execute([$studentAccountId]);
+        $invoicesUpdated = $stmt->rowCount();
+        
+        // 3. Verify the rejected payment records
+        $paymentsUpdated = 0;
+        if ($invoicesUpdated > 0) {
+            $stmt = $pdo->prepare("
+                SELECT id FROM invoices 
+                WHERE student_id = ? 
+                  AND invoice_type = 'registration' 
+                  AND status = 'paid'
+                ORDER BY created_at DESC
+                LIMIT 1
+            ");
+            $stmt->execute([$studentAccountId]);
+            $invoice = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($invoice) {
+                $stmt = $pdo->prepare("
+                    UPDATE payments 
+                    SET verification_status = 'verified',
+                        verified_date = NOW(),
+                        verified_by = ?,
+                        admin_notes = 'Re-approved after initial rejection'
+                    WHERE invoice_id = ? 
+                      AND verification_status = 'rejected'
+                ");
+                $stmt->execute([$adminId, $invoice['id']]);
+                $paymentsUpdated = $stmt->rowCount();
+            }
+        }
+        
+        // 4. Check if this is the first child
+        $isFirstChild = ($registration['is_additional_child'] == 0);
+        
+        error_log("[reapprove_registration] IsFirstChild: " . ($isFirstChild ? 'YES' : 'NO') . ", Parent IC: {$parentIC}, PARENT Password: " . ($parentPlainPassword ?? 'NULL'));
+        
+        // Commit all database changes
+        $pdo->commit();
+        
+        // 5. Send approval email to parent (same as regular approval)
+        $emailSent = false;
+        try {
+            $emailSent = sendApprovalEmail(
+                $registration['email'],
+                $registration['name_en'],
+                $registration['registration_number'],
+                $registration['student_status'],
+                $parentPlainPassword,
+                $isFirstChild
+            );
+        } catch (Exception $e) {
+            error_log("[reapprove_registration] Email sending failed: " . $e->getMessage());
+        }
+        
+        // Build success message
+        $message = "Registration {$registration['registration_number']} re-approved successfully!";
+        if ($invoicesUpdated > 0) {
+            $message .= " Invoice reactivated and marked as PAID.";
+        }
+        if ($paymentsUpdated > 0) {
+            $message .= " Payment verified.";
+        }
+        if ($emailSent) {
+            $message .= " Approval email sent to parent.";
+        } else {
+            $message .= " (Email notification failed - please contact parent manually)";
+        }
+        
+        error_log("[Re-Approve] Reg#{$registration['registration_number']}: invoices=$invoicesUpdated, payments=$paymentsUpdated, email=" . ($emailSent ? 'sent' : 'failed'));
+        $_SESSION['success'] = $message;
+        
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        error_log("[reapprove_registration] Error: " . $e->getMessage());
+        $_SESSION['error'] = "Error re-approving registration: " . $e->getMessage();
+    }
+    
+    header('Location: admin.php?page=registrations');
+    exit;
+}
+
 if ($action === 'delete_registration') {
     $regId = $_POST['registration_id'];
     try {
