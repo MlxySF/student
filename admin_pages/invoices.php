@@ -289,60 +289,17 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
     border: 2px solid #e2e8f0; 
 }
 
-/* ✨ FIXED: Better PDF display styles */
-.receipt-pdf-container { 
-    width: 100%; 
-    min-height: 600px; 
-    border: 2px solid #e2e8f0; 
-    border-radius: 8px; 
-    overflow: hidden;
-    background: #f8fafc;
-    position: relative;
-    margin-top: 15px;
+/* ✨ SIMPLIFIED: Compact PDF display */
+.receipt-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
 }
 
-.receipt-pdf-iframe { 
-    width: 100%; 
-    height: 700px; 
-    border: none; 
-    display: block;
-}
-
-.pdf-download-section {
-    padding: 30px 20px;
-    text-align: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.pdf-download-section i {
-    font-size: 48px;
-    margin-bottom: 16px;
-    opacity: 0.9;
-}
-
-.pdf-download-section h5 {
-    font-weight: 700;
-    margin-bottom: 8px;
-}
-
-.pdf-download-section p {
-    margin-bottom: 20px;
-    opacity: 0.9;
-}
-
-.pdf-download-section .btn {
-    margin: 5px;
-    font-weight: 600;
-    padding: 12px 24px;
-    border: 2px solid rgba(255,255,255,0.3);
-}
-
-.pdf-download-section .btn:hover {
-    transform: scale(1.05);
-    border-color: white;
+.receipt-actions .btn {
+    flex: 1;
+    min-width: 150px;
 }
 
 .receipt-loading { 
@@ -806,31 +763,27 @@ function loadReceipt(invoiceId) {
                 // Mark as loaded
                 loadedReceipts.add(invoiceId);
                 
-                // ✨ FIXED: Display receipt based on mime type with improved PDF handling
+                // ✨ SIMPLIFIED: Clean, compact PDF/image display
+                const dataUrl = 'data:' + data.receipt_mime_type + ';base64,' + data.receipt_data;
+                
                 if (data.receipt_mime_type === 'application/pdf') {
-                    // PDF Receipt - Show download buttons AND iframe viewer
-                    const dataUrl = 'data:' + data.receipt_mime_type + ';base64,' + data.receipt_data;
+                    // PDF Receipt - Just show download/open buttons (no iframe since it's blank)
                     container.innerHTML = `
-                        <div class="pdf-download-section">
-                            <i class="fas fa-file-pdf"></i>
-                            <h5>PDF Receipt Uploaded</h5>
-                            <p>Click the buttons below to download or view the receipt</p>
-                            <a href="${dataUrl}" download="receipt-${invoiceId}.pdf" class="btn btn-light btn-lg">
+                        <div class="alert alert-info">
+                            <i class="fas fa-file-pdf"></i> <strong>PDF Receipt Uploaded</strong>
+                        </div>
+                        <div class="receipt-actions">
+                            <a href="${dataUrl}" download="receipt-invoice-${invoiceId}.pdf" class="btn btn-primary">
                                 <i class="fas fa-download"></i> Download PDF
                             </a>
-                            <a href="${dataUrl}" target="_blank" class="btn btn-outline-light btn-lg">
+                            <a href="${dataUrl}" target="_blank" class="btn btn-secondary">
                                 <i class="fas fa-external-link-alt"></i> Open in New Tab
                             </a>
-                        </div>
-                        <div class="receipt-pdf-container">
-                            <iframe src="${dataUrl}" class="receipt-pdf-iframe" title="Payment Receipt PDF">
-                                <p>Your browser does not support PDFs. <a href="${dataUrl}" download>Download the PDF</a></p>
-                            </iframe>
                         </div>
                     `;
                 } else {
                     // Image Receipt - Display directly
-                    container.innerHTML = '<img src="data:' + data.receipt_mime_type + ';base64,' + data.receipt_data + '" alt="Receipt" class="receipt-image">';
+                    container.innerHTML = '<img src="' + dataUrl + '" alt="Receipt" class="receipt-image">';
                 }
                 console.log('Receipt displayed successfully');
             } else {
