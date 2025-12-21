@@ -27,6 +27,7 @@ if (!file_exists('../../config.php')) {
 }
 
 require_once '../../config.php';
+require_once '../../file_storage_helper.php';
 
 // Get invoice ID from request
 $invoice_id = isset($_GET['invoice_id']) ? intval($_GET['invoice_id']) : 0;
@@ -72,8 +73,7 @@ try {
     }
     
     // Construct file path
-    $directory = PAYMENT_RECEIPTS_DIR;
-    $filepath = $directory . $payment['receipt_filename'];
+    $filepath = PAYMENT_RECEIPTS_DIR . $payment['receipt_filename'];
     
     // Validate file exists
     if (!file_exists($filepath)) {
