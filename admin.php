@@ -222,14 +222,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $update_invoice->execute([$invoice_id]);
             $_SESSION['success'] = "Payment verified and invoice marked as PAID!";
         } else {
-            // FIXED: If rejected, set invoice to cancelled instead of unpaid
+            // CHANGED: If rejected, set invoice to 'rejected' status
             $update_invoice = $pdo->prepare("
                 UPDATE invoices 
-                SET status = 'cancelled' 
+                SET status = 'rejected' 
                 WHERE id = ?
             ");
             $update_invoice->execute([$invoice_id]);
-            $_SESSION['success'] = "Payment rejected and invoice marked as CANCELLED!";
+            $_SESSION['success'] = "Payment rejected and invoice marked as REJECTED!";
         }
         
         // ✨ SEND EMAIL NOTIFICATION
