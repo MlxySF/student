@@ -779,8 +779,8 @@ function getReceiptUrl($receipt_path) {
             <div class="bank-info-row">
               <span class="bank-info-label">Account Number</span>
               <span class="bank-info-value">
-                505019816740
-                <button class="copy-btn" onclick="copyToClipboard('505019816740', this)">
+                562123456789
+                <button class="copy-btn" onclick="copyToClipboard('562123456789', this)">
                   <i class="fas fa-copy"></i> Copy
                 </button>
               </span>
@@ -796,17 +796,17 @@ function getReceiptUrl($receipt_path) {
             <h6><i class="fas fa-shopping-cart"></i> Bank Details for Equipment & Clothing</h6>
             <div class="bank-info-row">
               <span class="bank-info-label">Bank Name</span>
-              <span class="bank-info-value">Public Bank</span>
+              <span class="bank-info-value">CIMB Bank</span>
             </div>
             <div class="bank-info-row">
               <span class="bank-info-label">Account Name</span>
-              <span class="bank-info-value">Chin Woo Sport Academy</span>
+              <span class="bank-info-value">Wushu Equipment Store</span>
             </div>
             <div class="bank-info-row">
               <span class="bank-info-label">Account Number</span>
               <span class="bank-info-value">
-                3244180136
-                <button class="copy-btn" onclick="copyToClipboard('3244180136', this)">
+                8001234567890
+                <button class="copy-btn" onclick="copyToClipboard('8001234567890', this)">
                   <i class="fas fa-copy"></i> Copy
                 </button>
               </span>

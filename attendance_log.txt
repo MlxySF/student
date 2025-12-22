@@ -526,3 +526,30 @@ POST Data: Array
     [registration_id] => 3
 )
 
+
+=== 2025-12-22 16:35:15 ===
+Action: verify_registration
+POST Data: Array
+(
+    [action] => verify_registration
+    [registration_id] => 4
+)
+
+
+=== 2025-12-22 16:36:47 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 4
+)
+
+
+=== 2025-12-22 16:40:01 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 5
+)
+

@@ -289,10 +289,10 @@ function getApprovedPaymentEmailHTML($payment, $adminNotes) {
             <strong>Wushu Sport Academy Team</strong></p>
         </div>
         
-        <div style="text-align: center; padding: 24px; background: #f8fafc; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0;">
-            <p style="margin: 0 0 8px 0; font-weight: 600; color: #1e293b; font-size: 15px;">Wushu Sport Academy 武术体育学院</p>
-            <p style="margin: 4px 0;>📧 Email: admin@wushusportacademy.com</p>
-            <p style="margin: 16px 0 0 0; font-size: 11px; color: #94a3b8;">This is an automated email.</p>
+        <div class="footer">
+            <p style="margin: 0 0 8px 0; font-weight: 600; color: #1e293b; font-size: 15px;">Wushu Sport Academy &#27494;&#26415;&#20307;&#32946;&#23398;&#38498;</p>
+            <p style="margin: 4px 0;">Student &amp; Parent Portal System</p>
+            <p style="margin: 16px 0 0 0; font-size: 11px; color: #94a3b8;">This is an automated notification.</p>
         </div>
     </div>
 </body>

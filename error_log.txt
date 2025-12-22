@@ -112,3 +112,122 @@
 [22-Dec-2025 08:02:01 UTC] [Serve File] Serving file: payment_receipts/receipt_3_20251222075013_834b43ca.jpg (Size: 39315 bytes, MIME: image/jpeg)
 [22-Dec-2025 08:02:01 UTC] [Serve File] Serving file: signatures/signature_WSA2025-9162_20251222075013_26ac6d8e.png (Size: 4165 bytes, MIME: image/png)
 [22-Dec-2025 08:02:01 UTC] [Serve File] Serving file: signatures/signature_WSA2025-5737_20251222052010_a4f9a31d.png (Size: 4664 bytes, MIME: image/png)
+[22-Dec-2025 08:35:05 UTC] [Registration] Starting registration for parent email: chaichonghern@gmail.com, child IC: 123123-31-2312, name: Chai Chong Hern
+[22-Dec-2025 08:35:05 UTC] [Reg Number] Generated unique random registration number: WSA2025-7943
+[22-Dec-2025 08:35:05 UTC] [Password] Using IC last 4 digits: 2312
+[22-Dec-2025 08:35:05 UTC] [Password] Using IC last 4 digits: 1849
+[22-Dec-2025 08:35:05 UTC] [Parent] Created NEW parent account ID=2, code=PAR-2025-0001, email=chaichonghern@gmail.com, password=1849
+[22-Dec-2025 08:35:05 UTC] [Parent Info] ID=2, Code=PAR-2025-0001, IsNew=1, Password=1849
+[22-Dec-2025 08:35:05 UTC] [Student] Created student ID=4 (Chai Chong Hern)
+[22-Dec-2025 08:35:05 UTC] [Link] Linked student ID=4 to parent ID=2
+[22-Dec-2025 08:35:05 UTC] [DateTime Validation] Invalid form_date '22/12/2025', using current datetime
+[22-Dec-2025 08:35:05 UTC] [Registration] Original form_date: 22/12/2025, Validated: 2025-12-22 08:35:05
+[22-Dec-2025 08:35:05 UTC] [File Helper] Saved file: signatures/signature_WSA2025-7943_chai_chong_hern_20251222083505_085a1a.png (Size: 3794 bytes)
+[22-Dec-2025 08:35:05 UTC] [File Save] Signature saved: signatures/signature_WSA2025-7943_chai_chong_hern_20251222083505_085a1a.png
+[22-Dec-2025 08:35:05 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-7943_chai_chong_hern_20251222083505_554561.pdf (Size: 1198456 bytes)
+[22-Dec-2025 08:35:05 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-7943_chai_chong_hern_20251222083505_554561.pdf
+[22-Dec-2025 08:35:05 UTC] [File Helper] Saved file: payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png (Size: 613149 bytes)
+[22-Dec-2025 08:35:05 UTC] [File Save] Payment receipt saved: payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png
+[22-Dec-2025 08:35:05 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Wed 8pm-10pm, Wushu Sport Academy: Sun 10am-12pm
+[22-Dec-2025 08:35:05 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Wed 8pm-10pm' to 'wsa-wed-8pm'
+[22-Dec-2025 08:35:05 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Sun 10am-12pm' to 'wsa-sun-10am'
+[22-Dec-2025 08:35:05 UTC] [Auto-Enroll] Starting enrollment for student ID=4, Classes: wsa-wed-8pm, wsa-sun-10am
+[22-Dec-2025 08:35:05 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=4 in class 'Wushu Sport Academy: Wed 8pm-10pm' (Code: wsa-wed-8pm)
+[22-Dec-2025 08:35:05 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=4 in class 'Wushu Sport Academy: Sun 10am-12pm' (Code: wsa-sun-10am)
+[22-Dec-2025 08:35:05 UTC] [Auto-Enroll] Results - Success: 2, Failed: 0, Skipped: 0
+[22-Dec-2025 08:35:05 UTC] [Invoice Split] Total: 200, Classes: 2, Per Class: 100
+[22-Dec-2025 08:35:05 UTC] [Invoice] Using receipt path: payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png
+[22-Dec-2025 08:35:05 UTC] [Invoice] Created invoice: INV-REG-202512-1492 (ID: 16) for class wsa-wed-8pm, amount=100
+[22-Dec-2025 08:35:05 UTC] [Payment] Created payment record (ID: 9) linked to invoice INV-REG-202512-1492, receipt_path=payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png
+[22-Dec-2025 08:35:05 UTC] [Invoice] Created invoice: INV-REG-202512-1039 (ID: 17) for class wsa-sun-10am, amount=100
+[22-Dec-2025 08:35:05 UTC] [Payment] Created payment record (ID: 10) linked to invoice INV-REG-202512-1039, receipt_path=payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png
+[22-Dec-2025 08:35:05 UTC] [Success] Reg#: WSA2025-7943, Parent: PAR-2025-0001 (ID:2), Student: 4, Invoices: 2, Payment Date: 2025-12-22, Receipt: payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png
+[22-Dec-2025 08:35:05 UTC] [Email] Sending to: chaichonghern@gmail.com, isNewParent: YES, parentPassword: 1849
+[22-Dec-2025 08:35:06 UTC] [Email] Successfully sent to chaichonghern@gmail.com
+[22-Dec-2025 08:35:06 UTC] [Admin Email] Sending registration notification to admin@wushusportacademy.com
+[22-Dec-2025 08:35:06 UTC] [Admin Email] Successfully sent registration notification
+[22-Dec-2025 08:35:06 UTC] [Admin Notification] Email sent: YES
+[22-Dec-2025 08:35:13 UTC] [Serve File] Serving file: signatures/signature_WSA2025-7943_chai_chong_hern_20251222083505_085a1a.png (Size: 3794 bytes, MIME: image/png)
+[22-Dec-2025 08:35:13 UTC] [Serve File] Serving file: payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png (Size: 613149 bytes, MIME: image/png)
+[22-Dec-2025 16:35:15 Asia/Kuala_Lumpur] [verify_registration] Generated PARENT password from parent IC: 1849
+[22-Dec-2025 16:35:15 Asia/Kuala_Lumpur] [verify_registration] Updated 2 invoices to paid
+[22-Dec-2025 16:35:15 Asia/Kuala_Lumpur] [verify_registration] Found 2 paid invoices
+[22-Dec-2025 16:35:15 Asia/Kuala_Lumpur] [verify_registration] Updated 1 payments for invoice ID 16
+[22-Dec-2025 16:35:15 Asia/Kuala_Lumpur] [verify_registration] Updated 1 payments for invoice ID 17
+[22-Dec-2025 16:35:15 Asia/Kuala_Lumpur] [verify_registration] Total payments updated: 2
+[22-Dec-2025 16:35:15 Asia/Kuala_Lumpur] [verify_registration] IsFirstChild: YES, Parent IC: 030322-10-1849, PARENT Password: 1849
+[22-Dec-2025 16:35:17 Asia/Kuala_Lumpur] [Approval Email] Sent to chaichonghern@gmail.com for child Chai Chong Hern
+[22-Dec-2025 16:35:17 Asia/Kuala_Lumpur] [Approve] Reg#WSA2025-7943: invoices=2, payments=2, email=sent
+[22-Dec-2025 08:35:17 UTC] [Serve File] Serving file: signatures/signature_WSA2025-7943_chai_chong_hern_20251222083505_085a1a.png (Size: 3794 bytes, MIME: image/png)
+[22-Dec-2025 08:35:17 UTC] [Serve File] Serving file: payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png (Size: 613149 bytes, MIME: image/png)
+[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] === DELETE REGISTRATION STARTED ===
+[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] Reg#: WSA2025-7943, Student: Chai Chong Hern, Student ID: 4, Parent ID: 2
+[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] Files to delete: 3 - uploads/signatures/signature_WSA2025-7943_chai_chong_hern_20251222083505_085a1a.png, uploads/registration_pdfs/pdf_WSA2025-7943_chai_chong_hern_20251222083505_554561.pdf, uploads/payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png
+[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ Registration record deleted
+[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 parent-child relationship(s)
+[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 payment record(s)
+[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 invoice(s)
+[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 0 attendance record(s)
+[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 enrollment(s)
+[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ Student account deleted (ID: 4)
+[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] Parent 'Chai' (ID: 2) has 0 remaining child(ren)
+[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ Parent account DELETED: PAR-2025-0001 (Chai)
+[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ Database transaction committed
+[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/signatures/signature_WSA2025-7943_chai_chong_hern_20251222083505_085a1a.png
+[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/registration_pdfs/pdf_WSA2025-7943_chai_chong_hern_20251222083505_554561.pdf
+[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png
+[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] === DELETE REGISTRATION COMPLETED ===
+[22-Dec-2025 08:39:25 UTC] [Registration] Starting registration for parent email: chaichonghern@gmail.com, child IC: 123123-31-2312, name: Chai Chong Hern
+[22-Dec-2025 08:39:25 UTC] [Reg Number] Generated unique random registration number: WSA2025-6519
+[22-Dec-2025 08:39:25 UTC] [Password] Using IC last 4 digits: 2312
+[22-Dec-2025 08:39:25 UTC] [Password] Using IC last 4 digits: 1849
+[22-Dec-2025 08:39:26 UTC] [Parent] Created NEW parent account ID=3, code=PAR-2025-0001, email=chaichonghern@gmail.com, password=1849
+[22-Dec-2025 08:39:26 UTC] [Parent Info] ID=3, Code=PAR-2025-0001, IsNew=1, Password=1849
+[22-Dec-2025 08:39:26 UTC] [Student] Created student ID=5 (Chai Chong Hern)
+[22-Dec-2025 08:39:26 UTC] [Link] Linked student ID=5 to parent ID=3
+[22-Dec-2025 08:39:26 UTC] [DateTime Validation] Invalid form_date '22/12/2025', using current datetime
+[22-Dec-2025 08:39:26 UTC] [Registration] Original form_date: 22/12/2025, Validated: 2025-12-22 08:39:26
+[22-Dec-2025 08:39:26 UTC] [File Helper] Saved file: signatures/signature_WSA2025-6519_chai_chong_hern_20251222083926_6c14c7.png (Size: 5272 bytes)
+[22-Dec-2025 08:39:26 UTC] [File Save] Signature saved: signatures/signature_WSA2025-6519_chai_chong_hern_20251222083926_6c14c7.png
+[22-Dec-2025 08:39:26 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-6519_chai_chong_hern_20251222083926_ed91bd.pdf (Size: 1197566 bytes)
+[22-Dec-2025 08:39:26 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-6519_chai_chong_hern_20251222083926_ed91bd.pdf
+[22-Dec-2025 08:39:26 UTC] [File Helper] Saved file: payment_receipts/receipt_5_chai_chong_hern_reg-wsa2025-6519-2025-12-22_20251222083926_02e7dc.png (Size: 613149 bytes)
+[22-Dec-2025 08:39:26 UTC] [File Save] Payment receipt saved: payment_receipts/receipt_5_chai_chong_hern_reg-wsa2025-6519-2025-12-22_20251222083926_02e7dc.png
+[22-Dec-2025 08:39:26 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Wed 8pm-10pm, SJK(C) Puay Chai 2: Tue 8pm-10pm
+[22-Dec-2025 08:39:26 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Wed 8pm-10pm' to 'wsa-wed-8pm'
+[22-Dec-2025 08:39:26 UTC] [Schedule Parse] Mapped 'SJK(C) Puay Chai 2: Tue 8pm-10pm' to 'pc2-tue-8pm'
+[22-Dec-2025 08:39:26 UTC] [Auto-Enroll] Starting enrollment for student ID=5, Classes: wsa-wed-8pm, pc2-tue-8pm
+[22-Dec-2025 08:39:26 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=5 in class 'Wushu Sport Academy: Wed 8pm-10pm' (Code: wsa-wed-8pm)
+[22-Dec-2025 08:39:26 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=5 in class 'SJK(C) Puay Chai 2: Tue 8pm-10pm' (Code: pc2-tue-8pm)
+[22-Dec-2025 08:39:26 UTC] [Auto-Enroll] Results - Success: 2, Failed: 0, Skipped: 0
+[22-Dec-2025 08:39:26 UTC] [Invoice Split] Total: 200, Classes: 2, Per Class: 100
+[22-Dec-2025 08:39:26 UTC] [Invoice] Using receipt path: payment_receipts/receipt_5_chai_chong_hern_reg-wsa2025-6519-2025-12-22_20251222083926_02e7dc.png
+[22-Dec-2025 08:39:26 UTC] [Invoice] Created invoice: INV-REG-202512-9676 (ID: 18) for class wsa-wed-8pm, amount=100
+[22-Dec-2025 08:39:26 UTC] [Payment] Created payment record (ID: 11) linked to invoice INV-REG-202512-9676, receipt_path=payment_receipts/receipt_5_chai_chong_hern_reg-wsa2025-6519-2025-12-22_20251222083926_02e7dc.png
+[22-Dec-2025 08:39:26 UTC] [Invoice] Created invoice: INV-REG-202512-5576 (ID: 19) for class pc2-tue-8pm, amount=100
+[22-Dec-2025 08:39:26 UTC] [Payment] Created payment record (ID: 12) linked to invoice INV-REG-202512-5576, receipt_path=payment_receipts/receipt_5_chai_chong_hern_reg-wsa2025-6519-2025-12-22_20251222083926_02e7dc.png
+[22-Dec-2025 08:39:26 UTC] [Success] Reg#: WSA2025-6519, Parent: PAR-2025-0001 (ID:3), Student: 5, Invoices: 2, Payment Date: 2025-12-22, Receipt: payment_receipts/receipt_5_chai_chong_hern_reg-wsa2025-6519-2025-12-22_20251222083926_02e7dc.png
+[22-Dec-2025 08:39:26 UTC] [Email] Sending to: chaichonghern@gmail.com, isNewParent: YES, parentPassword: 1849
+[22-Dec-2025 08:39:26 UTC] [Email] Successfully sent to chaichonghern@gmail.com
+[22-Dec-2025 08:39:26 UTC] [Admin Email] Sending registration notification to admin@wushusportacademy.com
+[22-Dec-2025 08:39:27 UTC] [Admin Email] Successfully sent registration notification
+[22-Dec-2025 08:39:27 UTC] [Admin Notification] Email sent: YES
+[22-Dec-2025 08:39:59 UTC] [Serve File] Serving file: signatures/signature_WSA2025-6519_chai_chong_hern_20251222083926_6c14c7.png (Size: 5272 bytes, MIME: image/png)
+[22-Dec-2025 08:39:59 UTC] [Serve File] Serving file: payment_receipts/receipt_5_chai_chong_hern_reg-wsa2025-6519-2025-12-22_20251222083926_02e7dc.png (Size: 613149 bytes, MIME: image/png)
+[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] === DELETE REGISTRATION STARTED ===
+[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] Reg#: WSA2025-6519, Student: Chai Chong Hern, Student ID: 5, Parent ID: 3
+[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] Files to delete: 3 - uploads/signatures/signature_WSA2025-6519_chai_chong_hern_20251222083926_6c14c7.png, uploads/registration_pdfs/pdf_WSA2025-6519_chai_chong_hern_20251222083926_ed91bd.pdf, uploads/payment_receipts/receipt_5_chai_chong_hern_reg-wsa2025-6519-2025-12-22_20251222083926_02e7dc.png
+[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ Registration record deleted
+[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 parent-child relationship(s)
+[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 payment record(s)
+[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 invoice(s)
+[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 0 attendance record(s)
+[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 enrollment(s)
+[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ Student account deleted (ID: 5)
+[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] Parent 'Chai' (ID: 3) has 0 remaining child(ren)
+[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ Parent account DELETED: PAR-2025-0001 (Chai)
+[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ Database transaction committed
+[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/signatures/signature_WSA2025-6519_chai_chong_hern_20251222083926_6c14c7.png
+[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/registration_pdfs/pdf_WSA2025-6519_chai_chong_hern_20251222083926_ed91bd.pdf
+[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/payment_receipts/receipt_5_chai_chong_hern_reg-wsa2025-6519-2025-12-22_20251222083926_02e7dc.png
+[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] === DELETE REGISTRATION COMPLETED ===

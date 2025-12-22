@@ -61,11 +61,12 @@ function sendRegistrationEmail($toEmail, $studentName, $registrationNumber, $pas
                 </p>
             </div>
             
-            <div style='text-align: center; padding: 24px; background: #f8fafc; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0;'>
-            <p style='margin: 0 0 8px 0; font-weight: 600; color: #1e293b; font-size: 15px;'>Wushu Sport Academy 武术体育学院</p>
-            <p style='margin: 4px 0;'>📧 Email: admin@wushusportacademy.com</p>
-            <p style='margin: 16px 0 0 0; font-size: 11px; color: #94a3b8;'>This is an automated email.</p>
-        </div>
+            <div class='footer'>
+                <p>Wushu Sport Academy<br>
+                No. 2, Jalan BP 5/6, Bandar Bukit Puchong, 47120 Puchong, Selangor<br>
+                Email: admin@wushusportacademy.com</p>
+                <p>This is an automated email. Please do not reply to this message.</p>
+            </div>
         </div>
     </body>
     </html>

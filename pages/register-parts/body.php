@@ -874,7 +874,7 @@ if (empty($_SESSION['csrf_token'])) {
                 </div>
                 <div class="flex-1">
                     <p class="text-xs text-slate-500 mb-1">Account Number 户口号码</p>
-                    <p class="font-bold text-slate-800 text-lg">5050 1981 6740</p>
+                    <p class="font-bold text-slate-800 text-lg">5621 2345 6789</p>
                     <button onclick="copyAccountNumber()" class="text-xs text-blue-600 hover:text-blue-800 mt-1 flex items-center gap-1">
                         <i class="fas fa-copy"></i> Copy 复制
                     </button>
