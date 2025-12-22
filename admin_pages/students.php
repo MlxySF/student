@@ -300,7 +300,10 @@ function updateFilters(paramName, value) {
 
 function viewStudent(registrationId, studentAccountId) {
     const student = studentsData.find(s => s.id == registrationId);
-    if (!student) return;
+    if (!student) {
+        alert('Student data not found');
+        return;
+    }
 
     // Show modal first
     const modal = new bootstrap.Modal(document.getElementById('viewStudentModal'));
@@ -308,8 +311,23 @@ function viewStudent(registrationId, studentAccountId) {
 
     // Fetch enrollments for this student using student_account_id
     fetch(`admin_handler.php?action=get_student_details&student_id=${studentAccountId}`)
-        .then(response => response.json())
+        .then(response => {
+            // ✨ Check if response is OK and is JSON
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Server returned non-JSON response. You may need to log in again.');
+            }
+            return response.json();
+        })
         .then(data => {
+            // ✨ Check for error in response
+            if (data.error) {
+                throw new Error(data.message || data.error);
+            }
+            
             let html = `
                 <div class="row">
                     <div class="col-md-6">
@@ -386,7 +404,7 @@ function viewStudent(registrationId, studentAccountId) {
 
             html += `
                         <div class="mt-3">
-                            <button class="btn btn-success btn-sm w-100" onclick="bootstrap.Modal.getInstance(document.getElementById('viewStudentModal')).hide(); enrollStudent(${registrationId}, ${studentAccountId}, '${student.name_en}');">
+                            <button class="btn btn-success btn-sm w-100" onclick="bootstrap.Modal.getInstance(document.getElementById('viewStudentModal')).hide(); enrollStudent(${registrationId}, ${studentAccountId}, '${student.name_en.replace(/'/g, "\\'")}'">
                                 <i class="fas fa-plus"></i> Enroll in New Class
                             </button>
                         </div>
@@ -397,8 +415,13 @@ function viewStudent(registrationId, studentAccountId) {
             document.getElementById('viewStudentContent').innerHTML = html;
         })
         .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('viewStudentContent').innerHTML = '<div class="alert alert-danger">Failed to load student details.</div>';
+            console.error('Error loading student details:', error);
+            let errorMessage = 'Failed to load student details.';
+            if (error.message) {
+                errorMessage += '<br><small class="text-muted">' + error.message + '</small>';
+            }
+            document.getElementById('viewStudentContent').innerHTML = 
+                '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + errorMessage + '</div>';
         });
 }
 
