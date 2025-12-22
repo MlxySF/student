@@ -3,11 +3,11 @@
  * send_approval_email.php
  * Sends approval notification email to parents when registration is approved
  * Call this after admin approves a registration
+ * 
+ * FIXED: PHPMailer Exception conflict - use fully qualified class names
  */
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
+// Only require PHPMailer files, don't import classes to avoid conflicts
 require_once 'PHPMailer/Exception.php';
 require_once 'PHPMailer/PHPMailer.php';
 require_once 'PHPMailer/SMTP.php';
@@ -25,17 +25,17 @@ require_once 'config.php';
  * @return bool Success status
  */
 function sendApprovalEmail($parentEmail, $studentName, $registrationNumber, $studentStatus, $parentPassword = null, $isFirstChild = false) {
-    $mail = new PHPMailer(true);
+    // Use fully qualified class name to avoid conflicts
+    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
     
     try {
         // Server settings
-        $mail->isSMTP();
         $mail->isSMTP();
         $mail->Host       = 'mail.wushusportacademy.com';
         $mail->SMTPAuth   = true;
         $mail->Username   = 'admin@wushusportacademy.com';
         $mail->Password   = 'UZa;nENf]!xqpRak';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
         // Recipients
@@ -52,7 +52,7 @@ function sendApprovalEmail($parentEmail, $studentName, $registrationNumber, $stu
         $mail->send();
         error_log("[Approval Email] Sent to {$parentEmail} for child {$studentName}");
         return true;
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         error_log("[Approval Email] Failed to send to {$parentEmail}: {$mail->ErrorInfo}");
         return false;
     }
@@ -237,7 +237,7 @@ if (isset($_POST['approve_registration'])) {
                 $_SESSION['warning'] = "Registration approved but failed to send email.";
             }
         }
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         error_log("Error approving registration: " . $e->getMessage());
         $_SESSION['error'] = "Failed to approve registration.";
     }
