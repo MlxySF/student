@@ -138,11 +138,10 @@ function getRejectionEmailHTML($studentName, $registrationNumber, $rejectReason)
         </div>
         
         <!-- Footer -->
-        <div style='text-align: center; padding: 24px; background: #f8fafc; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0;'>
-            <p style='margin: 0 0 8px 0; font-weight: 600; color: #1e293b; font-size: 15px;'>Wushu Sport Academy 武术体育学院</p>
-            <p style='margin: 4px 0;'>📧 Email: admin@wushusportacademy.com</p>
-            <p style='margin: 4px 0;'>📱 Phone: +60 12-345 6789</p>
-            <p style='margin: 16px 0 0 0; font-size: 11px; color: #94a3b8;'>This is an automated email. Please contact us if you have any questions.</p>
+        <div style="text-align: center; padding: 24px; background: #f8fafc; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0;">
+            <p style="margin: 0 0 8px 0; font-weight: 600; color: #1e293b; font-size: 15px;">Wushu Sport Academy 武术体育学院</p>
+            <p style="margin: 4px 0;>📧 Email: admin@wushusportacademy.com</p>
+            <p style="margin: 16px 0 0 0; font-size: 11px; color: #94a3b8;">This is an automated email.</p>
         </div>
     </div>
 </body>
