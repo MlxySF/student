@@ -195,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
     
-    // VERIFY PAYMENT
+    // VERIFY PAYMENT - ✨ FIXED: Pass $pdo as first parameter
     if ($_POST['action'] === 'verify_payment') {
         $payment_id = $_POST['payment_id'];
         $invoice_id = $_POST['invoice_id'];
@@ -232,7 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $_SESSION['success'] = "Payment rejected!";
         }
         
-        // ✨ SEND EMAIL NOTIFICATION
+        // ✨ SEND EMAIL NOTIFICATION - FIXED: Pass $pdo as first parameter
         error_log("[admin.php verify_payment] Attempting to send email notification");
         require_once 'send_payment_approval_email.php';
         try {
