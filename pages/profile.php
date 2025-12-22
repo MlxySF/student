@@ -75,13 +75,18 @@ if (!$student) {
     exit;
 }
 
-// Get PDF data from registrations table
-$pdf_data = null;
+// Get PDF path from registrations table (NEW METHOD - using file path instead of base64)
+$pdf_path = null;
 if ($registration_id) {
-    $pdf_stmt = $pdo->prepare("SELECT pdf_base64 FROM registrations WHERE id = ?");
+    $pdf_stmt = $pdo->prepare("SELECT pdf_path FROM registrations WHERE id = ?");
     $pdf_stmt->execute([$registration_id]);
     $pdf_record = $pdf_stmt->fetch();
-    $pdf_data = $pdf_record['pdf_base64'] ?? null;
+    $pdf_path = $pdf_record['pdf_path'] ?? null;
+    
+    // Check if file actually exists
+    if ($pdf_path && !file_exists($pdf_path)) {
+        $pdf_path = null; // File doesn't exist, don't show download button
+    }
 }
 
 // Get enrolled classes count
@@ -278,7 +283,7 @@ $invoice_stats = $stmt->fetch();
             </div>
         </div>
 
-        <?php if (!empty($pdf_data)): ?>
+        <?php if (!empty($pdf_path)): ?>
         <div class="card">
             <div class="card-header bg-success text-white"><i class="fas fa-file-contract"></i> Registration Agreement</div>
             <div class="card-body">
@@ -286,9 +291,9 @@ $invoice_stats = $stmt->fetch();
                     <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
                     <p class="mb-3"><strong>Signed Agreement Available</strong></p>
                     <p class="text-muted small mb-3">Download your signed registration agreement PDF</p>
-                    <button onclick="downloadSignedAgreement()" class="btn btn-success w-100">
+                    <a href="download_agreement.php?id=<?php echo $registration_id; ?>" class="btn btn-success w-100" target="_blank">
                         <i class="fas fa-download"></i> Download Agreement PDF
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>
@@ -490,29 +495,6 @@ document.getElementById('school-edit').addEventListener('change', function() {
         </div>
     </div>
 </div>
-<?php endif; ?>
-
-<?php if (!empty($pdf_data)): ?>
-<script>
-function downloadSignedAgreement() {
-    const base64Data = <?php echo json_encode($pdf_data); ?>;
-    const byteCharacters = atob(base64Data);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: 'application/pdf' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'Registration_Agreement_<?php echo e($student['student_id']); ?>.pdf';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-}
-</script>
 <?php endif; ?>
 
 <style>
