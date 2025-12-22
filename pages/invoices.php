@@ -6,7 +6,6 @@
 // FIXED: Show receipt using receipt_path for rejected invoices
 // FIXED: Only highlight admin notes in rejected section, not entire table
 // FIXED: Proper receipt path resolution for file_exists check and display
-// FIXED: jQuery reference error - ensure jQuery is loaded before DataTables init
 
 // Determine student account ID first
 if (isParent()) {
@@ -859,63 +858,47 @@ function getReceiptUrl($receipt_path) {
 <?php endforeach; ?>
 
 <script>
-// FIXED: Wrap in function that waits for jQuery to be loaded
-(function() {
-    // Function to initialize DataTables
-    function initializeDataTables() {
-        // Check if jQuery and DataTables are loaded
-        if (typeof jQuery === 'undefined' || typeof jQuery.fn.dataTable === 'undefined') {
-            // Retry after a short delay
-            setTimeout(initializeDataTables, 100);
-            return;
-        }
-        
-        // Now jQuery is loaded, we can use it
-        jQuery(document).ready(function($) {
-            // Common DataTables configuration for all invoice tables
-            const tableConfig = {
-                pageLength: 10,
-                lengthMenu: [
-                    [10, 25, 50, -1],
-                    ['10 rows', '25 rows', '50 rows', 'Show all']
-                ],
-                order: [[0, 'desc']],
-                language: {
-                    lengthMenu: '<i class="fas fa-list"></i> Display _MENU_ per page',
-                    info: 'Showing _START_ to _END_ of _TOTAL_ entries',
-                    infoEmpty: 'No entries available',
-                    search: '<i class="fas fa-search"></i>',
-                    searchPlaceholder: 'Search...',
-                    paginate: {
-                        next: '<i class="fas fa-angle-right"></i>',
-                        previous: '<i class="fas fa-angle-left"></i>'
-                    }
-                },
-                responsive: true
-            };
+// Initialize DataTables for each invoice section
+$(document).ready(function() {
+    // Common DataTables configuration for all invoice tables
+    const tableConfig = {
+        pageLength: 10,
+        lengthMenu: [
+            [10, 25, 50, -1],
+            ['10 rows', '25 rows', '50 rows', 'Show all']
+        ],
+        order: [[0, 'desc']],
+        language: {
+            lengthMenu: '<i class="fas fa-list"></i> Display _MENU_ per page',
+            info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+            infoEmpty: 'No entries available',
+            search: '<i class="fas fa-search"></i>',
+            searchPlaceholder: 'Search...',
+            paginate: {
+                next: '<i class="fas fa-angle-right"></i>',
+                previous: '<i class="fas fa-angle-left"></i>'
+            }
+        },
+        responsive: true
+    };
 
-            // Initialize each invoice table if it exists
-            if ($('.invoice-table-overdue').length) {
-                $('.invoice-table-overdue').DataTable(tableConfig);
-            }
-            if ($('.invoice-table-unpaid').length) {
-                $('.invoice-table-unpaid').DataTable(tableConfig);
-            }
-            if ($('.invoice-table-pending').length) {
-                $('.invoice-table-pending').DataTable(tableConfig);
-            }
-            if ($('.invoice-table-rejected').length) {
-                $('.invoice-table-rejected').DataTable(tableConfig);
-            }
-            if ($('.invoice-table-paid').length) {
-                $('.invoice-table-paid').DataTable(tableConfig);
-            }
-        });
+    // Initialize each invoice table if it exists
+    if ($('.invoice-table-overdue').length) {
+        $('.invoice-table-overdue').DataTable(tableConfig);
     }
-    
-    // Start trying to initialize DataTables
-    initializeDataTables();
-})();
+    if ($('.invoice-table-unpaid').length) {
+        $('.invoice-table-unpaid').DataTable(tableConfig);
+    }
+    if ($('.invoice-table-pending').length) {
+        $('.invoice-table-pending').DataTable(tableConfig);
+    }
+    if ($('.invoice-table-rejected').length) {
+        $('.invoice-table-rejected').DataTable(tableConfig);
+    }
+    if ($('.invoice-table-paid').length) {
+        $('.invoice-table-paid').DataTable(tableConfig);
+    }
+});
 
 function copyToClipboard(text, button) {
     navigator.clipboard.writeText(text).then(function() {
