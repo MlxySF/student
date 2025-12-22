@@ -38,12 +38,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
         
         $student_id = $_GET['student_id'] ?? 0;
         
+        // ✨ FIXED: Better validation with specific error messages
         if (empty($student_id)) {
-            echo json_encode(['error' => 'Invalid student ID']);
+            echo json_encode([
+                'error' => 'Invalid student ID',
+                'message' => 'Student ID parameter is missing or empty'
+            ]);
             exit;
         }
         
+        // ✨ FIXED: Validate that student_id is numeric
+        if (!is_numeric($student_id)) {
+            echo json_encode([
+                'error' => 'Invalid student ID format',
+                'message' => 'Student ID must be a number'
+            ]);
+            exit;
+        }
+        
+        $student_id = intval($student_id);
+        
         try {
+            // ✨ FIXED: First check if this student exists
+            $checkStmt = $pdo->prepare("SELECT id, student_id, full_name FROM students WHERE id = ?");
+            $checkStmt->execute([$student_id]);
+            $studentExists = $checkStmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$studentExists) {
+                echo json_encode([
+                    'error' => 'Student not found',
+                    'message' => "No student found with account ID: {$student_id}"
+                ]);
+                exit;
+            }
+            
+            // Now get enrollments
             $stmt = $pdo->prepare("
                 SELECT 
                     e.id, e.student_id, e.class_id, e.enrollment_date, e.status,
@@ -58,9 +87,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
             
             echo json_encode([
                 'success' => true,
+                'student' => $studentExists,
                 'enrollments' => $enrollments
             ]);
         } catch (PDOException $e) {
+            error_log("[get_student_details] Database error: " . $e->getMessage());
             echo json_encode([
                 'error' => 'Database error', 
                 'message' => $e->getMessage()
