@@ -997,12 +997,13 @@ try {
     
     // Save signature with user name
     $signatureResult = saveBase64ToFile(
-        $data['signature_base64'],
-        'signatures',
-        'signature',
-        $regNumber,
-        $childNameEn  // Add user name
-    );
+    $data['signature_base64'],
+    'signatures',
+    'signature',
+    $regNumber,
+    $childNameEn,  // User name
+    ''             // No additional info needed
+);
     
     if (!$signatureResult['success']) {
         throw new Exception('Failed to save signature: ' . $signatureResult['error']);
@@ -1013,12 +1014,13 @@ try {
     
     // Save PDF with user name
     $pdfResult = saveBase64ToFile(
-        $data['signed_pdf_base64'],
-        'registration_pdfs',
-        'pdf',
-        $regNumber,
-        $childNameEn  // Add user name
-    );
+    $data['signed_pdf_base64'],
+    'registration_pdfs',
+    'pdf',
+    $regNumber,
+    $childNameEn,  // User name
+    ''             // No additional info needed
+);
     
     if (!$pdfResult['success']) {
         throw new Exception('Failed to save PDF: ' . $pdfResult['error']);
@@ -1027,16 +1029,19 @@ try {
     $pdfPath = $pdfResult['path'];
     error_log("[File Save] PDF saved: {$pdfPath}");
     
-    // FIXED: Save payment receipt BEFORE registration INSERT
-    // Include user name AND payment date in receipt filename
-    $receiptResult = saveBase64ToFile(
-        $data['payment_receipt_base64'],
-        'payment_receipts',
-        'receipt',
-        $studentAccountId,
-        $childNameEn,  // Add user name
-        $paymentDate   // Add payment date
-    );
+    // Save payment receipt with user name AND payment date
+// For registration, we don't have invoice number yet, use reg number + payment date
+$additionalInfo = "REG-{$regNumber}-{$paymentDate}";
+
+$receiptResult = saveBase64ToFile(
+    $data['payment_receipt_base64'],
+    'payment_receipts',
+    'receipt',
+    $studentAccountId,
+    $childNameEn,      // User name
+    $additionalInfo    // Registration number + payment date
+);
+
     
     if (!$receiptResult['success']) {
         throw new Exception('Failed to save payment receipt: ' . $receiptResult['error']);

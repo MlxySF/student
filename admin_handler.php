@@ -503,21 +503,24 @@ if ($action === 'reapprove_registration') {
 
 if ($action === 'delete_registration') {
     $regId = $_POST['registration_id'];
+    
     try {
         $pdo->beginTransaction();
         
-        // Get registration details including parent account info AND FILE PATHS
+        // Get comprehensive registration details
         $checkStmt = $pdo->prepare("
             SELECT 
                 r.id, 
                 r.registration_number, 
+                r.name_en,
                 r.student_account_id, 
                 r.parent_account_id,
                 r.email,
                 r.signature_path,
                 r.pdf_path,
                 r.payment_receipt_path,
-                s.parent_account_id as student_parent_id
+                s.parent_account_id as student_parent_id,
+                s.full_name as student_full_name
             FROM registrations r
             LEFT JOIN students s ON r.student_account_id = s.id
             WHERE r.id = ?
@@ -526,185 +529,200 @@ if ($action === 'delete_registration') {
         $registration = $checkStmt->fetch();
         
         if (!$registration) {
-            $_SESSION['error'] = "Registration not found (ID: $regId)";
-            $pdo->rollBack();
-        } else {
-            $regNumber = $registration['registration_number'];
-            $studentAccountId = $registration['student_account_id'];
-            $parentAccountId = $registration['parent_account_id'] ?? $registration['student_parent_id'];
-            $email = $registration['email'];
-            
-            // ✨ NEW: Collect file paths for deletion (ADD /uploads/ PREFIX)
-            $filesToDelete = [];
-            if (!empty($registration['signature_path'])) {
-                // Add uploads/ prefix if not already present
-                $path = $registration['signature_path'];
+            throw new Exception("Registration not found (ID: $regId)");
+        }
+        
+        $regNumber = $registration['registration_number'];
+        $studentName = $registration['name_en'] ?? $registration['student_full_name'] ?? 'Unknown';
+        $studentAccountId = $registration['student_account_id'];
+        $parentAccountId = $registration['parent_account_id'] ?? $registration['student_parent_id'];
+        $email = $registration['email'];
+        
+        error_log("=== DELETE REGISTRATION STARTED ===");
+        error_log("[Delete Registration] Reg#: {$regNumber}, Student: {$studentName}, Student ID: {$studentAccountId}, Parent ID: {$parentAccountId}");
+        
+        // Collect file paths for deletion
+        $filesToDelete = [];
+        foreach (['signature_path', 'pdf_path', 'payment_receipt_path'] as $field) {
+            if (!empty($registration[$field])) {
+                $path = $registration[$field];
+                // Ensure uploads/ prefix
                 if (strpos($path, 'uploads/') !== 0) {
                     $path = 'uploads/' . $path;
                 }
                 $filesToDelete[] = $path;
-            }
-            if (!empty($registration['pdf_path'])) {
-                $path = $registration['pdf_path'];
-                if (strpos($path, 'uploads/') !== 0) {
-                    $path = 'uploads/' . $path;
-                }
-                $filesToDelete[] = $path;
-            }
-            if (!empty($registration['payment_receipt_path'])) {
-                $path = $registration['payment_receipt_path'];
-                if (strpos($path, 'uploads/') !== 0) {
-                    $path = 'uploads/' . $path;
-                }
-                $filesToDelete[] = $path;
-            }
-            
-            error_log("[Delete Registration] Reg#: {$regNumber}, Student ID: {$studentAccountId}, Parent ID: {$parentAccountId}");
-            error_log("[Delete Registration] Files to delete: " . count($filesToDelete) . " - " . implode(', ', $filesToDelete));
-            
-            // Delete the registration first
-            $stmt = $pdo->prepare("DELETE FROM registrations WHERE id = ?");
-            $stmt->execute([$regId]);
-            
-            // Delete associated student account if exists
-            if ($studentAccountId) {
-                // Delete parent-child relationship
-                $stmt = $pdo->prepare("DELETE FROM parent_child_relationships WHERE student_id = ?");
-                $stmt->execute([$studentAccountId]);
-                
-                // Delete enrollments
-                $stmt = $pdo->prepare("DELETE FROM enrollments WHERE student_id = ?");
-                $stmt->execute([$studentAccountId]);
-                
-                // Delete attendance records
-                $stmt = $pdo->prepare("DELETE FROM attendance WHERE student_id = ?");
-                $stmt->execute([$studentAccountId]);
-                
-                // Delete invoices
-                $stmt = $pdo->prepare("DELETE FROM invoices WHERE student_id = ?");
-                $stmt->execute([$studentAccountId]);
-                
-                // Delete payments
-                $stmt = $pdo->prepare("DELETE FROM payments WHERE student_id = ?");
-                $stmt->execute([$studentAccountId]);
-                
-                // Finally delete the student account
-                $stmt = $pdo->prepare("DELETE FROM students WHERE id = ?");
-                $stmt->execute([$studentAccountId]);
-                
-                error_log("[Delete Registration] Deleted student account ID: {$studentAccountId}");
-            }
-            
-            // Check if parent account should be deleted
-            if ($parentAccountId) {
-                // Count how many children this parent still has
-                $stmt = $pdo->prepare("
-                    SELECT COUNT(*) as child_count 
-                    FROM students 
-                    WHERE parent_account_id = ?
-                ");
-                $stmt->execute([$parentAccountId]);
-                $result = $stmt->fetch();
-                $childCount = (int)$result['child_count'];
-                
-                error_log("[Delete Registration] Parent ID {$parentAccountId} has {$childCount} remaining children");
-                
-                if ($childCount === 0) {
-                    // No more children - delete the parent account
-                    
-                    // First delete any remaining relationships (should be none, but just in case)
-                    $stmt = $pdo->prepare("DELETE FROM parent_child_relationships WHERE parent_id = ?");
-                    $stmt->execute([$parentAccountId]);
-                    
-                    // Delete the parent account
-                    $stmt = $pdo->prepare("SELECT parent_id, full_name FROM parent_accounts WHERE id = ?");
-                    $stmt->execute([$parentAccountId]);
-                    $parentInfo = $stmt->fetch();
-                    
-                    $stmt = $pdo->prepare("DELETE FROM parent_accounts WHERE id = ?");
-                    $stmt->execute([$parentAccountId]);
-                    
-                    error_log("[Delete Registration] Deleted parent account: {$parentInfo['parent_id']} ({$parentInfo['full_name']})");
-                    
-                    // Commit database changes before file operations
-                    $pdo->commit();
-                    
-                    // ✨ NEW: Delete files from filesystem
-                    $filesDeleted = 0;
-                    foreach ($filesToDelete as $filePath) {
-                        // Construct full path
-                        $fullPath = __DIR__ . '/' . $filePath;
-                        
-                        if (file_exists($fullPath)) {
-                            if (unlink($fullPath)) {
-                                $filesDeleted++;
-                                error_log("[Delete Registration] ✅ Deleted file: {$fullPath}");
-                            } else {
-                                error_log("[Delete Registration] ❌ Failed to delete file: {$fullPath}");
-                            }
-                        } else {
-                            error_log("[Delete Registration] ⚠️ File not found: {$fullPath}");
-                        }
-                    }
-                    
-                    $_SESSION['success'] = "Registration {$regNumber} deleted successfully! Student account and parent account removed. {$filesDeleted} file(s) deleted from storage.";
-                } else {
-                    // Parent still has other children - keep the parent account
-                    $pdo->commit();
-                    
-                    // ✨ NEW: Delete files from filesystem
-                    $filesDeleted = 0;
-                    foreach ($filesToDelete as $filePath) {
-                        $fullPath = __DIR__ . '/' . $filePath;
-                        
-                        if (file_exists($fullPath)) {
-                            if (unlink($fullPath)) {
-                                $filesDeleted++;
-                                error_log("[Delete Registration] ✅ Deleted file: {$fullPath}");
-                            } else {
-                                error_log("[Delete Registration] ❌ Failed to delete file: {$fullPath}");
-                            }
-                        } else {
-                            error_log("[Delete Registration] ⚠️ File not found: {$fullPath}");
-                        }
-                    }
-                    
-                    $_SESSION['success'] = "Registration {$regNumber} deleted successfully! Student account removed. Parent account retained ({$childCount} other child(ren) exist). {$filesDeleted} file(s) deleted from storage.";
-                }
-            } else {
-                // No parent account linked
-                $pdo->commit();
-                
-                // ✨ NEW: Delete files from filesystem
-                $filesDeleted = 0;
-                foreach ($filesToDelete as $filePath) {
-                    $fullPath = __DIR__ . '/' . $filePath;
-                    
-                    if (file_exists($fullPath)) {
-                        if (unlink($fullPath)) {
-                            $filesDeleted++;
-                            error_log("[Delete Registration] ✅ Deleted file: {$fullPath}");
-                        } else {
-                            error_log("[Delete Registration] ❌ Failed to delete file: {$fullPath}");
-                        }
-                    } else {
-                        error_log("[Delete Registration] ⚠️ File not found: {$fullPath}");
-                    }
-                }
-                
-                $_SESSION['success'] = "Registration {$regNumber} and associated student account deleted successfully! {$filesDeleted} file(s) deleted from storage.";
             }
         }
+        
+        error_log("[Delete Registration] Files to delete: " . count($filesToDelete) . " - " . implode(', ', $filesToDelete));
+        
+        // Step 1: Delete the registration record
+        $stmt = $pdo->prepare("DELETE FROM registrations WHERE id = ?");
+        $stmt->execute([$regId]);
+        error_log("[Delete Registration] ✅ Registration record deleted");
+        
+        // Step 2: Delete associated student account and related data
+        if ($studentAccountId) {
+            // Delete in proper order to avoid foreign key constraints
+            
+            // 2a. Delete parent-child relationships
+            $stmt = $pdo->prepare("DELETE FROM parent_child_relationships WHERE student_id = ?");
+            $stmt->execute([$studentAccountId]);
+            $relCount = $stmt->rowCount();
+            error_log("[Delete Registration] ✅ Deleted {$relCount} parent-child relationship(s)");
+            
+            // 2b. Delete payments (must be before invoices due to foreign key)
+            $stmt = $pdo->prepare("DELETE FROM payments WHERE student_id = ?");
+            $stmt->execute([$studentAccountId]);
+            $paymentCount = $stmt->rowCount();
+            error_log("[Delete Registration] ✅ Deleted {$paymentCount} payment record(s)");
+            
+            // 2c. Delete invoices
+            $stmt = $pdo->prepare("DELETE FROM invoices WHERE student_id = ?");
+            $stmt->execute([$studentAccountId]);
+            $invoiceCount = $stmt->rowCount();
+            error_log("[Delete Registration] ✅ Deleted {$invoiceCount} invoice(s)");
+            
+            // 2d. Delete attendance records
+            $stmt = $pdo->prepare("DELETE FROM attendance WHERE student_id = ?");
+            $stmt->execute([$studentAccountId]);
+            $attendanceCount = $stmt->rowCount();
+            error_log("[Delete Registration] ✅ Deleted {$attendanceCount} attendance record(s)");
+            
+            // 2e. Delete enrollments
+            $stmt = $pdo->prepare("DELETE FROM enrollments WHERE student_id = ?");
+            $stmt->execute([$studentAccountId]);
+            $enrollmentCount = $stmt->rowCount();
+            error_log("[Delete Registration] ✅ Deleted {$enrollmentCount} enrollment(s)");
+            
+            // 2f. Finally delete the student account
+            $stmt = $pdo->prepare("DELETE FROM students WHERE id = ?");
+            $stmt->execute([$studentAccountId]);
+            error_log("[Delete Registration] ✅ Student account deleted (ID: {$studentAccountId})");
+        }
+        
+        // Step 3: Check if parent account should be deleted
+        $parentDeleted = false;
+        $parentInfo = null;
+        $remainingChildren = 0;
+        
+        if ($parentAccountId) {
+            // Get parent info before checking children
+            $stmt = $pdo->prepare("SELECT parent_id, full_name, email FROM parent_accounts WHERE id = ?");
+            $stmt->execute([$parentAccountId]);
+            $parentInfo = $stmt->fetch();
+            
+            // Count remaining children for this parent
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) as child_count 
+                FROM students 
+                WHERE parent_account_id = ?
+            ");
+            $stmt->execute([$parentAccountId]);
+            $result = $stmt->fetch();
+            $remainingChildren = (int)$result['child_count'];
+            
+            error_log("[Delete Registration] Parent '{$parentInfo['full_name']}' (ID: {$parentAccountId}) has {$remainingChildren} remaining child(ren)");
+            
+            if ($remainingChildren === 0) {
+                // No more children - DELETE the parent account
+                
+                // Delete any remaining relationships (should be none, but for safety)
+                $stmt = $pdo->prepare("DELETE FROM parent_child_relationships WHERE parent_id = ?");
+                $stmt->execute([$parentAccountId]);
+                
+                // Delete the parent account
+                $stmt = $pdo->prepare("DELETE FROM parent_accounts WHERE id = ?");
+                $stmt->execute([$parentAccountId]);
+                
+                $parentDeleted = true;
+                error_log("[Delete Registration] ✅ Parent account DELETED: {$parentInfo['parent_id']} ({$parentInfo['full_name']})");
+            } else {
+                error_log("[Delete Registration] ℹ️ Parent account RETAINED: {$parentInfo['parent_id']} ({$parentInfo['full_name']}) - {$remainingChildren} child(ren) remain");
+            }
+        }
+        
+        // Step 4: Commit database changes
+        $pdo->commit();
+        error_log("[Delete Registration] ✅ Database transaction committed");
+        
+        // Step 5: Delete files from filesystem
+        $filesDeleted = 0;
+        $filesNotFound = 0;
+        $filesFailed = 0;
+        
+        foreach ($filesToDelete as $filePath) {
+            $fullPath = __DIR__ . '/' . $filePath;
+            
+            if (file_exists($fullPath)) {
+                if (unlink($fullPath)) {
+                    $filesDeleted++;
+                    error_log("[Delete Registration] ✅ File deleted: {$filePath}");
+                } else {
+                    $filesFailed++;
+                    error_log("[Delete Registration] ❌ Failed to delete file: {$filePath}");
+                }
+            } else {
+                $filesNotFound++;
+                error_log("[Delete Registration] ⚠️ File not found: {$filePath}");
+            }
+        }
+        
+        error_log("=== DELETE REGISTRATION COMPLETED ===");
+        
+        // Build detailed success message
+        $message = "Registration {$regNumber} for {$studentName} deleted successfully!";
+        
+        // Add student deletion info
+        if ($studentAccountId) {
+            $details = [];
+            if (isset($enrollmentCount) && $enrollmentCount > 0) $details[] = "{$enrollmentCount} enrollment(s)";
+            if (isset($attendanceCount) && $attendanceCount > 0) $details[] = "{$attendanceCount} attendance record(s)";
+            if (isset($invoiceCount) && $invoiceCount > 0) $details[] = "{$invoiceCount} invoice(s)";
+            if (isset($paymentCount) && $paymentCount > 0) $details[] = "{$paymentCount} payment(s)";
+            
+            if (!empty($details)) {
+                $message .= " Removed: " . implode(", ", $details) . ".";
+            }
+        }
+        
+        // Add parent account status
+        if ($parentDeleted && $parentInfo) {
+            $message .= " Parent account '{$parentInfo['full_name']}' also deleted (no remaining children).";
+        } elseif ($parentAccountId && $parentInfo) {
+            $message .= " Parent account '{$parentInfo['full_name']}' retained ({$remainingChildren} other child(ren)).";
+        }
+        
+        // Add file deletion info
+        if ($filesDeleted > 0) {
+            $message .= " {$filesDeleted} file(s) deleted from storage.";
+        }
+        if ($filesFailed > 0) {
+            $message .= " Warning: {$filesFailed} file(s) could not be deleted.";
+        }
+        
+        $_SESSION['success'] = $message;
+        
     } catch (PDOException $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
-        error_log("[Delete Registration] Error: " . $e->getMessage());
-        $_SESSION['error'] = "Database error: " . $e->getMessage();
+        error_log("[Delete Registration] ❌ Database error: " . $e->getMessage());
+        error_log("[Delete Registration] Stack trace: " . $e->getTraceAsString());
+        $_SESSION['error'] = "Database error while deleting registration: " . $e->getMessage();
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        error_log("[Delete Registration] ❌ Error: " . $e->getMessage());
+        error_log("[Delete Registration] Stack trace: " . $e->getTraceAsString());
+        $_SESSION['error'] = "Error deleting registration: " . $e->getMessage();
     }
+    
     header('Location: admin.php?page=registrations');
     exit;
 }
+
 
 // ============ STUDENT MANAGEMENT ============
 

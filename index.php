@@ -422,13 +422,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             exit;
         }
 
-        // Save file using file_helper.php
-        $uploadResult = saveUploadedFile(
-            $_FILES['receipt'],
-            'payment_receipts',
-            'receipt',
-            $activeStudentId
-        );
+        // Get student name for filename
+$stmt = $pdo->prepare("SELECT full_name FROM students WHERE id = ?");
+$stmt->execute([$activeStudentId]);
+$studentData = $stmt->fetch();
+$studentName = $studentData['full_name'] ?? 'Unknown';
+
+// Get invoice NUMBER (not ID) if this is an invoice payment
+$invoiceNumber = '';
+if ($invoice_id) {
+    $stmt = $pdo->prepare("SELECT invoice_number FROM invoices WHERE id = ?");
+    $stmt->execute([$invoice_id]);
+    $invoiceData = $stmt->fetch();
+    $invoiceNumber = $invoiceData['invoice_number'] ?? '';
+    
+    error_log("[Payment Upload] Using invoice NUMBER: {$invoiceNumber} (ID: {$invoice_id})");
+}
+
+// Save file using file_helper.php with enhanced naming
+// Now uses invoice NUMBER instead of ID
+$uploadResult = saveUploadedFile(
+    $_FILES['receipt'],
+    'payment_receipts',
+    'receipt',
+    $activeStudentId,           // Student ID as identifier
+    $studentName,                // Student name
+    $invoiceNumber               // Invoice NUMBER (e.g., INV-REG-202512-5678)
+);
+
+
 
         if (!$uploadResult['success']) {
             $_SESSION['error'] = "Failed to save receipt: " . $uploadResult['error'];

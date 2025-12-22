@@ -158,12 +158,6 @@ function getApprovalEmailHTML($parentEmail, $studentName, $registrationNumber, $
                     🚀 Access Parent Portal
                 </a>
             </div>
-            
-            <!-- Contact Info -->
-            <div style='background: #f8fafc; padding: 16px; border-radius: 8px; margin: 24px 0;'>
-                <p style='margin: 0 0 8px 0; color: #475569; font-size: 13px; font-weight: 600;'>Need Help?</p>
-                <p style='margin: 0; color: #64748b; font-size: 13px;'>Contact us at <a href='mailto:admin@wushusportacademy.com' style='color: #3b82f6; text-decoration: none;'>admin@wushusportacademy.com</a> or call <strong>+60 12-345 6789</strong></p>
-            </div>
         </div>
         
         <!-- Footer -->

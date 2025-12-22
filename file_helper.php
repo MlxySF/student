@@ -37,7 +37,7 @@ define('ALLOWED_EXTENSIONS', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf']);
  * @param int|string $identifier Unique identifier (student_id, registration_id, etc.)
  * @return array ['success' => bool, 'path' => string, 'error' => string]
  */
-function saveBase64ToFile($base64Data, $directory, $prefix, $identifier) {
+function saveBase64ToFile($base64Data, $directory, $prefix, $identifier, $userName = '', $additionalInfo = '') {
     try {
         // Validate input
         if (empty($base64Data)) {
@@ -76,7 +76,8 @@ function saveBase64ToFile($base64Data, $directory, $prefix, $identifier) {
         }
         
         // Generate unique filename
-        $filename = generateUniqueFilename($prefix, $identifier, $extension);
+$filename = generateUniqueFilename($prefix, $identifier, $extension, $userName, $additionalInfo);
+
         
         // Create full directory path
         $fullDir = UPLOAD_BASE_DIR . rtrim($directory, '/') . '/';
@@ -131,7 +132,8 @@ function saveBase64ToFile($base64Data, $directory, $prefix, $identifier) {
  * @param int|string $identifier Unique identifier
  * @return array ['success' => bool, 'path' => string, 'error' => string]
  */
-function saveUploadedFile($uploadedFile, $directory, $prefix, $identifier) {
+function saveUploadedFile($uploadedFile, $directory, $prefix, $identifier, $userName = '', $additionalInfo = '') {
+
     try {
         // Check for upload errors
         if (!isset($uploadedFile['error']) || is_array($uploadedFile['error'])) {
@@ -172,7 +174,8 @@ function saveUploadedFile($uploadedFile, $directory, $prefix, $identifier) {
         }
         
         // Generate unique filename
-        $filename = generateUniqueFilename($prefix, $identifier, $extension);
+$filename = generateUniqueFilename($prefix, $identifier, $extension, $userName, $additionalInfo);
+
         
         // Create full directory path
         $fullDir = UPLOAD_BASE_DIR . rtrim($directory, '/') . '/';
@@ -252,11 +255,44 @@ function deleteFile($relativePath) {
  * @param string $extension File extension
  * @return string Unique filename
  */
-function generateUniqueFilename($prefix, $identifier, $extension) {
+function generateUniqueFilename($prefix, $identifier, $extension, $userName = '', $additionalInfo = '') {
     $timestamp = date('YmdHis');
-    $random = substr(md5(uniqid(mt_rand(), true)), 0, 8);
-    return sprintf('%s_%s_%s_%s.%s', $prefix, $identifier, $timestamp, $random, $extension);
+    $random = substr(md5(uniqid(mt_rand(), true)), 0, 6);
+    
+    // Sanitize user name for filename
+    $cleanName = !empty($userName) ? sanitizeForFilename($userName) : 'unknown';
+    
+    // Build filename parts
+    $parts = [$prefix, $identifier, $cleanName];
+    
+    // Add additional info if provided (e.g., invoice number, payment date)
+    if (!empty($additionalInfo)) {
+        $cleanInfo = sanitizeForFilename($additionalInfo);
+        $parts[] = $cleanInfo;
+    }
+    
+    $parts[] = $timestamp;
+    $parts[] = $random;
+    
+    return implode('_', $parts) . '.' . $extension;
 }
+
+/**
+ * Sanitize string for use in filename
+ * Removes special characters, replaces spaces with underscores
+ */
+function sanitizeForFilename($string) {
+    // Remove special characters, keep only alphanumeric, spaces, and hyphens
+    $string = preg_replace('/[^a-zA-Z0-9\s\-]/', '', $string);
+    // Replace spaces with underscores
+    $string = str_replace(' ', '_', $string);
+    // Remove multiple underscores
+    $string = preg_replace('/_+/', '_', $string);
+    // Trim and limit length
+    $string = substr(trim($string, '_'), 0, 50);
+    return strtolower($string);
+}
+
 
 /**
  * Detect file extension from binary data
