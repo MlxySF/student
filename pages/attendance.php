@@ -1,196 +1,457 @@
 <?php
-// Student Attendance Page - Updated for multi-child parent support
-// FIXED: Use student_account_id for parent portal
+// Get all classes with schedule
+$all_classes = $pdo->query("SELECT * FROM classes ORDER BY class_code")->fetchAll();
 
-if (isParent()) {
-    $stmt = $pdo->prepare("SELECT student_account_id FROM registrations WHERE id = ?");
-    $stmt->execute([getActiveStudentId()]);
-    $reg = $stmt->fetch();
-    $studentAccountId = $reg['student_account_id'];
-} else {
-    $studentAccountId = getActiveStudentId();
+// Selected class and date
+$selected_class = $_GET['class_id'] ?? null;
+$selected_date = $_GET['date'] ?? date('Y-m-d');
+$selected_month = $_GET['month'] ?? date('Y-m');
+
+// Get class details for schedule restrictions
+$class_details = null;
+$date_validation_error = '';
+if ($selected_class) {
+    $stmt = $pdo->prepare("SELECT * FROM classes WHERE id = ?");
+    $stmt->execute([$selected_class]);
+    $class_details = $stmt->fetch();
+    
+    // Validate selected date matches class schedule
+    if ($class_details && $class_details['day_of_week']) {
+        $selected_day_name = date('l', strtotime($selected_date));
+        
+        if ($selected_day_name !== $class_details['day_of_week']) {
+            $date_validation_error = "Invalid date: This class only meets on {$class_details['day_of_week']}s. The selected date ({$selected_date}) is a {$selected_day_name}.";
+            
+            // Auto-correct to nearest valid date
+            $day_map = [
+                'Monday' => 1, 'Tuesday' => 2, 'Wednesday' => 3, 'Thursday' => 4,
+                'Friday' => 5, 'Saturday' => 6, 'Sunday' => 0
+            ];
+            $target_day = $day_map[$class_details['day_of_week']];
+            $current = strtotime($selected_date);
+            
+            // Find next occurrence of the class day
+            for ($i = 0; $i < 7; $i++) {
+                if (date('w', $current) == $target_day) {
+                    $selected_date = date('Y-m-d', $current);
+                    $date_validation_error .= " Redirecting to nearest {$class_details['day_of_week']}: " . date('M j, Y', strtotime($selected_date));
+                    break;
+                }
+                $current = strtotime('+1 day', $current);
+            }
+        }
+    }
 }
 
-// Get overall attendance statistics
-$stmt = $pdo->prepare("
-    SELECT 
-        COUNT(*) as total,
-        SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present,
-        SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent,
-        SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late
-    FROM attendance 
-    WHERE student_id = ?
-");
-$stmt->execute([$studentAccountId]);
-$stats = $stmt->fetch();
-
-$attendance_rate = $stats['total'] > 0 ? round(($stats['present'] / $stats['total']) * 100) : 0;
+// Get students enrolled in selected class
+$enrolled_students = [];
+if ($selected_class) {
+    $stmt = $pdo->prepare("
+        SELECT s.id, s.student_id, s.full_name, a.status as attendance_status, a.notes
+        FROM enrollments e
+        JOIN students s ON e.student_id = s.id
+        LEFT JOIN attendance a ON a.student_id = s.id AND a.class_id = ? AND a.attendance_date = ?
+        WHERE e.class_id = ? AND e.status = 'active'
+        ORDER BY s.full_name
+    ");
+    $stmt->execute([$selected_class, $selected_date, $selected_class]);
+    $enrolled_students = $stmt->fetchAll();
+}
 
 // Get recent attendance records
-$stmt = $pdo->prepare("
-    SELECT a.*, c.class_name, c.class_code
+$stmt = $pdo->query("
+    SELECT a.*, s.student_id, s.full_name, c.class_code, c.class_name
     FROM attendance a
+    JOIN students s ON a.student_id = s.id
     JOIN classes c ON a.class_id = c.id
-    WHERE a.student_id = ?
-    ORDER BY a.attendance_date DESC
-    LIMIT 50
+    ORDER BY a.attendance_date DESC, a.marked_at DESC
+    LIMIT 500
 ");
-$stmt->execute([$studentAccountId]);
-$attendance_records = $stmt->fetchAll();
-
-// Get enrolled classes
-$stmt = $pdo->prepare("
-    SELECT DISTINCT c.id, c.class_name, c.class_code
-    FROM enrollments e
-    JOIN classes c ON e.class_id = c.id
-    WHERE e.student_id = ? AND e.status = 'active'
-    ORDER BY c.class_name
-");
-$stmt->execute([$studentAccountId]);
-$enrolled_classes = $stmt->fetchAll();
+$recent_attendance = $stmt->fetchAll();
 ?>
 
-<?php if (isParent()): ?>
-<div class="alert alert-info mb-3">
-    <i class="fas fa-info-circle"></i> Viewing attendance for: <strong><?php echo htmlspecialchars(getActiveStudentName()); ?></strong>
-</div>
-<?php endif; ?>
+<h3><i class="fas fa-calendar-check"></i> Attendance Management</h3>
 
-<!-- Attendance Statistics -->
-<div class="row mb-4">
-    <div class="col-md-3 mb-3">
-        <div class="stat-card">
-            <div class="stat-icon bg-success">
-                <i class="fas fa-check"></i>
-            </div>
-            <div class="stat-content">
-                <h3><?php echo $stats['present']; ?></h3>
-                <p>Present</p>
-            </div>
-        </div>
+<!-- Export Section -->
+<div class="card mb-3">
+    <div class="card-header bg-success text-white">
+        <i class="fas fa-file-excel"></i> Export Attendance to Excel
     </div>
-    <div class="col-md-3 mb-3">
-        <div class="stat-card">
-            <div class="stat-icon bg-danger">
-                <i class="fas fa-times"></i>
-            </div>
-            <div class="stat-content">
-                <h3><?php echo $stats['absent']; ?></h3>
-                <p>Absent</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="stat-card">
-            <div class="stat-icon bg-warning">
-                <i class="fas fa-clock"></i>
-            </div>
-            <div class="stat-content">
-                <h3><?php echo $stats['late']; ?></h3>
-                <p>Late</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="stat-card">
-            <div class="stat-icon <?php echo $attendance_rate >= 80 ? 'bg-success' : 'bg-danger'; ?>">
-                <i class="fas fa-percentage"></i>
-            </div>
-            <div class="stat-content">
-                <h3><?php echo $attendance_rate; ?>%</h3>
-                <p>Attendance Rate</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Overall Attendance Rate -->
-<div class="card mb-4">
     <div class="card-body">
-        <h5 class="mb-3">Overall Attendance Rate</h5>
-        <div class="progress" style="height: 30px;">
-            <div class="progress-bar <?php echo $attendance_rate >= 80 ? 'bg-success' : 'bg-danger'; ?>" 
-                 style="width: <?php echo $attendance_rate; ?>%" 
-                 aria-valuenow="<?php echo $attendance_rate; ?>" 
-                 aria-valuemin="0" 
-                 aria-valuemax="100">
-                <strong><?php echo $attendance_rate; ?>%</strong>
+        <form method="GET" action="export_attendance_excel.php" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label"><i class="fas fa-chalkboard"></i> Select Class</label>
+                <select name="class_id" class="form-control" required>
+                    <option value="">-- Select Class --</option>
+                    <?php foreach($all_classes as $c): ?>
+                    <option value="<?php echo $c['id']; ?>">
+                        <?php echo $c['class_code']; ?> - <?php echo htmlspecialchars($c['class_name']); ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
             </div>
-        </div>
-        <div class="row mt-3 text-center">
-            <div class="col-4">
-                <i class="fas fa-check text-success"></i> Present: <strong><?php echo $stats['present']; ?></strong>
+            <div class="col-md-4">
+                <label class="form-label"><i class="fas fa-calendar"></i> Export Month</label>
+                <input type="month" name="month" class="form-control" value="<?php echo $selected_month; ?>" required>
             </div>
-            <div class="col-4">
-                <i class="fas fa-clock text-warning"></i> Late: <strong><?php echo $stats['late']; ?></strong>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-success w-100">
+                    <i class="fas fa-file-excel"></i> Export to Excel
+                </button>
             </div>
-            <div class="col-4">
-                <i class="fas fa-times text-danger"></i> Absent: <strong><?php echo $stats['absent']; ?></strong>
-            </div>
-            <div class="col-12 mt-2">
-                <i class="fas fa-list"></i> <strong><?php echo $stats['total']; ?></strong> Total
-            </div>
-        </div>
+        </form>
     </div>
 </div>
 
-<?php if (count($enrolled_classes) == 0): ?>
+<!-- Class and Date Filter -->
+<div class="card mb-3">
+    <div class="card-header">
+        <i class="fas fa-filter"></i> Mark Attendance - Filter
+        <?php if ($class_details && $class_details['day_of_week']): ?>
+            <span class="badge bg-primary ms-2">Only <?php echo $class_details['day_of_week']; ?>s Allowed</span>
+        <?php endif; ?>
+    </div>
+    <div class="card-body">
+        <?php if ($date_validation_error && strpos($date_validation_error, 'Redirecting') !== false): ?>
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> <?php echo $date_validation_error; ?>
+            </div>
+        <?php endif; ?>
+        
+        <form method="GET" class="row g-3" id="filterForm">
+            <input type="hidden" name="page" value="attendance">
+            <div class="col-md-4">
+                <label class="form-label">Select Class *</label>
+                <select name="class_id" id="classSelect" class="form-control" required onchange="this.form.submit()">
+                    <option value="">-- Select Class --</option>
+                    <?php foreach($all_classes as $c): ?>
+                    <option value="<?php echo $c['id']; ?>" 
+                            data-day="<?php echo $c['day_of_week'] ?? ''; ?>"
+                            <?php echo $selected_class == $c['id'] ? 'selected' : ''; ?>>
+                        <?php echo $c['class_code']; ?> - <?php echo htmlspecialchars($c['class_name']); ?>
+                        <?php if ($c['day_of_week']): ?>
+                            (<?php echo $c['day_of_week']; ?>s)
+                        <?php endif; ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">Select Date (use arrows or type) *</label>
+                <div class="input-group">
+                    <button type="button" class="btn btn-outline-secondary" id="prevDate" title="Previous class day">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <input type="date" name="date" id="dateSelect" class="form-control" value="<?php echo $selected_date; ?>" required>
+                    <button type="button" class="btn btn-outline-secondary" id="nextDate" title="Next class day">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <small class="text-primary" id="dateHint"></small>
+                <small class="text-danger" id="dateError" style="display:none;"></small>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Load Attendance
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Date navigation with validation
+const classSelect = document.getElementById('classSelect');
+const dateSelect = document.getElementById('dateSelect');
+const prevDateBtn = document.getElementById('prevDate');
+const nextDateBtn = document.getElementById('nextDate');
+const dateHint = document.getElementById('dateHint');
+const dateError = document.getElementById('dateError');
+const filterForm = document.getElementById('filterForm');
+
+const dayMap = {
+    'Monday': 1,
+    'Tuesday': 2,
+    'Wednesday': 3,
+    'Thursday': 4,
+    'Friday': 5,
+    'Saturday': 6,
+    'Sunday': 0
+};
+
+let currentClassDay = null;
+let currentDayNumber = null;
+
+function updateDateRestriction() {
+    const selectedOption = classSelect.options[classSelect.selectedIndex];
+    const classDay = selectedOption.getAttribute('data-day');
+    
+    currentClassDay = classDay;
+    currentDayNumber = classDay ? dayMap[classDay] : null;
+    
+    if (classDay && dayMap.hasOwnProperty(classDay)) {
+        dateHint.textContent = `Use arrows to navigate between ${classDay}s, or type a date manually`;
+        dateHint.style.display = 'block';
+        prevDateBtn.disabled = false;
+        nextDateBtn.disabled = false;
+    } else {
+        dateHint.textContent = 'No schedule set for this class';
+        dateHint.style.display = 'block';
+        prevDateBtn.disabled = true;
+        nextDateBtn.disabled = true;
+    }
+}
+
+function findNextClassDate(fromDate, direction = 1) {
+    if (!currentDayNumber && currentDayNumber !== 0) {
+        return fromDate;
+    }
+    
+    let current = new Date(fromDate);
+    
+    // Move one day in the direction first
+    current.setDate(current.getDate() + direction);
+    
+    // Find next occurrence of the class day
+    for (let i = 0; i < 7; i++) {
+        if (current.getDay() === currentDayNumber) {
+            return current.toISOString().split('T')[0];
+        }
+        current.setDate(current.getDate() + direction);
+    }
+    
+    return fromDate;
+}
+
+function validateSelectedDate() {
+    if (!currentClassDay || !dateSelect.value) {
+        dateError.style.display = 'none';
+        return;
+    }
+    
+    const selectedDate = new Date(dateSelect.value + 'T00:00:00');
+    const selectedDayOfWeek = selectedDate.getDay();
+    
+    if (selectedDayOfWeek !== currentDayNumber) {
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const selectedDayName = dayNames[selectedDayOfWeek];
+        
+        dateError.textContent = `⚠️ Warning: Selected date is a ${selectedDayName}. This class only meets on ${currentClassDay}s. Click "Load Attendance" to auto-correct.`;
+        dateError.style.display = 'block';
+        dateSelect.style.borderColor = '#ffc107';
+    } else {
+        dateError.style.display = 'none';
+        dateSelect.style.borderColor = '';
+    }
+}
+
+if (classSelect && dateSelect) {
+    // Previous date button
+    prevDateBtn.addEventListener('click', function() {
+        if (!dateSelect.value) return;
+        const prevDate = findNextClassDate(dateSelect.value, -1);
+        dateSelect.value = prevDate;
+        validateSelectedDate();
+    });
+    
+    // Next date button
+    nextDateBtn.addEventListener('click', function() {
+        if (!dateSelect.value) return;
+        const nextDate = findNextClassDate(dateSelect.value, 1);
+        dateSelect.value = nextDate;
+        validateSelectedDate();
+    });
+    
+    // Class change
+    classSelect.addEventListener('change', function() {
+        updateDateRestriction();
+        validateSelectedDate();
+    });
+    
+    // Date change/input
+    dateSelect.addEventListener('change', validateSelectedDate);
+    dateSelect.addEventListener('input', validateSelectedDate);
+    
+    // Run on page load
+    updateDateRestriction();
+    validateSelectedDate();
+}
+</script>
+
+<?php if ($selected_class && count($enrolled_students) > 0): ?>
+<!-- Bulk Attendance Form -->
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-users"></i> Mark Attendance - <?php echo date('l, F j, Y', strtotime($selected_date)); ?></span>
+        <?php 
+        // Check if attendance exists for this class and date
+        $checkStmt = $pdo->prepare("SELECT COUNT(*) as count FROM attendance WHERE class_id = ? AND attendance_date = ?");
+        $checkStmt->execute([$selected_class, $selected_date]);
+        $attendanceExists = $checkStmt->fetch()['count'] > 0;
+        
+        if ($attendanceExists): ?>
+            <button class="btn btn-danger btn-sm" onclick="if(confirm('Delete ALL attendance records for this class on <?php echo date('F j, Y', strtotime($selected_date)); ?>?')) document.getElementById('deleteAttendanceForm').submit();">
+                <i class="fas fa-trash"></i> Delete All Attendance for This Day
+            </button>
+            <form id="deleteAttendanceForm" method="POST" action="admin_handler.php" style="display:none;">
+                <input type="hidden" name="action" value="delete_attendance_day">
+                <input type="hidden" name="class_id" value="<?php echo $selected_class; ?>">
+                <input type="hidden" name="attendance_date" value="<?php echo $selected_date; ?>">
+            </form>
+        <?php endif; ?>
+    </div>
+    <div class="card-body">
+        <div id="saveMessage" class="alert" style="display: none;"></div>
+        
+        <form method="POST" id="bulkAttendanceForm">
+            <input type="hidden" name="action" value="bulk_attendance">
+            <input type="hidden" name="class_id" value="<?php echo $selected_class; ?>">
+            <input type="hidden" name="attendance_date" value="<?php echo $selected_date; ?>">
+
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Full Name</th>
+                            <th>Status</th>
+                            <th>Notes/Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach($enrolled_students as $s): 
+                            $current_status = $s['attendance_status'] ?? 'present';
+                        ?>
+                        <tr>
+                            <td><span class="badge bg-secondary"><?php echo $s['student_id']; ?></span></td>
+                            <td><?php echo htmlspecialchars($s['full_name']); ?></td>
+                            <td>
+                                <select name="attendance[<?php echo $s['id']; ?>]" class="form-control form-control-sm">
+                                    <option value="present" <?php echo $current_status === 'present' ? 'selected' : ''; ?>>Present</option>
+                                    <option value="absent" <?php echo $current_status === 'absent' ? 'selected' : ''; ?>>Absent</option>
+                                    <option value="late" <?php echo $current_status === 'late' ? 'selected' : ''; ?>>Late</option>
+                                    <option value="excused" <?php echo $current_status === 'excused' ? 'selected' : ''; ?>>Excused</option>
+                                </select>
+                            </td>
+                            <td>
+                                <textarea name="notes[<?php echo $s['id']; ?>]" class="form-control form-control-sm" rows="1" placeholder="Optional notes..."><?php echo htmlspecialchars($s['notes'] ?? ''); ?></textarea>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="text-end">
+                <button type="submit" class="btn btn-success btn-lg" id="saveBtn">
+                    <i class="fas fa-save"></i> Save All Attendance & Notes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// AJAX form submission without page reload
+document.getElementById('bulkAttendanceForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const saveBtn = document.getElementById('saveBtn');
+    const saveMessage = document.getElementById('saveMessage');
+    const formData = new FormData(this);
+    
+    // Disable button and show loading
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    saveMessage.style.display = 'none';
+    
+    // Send AJAX request
+    fetch('admin_handler.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Re-enable button
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save All Attendance & Notes';
+        
+        // Show message
+        if (data.success) {
+            saveMessage.className = 'alert alert-success';
+            saveMessage.innerHTML = '<i class="fas fa-check-circle"></i> ' + (data.message || 'Attendance saved successfully!');
+            saveMessage.style.display = 'block';
+            
+            // Hide message after 3 seconds
+            setTimeout(() => {
+                saveMessage.style.display = 'none';
+            }, 3000);
+        } else {
+            saveMessage.className = 'alert alert-danger';
+            saveMessage.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + (data.error || 'Failed to save attendance');
+            saveMessage.style.display = 'block';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save All Attendance & Notes';
+        saveMessage.className = 'alert alert-danger';
+        saveMessage.innerHTML = '<i class="fas fa-exclamation-circle"></i> Network error. Please try again.';
+        saveMessage.style.display = 'block';
+    });
+});
+</script>
+
+<?php elseif($selected_class): ?>
 <div class="alert alert-info">
-    <i class="fas fa-info-circle"></i> Not enrolled in any classes yet. Enroll in classes to see attendance records.
+    <i class="fas fa-info-circle"></i> No students enrolled in this class.
 </div>
 <?php endif; ?>
 
-<!-- Recent Attendance Records -->
+<!-- Recent Attendance History -->
 <div class="card">
     <div class="card-header">
         <i class="fas fa-history"></i> Recent Attendance Records
     </div>
     <div class="card-body">
-        <?php if (count($attendance_records) > 0): ?>
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Class</th>
-                            <th>Status</th>
-                            <th>Notes</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($attendance_records as $record): ?>
-                            <tr>
-                                <td><?php echo formatDate($record['attendance_date']); ?></td>
-                                <td>
-                                    <span class="badge bg-primary"><?php echo htmlspecialchars($record['class_code']); ?></span>
-                                    <?php echo htmlspecialchars($record['class_name']); ?>
-                                </td>
-                                <td>
-                                    <?php 
-                                    $badge_class = '';
-                                    switch($record['status']) {
-                                        case 'present': $badge_class = 'bg-success'; break;
-                                        case 'absent': $badge_class = 'bg-danger'; break;
-                                        case 'late': $badge_class = 'bg-warning'; break;
-                                        case 'excused': $badge_class = 'bg-info'; break;
-                                        default: $badge_class = 'bg-secondary';
-                                    }
-                                    ?>
-                                    <span class="badge <?php echo $badge_class; ?>">
-                                        <?php echo ucfirst($record['status']); ?>
-                                    </span>
-                                </td>
-                                <td><?php echo htmlspecialchars($record['notes'] ?? '-'); ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        <?php else: ?>
-            <div class="text-center py-5">
-                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
-                <p class="text-muted">No attendance records yet.</p>
-            </div>
-        <?php endif; ?>
+        <div class="table-responsive">
+            <table class="table table-hover data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Student</th>
+                        <th>Class</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach($recent_attendance as $a): ?>
+                    <tr>
+                        <td><?php echo date('D, M j, Y', strtotime($a['attendance_date'])); ?></td>
+                        <td>
+                            <?php echo htmlspecialchars($a['full_name']); ?><br>
+                            <small class="text-muted"><?php echo $a['student_id']; ?></small>
+                        </td>
+                        <td><?php echo $a['class_code']; ?> - <?php echo htmlspecialchars($a['class_name']); ?></td>
+                        <td>
+                            <?php if($a['status'] === 'present'): ?>
+                                <span class="badge bg-success">Present</span>
+                            <?php elseif($a['status'] === 'absent'): ?>
+                                <span class="badge bg-danger">Absent</span>
+                            <?php elseif($a['status'] === 'late'): ?>
+                                <span class="badge bg-warning">Late</span>
+                            <?php else: ?>
+                                <span class="badge bg-info">Excused</span>
+                            <?php endif; ?>
+                        </td>
+                        <td><?php echo htmlspecialchars($a['notes'] ?? '-'); ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>

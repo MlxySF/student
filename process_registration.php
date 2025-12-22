@@ -25,7 +25,7 @@
 header('Content-Type: application/json');
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
-ini_set('log_errors', 1);
+ini_set('log_errors', 0);
 ini_set('error_log', __DIR__ . '/error_log.txt');
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -37,8 +37,8 @@ require 'PHPMailer/SMTP.php';
 require 'file_helper.php'; // NEW: File management functions
 
 // Admin email configuration
-define('ADMIN_EMAIL', 'chaichonghern@gmail.com');
-define('ADMIN_NAME', 'Academy Admin');
+define('ADMIN_EMAIL', 'admin@wushusportacademy.com');
+define('ADMIN_NAME', 'Wushu Sport Academy');
 
 /**
  * Generate password: either from IC last 4 digits OR custom password
@@ -518,16 +518,15 @@ function sendRegistrationEmail($toEmail, $studentName, $registrationNumber, $chi
         error_log("[Email] Sending to: {$toEmail}, isNewParent: " . ($isNewParent ? 'YES' : 'NO') . ", parentPassword: " . ($parentPassword ?? 'NULL'));
         
         $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
+        $mail->Host       = 'mail.wushusportacademy.com';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'chaichonghern@gmail.com';
-        $mail->Password   = 'kyyj elhp dkdw gvki';
+        $mail->Username   = 'admin@wushusportacademy.com';
+        $mail->Password   = 'UZa;nENf]!xqpRak';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
-        $mail->setFrom('noreply@wushusportacademy.com', 'Wushu Sport Academy');
+        $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
         $mail->addAddress($toEmail);
-        $mail->addReplyTo('admin@wushusportacademy.com', 'Academy Admin');
 
         $mail->isHTML(true);
         $mail->CharSet = 'UTF-8';
@@ -872,9 +871,9 @@ try {
     }
 
     $host = 'localhost';
-    $dbname = 'mlxysf_student_portal';
-    $username = 'mlxysf_student_portal';
-    $password = 'YAjv86kdSAPpw';
+    $dbname = 'wushuspo_portal';
+    $username = 'wushuspo_admin';
+    $password = '%==l;7tS*.OjXd**';
 
     $conn = new PDO("mysql:host={$host};dbname={$dbname};charset=utf8mb4", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -994,18 +993,20 @@ try {
     $validatedFormDateTime = validateFormDateTime($data['form_date']);
     error_log("[Registration] Original form_date: {$data['form_date']}, Validated: {$validatedFormDateTime}");
 
-    // ==========================
+        // ==========================
     // SAVE FILES TO LOCAL STORAGE
     // NEW: Convert base64 to files
     // FIXED: Save payment receipt BEFORE registration INSERT
+    // UPDATED 2025-12-22: Include user name in filenames
     // ==========================
     
-    // Save signature
+    // Save signature with user name
     $signatureResult = saveBase64ToFile(
         $data['signature_base64'],
         'signatures',
         'signature',
-        $regNumber
+        $regNumber,
+        $childNameEn  // Add user name
     );
     
     if (!$signatureResult['success']) {
@@ -1015,12 +1016,13 @@ try {
     $signaturePath = $signatureResult['path'];
     error_log("[File Save] Signature saved: {$signaturePath}");
     
-    // Save PDF
+    // Save PDF with user name
     $pdfResult = saveBase64ToFile(
         $data['signed_pdf_base64'],
         'registration_pdfs',
         'pdf',
-        $regNumber
+        $regNumber,
+        $childNameEn  // Add user name
     );
     
     if (!$pdfResult['success']) {
@@ -1031,11 +1033,14 @@ try {
     error_log("[File Save] PDF saved: {$pdfPath}");
     
     // FIXED: Save payment receipt BEFORE registration INSERT
+    // Include user name AND payment date in receipt filename
     $receiptResult = saveBase64ToFile(
         $data['payment_receipt_base64'],
         'payment_receipts',
         'receipt',
-        $studentAccountId
+        $studentAccountId,
+        $childNameEn,  // Add user name
+        $paymentDate   // Add payment date
     );
     
     if (!$receiptResult['success']) {

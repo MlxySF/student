@@ -18,10 +18,10 @@ function sendRegistrationEmailSMTP($toEmail, $studentName, $registrationNumber, 
     try {
         // Server settings
         $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com'; // Change to your SMTP server
+        $mail->Host       = 'mail.wushusportacademy.com'; // Change to your SMTP server
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'chaichonghern@gmail.com'; // Your email
-        $mail->Password   = 'kyyj elhp dkdw gvki'; // Your email app password
+        $mail->Username   = 'admin@wushusportacademy.com'; // Your email
+        $mail->Password   = 'UZa;nENf]!xqpRak'; // Your email app password
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
         
@@ -31,9 +31,8 @@ function sendRegistrationEmailSMTP($toEmail, $studentName, $registrationNumber, 
         // 3. Use that app password here
 
         // Recipients
-        $mail->setFrom('noreply@wushusportacademy.com', 'Wushu Sport Academy');
+        $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
         $mail->addAddress($toEmail, $studentName);
-        $mail->addReplyTo('admin@wushusportacademy.com', 'Academy Admin');
 
         // Content
         $mail->isHTML(true);

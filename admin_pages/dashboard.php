@@ -13,7 +13,7 @@ try {
 
 try {
     // Get students by status - ONLY COUNT APPROVED ACCOUNTS
-    // Using payment_status = 'approved' filter
+    // Using account_status = 'approved' filter (NOT payment_status)
     $stmt = $pdo->query("
         SELECT student_status, COUNT(*) as count 
         FROM registrations 

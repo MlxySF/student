@@ -28,17 +28,16 @@ function sendRejectionEmail($toEmail, $studentName, $registrationNumber, $reject
         
         // SMTP Configuration
         $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
+        $mail->Host       = 'mail.wushusportacademy.com';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'chaichonghern@gmail.com';
-        $mail->Password   = 'kyyj elhp dkdw gvki';
+        $mail->Username   = 'admin@wushusportacademy.com';
+        $mail->Password   = 'UZa;nENf]!xqpRak';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
         // Email Headers
-        $mail->setFrom('noreply@wushusportacademy.com', 'Wushu Sport Academy');
+        $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
         $mail->addAddress($toEmail);
-        $mail->addReplyTo('admin@wushusportacademy.com', 'Academy Admin');
 
         // Email Content
         $mail->isHTML(true);

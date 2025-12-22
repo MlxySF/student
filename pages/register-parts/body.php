@@ -1021,7 +1021,7 @@ if (empty($_SESSION['csrf_token'])) {
 
 <!-- HIDDEN PDF TEMPLATE - PAGE 1 -->
 <div id="pdf-template-page1" style="width: 794px; padding: 40px; background: #ffffff; position: fixed; top: -10000px; left: -10000px; visibility: hidden; pointer-events: none; color: #111827; font-family: 'Noto Sans SC', sans-serif;">
-    <img src="/assets/WSP Letter.png" style="width: 100%; margin-bottom: 12px;" alt="Letterhead">
+    <img src="/cache/letterhead_cache.jpg" style="width: 100%; margin-bottom: 12px;" alt="Letterhead">
     <h1 style="text-align:center; font-size:24px; font-weight:800; margin-top:6px;">OFFICIAL WUSHU REGISTRATION 2026</h1>
     <p style="text-align:center; font-size:13px; color:#6b7280; margin-bottom:24px;">Legal Binding Document · This form confirms participation in Wushu Sports Academy programmes.</p>
 
@@ -1081,7 +1081,7 @@ if (empty($_SESSION['csrf_token'])) {
 
 <!-- HIDDEN PDF TEMPLATE - PAGE 2 -->
 <div id="pdf-template-page2" style="width: 794px; padding: 40px; background: #ffffff; position: fixed; top: -10000px; left: -10000px; visibility: hidden; pointer-events: none; color: #111827; font-family: Arial, sans-serif;">
-    <img src="/assets/WSP Letter.png" style="width: 100%; margin-bottom: 12px;" alt="Letterhead">
+    <img src="/cache/letterhead_cache.jpg" style="width: 100%; margin-bottom: 12px;" alt="Letterhead">
     <h1 style="text-align:center; font-size:24px; font-weight:800; margin-top:6px; font-family: 'Noto Sans SC', sans-serif;">TERMS & CONDITIONS</h1>
     <p style="text-align:center; font-size:13px; color:#6b7280; margin-bottom:16px; font-family: 'Noto Sans SC', sans-serif;">条款与条件 · Agreed and Signed by Parent/Guardian</p>
 

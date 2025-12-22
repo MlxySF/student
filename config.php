@@ -6,13 +6,13 @@ date_default_timezone_set('Asia/Kuala_Lumpur');
 
 // Database Configuration
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'mlxysf_student_portal');
-define('DB_USER', 'mlxysf_student_portal');
-define('DB_PASS', 'YAjv86kdSAPpw');
+define('DB_NAME', 'wushuspo_portal');
+define('DB_USER', 'wushuspo_admin');
+define('DB_PASS', '%==l;7tS*.OjXd**');
 
 // Site Configuration
 define('SITE_NAME', 'Wushu Sport Academy');
-define('SITE_URL', 'https://wushusportacademy.app.tc/student/');
+define('SITE_URL', 'https://wushusportacademy.com/');
 
 // Connect to Database
 try {

@@ -47,16 +47,15 @@ function sendApprovalNotification($registrationId, $conn) {
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
+        $mail->Host       = 'mail.wushusportacademy.com';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'chaichonghern@gmail.com';
-        $mail->Password   = 'kyyj elhp dkdw gvki';
+        $mail->Username   = 'admin@wushusportacademy.com';
+        $mail->Password   = 'UZa;nENf]!xqpRak';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
-        $mail->setFrom('noreply@wushusportacademy.com', 'Wushu Sport Academy');
+        $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
         $mail->addAddress($reg['email']);
-        $mail->addReplyTo('admin@wushusportacademy.com', 'Academy Admin');
 
         $mail->isHTML(true);
         $mail->CharSet = 'UTF-8';
@@ -192,9 +191,9 @@ if (php_sapi_name() !== 'cli' && basename($_SERVER['SCRIPT_FILENAME']) === basen
         }
         
         $host = 'localhost';
-        $dbname = 'mlxysf_student_portal';
-        $username = 'mlxysf_student_portal';
-        $password = 'YAjv86kdSAPpw';
+        $dbname = 'wushuspo_portal';
+        $username = 'wushuspo_admin';
+        $password = '%==l;7tS*.OjXd**';
         
         $conn = new PDO("mysql:host={$host};dbname={$dbname};charset=utf8mb4", $username, $password);
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

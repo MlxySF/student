@@ -35,9 +35,9 @@ try {
     
     // Database connection
     $host = 'localhost';
-    $dbname = 'mlxysf_student_portal';
-    $username = 'mlxysf_student_portal';
-    $password = 'YAjv86kdSAPpw';
+    $dbname = 'wushuspo_portal';
+    $username = 'wushuspo_admin';
+    $password = '%==l;7tS*.OjXd**';
     
     $conn = new PDO("mysql:host={$host};dbname={$dbname};charset=utf8mb4", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

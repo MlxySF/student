@@ -236,7 +236,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         error_log("[admin.php verify_payment] Attempting to send email notification");
         require_once 'send_payment_approval_email.php';
         try {
-            $emailSent = sendPaymentApprovalEmail($payment_id, $verification_status, $admin_notes);
+            $emailSent = sendPaymentApprovalEmail($pdo, $payment_id, $verification_status, $admin_notes);
             error_log("[admin.php verify_payment] Email function returned: " . ($emailSent ? 'true' : 'false'));
             
             if ($emailSent && $verification_status === 'verified') {

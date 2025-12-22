@@ -1,0 +1,466 @@
+
+=== 2025-12-21 18:20:57 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 1
+)
+
+
+=== 2025-12-21 18:29:59 ===
+Action: create_class
+POST Data: Array
+(
+    [action] => create_class
+    [class_code] => wsa-wed-8pm
+    [class_name] => Wushu Sport Academy: Wed 8pm-10pm
+    [day_of_week] => Wednesday
+    [start_time] => 20:00
+    [end_time] => 22:00
+    [monthly_fee] => 120
+    [description] => (C 和 太极套路)
+)
+
+
+=== 2025-12-21 18:30:30 ===
+Action: create_class
+POST Data: Array
+(
+    [action] => create_class
+    [class_code] => wsa-sun-10am
+    [class_name] => Wushu Sport Academy: Sun 10am-12pm
+    [day_of_week] => Sunday
+    [start_time] => 10:00
+    [end_time] => 12:00
+    [monthly_fee] => 120
+    [description] => (A/B/C/D 传统和太极套路)
+)
+
+
+=== 2025-12-21 18:31:05 ===
+Action: create_class
+POST Data: Array
+(
+    [action] => create_class
+    [class_code] => wsa-sun-1pm
+    [class_name] => Wushu Sport Academy: Sun 1pm-3pm
+    [day_of_week] => Sunday
+    [start_time] => 13:00
+    [end_time] => 15:00
+    [monthly_fee] => 120
+    [description] => (C/D 和太极套路)
+)
+
+
+=== 2025-12-21 18:31:42 ===
+Action: create_class
+POST Data: Array
+(
+    [action] => create_class
+    [class_code] => pc2-tue-8pm
+    [class_name] => SJK(C) Puay Chai 2: Tue 8pm-10pm
+    [day_of_week] => Tuesday
+    [start_time] => 20:00
+    [end_time] => 22:00
+    [monthly_fee] => 120
+    [description] => (A/B/C 和 传统套路)
+)
+
+
+=== 2025-12-21 18:32:17 ===
+Action: create_class
+POST Data: Array
+(
+    [action] => create_class
+    [class_code] => pc2-wed-8pm
+    [class_name] => SJK(C) Puay Chai 2: Wed 8pm-10pm
+    [day_of_week] => Wednesday
+    [start_time] => 20:00
+    [end_time] => 22:00
+    [monthly_fee] => 120
+    [description] => 全部组别 All Groups (A/B/C/D 套路) 没有太极 和 没有传统
+)
+
+
+=== 2025-12-21 18:32:57 ===
+Action: create_class
+POST Data: Array
+(
+    [action] => create_class
+    [class_code] => pc2-fri-8pm
+    [class_name] => SJK(C) Puay Chai 2: Wed 8pm-10pm
+    [day_of_week] => Wednesday
+    [start_time] => 20:00
+    [end_time] => 22:00
+    [monthly_fee] => 120
+    [description] => 太极套路而已
+)
+
+
+=== 2025-12-21 18:35:20 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 2
+)
+
+
+=== 2025-12-21 18:58:26 ===
+Action: verify_registration
+POST Data: Array
+(
+    [action] => verify_registration
+    [registration_id] => 3
+)
+
+
+=== 2025-12-21 19:00:25 ===
+Action: bulk_attendance
+POST Data: Array
+(
+    [action] => bulk_attendance
+    [class_id] => 2
+    [attendance_date] => 2025-12-21
+    [attendance] => Array
+        (
+            [3] => present
+        )
+
+)
+
+
+BULK ATTENDANCE ACTION STARTED
+Processing student 3 with status present
+Inserted new record
+SUCCESS: Committed transaction, marked 1 students
+
+=== 2025-12-21 19:00:41 ===
+Action: mark_attendance
+POST Data: Array
+(
+    [action] => mark_attendance
+    [student_id] => 3
+    [class_id] => 2
+    [attendance_date] => 2025-12-21
+    [status] => present
+    [notes] => test
+)
+
+
+=== 2025-12-21 19:01:00 ===
+Action: bulk_attendance
+POST Data: Array
+(
+    [action] => bulk_attendance
+    [class_id] => 2
+    [attendance_date] => 2025-12-21
+    [attendance] => Array
+        (
+            [3] => absent
+        )
+
+)
+
+
+BULK ATTENDANCE ACTION STARTED
+Processing student 3 with status absent
+Updated existing record
+SUCCESS: Committed transaction, marked 1 students
+
+=== 2025-12-21 19:01:06 ===
+Action: mark_attendance
+POST Data: Array
+(
+    [action] => mark_attendance
+    [student_id] => 3
+    [class_id] => 2
+    [attendance_date] => 2025-12-21
+    [status] => absent
+    [notes] => 
+)
+
+
+=== 2025-12-21 19:09:57 ===
+Action: mark_attendance
+Is AJAX: NO
+POST Data: Array
+(
+    [action] => mark_attendance
+    [student_id] => 3
+    [class_id] => 2
+    [attendance_date] => 2025-12-21
+    [status] => absent
+    [notes] => omg
+)
+
+
+=== 2025-12-21 19:23:28 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 3
+)
+
+
+=== 2025-12-21 19:51:48 ===
+Action: verify_registration
+POST Data: Array
+(
+    [action] => verify_registration
+    [registration_id] => 4
+)
+
+
+=== 2025-12-21 20:11:55 ===
+Action: reject_registration
+POST Data: Array
+(
+    [action] => reject_registration
+    [registration_id] => 5
+    [reject_reason] => test
+)
+
+
+=== 2025-12-21 20:14:20 ===
+Action: reject_registration
+POST Data: Array
+(
+    [action] => reject_registration
+    [registration_id] => 6
+    [reject_reason] => test
+)
+
+
+=== 2025-12-21 20:15:58 ===
+Action: reject_registration
+POST Data: Array
+(
+    [action] => reject_registration
+    [registration_id] => 7
+    [reject_reason] => test
+)
+
+
+=== 2025-12-21 20:17:39 ===
+Action: verify_registration
+POST Data: Array
+(
+    [action] => verify_registration
+    [registration_id] => 8
+)
+
+
+=== 2025-12-21 20:20:49 ===
+Action: verify_registration
+POST Data: Array
+(
+    [action] => verify_registration
+    [registration_id] => 9
+)
+
+
+=== 2025-12-21 20:27:32 ===
+Action: reject_registration
+POST Data: Array
+(
+    [action] => reject_registration
+    [registration_id] => 10
+    [reject_reason] => test
+)
+
+
+=== 2025-12-21 20:29:16 ===
+Action: verify_registration
+POST Data: Array
+(
+    [action] => verify_registration
+    [registration_id] => 11
+)
+
+
+=== 2025-12-21 20:41:10 ===
+Action: enroll_student
+POST Data: Array
+(
+    [action] => enroll_student
+    [student_id] => 4
+    [registration_id] => 4
+    [class_id] => 3
+)
+
+
+=== 2025-12-21 20:41:18 ===
+Action: enroll_student
+POST Data: Array
+(
+    [action] => enroll_student
+    [student_id] => 4
+    [registration_id] => 4
+    [class_id] => 5
+)
+
+
+=== 2025-12-21 20:41:30 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 4
+)
+
+
+=== 2025-12-21 20:41:45 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 9
+)
+
+
+=== 2025-12-21 20:50:28 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 11
+)
+
+
+=== 2025-12-22 01:24:09 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 0
+)
+
+
+=== 2025-12-22 01:35:13 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 0
+)
+
+
+=== 2025-12-22 01:44:26 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 13
+)
+
+
+=== 2025-12-22 01:59:18 ===
+Action: verify_registration
+POST Data: Array
+(
+    [action] => verify_registration
+    [registration_id] => 14
+)
+
+
+=== 2025-12-22 02:04:34 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 14
+)
+
+
+=== 2025-12-22 02:06:52 ===
+Action: verify_registration
+POST Data: Array
+(
+    [action] => verify_registration
+    [registration_id] => 15
+)
+
+
+=== 2025-12-22 02:52:29 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 15
+)
+
+
+=== 2025-12-22 03:17:14 ===
+Action: verify_registration
+POST Data: Array
+(
+    [action] => verify_registration
+    [registration_id] => 16
+)
+
+
+=== 2025-12-22 04:19:26 ===
+Action: bulk_attendance
+POST Data: Array
+(
+    [action] => bulk_attendance
+    [class_id] => 2
+    [attendance_date] => 2025-12-28
+    [attendance] => Array
+        (
+            [16] => present
+        )
+
+)
+
+
+BULK ATTENDANCE ACTION STARTED
+Processing student 16 with status present
+Inserted new record
+SUCCESS: Committed transaction, marked 1 students
+
+=== 2025-12-22 04:19:36 ===
+Action: mark_attendance
+POST Data: Array
+(
+    [action] => mark_attendance
+    [student_id] => 16
+    [class_id] => 2
+    [attendance_date] => 2025-12-28
+    [status] => present
+    [notes] => Tes
+)
+
+
+=== 2025-12-22 04:19:40 ===
+Action: delete_attendance_day
+POST Data: Array
+(
+    [action] => delete_attendance_day
+    [class_id] => 2
+    [attendance_date] => 2025-12-28
+)
+
+
+=== 2025-12-22 04:20:34 ===
+Action: enroll_student
+POST Data: Array
+(
+    [action] => enroll_student
+    [student_id] => 16
+    [registration_id] => 16
+    [class_id] => 4
+)
+
+
+=== 2025-12-22 04:20:40 ===
+Action: unenroll_student
+POST Data: Array
+(
+    [action] => unenroll_student
+    [enrollment_id] => 5
+)
+
