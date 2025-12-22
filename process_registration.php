@@ -552,16 +552,16 @@ function sendAdminRegistrationNotification($registrationData) {
         error_log("[Admin Email] Sending registration notification to " . ADMIN_EMAIL);
         
         $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
+        $mail->isSMTP();
+        $mail->Host       = 'mail.wushusportacademy.com';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'chaichonghern@gmail.com';
-        $mail->Password   = 'kyyj elhp dkdw gvki';
+        $mail->Username   = 'admin@wushusportacademy.com';
+        $mail->Password   = 'UZa;nENf]!xqpRak';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
-        $mail->setFrom('noreply@wushusportacademy.com', 'Wushu Portal System');
+        $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
         $mail->addAddress(ADMIN_EMAIL, ADMIN_NAME);
-        $mail->addReplyTo($registrationData['parent_email'], $registrationData['parent_name']);
 
         $mail->isHTML(true);
         $mail->CharSet = 'UTF-8';

@@ -18,8 +18,8 @@ require 'PHPMailer/PHPMailer.php';
 require 'PHPMailer/SMTP.php';
 
 // Admin email configuration
-define('ADMIN_EMAIL', 'chaichonghern@gmail.com');
-define('ADMIN_NAME', 'Academy Admin');
+define('ADMIN_EMAIL', 'admin@wushusportacademy.com');
+define('ADMIN_NAME', 'Wushu Sport Academy');
 
 // ============================================================
 // EMAIL NOTIFICATION FUNCTIONS
@@ -34,14 +34,15 @@ function sendAdminPaymentNotification($paymentData) {
         error_log("[Admin Email] Sending payment notification to " . ADMIN_EMAIL);
         
         $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
+        $mail->isSMTP();
+        $mail->Host       = 'mail.wushusportacademy.com';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'chaichonghern@gmail.com';
-        $mail->Password   = 'kyyj elhp dkdw gvki';
+        $mail->Username   = 'admin@wushusportacademy.com';
+        $mail->Password   = 'UZa;nENf]!xqpRak';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
-        $mail->setFrom('noreply@wushusportacademy.com', 'Wushu Portal System');
+        $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
         $mail->addAddress(ADMIN_EMAIL, ADMIN_NAME);
 
         $mail->isHTML(true);
@@ -612,6 +613,63 @@ $page = $_GET['page'] ?? 'login';
         }
 
         /* ============================================
+           LOADING OVERLAY - Prevents duplicate submissions
+           ============================================ */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 400px;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .loading-subtext {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        /* ============================================
            FIXED HEADER DESIGN
            ============================================ */
 
@@ -995,11 +1053,6 @@ $page = $_GET['page'] ?? 'login';
             animation: spin 1s linear infinite;
         }
 
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
         .reload-toast {
             position: fixed;
             top: 90px;
@@ -1130,6 +1183,11 @@ $page = $_GET['page'] ?? 'login';
                 width: 100%;
                 justify-content: center;
             }
+
+            .loading-content {
+                margin: 20px;
+                padding: 30px 20px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -1197,6 +1255,15 @@ $page = $_GET['page'] ?? 'login';
 </head>
 <body<?php echo ($page !== 'login') ? ' class="logged-in"' : ''; ?>>
 
+<!-- GLOBAL LOADING OVERLAY -->
+<div class="loading-overlay" id="globalLoadingOverlay">
+    <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Processing...</div>
+        <div class="loading-subtext">Please wait, do not close this window</div>
+    </div>
+</div>
+
 <div class="reload-toast" id="reloadToast">
     <i class="fas fa-check-circle text-success"></i>
     <span>Data refreshed successfully!</span>
@@ -1236,7 +1303,7 @@ $page = $_GET['page'] ?? 'login';
                 </div>
             <?php endif; ?>
 
-            <form method="POST" action="">
+            <form method="POST" action="" class="submit-with-loading">
                 <?php echo csrfField(); ?>
                 <input type="hidden" name="action" value="login">
                 <div class="mb-3">
@@ -1430,6 +1497,33 @@ $page = $_GET['page'] ?? 'login';
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
 <script>
+    // ============================================================
+    // GLOBAL LOADING OVERLAY HANDLER
+    // Prevents duplicate form submissions
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const overlay = document.getElementById('globalLoadingOverlay');
+        
+        // Find all forms that should show loading overlay
+        const forms = document.querySelectorAll('.submit-with-loading, form[method="POST"]');
+        
+        forms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                // Don't show overlay for search/filter forms (GET method)
+                if (form.method.toLowerCase() === 'post') {
+                    // Show overlay
+                    overlay.classList.add('active');
+                    
+                    // Disable all submit buttons in the form
+                    const submitButtons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+                    submitButtons.forEach(btn => {
+                        btn.disabled = true;
+                    });
+                }
+            });
+        });
+    });
+
     function reloadPageData() {
         const reloadBtn = document.querySelector('.btn-reload');
         const reloadIcon = reloadBtn.querySelector('i');
