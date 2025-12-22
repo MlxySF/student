@@ -6,6 +6,7 @@
  * FIXED: PHPMailer Exception conflict with PHP's built-in Exception
  * FIXED: Pass $pdo as parameter instead of using global scope
  * FIXED: Parent email retrieval - join through students.parent_account_id
+ * FIXED: Character encoding issues - removed emojis, using HTML entities
  * UPDATED: Removed PDF attachment to improve email deliverability
  * UPDATED: Added anti-spam optimizations
  * ADDED: Extensive debugging to troubleshoot email issues
@@ -119,7 +120,8 @@ function sendPaymentApprovalEmail($pdo, $paymentId, $status, $adminNotes = '') {
         $mail->Password   = 'kyyj elhp dkdw gvki';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
-        $mail->CharSet    = 'UTF-8';
+        $mail->CharSet    = 'UTF-8'; // ✨ Ensure UTF-8 encoding
+        $mail->Encoding   = 'base64'; // ✨ Use base64 encoding for better compatibility
         
         // ✨ Anti-spam optimizations
         $mail->XMailer = ' '; // Remove PHPMailer signature
@@ -182,26 +184,26 @@ function sendPaymentApprovalEmail($pdo, $paymentId, $status, $adminNotes = '') {
 
 /**
  * Get HTML template for approved payment email
- * ✨ UPDATED: No PDF attachment, directs user to dashboard instead
+ * ✨ FIXED: Removed emojis, using HTML symbols and entities instead
  */
 function getApprovedPaymentEmailHTML($payment, $adminNotes) {
-    $studentName = htmlspecialchars($payment['student_name']);
-    $invoiceNumber = htmlspecialchars($payment['invoice_number']);
+    $studentName = htmlspecialchars($payment['student_name'], ENT_QUOTES, 'UTF-8');
+    $invoiceNumber = htmlspecialchars($payment['invoice_number'], ENT_QUOTES, 'UTF-8');
     $amount = number_format($payment['amount'], 2);
-    $className = htmlspecialchars($payment['class_name']);
-    $classCode = htmlspecialchars($payment['class_code']);
-    $paymentMonth = htmlspecialchars($payment['payment_month']);
-    $notes = !empty($adminNotes) ? htmlspecialchars($adminNotes) : 'No additional notes';
+    $className = htmlspecialchars($payment['class_name'], ENT_QUOTES, 'UTF-8');
+    $classCode = htmlspecialchars($payment['class_code'], ENT_QUOTES, 'UTF-8');
+    $paymentMonth = htmlspecialchars($payment['payment_month'], ENT_QUOTES, 'UTF-8');
+    $notes = !empty($adminNotes) ? htmlspecialchars($adminNotes, ENT_QUOTES, 'UTF-8') : 'No additional notes';
     
     // Portal URL for downloading receipt
     $portalUrl = 'https://wushusportacademy.app.tc/student/';
     
-    return "
+    return '
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset='UTF-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5; }
         .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -226,103 +228,104 @@ function getApprovedPaymentEmailHTML($payment, $adminNotes) {
     </style>
 </head>
 <body>
-    <div class='container'>
-        <div class='header'>
-            <div class='checkmark'>✅</div>
+    <div class="container">
+        <div class="header">
+            <div class="checkmark">&#10004;</div>
             <h1>Payment Approved!</h1>
             <p>Your payment has been verified and processed</p>
         </div>
         
-        <div class='content'>
+        <div class="content">
             <p>Dear Parent/Guardian,</p>
             
-            <p>Great news! Your payment for <strong>{$studentName}</strong> has been approved and processed successfully.</p>
+            <p>Great news! Your payment for <strong>' . $studentName . '</strong> has been approved and processed successfully.</p>
             
-            <div class='info-box'>
-                <h3 style='margin: 0 0 16px 0; color: #1e293b; font-size: 18px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;'>💳 Payment Details</h3>
-                <div class='info-row'>
-                    <div class='info-label'>Receipt Number:</div>
-                    <div class='info-value'><strong>{$invoiceNumber}</strong></div>
+            <div class="info-box">
+                <h3 style="margin: 0 0 16px 0; color: #1e293b; font-size: 18px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">Payment Details</h3>
+                <div class="info-row">
+                    <div class="info-label">Receipt Number:</div>
+                    <div class="info-value"><strong>' . $invoiceNumber . '</strong></div>
                 </div>
-                <div class='info-row'>
-                    <div class='info-label'>Student Name:</div>
-                    <div class='info-value'>{$studentName}</div>
+                <div class="info-row">
+                    <div class="info-label">Student Name:</div>
+                    <div class="info-value">' . $studentName . '</div>
                 </div>
-                <div class='info-row'>
-                    <div class='info-label'>Class:</div>
-                    <div class='info-value'>{$className} ({$classCode})</div>
+                <div class="info-row">
+                    <div class="info-label">Class:</div>
+                    <div class="info-value">' . $className . ' (' . $classCode . ')</div>
                 </div>
-                <div class='info-row'>
-                    <div class='info-label'>Payment Month:</div>
-                    <div class='info-value'>{$paymentMonth}</div>
+                <div class="info-row">
+                    <div class="info-label">Payment Month:</div>
+                    <div class="info-value">' . $paymentMonth . '</div>
                 </div>
-                <div class='info-row'>
-                    <div class='info-label'>Amount Paid:</div>
-                    <div class='info-value'><span class='amount'>RM {$amount}</span></div>
+                <div class="info-row">
+                    <div class="info-label">Amount Paid:</div>
+                    <div class="info-value"><span class="amount">RM ' . $amount . '</span></div>
                 </div>
-                <div class='info-row'>
-                    <div class='info-label'>Status:</div>
-                    <div class='info-value'><strong style='color: #059669;'>APPROVED ✓</strong></div>
+                <div class="info-row">
+                    <div class="info-label">Status:</div>
+                    <div class="info-value"><strong style="color: #059669;">APPROVED &#10003;</strong></div>
                 </div>
             </div>
             
-            <div class='dashboard-box'>
-                <strong style='font-size: 18px; color: #1e293b;'>📄 Download Your Receipt</strong><br><br>
-                <p style='margin: 10px 0; color: #64748b;'>Your official payment receipt is ready to download from your student dashboard.</p>
-                <a href='{$portalUrl}' class='dashboard-btn' style='color: white;'>🔗 Go to Dashboard</a><br>
-                <small style='color: #64748b; margin-top: 10px; display: inline-block;'>Login to view and download your payment receipt</small>
+            <div class="dashboard-box">
+                <strong style="font-size: 18px; color: #1e293b;">&#128196; Download Your Receipt</strong><br><br>
+                <p style="margin: 10px 0; color: #64748b;">Your official payment receipt is ready to download from your student dashboard.</p>
+                <a href="' . $portalUrl . '" class="dashboard-btn" style="color: white;">&#128279; Go to Dashboard</a><br>
+                <small style="color: #64748b; margin-top: 10px; display: inline-block;">Login to view and download your payment receipt</small>
             </div>
             
-            <div class='success-box'>
-                <strong>✅ Payment Successfully Processed</strong><br>
+            <div class="success-box">
+                <strong>&#10004; Payment Successfully Processed</strong><br>
                 Your payment has been recorded in our system. The invoice has been marked as PAID.
             </div>
             
-            <p><strong>What's Next?</strong></p>
+            <p><strong>What\'s Next?</strong></p>
             <ul>
                 <li>Your child can continue attending classes</li>
                 <li>Login to the dashboard to download your official receipt</li>
                 <li>View your updated payment history in the portal</li>
             </ul>
             
-            <p><strong>Admin Notes:</strong><br>{$notes}</p>
+            <p><strong>Admin Notes:</strong><br>' . $notes . '</p>
             
-            <p>If you have any questions about this payment, please don't hesitate to contact us.</p>
+            <p>If you have any questions about this payment, please don\'t hesitate to contact us.</p>
             
             <p>Thank you for your prompt payment!<br>
             <strong>Wushu Sport Academy Team</strong></p>
         </div>
         
-        <div class='footer'>
-            <p style='margin: 0 0 8px 0; font-weight: 600; color: #1e293b; font-size: 15px;'>Wushu Sport Academy 武术体育学院</p>
-            <p style='margin: 4px 0;'>Student & Parent Portal System</p>
-            <p style='margin: 16px 0 0 0; font-size: 11px; color: #94a3b8;'>This is an automated notification.</p>
+        <div class="footer">
+            <p style="margin: 0 0 8px 0; font-weight: 600; color: #1e293b; font-size: 15px;">Wushu Sport Academy &#27494;&#26415;&#20307;&#32946;&#23398;&#38498;</p>
+            <p style="margin: 4px 0;">Student &amp; Parent Portal System</p>
+            <p style="margin: 16px 0 0 0; font-size: 11px; color: #94a3b8;">This is an automated notification.</p>
         </div>
     </div>
 </body>
 </html>
-    ";
+    ';
 }
 
 /**
  * Get HTML template for rejected payment email
+ * ✨ FIXED: Removed emojis, using HTML symbols and entities instead
  */
 function getRejectedPaymentEmailHTML($payment, $adminNotes) {
-    $studentName = htmlspecialchars($payment['student_name']);
-    $invoiceNumber = htmlspecialchars($payment['invoice_number'] ?? 'N/A');
+    $studentName = htmlspecialchars($payment['student_name'], ENT_QUOTES, 'UTF-8');
+    $invoiceNumber = htmlspecialchars($payment['invoice_number'] ?? 'N/A', ENT_QUOTES, 'UTF-8');
     $amount = number_format($payment['amount'], 2);
-    $className = htmlspecialchars($payment['class_name']);
-    $paymentMonth = htmlspecialchars($payment['payment_month']);
-    $notes = !empty($adminNotes) ? htmlspecialchars($adminNotes) : 'Receipt unclear or payment details do not match';
+    $className = htmlspecialchars($payment['class_name'], ENT_QUOTES, 'UTF-8');
+    $paymentMonth = htmlspecialchars($payment['payment_month'], ENT_QUOTES, 'UTF-8');
+    $notes = !empty($adminNotes) ? htmlspecialchars($adminNotes, ENT_QUOTES, 'UTF-8') : 'Receipt unclear or payment details do not match';
     
     $portalUrl = 'https://wushusportacademy.app.tc/student/';
     
-    return "
+    return '
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset='UTF-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5; }
         .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -340,30 +343,30 @@ function getRejectedPaymentEmailHTML($payment, $adminNotes) {
     </style>
 </head>
 <body>
-    <div class='container'>
-        <div class='header'>
-            <div class='icon'>⚠️</div>
+    <div class="container">
+        <div class="header">
+            <div class="icon">&#9888;</div>
             <h1>Payment Verification Required</h1>
             <p>Action needed to complete your payment</p>
         </div>
         
-        <div class='content'>
+        <div class="content">
             <p>Dear Parent/Guardian,</p>
             
-            <p>We have reviewed your payment submission for <strong>{$studentName}</strong>, and we need you to resubmit your payment receipt.</p>
+            <p>We have reviewed your payment submission for <strong>' . $studentName . '</strong>, and we need you to resubmit your payment receipt.</p>
             
-            <div class='info-box'>
+            <div class="info-box">
                 <strong>Payment Details:</strong><br><br>
-                <strong>Student:</strong> {$studentName}<br>
-                <strong>Class:</strong> {$className}<br>
-                <strong>Payment Month:</strong> {$paymentMonth}<br>
-                <strong>Amount:</strong> RM {$amount}<br>
-                <strong>Status:</strong> <span style='color: #ef4444;'><strong>Verification Required</strong></span>
+                <strong>Student:</strong> ' . $studentName . '<br>
+                <strong>Class:</strong> ' . $className . '<br>
+                <strong>Payment Month:</strong> ' . $paymentMonth . '<br>
+                <strong>Amount:</strong> RM ' . $amount . '<br>
+                <strong>Status:</strong> <span style="color: #ef4444;"><strong>Verification Required</strong></span>
             </div>
             
-            <div class='warning-box'>
+            <div class="warning-box">
                 <strong>Reason for Rejection:</strong><br>
-                {$notes}
+                ' . $notes . '
             </div>
             
             <p><strong>Common reasons for rejection:</strong></p>
@@ -374,16 +377,16 @@ function getRejectedPaymentEmailHTML($payment, $adminNotes) {
                 <li>Wrong payment reference or account details</li>
             </ul>
             
-            <div class='dashboard-box'>
-                <strong style='font-size: 18px; color: #1e293b;'>📤 Resubmit Your Receipt</strong><br><br>
-                <p style='margin: 10px 0; color: #64748b;'>Please login to your dashboard to upload a corrected payment receipt.</p>
-                <a href='{$portalUrl}' class='dashboard-btn' style='color: white;'>🔗 Go to Dashboard</a>
+            <div class="dashboard-box">
+                <strong style="font-size: 18px; color: #1e293b;">&#128228; Resubmit Your Receipt</strong><br><br>
+                <p style="margin: 10px 0; color: #64748b;">Please login to your dashboard to upload a corrected payment receipt.</p>
+                <a href="' . $portalUrl . '" class="dashboard-btn" style="color: white;">&#128279; Go to Dashboard</a>
             </div>
             
             <p><strong>What you need to do:</strong></p>
             <ol>
                 <li>Check that your payment receipt clearly shows all transaction details</li>
-                <li>Verify the payment amount matches: <strong>RM {$amount}</strong></li>
+                <li>Verify the payment amount matches: <strong>RM ' . $amount . '</strong></li>
                 <li>Take a new, clear photo/screenshot if needed</li>
                 <li>Login to the portal and upload the corrected receipt</li>
             </ol>
@@ -397,15 +400,15 @@ Please contact us if you need help or have questions about your payment.</p>
             <strong>Wushu Sport Academy Team</strong></p>
         </div>
         
-        <div class='footer'>
-            <p style='margin: 0 0 8px 0; font-weight: 600; color: #1e293b; font-size: 15px;'>Wushu Sport Academy 武术体育学院</p>
-            <p style='margin: 4px 0;'>Student & Parent Portal System</p>
-            <p style='margin: 16px 0 0 0; font-size: 11px; color: #94a3b8;'>For assistance, please reply to this email</p>
+        <div class="footer">
+            <p style="margin: 0 0 8px 0; font-weight: 600; color: #1e293b; font-size: 15px;">Wushu Sport Academy &#27494;&#26415;&#20307;&#32946;&#23398;&#38498;</p>
+            <p style="margin: 4px 0;">Student &amp; Parent Portal System</p>
+            <p style="margin: 16px 0 0 0; font-size: 11px; color: #94a3b8;">For assistance, please reply to this email</p>
         </div>
     </div>
 </body>
 </html>
-    ";
+    ';
 }
 
 ?>
