@@ -202,13 +202,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $verification_status = $_POST['verification_status'];
         $admin_notes = $_POST['admin_notes'] ?? '';
         
+        error_log("[admin.php verify_payment] Starting - Payment ID: {$payment_id}, Status: {$verification_status}");
+        
         // Update payment verification
         $stmt = $pdo->prepare("
             UPDATE payments 
-            SET verification_status = ?, admin_notes = ? 
+            SET verification_status = ?, admin_notes = ?, verified_date = NOW(), verified_by = ? 
             WHERE id = ?
         ");
-        $stmt->execute([$verification_status, $admin_notes, $payment_id]);
+        $stmt->execute([$verification_status, $admin_notes, $_SESSION['admin_id'] ?? null, $payment_id]);
         
         // If verified, update invoice status to paid
         if ($verification_status === 'verified') {
@@ -228,6 +230,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             ");
             $update_invoice->execute([$invoice_id]);
             $_SESSION['success'] = "Payment rejected!";
+        }
+        
+        // ✨ SEND EMAIL NOTIFICATION
+        error_log("[admin.php verify_payment] Attempting to send email notification");
+        require_once 'send_payment_approval_email.php';
+        try {
+            $emailSent = sendPaymentApprovalEmail($payment_id, $verification_status, $admin_notes);
+            error_log("[admin.php verify_payment] Email function returned: " . ($emailSent ? 'true' : 'false'));
+            
+            if ($emailSent && $verification_status === 'verified') {
+                $_SESSION['success'] .= " Approval email with PDF receipt sent to parent.";
+                error_log("[admin.php verify_payment] Approval email sent successfully");
+            } else if ($emailSent && $verification_status === 'rejected') {
+                $_SESSION['success'] .= " Rejection notification sent to parent.";
+                error_log("[admin.php verify_payment] Rejection email sent successfully");
+            } else {
+                error_log("[admin.php verify_payment] Email was not sent (emailSent = false)");
+            }
+        } catch (Exception $e) {
+            error_log("[admin.php verify_payment] Email error: " . $e->getMessage());
+            error_log("[admin.php verify_payment] Stack trace: " . $e->getTraceAsString());
+            $_SESSION['success'] .= " (Note: Email notification could not be sent)";
         }
         
         header('Location: admin.php?page=invoices');
