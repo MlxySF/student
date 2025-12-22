@@ -114,10 +114,11 @@ function sendPaymentApprovalEmail($pdo, $paymentId, $status, $adminNotes = '') {
         
         // SMTP Configuration
         $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
+        $mail->isSMTP();
+        $mail->Host       = 'mail.wushusportacademy.com';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'chaichonghern@gmail.com';
-        $mail->Password   = 'kyyj elhp dkdw gvki';
+        $mail->Username   = 'admin@wushusportacademy.com';
+        $mail->Password   = 'UZa;nENf]!xqpRak';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
         $mail->CharSet    = 'UTF-8'; // ✨ Ensure UTF-8 encoding
@@ -130,9 +131,8 @@ function sendPaymentApprovalEmail($pdo, $paymentId, $status, $adminNotes = '') {
         error_log("[Payment Approval Email] SMTP configured");
         
         // Recipients
-        $mail->setFrom('noreply@wushusportacademy.com', 'Wushu Sport Academy');
+        $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
         $mail->addAddress($recipientEmail, $recipientName);
-        $mail->addReplyTo('chaichonghern@gmail.com', 'Wushu Sport Academy');
         
         // Email content based on status
         $mail->isHTML(true);
@@ -318,7 +318,7 @@ function getRejectedPaymentEmailHTML($payment, $adminNotes) {
     $paymentMonth = htmlspecialchars($payment['payment_month'], ENT_QUOTES, 'UTF-8');
     $notes = !empty($adminNotes) ? htmlspecialchars($adminNotes, ENT_QUOTES, 'UTF-8') : 'Receipt unclear or payment details do not match';
     
-    $portalUrl = 'https://wushusportacademy.app.tc/student/';
+    $portalUrl = 'https://wushusportacademy.com/';
     
     return '
 <!DOCTYPE html>
