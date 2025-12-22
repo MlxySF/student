@@ -5,6 +5,7 @@
 
 # Enable Rewrite Engine
 RewriteEngine On
+AddHandler application/x-httpd-ea-php74 .php .php7 .phtml
 
 # ============================================================
 # SECURITY SETTINGS
