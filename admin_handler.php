@@ -1000,9 +1000,79 @@ if ($action === 'edit_invoice') {
 
 if ($action === 'delete_invoice') {
     $id = $_POST['invoice_id'];
-    $stmt = $pdo->prepare("DELETE FROM invoices WHERE id = ?");
-    $stmt->execute([$id]);
-    $_SESSION['success'] = "Invoice deleted!";
+    
+    try {
+        $pdo->beginTransaction();
+        
+        // ✨ UPDATED: Get invoice details and associated payment receipt file paths
+        $stmt = $pdo->prepare("
+            SELECT i.invoice_number, p.id as payment_id, p.receipt_path 
+            FROM invoices i
+            LEFT JOIN payments p ON i.id = p.invoice_id
+            WHERE i.id = ?
+        ");
+        $stmt->execute([$id]);
+        $invoiceData = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$invoiceData) {
+            throw new Exception("Invoice not found");
+        }
+        
+        $invoiceNumber = $invoiceData['invoice_number'];
+        $receiptPath = $invoiceData['receipt_path'];
+        $filesDeleted = 0;
+        
+        // ✨ NEW: Delete receipt file from filesystem if it exists
+        if (!empty($receiptPath)) {
+            // Add uploads/ prefix if not already present
+            $path = $receiptPath;
+            if (strpos($path, 'uploads/') !== 0) {
+                $path = 'uploads/' . $path;
+            }
+            
+            $fullPath = __DIR__ . '/' . $path;
+            
+            if (file_exists($fullPath)) {
+                if (unlink($fullPath)) {
+                    $filesDeleted++;
+                    error_log("[Delete Invoice] ✅ Deleted receipt file: {$fullPath}");
+                } else {
+                    error_log("[Delete Invoice] ❌ Failed to delete receipt file: {$fullPath}");
+                }
+            } else {
+                error_log("[Delete Invoice] ⚠️ Receipt file not found: {$fullPath}");
+            }
+        }
+        
+        // Delete associated payments first (if any)
+        if (!empty($invoiceData['payment_id'])) {
+            $stmt = $pdo->prepare("DELETE FROM payments WHERE invoice_id = ?");
+            $stmt->execute([$id]);
+            error_log("[Delete Invoice] Deleted payment record for invoice {$invoiceNumber}");
+        }
+        
+        // Delete the invoice
+        $stmt = $pdo->prepare("DELETE FROM invoices WHERE id = ?");
+        $stmt->execute([$id]);
+        
+        $pdo->commit();
+        
+        $message = "Invoice {$invoiceNumber} deleted!";
+        if ($filesDeleted > 0) {
+            $message .= " Receipt file deleted from storage.";
+        }
+        $_SESSION['success'] = $message;
+        
+        error_log("[Delete Invoice] Successfully deleted invoice {$invoiceNumber}, files deleted: {$filesDeleted}");
+        
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        error_log("[Delete Invoice] Error: " . $e->getMessage());
+        $_SESSION['error'] = "Failed to delete invoice: " . $e->getMessage();
+    }
+    
     header('Location: admin.php?page=invoices');
     exit;
 }
