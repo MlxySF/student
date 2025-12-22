@@ -4,14 +4,12 @@
  * Sends approval notification email to parents when registration is approved
  * Call this after admin approves a registration
  * 
- * FIXED: PHPMailer Exception conflict - use fully qualified class names
+ * FIXED: Use centralized PHPMailer loader to prevent class conflicts
  */
 
-// Only require PHPMailer files, don't import classes to avoid conflicts
-require_once 'PHPMailer/Exception.php';
-require_once 'PHPMailer/PHPMailer.php';
-require_once 'PHPMailer/SMTP.php';
-require_once 'config.php';
+// Load PHPMailer classes (centralized loader prevents duplicate declarations)
+require_once __DIR__ . '/phpmailer_loader.php';
+require_once __DIR__ . '/config.php';
 
 /**
  * Send approval email to parent
