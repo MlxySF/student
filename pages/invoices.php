@@ -2,6 +2,7 @@
 // Student Invoices & Payments Page - Updated with DataTables pagination and status filter
 // FIXED: Determine student account ID properly for parent portal
 // FIXED: Use invoice's payment_month instead of current date
+// NEW: Added rejected status support and invoice number search
 
 // Determine student account ID first
 if (isParent()) {
@@ -21,13 +22,14 @@ if (isParent()) {
 $filter_type = isset($_GET['filter_type']) ? $_GET['filter_type'] : '';
 $filter_month = isset($_GET['filter_month']) ? $_GET['filter_month'] : '';
 $filter_status = isset($_GET['filter_status']) ? $_GET['filter_status'] : '';
+$filter_invoice_number = isset($_GET['filter_invoice_number']) ? trim($_GET['filter_invoice_number']) : '';
 $filter_applied = isset($_GET['filter_applied']) ? $_GET['filter_applied'] : false;
 
 // Check if user has clicked the search/filter button
 if (isset($_GET['page']) && $_GET['page'] === 'invoices' && 
-    (isset($_GET['filter_type']) || isset($_GET['filter_month']) || isset($_GET['filter_status']) || $_SERVER['REQUEST_METHOD'] === 'GET')) {
+    (isset($_GET['filter_type']) || isset($_GET['filter_month']) || isset($_GET['filter_status']) || isset($_GET['filter_invoice_number']) || $_SERVER['REQUEST_METHOD'] === 'GET')) {
     // Check if filter form was actually submitted (has filter parameters in URL)
-    if (array_key_exists('filter_type', $_GET) || array_key_exists('filter_month', $_GET) || array_key_exists('filter_status', $_GET)) {
+    if (array_key_exists('filter_type', $_GET) || array_key_exists('filter_month', $_GET) || array_key_exists('filter_status', $_GET) || array_key_exists('filter_invoice_number', $_GET)) {
         $filter_applied = true;
     }
 }
@@ -69,6 +71,12 @@ if ($filter_applied) {
         $params[] = $filter_status;
     }
 
+    // Add invoice number search
+    if ($filter_invoice_number) {
+        $sql .= " AND i.invoice_number LIKE ?";
+        $params[] = '%' . $filter_invoice_number . '%';
+    }
+
     $sql .= "
         ORDER BY 
             CASE 
@@ -77,7 +85,8 @@ if ($filter_applied) {
                 WHEN i.status = 'pending' THEN 3
                 WHEN i.status = 'paid' THEN 4
                 WHEN i.status = 'cancelled' THEN 5
-                ELSE 6
+                WHEN i.status = 'rejected' THEN 6
+                ELSE 7
             END,
             i.due_date ASC,
             i.created_at DESC
@@ -103,6 +112,7 @@ $overdue_invoices = array_values(array_filter($all_invoices, fn($i) => $i['statu
 $unpaid_invoices = array_values(array_filter($all_invoices, fn($i) => $i['status'] === 'unpaid'));
 $pending_invoices = array_values(array_filter($all_invoices, fn($i) => $i['status'] === 'pending'));
 $paid_invoices = array_values(array_filter($all_invoices, fn($i) => $i['status'] === 'paid'));
+$rejected_invoices = array_values(array_filter($all_invoices, fn($i) => $i['status'] === 'rejected'));
 
 // Calculate totals
 $overdue_total = array_sum(array_column($overdue_invoices, 'amount'));
@@ -267,7 +277,14 @@ function isClassFeeInvoice($invoice) {
         <form method="GET" action="" class="row g-3 align-items-end">
             <input type="hidden" name="page" value="invoices">
             
+            <!-- NEW: Invoice Number Search -->
             <div class="col-md-3">
+                <label class="form-label"><i class="fas fa-hashtag"></i> Invoice Number</label>
+                <input type="text" name="filter_invoice_number" class="form-control" value="<?php echo htmlspecialchars($filter_invoice_number); ?>" placeholder="INV-20251222-0001">
+                <small class="text-muted">Full or partial number</small>
+            </div>
+            
+            <div class="col-md-2">
                 <label class="form-label"><i class="fas fa-tag"></i> Invoice Type</label>
                 <select name="filter_type" class="form-select">
                     <option value="">All Types</option>
@@ -292,7 +309,7 @@ function isClassFeeInvoice($invoice) {
                 </select>
             </div>
             
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label"><i class="fas fa-info-circle"></i> Status</label>
                 <select name="filter_status" class="form-select">
                     <option value="">All Status</option>
@@ -301,10 +318,11 @@ function isClassFeeInvoice($invoice) {
                     <option value="pending" <?php echo $filter_status === 'pending' ? 'selected' : ''; ?>>Pending</option>
                     <option value="paid" <?php echo $filter_status === 'paid' ? 'selected' : ''; ?>>Paid</option>
                     <option value="cancelled" <?php echo $filter_status === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                    <option value="rejected" <?php echo $filter_status === 'rejected' ? 'selected' : ''; ?>>Rejected</option>
                 </select>
             </div>
             
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label"><i class="fas fa-calendar"></i> Month & Year</label>
                 <input type="month" name="filter_month" class="form-control" value="<?php echo htmlspecialchars($filter_month); ?>">
             </div>
@@ -322,6 +340,9 @@ function isClassFeeInvoice($invoice) {
                     <div>
                         <i class="fas fa-info-circle"></i> 
                         <strong>Active Filters:</strong>
+                        <?php if ($filter_invoice_number): ?>
+                            <span class="badge bg-primary ms-2">Invoice: <?php echo htmlspecialchars($filter_invoice_number); ?></span>
+                        <?php endif; ?>
                         <?php if ($filter_type): ?>
                             <span class="badge bg-primary ms-2"><?php echo ucfirst(str_replace('_', ' ', $filter_type)); ?></span>
                         <?php else: ?>
@@ -360,6 +381,7 @@ function isClassFeeInvoice($invoice) {
                         <strong><i class="fas fa-lightbulb"></i> Quick Tips:</strong>
                         <ul class="mb-0 mt-2">
                             <li>Leave filters empty and click Search to see <strong>all invoices</strong></li>
+                            <li>Search by <strong>Invoice Number</strong> for specific invoices</li>
                             <li>Select <strong>Invoice Type</strong> to filter by category</li>
                             <li>Select <strong>Status</strong> to filter by payment status</li>
                             <li>Select <strong>Month & Year</strong> to see invoices for a specific period</li>
@@ -517,6 +539,45 @@ function isClassFeeInvoice($invoice) {
         </div>
         <?php endif; ?>
 
+        <?php if (count($rejected_invoices) > 0): ?>
+        <div class="card mb-4 border-danger">
+            <div class="card-header bg-danger text-white"><i class="fas fa-times-circle"></i> Rejected Payments
+                <span class="badge bg-light text-danger float-end"><?php echo count($rejected_invoices); ?></span></div>
+            <div class="card-body">
+                <div class="alert alert-danger mb-3"><i class="fas fa-exclamation-triangle"></i> <strong>Payment Rejected:</strong> These payment receipts were rejected by admin. Please check admin notes and resubmit with correct payment proof.</div>
+                <div class="table-responsive">
+                    <table class="table sp-invoices-table invoice-table-rejected">
+                        <thead><tr><th>Invoice #</th><th>Date</th><th>Description</th><th class="sp-hide-mobile">Class</th><th>Amount</th><th class="sp-hide-mobile">Admin Notes</th><th>Action</th></tr></thead>
+                        <tbody>
+                            <?php foreach ($rejected_invoices as $inv): ?>
+                                <tr class="sp-invoice-row table-danger">
+                                    <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
+                                        <div class="d-md-none"><span class="badge bg-danger"><i class="fas fa-times-circle"></i> Rejected</span></div>
+                                        <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+                                            <div class="d-md-none"><span class="badge bg-primary"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="sp-hide-mobile"><?php echo date('d M Y', strtotime($inv['created_at'])); ?></td>
+                                    <td><?php echo htmlspecialchars($inv['description']); ?>
+                                        <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
+                                            <br><span class="badge bg-primary mt-1"><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($inv['payment_month']); ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="sp-hide-mobile"><?php echo $inv['class_code'] ? '<span class="badge bg-info">' . $inv['class_code'] . '</span>' : '-'; ?></td>
+                                    <td><strong class="text-danger"><?php echo formatCurrency($inv['amount']); ?></strong></td>
+                                    <td class="sp-hide-mobile"><span class="text-danger"><?php echo !empty($inv['admin_notes']) ? htmlspecialchars(substr($inv['admin_notes'], 0, 50)) . '...' : 'No notes'; ?></span></td>
+                                    <td class="sp-invoice-actions-cell">
+                                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#invoiceModal<?php echo $inv['id']; ?>"><i class="fas fa-eye"></i> View Details</button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <?php if (count($paid_invoices) > 0): ?>
         <div class="card mb-4">
             <div class="card-header bg-success text-white"><i class="fas fa-check-circle"></i> Paid Invoices
@@ -567,13 +628,15 @@ function isClassFeeInvoice($invoice) {
 <?php foreach ($all_invoices as $inv): ?>
 <div class="modal fade" id="invoiceModal<?php echo $inv['id']; ?>" tabindex="-1">
   <div class="modal-dialog modal-lg"><div class="modal-content">
-    <div class="modal-header <?php echo $inv['status'] === 'overdue' ? 'bg-danger text-white' : ($inv['status'] === 'pending' ? 'bg-info text-white' : ''); ?>">
+    <div class="modal-header <?php echo $inv['status'] === 'overdue' ? 'bg-danger text-white' : ($inv['status'] === 'pending' ? 'bg-info text-white' : ($inv['status'] === 'rejected' ? 'bg-danger text-white' : '')); ?>">
       <h5 class="modal-title"><i class="fas fa-file-invoice"></i> Invoice & Payment Details</h5>
-      <button type="button" class="btn-close <?php echo in_array($inv['status'], ['overdue', 'pending']) ? 'btn-close-white' : ''; ?>" data-bs-dismiss="modal"></button>
+      <button type="button" class="btn-close <?php echo in_array($inv['status'], ['overdue', 'pending', 'rejected']) ? 'btn-close-white' : ''; ?>" data-bs-dismiss="modal"></button>
     </div>
     <div class="modal-body">
       <?php if ($inv['status'] === 'overdue'): ?>
         <div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> <strong>OVERDUE!</strong> Please pay immediately.</div>
+      <?php elseif ($inv['status'] === 'rejected'): ?>
+        <div class="alert alert-danger"><i class="fas fa-times-circle"></i> <strong>PAYMENT REJECTED!</strong> Your payment receipt was not accepted. Please check admin notes below and upload a correct payment proof.</div>
       <?php endif; ?>
       
       <h6><i class="fas fa-file-invoice"></i> Invoice Information</h6>
@@ -588,6 +651,13 @@ function isClassFeeInvoice($invoice) {
         <?php if ($inv['class_name']): ?>
         <tr><th>Class</th><td><span class="badge bg-info"><?php echo $inv['class_code']; ?></span> <?php echo htmlspecialchars($inv['class_name']); ?></td></tr>
         <?php endif; ?>
+        <tr><th>Status</th><td>
+          <?php if ($inv['status'] === 'rejected'): ?>
+            <span class="badge bg-danger"><i class="fas fa-times-circle"></i> REJECTED</span>
+          <?php else: ?>
+            <span class="badge bg-<?php echo $inv['status'] === 'paid' ? 'success' : ($inv['status'] === 'pending' ? 'info' : 'warning'); ?>"><?php echo ucfirst($inv['status']); ?></span>
+          <?php endif; ?>
+        </td></tr>
       </table>
 
       <?php if (!empty($inv['payment_id'])): ?>
@@ -604,7 +674,7 @@ function isClassFeeInvoice($invoice) {
             <?php endif; ?>
           </td></tr>
           <?php if (!empty($inv['admin_notes'])): ?>
-          <tr><th>Admin Notes</th><td><?php echo nl2br(htmlspecialchars($inv['admin_notes'])); ?></td></tr>
+          <tr><th>Admin Notes</th><td><div class="alert alert-<?php echo $inv['verification_status'] === 'rejected' ? 'danger' : 'info'; ?> mb-0"><?php echo nl2br(htmlspecialchars($inv['admin_notes'])); ?></div></td></tr>
           <?php endif; ?>
         </table>
 
@@ -618,7 +688,7 @@ function isClassFeeInvoice($invoice) {
         <?php else: ?>
           <div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Receipt not available.</div>
         <?php endif; ?>
-      <?php elseif (in_array($inv['status'], ['unpaid', 'overdue'])): ?>
+      <?php elseif (in_array($inv['status'], ['unpaid', 'overdue', 'rejected'])): ?>
         <!-- Show Bank Details based on invoice type -->
         <?php if (isClassFeeInvoice($inv)): ?>
           <!-- Bank Details for Class Fees -->
@@ -675,6 +745,9 @@ function isClassFeeInvoice($invoice) {
         <?php endif; ?>
         
         <hr><h6><i class="fas fa-upload"></i> Upload Payment Receipt</h6>
+        <?php if ($inv['status'] === 'rejected'): ?>
+          <div class="alert alert-warning"><i class="fas fa-info-circle"></i> <strong>Resubmit Payment:</strong> Your previous payment was rejected. Please upload a correct payment receipt.</div>
+        <?php endif; ?>
         <form method="POST" action="?page=invoices" enctype="multipart/form-data">
           <?php echo csrfField(); ?>
           <input type="hidden" name="action" value="upload_payment">
@@ -701,7 +774,7 @@ function isClassFeeInvoice($invoice) {
             </div>
           </div>
           
-          <button type="submit" class="btn btn-success"><i class="fas fa-upload"></i> Submit Payment</button>
+          <button type="submit" class="btn btn-success"><i class="fas fa-upload"></i> <?php echo $inv['status'] === 'rejected' ? 'Resubmit Payment' : 'Submit Payment'; ?></button>
         </form>
       <?php endif; ?>
     </div>
@@ -744,6 +817,9 @@ $(document).ready(function() {
     }
     if ($('.invoice-table-pending').length) {
         $('.invoice-table-pending').DataTable(tableConfig);
+    }
+    if ($('.invoice-table-rejected').length) {
+        $('.invoice-table-rejected').DataTable(tableConfig);
     }
     if ($('.invoice-table-paid').length) {
         $('.invoice-table-paid').DataTable(tableConfig);
