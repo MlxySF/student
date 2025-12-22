@@ -5,6 +5,7 @@
 // NEW: Added rejected status support and invoice number search
 // FIXED: Show receipt using receipt_path for rejected invoices
 // FIXED: Only highlight admin notes in rejected section, not entire table
+// FIXED: Proper receipt path resolution for file_exists check and display
 
 // Determine student account ID first
 if (isParent()) {
@@ -130,6 +131,45 @@ $action_required_total = $unpaid_total + $overdue_total;
 function isClassFeeInvoice($invoice) {
     $classFeeTypes = ['monthly_fee', 'registration'];
     return in_array($invoice['invoice_type'], $classFeeTypes);
+}
+
+// Helper function to resolve receipt path correctly
+function getReceiptPath($receipt_path) {
+    if (empty($receipt_path)) {
+        return null;
+    }
+    
+    // If path starts with uploads/, it's relative to document root
+    if (strpos($receipt_path, 'uploads/') === 0) {
+        $full_path = __DIR__ . '/../' . $receipt_path;
+    } else {
+        $full_path = $receipt_path;
+    }
+    
+    return $full_path;
+}
+
+// Helper function to get web-accessible receipt URL
+function getReceiptUrl($receipt_path) {
+    if (empty($receipt_path)) {
+        return null;
+    }
+    
+    // If path starts with uploads/, make it web-accessible
+    if (strpos($receipt_path, 'uploads/') === 0) {
+        return $receipt_path; // Already relative to web root
+    }
+    
+    // If it's an absolute path, try to convert it
+    if (strpos($receipt_path, '/') === 0 || preg_match('/^[a-zA-Z]:/', $receipt_path)) {
+        // Extract the relative part from document root
+        $doc_root = $_SERVER['DOCUMENT_ROOT'];
+        if (strpos($receipt_path, $doc_root) === 0) {
+            return substr($receipt_path, strlen($doc_root));
+        }
+    }
+    
+    return $receipt_path;
 }
 ?>
 
@@ -689,27 +729,31 @@ function isClassFeeInvoice($invoice) {
 
         <h6>Your Uploaded Receipt</h6>
         <?php 
-        // UPDATED: Check for receipt_path first (new file storage), then fallback to receipt_data (old base64)
-        if (!empty($inv['receipt_path']) && file_exists($inv['receipt_path'])): 
-            $mime_type = mime_content_type($inv['receipt_path']);
+        // FIXED: Proper receipt path resolution for rejected invoices
+        $receipt_full_path = getReceiptPath($inv['receipt_path']);
+        $receipt_url = getReceiptUrl($inv['receipt_path']);
+        
+        if (!empty($receipt_full_path) && file_exists($receipt_full_path)): 
+            $mime_type = mime_content_type($receipt_full_path);
             $is_pdf = ($mime_type === 'application/pdf');
         ?>
             <?php if ($is_pdf): ?>
-                <embed src="<?php echo $inv['receipt_path']; ?>" type="application/pdf" class="receipt-pdf">
+                <embed src="<?php echo htmlspecialchars($receipt_url); ?>" type="application/pdf" class="receipt-pdf">
                 <div class="mt-2">
-                    <a href="<?php echo $inv['receipt_path']; ?>" class="btn btn-sm btn-primary" download="<?php echo $inv['receipt_filename']; ?>">
+                    <a href="<?php echo htmlspecialchars($receipt_url); ?>" class="btn btn-sm btn-primary" download="<?php echo htmlspecialchars($inv['receipt_filename']); ?>">
                         <i class="fas fa-download"></i> Download Receipt
                     </a>
                 </div>
             <?php else: ?>
-                <img src="<?php echo $inv['receipt_path']; ?>" alt="Receipt" class="receipt-image">
+                <img src="<?php echo htmlspecialchars($receipt_url); ?>" alt="Receipt" class="receipt-image">
                 <div class="mt-2">
-                    <a href="<?php echo $inv['receipt_path']; ?>" class="btn btn-sm btn-primary" download="<?php echo $inv['receipt_filename']; ?>">
+                    <a href="<?php echo htmlspecialchars($receipt_url); ?>" class="btn btn-sm btn-primary" download="<?php echo htmlspecialchars($inv['receipt_filename']); ?>">
                         <i class="fas fa-download"></i> Download Receipt
                     </a>
                 </div>
             <?php endif; ?>
         <?php elseif (!empty($inv['receipt_data'])): ?>
+            <!-- Fallback to base64 encoded data if path doesn't work -->
             <?php if ($inv['receipt_mime_type'] === 'application/pdf'): ?>
                 <embed src="data:<?php echo $inv['receipt_mime_type']; ?>;base64,<?php echo $inv['receipt_data']; ?>" type="<?php echo $inv['receipt_mime_type']; ?>" class="receipt-pdf">
             <?php else: ?>
