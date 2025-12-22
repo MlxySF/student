@@ -5,12 +5,8 @@
  * Call this after updating payment_status to 'approved'
  */
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-require 'PHPMailer/Exception.php';
-require 'PHPMailer/PHPMailer.php';
-require 'PHPMailer/SMTP.php';
+// Load PHPMailer classes (centralized loader prevents duplicate declarations)
+require_once __DIR__ . '/phpmailer_loader.php';
 
 function generatePasswordFromIC(string $ic): string {
     $icClean = str_replace('-', '', $ic);

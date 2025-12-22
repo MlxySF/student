@@ -101,6 +101,13 @@ function sendInvoiceNotification($pdo, $invoiceId) {
         // Anti-spam optimizations
         $mail->XMailer = ' ';
         $mail->Priority = 3;
+
+// ✨ NEW: Anti-spam headers
+$mail->addCustomHeader('X-Mailer', 'Wushu Sport Academy');
+$mail->addCustomHeader('X-Priority', '3');
+$mail->addCustomHeader('Importance', 'Normal');
+$mail->addCustomHeader('List-Unsubscribe', '<mailto:admin@wushusportacademy.com>');
+
         
         error_log("[Invoice Notification] SMTP configured");
         
@@ -110,7 +117,7 @@ function sendInvoiceNotification($pdo, $invoiceId) {
         
         // Email content
         $mail->isHTML(true);
-        $mail->Subject = 'New Invoice - ' . $invoice['student_name'] . ' - ' . $invoice['invoice_number'];
+        $mail->Subject = 'Wushu Sport Academy: Invoice ' . $invoice['invoice_number'] . ' - ' . $invoice['student_name'];
         $mail->Body = getInvoiceNotificationEmailHTML($invoice);
         $mail->AltBody = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $mail->Body));
         
@@ -150,7 +157,7 @@ function getInvoiceNotificationEmailHTML($invoice) {
     $classCode = !empty($invoice['class_code']) ? htmlspecialchars($invoice['class_code'], ENT_QUOTES, 'UTF-8') : '';
     
     // Portal URL for payment
-    $portalUrl = 'https://wushusportacademy.app.tc/student/';
+    $portalUrl = 'https://wushusportacademy.com/';
     
     return '
 <!DOCTYPE html>
@@ -229,7 +236,7 @@ function getInvoiceNotificationEmailHTML($invoice) {
             
             <div class="warning-box">
                 <strong>&#9888; Important:</strong><br>
-                Please make payment before <strong>' . $dueDate . '</strong> to avoid late payment penalties.
+                Please make payment before <strong>' . $dueDate . '</strong> to avoid late payment.
             </div>
             
             <div class="payment-box">

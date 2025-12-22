@@ -804,10 +804,6 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
                         <td style='padding: 6px 0; color: #166534; font-weight: 600;'>Status:</td>
                         <td style='padding: 6px 0; color: #166534;'><span style='background: #dcfce7; padding: 4px 12px; border-radius: 4px; font-size: 13px; font-weight: 600;'>{$studentStatus}</span></td>
                     </tr>
-                    <tr>
-                        <td style='padding: 6px 0; color: #166534; font-weight: 600; vertical-align: top;'>Child Password:</td>
-                        <td style='padding: 6px 0; color: #166534;'><code style='background: #fff; padding: 6px 12px; border: 1px solid #bbf7d0; border-radius: 4px; font-family: monospace; font-size: 14px;'>{$childPassword}</code><br><span style='font-size: 12px; color: #15803d;'>(Last 4 digits of child's IC · Optional for independent login)</span></td>
-                    </tr>
                 </table>
             </div>
             

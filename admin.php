@@ -1,6 +1,5 @@
 <?php
 // admin.php - Complete Admin Panel
-ob_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -66,94 +65,123 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     redirectIfNotAdmin();
     
     // CREATE INVOICE
-    if ($_POST['action'] === 'create_invoice') {
-        $student_id = $_POST['student_id'];
-        $invoice_type = $_POST['invoice_type'];
-        $class_id = !empty($_POST['class_id']) ? $_POST['class_id'] : null;
-        $description = $_POST['description'];
-        $amount = $_POST['amount'];
-        $due_date = $_POST['due_date'];
-        
-        // Generate invoice number
-        $invoice_number = 'INV-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
-        
-        // Set payment_month for monthly_fee type
-        $payment_month = null;
-        if ($invoice_type === 'monthly_fee') {
-            $payment_month = date('M Y'); // e.g., "Dec 2025"
-        }
-        
-        $stmt = $pdo->prepare("
-            INSERT INTO invoices (student_id, invoice_number, invoice_type, class_id, description, amount, due_date, payment_month, status, created_at) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'unpaid', NOW())
-        ");
-        
-        if ($stmt->execute([$student_id, $invoice_number, $invoice_type, $class_id, $description, $amount, $due_date, $payment_month])) {
-            $_SESSION['success'] = "Invoice created successfully!";
-        } else {
-            $_SESSION['error'] = "Failed to create invoice.";
-        }
-        
-        header('Location: admin.php?page=invoices');
-        exit;
+if ($_POST['action'] === 'create_invoice') {
+    $student_id = $_POST['student_id'];
+    $invoice_type = $_POST['invoice_type'];
+    $class_id = !empty($_POST['class_id']) ? $_POST['class_id'] : null;
+    $description = $_POST['description'];
+    $amount = $_POST['amount'];
+    $due_date = $_POST['due_date'];
+    
+    // Generate invoice number
+    $invoice_number = 'INV-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+    
+    // Set payment_month for monthly_fee type
+    $payment_month = null;
+    if ($invoice_type === 'monthly_fee') {
+        $payment_month = date('M Y'); // e.g., "Dec 2025"
     }
     
+    error_log("[admin.php create_invoice] Creating invoice: {$invoice_number}");
+    
+    $stmt = $pdo->prepare("
+        INSERT INTO invoices (student_id, invoice_number, invoice_type, class_id, description, amount, due_date, payment_month, status, created_at) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'unpaid', NOW())
+    ");
+    
+    if ($stmt->execute([$student_id, $invoice_number, $invoice_type, $class_id, $description, $amount, $due_date, $payment_month])) {
+        // ✨ NEW: Get invoice ID and send email notification
+        $invoiceId = $pdo->lastInsertId();
+        error_log("[admin.php create_invoice] Invoice created with ID: {$invoiceId}");
+        
+        // ✨ NEW: Send notification email
+        require_once 'send_invoice_notification.php';
+        $emailSent = false;
+        try {
+            $emailSent = sendInvoiceNotification($pdo, $invoiceId);
+            error_log("[admin.php create_invoice] Email result: " . ($emailSent ? 'SUCCESS' : 'FAILED'));
+        } catch (Exception $e) {
+            error_log("[admin.php create_invoice] Email exception: " . $e->getMessage());
+        }
+        
+        // Build success message
+        $message = "Invoice created successfully! #{$invoice_number}";
+        if ($emailSent) {
+            $message .= " ✅ Email notification sent.";
+        } else {
+            $message .= " ⚠️ Email notification failed.";
+        }
+        $_SESSION['success'] = $message;
+    } else {
+        $_SESSION['error'] = "Failed to create invoice.";
+    }
+    
+    header('Location: admin.php?page=invoices');
+    exit;
+}
+
+    
     // GENERATE MONTHLY INVOICES
-    if ($_POST['action'] === 'generate_monthly_invoices') {
-        $current_month = date('M Y'); // e.g., "Dec 2025"
-        $due_date = date('Y-m-10'); // 10th of current month
-        $generated_count = 0;
+if ($_POST['action'] === 'generate_monthly_invoices') {
+    $current_month = date('M Y');
+    $due_date = date('Y-m-10');
+    $generated_count = 0;
+    $emailsSent = 0;        // ✨ NEW
+    $emailsFailed = 0;      // ✨ NEW
+    
+    // ... existing enrollment query ...
+    
+    foreach ($enrollments as $enrollment) {
+        // ... existing duplicate check ...
         
-        // Get all active enrollments
-        $stmt = $pdo->query("
-            SELECT DISTINCT e.student_id, e.class_id, c.monthly_fee, s.student_id as student_code, s.full_name
-            FROM enrollments e
-            JOIN students s ON e.student_id = s.id
-            JOIN classes c ON e.class_id = c.id
-            WHERE e.status = 'active' AND c.monthly_fee > 0
-        ");
-        $enrollments = $stmt->fetchAll();
-        
-        foreach ($enrollments as $enrollment) {
-            // Check if invoice already exists for this month
-            $check_stmt = $pdo->prepare("
-                SELECT id FROM invoices 
-                WHERE student_id = ? 
-                AND class_id = ? 
-                AND invoice_type = 'monthly_fee' 
-                AND payment_month = ?
-            ");
-            $check_stmt->execute([$enrollment['student_id'], $enrollment['class_id'], $current_month]);
+        if ($check_stmt->rowCount() == 0) {
+            $invoice_number = 'INV-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+            $description = "Monthly Fee - $current_month";
             
-            if ($check_stmt->rowCount() == 0) {
-                // Generate invoice number
-                $invoice_number = 'INV-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+            $insert_stmt = $pdo->prepare("
+                INSERT INTO invoices (student_id, invoice_number, invoice_type, class_id, description, amount, due_date, payment_month, status, created_at) 
+                VALUES (?, ?, 'monthly_fee', ?, ?, ?, ?, ?, 'unpaid', NOW())
+            ");
+            
+            if ($insert_stmt->execute([
+                $enrollment['student_id'],
+                $invoice_number,
+                $enrollment['class_id'],
+                $description,
+                $enrollment['monthly_fee'],
+                $due_date,
+                $current_month
+            ])) {
+                $generated_count++;
                 
-                $description = "Monthly Fee - $current_month";
-                
-                $insert_stmt = $pdo->prepare("
-                    INSERT INTO invoices (student_id, invoice_number, invoice_type, class_id, description, amount, due_date, payment_month, status, created_at) 
-                    VALUES (?, ?, 'monthly_fee', ?, ?, ?, ?, ?, 'unpaid', NOW())
-                ");
-                
-                if ($insert_stmt->execute([
-                    $enrollment['student_id'],
-                    $invoice_number,
-                    $enrollment['class_id'],
-                    $description,
-                    $enrollment['monthly_fee'],
-                    $due_date,
-                    $current_month
-                ])) {
-                    $generated_count++;
+                // ✨ NEW: Send email notification
+                $invoiceId = $pdo->lastInsertId();
+                require_once 'send_invoice_notification.php';
+                try {
+                    if (sendInvoiceNotification($pdo, $invoiceId)) {
+                        $emailsSent++;
+                    } else {
+                        $emailsFailed++;
+                    }
+                } catch (Exception $e) {
+                    $emailsFailed++;
+                    error_log("[Generate Invoices] Email error: " . $e->getMessage());
                 }
             }
         }
-        
-        $_SESSION['success'] = "Generated $generated_count monthly invoices for $current_month!";
-        header('Location: admin.php?page=invoices');
-        exit;
     }
+    
+    // ✨ UPDATED: Enhanced success message
+    $message = "Generated $generated_count monthly invoices for $current_month!";
+    if ($generated_count > 0) {
+        $message .= " | Email notifications: {$emailsSent} sent, {$emailsFailed} failed";
+    }
+    $_SESSION['success'] = $message;
+    
+    header('Location: admin.php?page=invoices');
+    exit;
+}
+
     
     // EDIT INVOICE
     if ($_POST['action'] === 'edit_invoice') {
@@ -180,20 +208,90 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
     
     // DELETE INVOICE
-    if ($_POST['action'] === 'delete_invoice') {
-        $invoice_id = $_POST['invoice_id'];
+if ($_POST['action'] === 'delete_invoice') {
+    $invoice_id = $_POST['invoice_id'];
+    
+    try {
+        $pdo->beginTransaction();
         
-        $stmt = $pdo->prepare("DELETE FROM invoices WHERE id = ?");
+        // ✨ NEW: Get invoice details and payment receipt paths
+        $stmt = $pdo->prepare("
+            SELECT 
+                i.invoice_number,
+                p.id as payment_id,
+                p.receipt_path
+            FROM invoices i
+            LEFT JOIN payments p ON i.id = p.invoice_id
+            WHERE i.id = ?
+        ");
+        $stmt->execute([$invoice_id]);
+        $invoiceData = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        if ($stmt->execute([$invoice_id])) {
-            $_SESSION['success'] = "Invoice deleted successfully!";
-        } else {
-            $_SESSION['error'] = "Failed to delete invoice.";
+        if (!$invoiceData) {
+            throw new Exception("Invoice not found");
         }
         
-        header('Location: admin.php?page=invoices');
-        exit;
+        $invoiceNumber = $invoiceData['invoice_number'];
+        $receiptPath = $invoiceData['receipt_path'];
+        $filesDeleted = 0;
+        
+        // ✨ NEW: Delete receipt file from filesystem if it exists
+        if (!empty($receiptPath)) {
+            // Add uploads/ prefix if not already present
+            $path = $receiptPath;
+            if (strpos($path, 'uploads/') !== 0) {
+                $path = 'uploads/' . $path;
+            }
+            
+            $fullPath = __DIR__ . '/' . $path;
+            
+            if (file_exists($fullPath)) {
+                if (unlink($fullPath)) {
+                    $filesDeleted++;
+                    error_log("[Delete Invoice] ✅ Deleted receipt file: {$fullPath}");
+                } else {
+                    error_log("[Delete Invoice] ❌ Failed to delete receipt file: {$fullPath}");
+                }
+            } else {
+                error_log("[Delete Invoice] ⚠️ Receipt file not found: {$fullPath}");
+            }
+        }
+        
+        // Delete associated payment records first (if any)
+        if (!empty($invoiceData['payment_id'])) {
+            $stmt = $pdo->prepare("DELETE FROM payments WHERE invoice_id = ?");
+            $stmt->execute([$invoice_id]);
+            error_log("[Delete Invoice] Deleted payment record for invoice {$invoiceNumber}");
+        }
+        
+        // Delete the invoice
+        $stmt = $pdo->prepare("DELETE FROM invoices WHERE id = ?");
+        $stmt->execute([$invoice_id]);
+        
+        $pdo->commit();
+        
+        // Build success message
+        $message = "Invoice {$invoiceNumber} deleted successfully!";
+        if ($filesDeleted > 0) {
+            $message .= " Receipt file removed from storage.";
+        }
+        
+        $_SESSION['success'] = $message;
+        error_log("[Delete Invoice] Success: {$invoiceNumber}, files deleted: {$filesDeleted}");
+        
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        error_log("[Delete Invoice] Error: " . $e->getMessage());
+        $_SESSION['error'] = "Failed to delete invoice: " . $e->getMessage();
     }
+    
+    header('Location: admin.php?page=invoices');
+    exit;
+}
+
+
     
     // VERIFY PAYMENT
     if ($_POST['action'] === 'verify_payment') {
@@ -1260,4 +1358,3 @@ $page = $_GET['page'] ?? 'login';
 </script>
 </body>
 </html>
-<?php ob_end_flush(); ?>

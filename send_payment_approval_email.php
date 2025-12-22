@@ -3,8 +3,7 @@
  * Payment Approval Email Notification System
  * Sends emails to parents/students when payment status changes
  * 
- * FIXED: Use centralized PHPMailer loader to prevent class conflicts
- * FIXED: PHPMailer Exception conflict with PHP's built-in Exception - use fully qualified names
+ * FIXED: PHPMailer Exception conflict with PHP's built-in Exception
  * FIXED: Pass $pdo as parameter instead of using global scope
  * FIXED: Parent email retrieval - join through students.parent_account_id
  * FIXED: Character encoding issues - removed emojis, using HTML entities
@@ -104,10 +103,11 @@ function sendPaymentApprovalEmail($pdo, $paymentId, $status, $adminNotes = '') {
         
         error_log("[Payment Approval Email] Email will be sent to: {$recipientEmail}");
         
-        // Setup email - use fully qualified class name to avoid conflicts
-        $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+        // Setup email
+        $mail = new PHPMailer(true);
         
         // SMTP Configuration
+        $mail->isSMTP();
         $mail->isSMTP();
         $mail->Host       = 'mail.wushusportacademy.com';
         $mail->SMTPAuth   = true;
@@ -163,7 +163,7 @@ function sendPaymentApprovalEmail($pdo, $paymentId, $status, $adminNotes = '') {
         
         return true;
         
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         error_log("[Payment Approval Email] ❌ EXCEPTION CAUGHT:");
         error_log("[Payment Approval Email] Message: " . $e->getMessage());
         

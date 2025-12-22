@@ -1,180 +1,114 @@
-[21-Dec-2025 18:49:58 UTC] [Serve File] Serving file: payment_receipts/receipt_15_20251221180538_c8897439.png (Size: 613149 bytes, MIME: image/png)
-[21-Dec-2025 18:49:58 UTC] [Serve File] Serving file: signatures/signature_WSA2025-8247_20251221180538_94aa2a76.png (Size: 3765 bytes, MIME: image/png)
-[21-Dec-2025 18:52:27 UTC] [Serve File] Serving file: payment_receipts/receipt_15_20251221180538_c8897439.png (Size: 613149 bytes, MIME: image/png)
-[21-Dec-2025 18:52:27 UTC] [Serve File] Serving file: signatures/signature_WSA2025-8247_20251221180538_94aa2a76.png (Size: 3765 bytes, MIME: image/png)
-[21-Dec-2025 19:16:43 UTC] [Registration] Starting registration for parent email: chaichonghern@gmail.com, child IC: 123123-31-2312, name: Chai Chong Hern
-[21-Dec-2025 19:16:43 UTC] [Reg Number] Generated unique random registration number: WSA2025-6651
-[21-Dec-2025 19:16:43 UTC] [Password] Using IC last 4 digits: 2312
-[21-Dec-2025 19:16:43 UTC] [Password] Using IC last 4 digits: 1849
-[21-Dec-2025 19:16:43 UTC] [Parent] Created NEW parent account ID=13, code=PAR-2025-0001, email=chaichonghern@gmail.com, password=1849
-[21-Dec-2025 19:16:43 UTC] [Parent Info] ID=13, Code=PAR-2025-0001, IsNew=1, Password=1849
-[21-Dec-2025 19:16:43 UTC] [Student] Created student ID=16 (Chai Chong Hern)
-[21-Dec-2025 19:16:43 UTC] [Link] Linked student ID=16 to parent ID=13
-[21-Dec-2025 19:16:43 UTC] [DateTime Validation] Invalid form_date '22/12/2025', using current datetime
-[21-Dec-2025 19:16:43 UTC] [Registration] Original form_date: 22/12/2025, Validated: 2025-12-21 19:16:43
-[21-Dec-2025 19:16:43 UTC] [File Helper] Saved file: signatures/signature_ChaiChongHern_WSA2025-6651_20251221191643_40545a.png (Size: 4053 bytes, User: Chai Chong Hern)
-[21-Dec-2025 19:16:43 UTC] [File Save] Signature saved: signatures/signature_ChaiChongHern_WSA2025-6651_20251221191643_40545a.png
-[21-Dec-2025 19:16:43 UTC] [File Helper] Saved file: registration_pdfs/pdf_ChaiChongHern_WSA2025-6651_20251221191643_a78da5.pdf (Size: 1189005 bytes, User: Chai Chong Hern)
-[21-Dec-2025 19:16:43 UTC] [File Save] PDF saved: registration_pdfs/pdf_ChaiChongHern_WSA2025-6651_20251221191643_a78da5.pdf
-[21-Dec-2025 19:16:43 UTC] [File Helper] Saved file: payment_receipts/receipt_ChaiChongHern_20251221_16_20251221191643_9d62ea.jpg (Size: 39315 bytes, User: Chai Chong Hern)
-[21-Dec-2025 19:16:43 UTC] [File Save] Payment receipt saved: payment_receipts/receipt_ChaiChongHern_20251221_16_20251221191643_9d62ea.jpg
-[21-Dec-2025 19:16:43 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Sun 10am-12pm
-[21-Dec-2025 19:16:43 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Sun 10am-12pm' to 'wsa-sun-10am'
-[21-Dec-2025 19:16:43 UTC] [Auto-Enroll] Starting enrollment for student ID=16, Classes: wsa-sun-10am
-[21-Dec-2025 19:16:43 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=16 in class 'Wushu Sport Academy: Sun 10am-12pm' (Code: wsa-sun-10am)
-[21-Dec-2025 19:16:43 UTC] [Auto-Enroll] Results - Success: 1, Failed: 0, Skipped: 0
-[21-Dec-2025 19:16:43 UTC] [Invoice Split] Total: 120, Classes: 1, Per Class: 120
-[21-Dec-2025 19:16:43 UTC] [Invoice] Using receipt path: payment_receipts/receipt_ChaiChongHern_20251221_16_20251221191643_9d62ea.jpg
-[21-Dec-2025 19:16:43 UTC] [Invoice] Created invoice: INV-REG-202512-6385 (ID: 18) for class wsa-sun-10am, amount=120
-[21-Dec-2025 19:16:43 UTC] [Payment] Created payment record (ID: 18) linked to invoice INV-REG-202512-6385, receipt_path=payment_receipts/receipt_ChaiChongHern_20251221_16_20251221191643_9d62ea.jpg
-[21-Dec-2025 19:16:43 UTC] [Success] Reg#: WSA2025-6651, Parent: PAR-2025-0001 (ID:13), Student: 16, Invoices: 1, Payment Date: 2025-12-21, Receipt: payment_receipts/receipt_ChaiChongHern_20251221_16_20251221191643_9d62ea.jpg
-[21-Dec-2025 19:16:43 UTC] [Email] Sending to: chaichonghern@gmail.com, isNewParent: YES, parentPassword: 1849
-[21-Dec-2025 19:16:45 UTC] [Email] Successfully sent to chaichonghern@gmail.com
-[21-Dec-2025 19:16:45 UTC] [Admin Email] Sending registration notification to admin@wushusportacademy.com
-[21-Dec-2025 19:16:48 UTC] [Admin Email] Successfully sent registration notification
-[21-Dec-2025 19:16:48 UTC] [Admin Notification] Email sent: YES
-[21-Dec-2025 19:17:11 UTC] [Serve File] Serving file: payment_receipts/receipt_ChaiChongHern_20251221_16_20251221191643_9d62ea.jpg (Size: 39315 bytes, MIME: image/jpeg)
-[21-Dec-2025 19:17:11 UTC] [Serve File] Serving file: signatures/signature_ChaiChongHern_WSA2025-6651_20251221191643_40545a.png (Size: 4053 bytes, MIME: image/png)
-[21-Dec-2025 19:17:15 UTC] [Serve File] Serving file: signatures/signature_ChaiChongHern_WSA2025-6651_20251221191643_40545a.png (Size: 4053 bytes, MIME: image/png)
-[21-Dec-2025 19:17:15 UTC] [Serve File] Serving file: payment_receipts/receipt_ChaiChongHern_20251221_16_20251221191643_9d62ea.jpg (Size: 39315 bytes, MIME: image/jpeg)
-[21-Dec-2025 20:10:01 UTC] [Serve File] Serving file: signatures/signature_ChaiChongHern_WSA2025-6651_20251221191643_40545a.png (Size: 4053 bytes, MIME: image/png)
-[21-Dec-2025 20:10:01 UTC] [Serve File] Serving file: payment_receipts/receipt_ChaiChongHern_20251221_16_20251221191643_9d62ea.jpg (Size: 39315 bytes, MIME: image/jpeg)
-[21-Dec-2025 20:20:45 UTC] [Serve File] Serving file: payment_receipts/receipt_ChaiChongHern_20251221_16_20251221191643_9d62ea.jpg (Size: 39315 bytes, MIME: image/jpeg)
-[21-Dec-2025 20:20:45 UTC] [Serve File] Serving file: signatures/signature_ChaiChongHern_WSA2025-6651_20251221191643_40545a.png (Size: 4053 bytes, MIME: image/png)
-[21-Dec-2025 20:20:50 UTC] [Serve File] Serving file: registration_pdfs/pdf_ChaiChongHern_WSA2025-6651_20251221191643_a78da5.pdf (Size: 1189005 bytes, MIME: application/pdf)
-[22-Dec-2025 04:25:06 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222042506_565843d9.jpeg
-[22-Dec-2025 04:25:06 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 04:25:09 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 04:25:09 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
-[22-Dec-2025 04:33:17 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222043316_927c3b8d.jpeg
-[22-Dec-2025 04:33:17 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 04:33:19 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 04:33:19 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
-[22-Dec-2025 04:44:13 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222044413_0c35d8f4.png
-[22-Dec-2025 04:44:13 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 04:44:16 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 04:44:16 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
-[22-Dec-2025 04:46:11 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222044611_965d7ce1.png
-[22-Dec-2025 04:46:11 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 04:46:14 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 04:46:14 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
-[22-Dec-2025 04:46:15 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222044615_4307411f.png
-[22-Dec-2025 04:46:15 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 04:46:18 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222044618_dab9925b.png
-[22-Dec-2025 04:46:18 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 04:46:20 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 04:46:20 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
-[22-Dec-2025 04:47:05 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222044705_08f7adce.pdf
-[22-Dec-2025 04:47:05 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 04:47:08 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 04:47:08 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
-[22-Dec-2025 04:58:09 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222045809_c3724979.jpg
-[22-Dec-2025 04:58:09 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 04:58:11 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 04:58:11 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
-[22-Dec-2025 05:44:20 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222054420_d22d051b.png
-[22-Dec-2025 05:44:20 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 05:44:23 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 05:44:23 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
-[22-Dec-2025 05:47:10 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222054710_49a79e02.jpg
-[22-Dec-2025 05:47:10 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 05:47:13 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 05:47:13 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
-[22-Dec-2025 05:53:18 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222055318_846378f3.jpg
-[22-Dec-2025 05:53:18 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 05:53:21 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 05:53:21 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
-[22-Dec-2025 05:53:40 Asia/Kuala_Lumpur] PHP Fatal error:  Cannot declare class PHPMailer\PHPMailer\Exception, because the name is already in use in /home/wushuspo/public_html/PHPMailer/Exception.php on line 0
-[22-Dec-2025 09:49:44 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Class 'FPDF' not found in /home/wushuspo/public_html/send_payment_approval_email.php:513
-Stack trace:
-#0 /home/wushuspo/public_html/admin.php(237): require_once()
-#1 {main}
-  thrown in /home/wushuspo/public_html/send_payment_approval_email.php on line 513
-[22-Dec-2025 09:57:58 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222095758_aebe9528.png
-[22-Dec-2025 09:57:58 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 09:58:02 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 09:58:02 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
-[22-Dec-2025 10:19:37 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222101937_1646e205.png
-[22-Dec-2025 10:19:37 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 10:19:40 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 10:19:40 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
-[22-Dec-2025 10:19:57 Asia/Kuala_Lumpur] ========================================
-[22-Dec-2025 10:19:57 Asia/Kuala_Lumpur] [Payment Approval Email] STARTING
-[22-Dec-2025 10:19:57 Asia/Kuala_Lumpur] [Payment Approval Email] Payment ID: verified
-[22-Dec-2025 10:19:57 Asia/Kuala_Lumpur] [Payment Approval Email] Status: 
-[22-Dec-2025 10:19:57 Asia/Kuala_Lumpur] [Payment Approval Email] Admin Notes: 
-[22-Dec-2025 10:19:57 Asia/Kuala_Lumpur] ========================================
-[22-Dec-2025 10:19:57 Asia/Kuala_Lumpur] [Payment Approval Email] SQL Query:              SELECT                  p.id as payment_id,                 p.amount,                 p.payment_month,                 p.receipt_filename,                 p.verification_status,                 p.invoice_id,                 s.id as student_account_id,                 s.full_name as student_name,                 s.student_id as student_number,                 r.name_en as registration_name,                 c.class_name,                 c.class_code,                 i.invoice_number,                 i.description as invoice_description,                 pa.email as parent_email,                 pa.full_name as parent_name,                 pa.parent_id as parent_number             FROM payments p             JOIN students s ON p.student_id = s.id             LEFT JOIN registrations r ON s.id = r.student_account_id             LEFT JOIN classes c ON p.class_id = c.id             LEFT JOIN invoices i ON p.invoice_id = i.id             LEFT JOIN parent_accounts pa ON p.parent_account_id = pa.id             WHERE p.id = ?         
-[22-Dec-2025 10:19:57 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on string in /home/wushuspo/public_html/send_payment_approval_email.php:79
-Stack trace:
-#0 /home/wushuspo/public_html/admin.php(239): sendPaymentApprovalEmail('34', 'verified', '')
-#1 {main}
-  thrown in /home/wushuspo/public_html/send_payment_approval_email.php on line 79
-[22-Dec-2025 10:24:10 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222102410_e0e30aea.jpg
-[22-Dec-2025 10:24:10 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 10:24:13 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 10:24:13 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur] ========================================
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur] [Payment Approval Email] STARTING
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur] [Payment Approval Email] Payment ID: 35
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur] [Payment Approval Email] Status: verified
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur] [Payment Approval Email] Admin Notes: 
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur] ========================================
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur] [Payment Approval Email] SQL Query:              SELECT                  p.id as payment_id,                 p.amount,                 p.payment_month,                 p.receipt_filename,                 p.verification_status,                 p.invoice_id,                 s.id as student_account_id,                 s.full_name as student_name,                 s.student_id as student_number,                 r.name_en as registration_name,                 c.class_name,                 c.class_code,                 i.invoice_number,                 i.description as invoice_description,                 pa.email as parent_email,                 pa.full_name as parent_name,                 pa.parent_id as parent_number             FROM payments p             JOIN students s ON p.student_id = s.id             LEFT JOIN registrations r ON s.id = r.student_account_id             LEFT JOIN classes c ON p.class_id = c.id             LEFT JOIN invoices i ON p.invoice_id = i.id             LEFT JOIN parent_accounts pa ON p.parent_account_id = pa.id             WHERE p.id = ?         
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur] [Payment Approval Email] Payment record found:
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur]   - Student Name: Chai Chong Hern
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur]   - Parent Email: chaichonghern@gmail.com
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur]   - Amount: 11.00
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur] [Payment Approval Email] Email will be sent to: chaichonghern@gmail.com
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur] [Payment Approval Email] SMTP configured
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur] PHP Notice:  Undefined variable: parentEmail in /home/wushuspo/public_html/send_payment_approval_email.php on line 123
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur] [Payment Approval Email] ❌ EXCEPTION CAUGHT:
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur] [Payment Approval Email] Message: Invalid address:  (to): 
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur] [Payment Approval Email] PHPMailer Error: Invalid address:  (to): 
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur] ========================================
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur] [admin.php verify_payment] Email function returned: false
-[22-Dec-2025 10:24:24 Asia/Kuala_Lumpur] [admin.php verify_payment] Email was not sent (emailSent = false)
-[22-Dec-2025 10:36:57 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222103657_30e0c1a3.jpg
-[22-Dec-2025 10:36:57 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 10:37:00 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 10:37:00 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
-[22-Dec-2025 10:41:26 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222104126_529ce004.jpg
-[22-Dec-2025 10:41:26 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 10:41:29 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 10:41:29 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur] ========================================
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur] [Payment Approval Email] STARTING
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur] [Payment Approval Email] Payment ID: 37
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur] [Payment Approval Email] Status: verified
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur] [Payment Approval Email] Admin Notes: 
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur] ========================================
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur] [Payment Approval Email] SQL Query:              SELECT                  p.id as payment_id,                 p.amount,                 p.payment_month,                 p.receipt_filename,                 p.verification_status,                 p.invoice_id,                 s.id as student_account_id,                 s.full_name as student_name,                 s.student_id as student_number,                 r.name_en as registration_name,                 c.class_name,                 c.class_code,                 i.invoice_number,                 i.description as invoice_description,                 pa.email as parent_email,                 pa.full_name as parent_name,                 pa.parent_id as parent_number             FROM payments p             JOIN students s ON p.student_id = s.id             LEFT JOIN registrations r ON s.id = r.student_account_id             LEFT JOIN classes c ON p.class_id = c.id             LEFT JOIN invoices i ON p.invoice_id = i.id             LEFT JOIN parent_accounts pa ON p.parent_account_id = pa.id             WHERE p.id = ?         
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur] [Payment Approval Email] Payment record found:
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur]   - Student Name: Chai Chong Hern
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur]   - Parent Email: chaichonghern@gmail.com
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur]   - Amount: 12.00
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur] [Payment Approval Email] Email will be sent to: chaichonghern@gmail.com
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur] [Payment Approval Email] SMTP configured
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur] [Payment Approval Email] Preparing APPROVED email
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur] [Payment Approval Email] Attempting to generate PDF receipt
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur] [PDF Generation] Starting PDF generation
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur] [PDF Generation] Creating FPDF instance
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur] [PDF Generation] PDF generated successfully (size: 1839 bytes)
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur] [Payment Approval Email] PDF receipt attached: Payment_Receipt_INV-20251222-3997.pdf
-[22-Dec-2025 10:41:41 Asia/Kuala_Lumpur] [Payment Approval Email] Attempting to send email via SMTP...
-[22-Dec-2025 10:41:46 Asia/Kuala_Lumpur] [Payment Approval Email] ✅ SUCCESS! Email sent to chaichonghern@gmail.com
-[22-Dec-2025 10:41:46 Asia/Kuala_Lumpur] ========================================
-[22-Dec-2025 10:41:46 Asia/Kuala_Lumpur] [admin.php verify_payment] Email function returned: true
-[22-Dec-2025 10:41:46 Asia/Kuala_Lumpur] [admin.php verify_payment] Approval email sent successfully
-[22-Dec-2025 10:50:41 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222105041_4a3ba265.png
-[22-Dec-2025 10:50:41 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 10:50:43 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 10:50:43 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
-[22-Dec-2025 10:55:22 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222105522_869f19f2.jpg
-[22-Dec-2025 10:55:22 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 10:55:25 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 10:55:25 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
-[22-Dec-2025 10:57:30 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_16_20251222105730_faf50a9c.pdf
-[22-Dec-2025 10:57:30 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to chaichonghern@gmail.com
-[22-Dec-2025 10:57:32 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 10:57:32 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
+[22-Dec-2025 07:30:32 UTC] [Registration] Starting registration for parent email: chaichonghern@gmail.com, child IC: 123123-31-2311, name: Xander Teoh
+[22-Dec-2025 07:30:32 UTC] [Reg Number] Generated unique random registration number: WSA2025-6949
+[22-Dec-2025 07:30:32 UTC] [Password] Using IC last 4 digits: 2311
+[22-Dec-2025 07:30:32 UTC] [Parent] Found existing parent account ID=1 for email=chaichonghern@gmail.com
+[22-Dec-2025 07:30:32 UTC] [Parent Info] ID=1, Code=PAR-2025-0001, IsNew=, Password=NULL
+[22-Dec-2025 07:30:32 UTC] [Student] Created student ID=2 (Xander Teoh)
+[22-Dec-2025 07:30:32 UTC] [Link] Linked student ID=2 to parent ID=1
+[22-Dec-2025 07:30:32 UTC] [DateTime Validation] Invalid form_date '22/12/2025', using current datetime
+[22-Dec-2025 07:30:32 UTC] [Registration] Original form_date: 22/12/2025, Validated: 2025-12-22 07:30:32
+[22-Dec-2025 07:30:32 UTC] [File Helper] Saved file: signatures/signature_WSA2025-6949_20251222073032_36c9eb38.png (Size: 3865 bytes)
+[22-Dec-2025 07:30:32 UTC] [File Save] Signature saved: signatures/signature_WSA2025-6949_20251222073032_36c9eb38.png
+[22-Dec-2025 07:30:32 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-6949_20251222073032_9aad187a.pdf (Size: 1194691 bytes)
+[22-Dec-2025 07:30:32 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-6949_20251222073032_9aad187a.pdf
+[22-Dec-2025 07:30:32 UTC] [File Helper] Saved file: payment_receipts/receipt_2_20251222073032_3e4d1ff1.png (Size: 385364 bytes)
+[22-Dec-2025 07:30:32 UTC] [File Save] Payment receipt saved: payment_receipts/receipt_2_20251222073032_3e4d1ff1.png
+[22-Dec-2025 07:30:32 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Wed 8pm-10pm, SJK(C) Puay Chai 2: Wed 8pm-10pm
+[22-Dec-2025 07:30:32 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Wed 8pm-10pm' to 'wsa-wed-8pm'
+[22-Dec-2025 07:30:32 UTC] [Schedule Parse] Mapped 'SJK(C) Puay Chai 2: Wed 8pm-10pm' to 'pc2-wed-8pm'
+[22-Dec-2025 07:30:32 UTC] [Auto-Enroll] Starting enrollment for student ID=2, Classes: wsa-wed-8pm, pc2-wed-8pm
+[22-Dec-2025 07:30:32 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=2 in class 'Wushu Sport Academy: Wed 8pm-10pm' (Code: wsa-wed-8pm)
+[22-Dec-2025 07:30:32 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=2 in class 'SJK(C) Puay Chai 2: Wed 8pm-10pm' (Code: pc2-wed-8pm)
+[22-Dec-2025 07:30:32 UTC] [Auto-Enroll] Results - Success: 2, Failed: 0, Skipped: 0
+[22-Dec-2025 07:30:32 UTC] [Invoice Split] Total: 200, Classes: 2, Per Class: 100
+[22-Dec-2025 07:30:32 UTC] [Invoice] Using receipt path: payment_receipts/receipt_2_20251222073032_3e4d1ff1.png
+[22-Dec-2025 07:30:32 UTC] [Invoice] Created invoice: INV-REG-202512-8189 (ID: 12) for class wsa-wed-8pm, amount=100
+[22-Dec-2025 07:30:32 UTC] [Payment] Created payment record (ID: 4) linked to invoice INV-REG-202512-8189, receipt_path=payment_receipts/receipt_2_20251222073032_3e4d1ff1.png
+[22-Dec-2025 07:30:32 UTC] [Invoice] Created invoice: INV-REG-202512-6257 (ID: 13) for class pc2-wed-8pm, amount=100
+[22-Dec-2025 07:30:32 UTC] [Payment] Created payment record (ID: 5) linked to invoice INV-REG-202512-6257, receipt_path=payment_receipts/receipt_2_20251222073032_3e4d1ff1.png
+[22-Dec-2025 07:30:32 UTC] [Success] Reg#: WSA2025-6949, Parent: PAR-2025-0001 (ID:1), Student: 2, Invoices: 2, Payment Date: 2025-12-22, Receipt: payment_receipts/receipt_2_20251222073032_3e4d1ff1.png
+[22-Dec-2025 07:30:32 UTC] [Email] Sending to: chaichonghern@gmail.com, isNewParent: NO, parentPassword: NULL
+[22-Dec-2025 07:30:39 UTC] [Email] Successfully sent to chaichonghern@gmail.com
+[22-Dec-2025 07:30:39 UTC] [Admin Email] Sending registration notification to admin@wushusportacademy.com
+[22-Dec-2025 07:30:39 UTC] [Admin Email] Successfully sent registration notification
+[22-Dec-2025 07:30:39 UTC] [Admin Notification] Email sent: YES
+[22-Dec-2025 07:31:31 UTC] [Serve File] Serving file: signatures/signature_WSA2025-6949_20251222073032_36c9eb38.png (Size: 3865 bytes, MIME: image/png)
+[22-Dec-2025 07:31:31 UTC] [Serve File] Serving file: payment_receipts/receipt_1_20251222052010_3c66a8ff.png (Size: 450281 bytes, MIME: image/png)
+[22-Dec-2025 07:31:31 UTC] [Serve File] Serving file: signatures/signature_WSA2025-5737_20251222052010_a4f9a31d.png (Size: 4664 bytes, MIME: image/png)
+[22-Dec-2025 07:31:31 UTC] [Serve File] Serving file: payment_receipts/receipt_2_20251222073032_3e4d1ff1.png (Size: 385364 bytes, MIME: image/png)
+[22-Dec-2025 15:31:39 Asia/Kuala_Lumpur] [reject_registration] Cancelled 2 invoices
+[22-Dec-2025 15:31:39 Asia/Kuala_Lumpur] [reject_registration] Found 2 cancelled invoices
+[22-Dec-2025 15:31:39 Asia/Kuala_Lumpur] [reject_registration] Rejected 1 payments for invoice ID 12
+[22-Dec-2025 15:31:39 Asia/Kuala_Lumpur] [reject_registration] Rejected 1 payments for invoice ID 13
+[22-Dec-2025 15:31:39 Asia/Kuala_Lumpur] [reject_registration] Total payments rejected: 2
+[22-Dec-2025 15:31:39 Asia/Kuala_Lumpur] [Rejection Email] Sending to: chaichonghern@gmail.com, Student: Xander Teoh, Reg#: WSA2025-6949
+[22-Dec-2025 15:31:41 Asia/Kuala_Lumpur] [Rejection Email] Successfully sent to chaichonghern@gmail.com
+[22-Dec-2025 15:31:41 Asia/Kuala_Lumpur] [Reject] Reg#WSA2025-6949: invoices=2, payments=2, email=sent
+[22-Dec-2025 07:31:41 UTC] [Serve File] Serving file: payment_receipts/receipt_2_20251222073032_3e4d1ff1.png (Size: 385364 bytes, MIME: image/png)
+[22-Dec-2025 07:31:41 UTC] [Serve File] Serving file: signatures/signature_WSA2025-5737_20251222052010_a4f9a31d.png (Size: 4664 bytes, MIME: image/png)
+[22-Dec-2025 07:31:41 UTC] [Serve File] Serving file: signatures/signature_WSA2025-6949_20251222073032_36c9eb38.png (Size: 3865 bytes, MIME: image/png)
+[22-Dec-2025 07:31:41 UTC] [Serve File] Serving file: payment_receipts/receipt_1_20251222052010_3c66a8ff.png (Size: 450281 bytes, MIME: image/png)
+[22-Dec-2025 15:33:34 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_1_20251222153334_a5c932d0.jpeg
+[22-Dec-2025 15:33:34 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to admin@wushusportacademy.com
+[22-Dec-2025 15:33:34 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
+[22-Dec-2025 15:33:34 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
+[22-Dec-2025 07:33:49 UTC] [Serve File] Serving file: signatures/signature_WSA2025-5737_20251222052010_a4f9a31d.png (Size: 4664 bytes, MIME: image/png)
+[22-Dec-2025 07:33:49 UTC] [Serve File] Serving file: payment_receipts/receipt_1_20251222052010_3c66a8ff.png (Size: 450281 bytes, MIME: image/png)
+[22-Dec-2025 07:33:49 UTC] [Serve File] Serving file: signatures/signature_WSA2025-6949_20251222073032_36c9eb38.png (Size: 3865 bytes, MIME: image/png)
+[22-Dec-2025 07:33:49 UTC] [Serve File] Serving file: payment_receipts/receipt_2_20251222073032_3e4d1ff1.png (Size: 385364 bytes, MIME: image/png)
+[22-Dec-2025 07:49:24 UTC] [Serve File] Serving file: signatures/signature_WSA2025-6949_20251222073032_36c9eb38.png (Size: 3865 bytes, MIME: image/png)
+[22-Dec-2025 07:49:24 UTC] [Serve File] Serving file: signatures/signature_WSA2025-5737_20251222052010_a4f9a31d.png (Size: 4664 bytes, MIME: image/png)
+[22-Dec-2025 07:49:24 UTC] [Serve File] File not found: /home/wushuspo/public_html/uploads/payment_receipts/receipt_1_20251222052010_3c66a8ff.png
+[22-Dec-2025 07:49:24 UTC] [Serve File] Serving file: payment_receipts/receipt_2_20251222073032_3e4d1ff1.png (Size: 385364 bytes, MIME: image/png)
+[22-Dec-2025 07:50:13 UTC] [Registration] Starting registration for parent email: chaichonghern@gmail.com, child IC: 123123-31-2311, name: Xander Teoh
+[22-Dec-2025 07:50:13 UTC] [IC Override] Found rejected registration with IC: 123123-31-2311. Allowing re-registration.
+[22-Dec-2025 07:50:13 UTC] [Reg Number] Generated unique random registration number: WSA2025-9162
+[22-Dec-2025 07:50:13 UTC] [Password] Using IC last 4 digits: 2311
+[22-Dec-2025 07:50:13 UTC] [Parent] Found existing parent account ID=1 for email=chaichonghern@gmail.com
+[22-Dec-2025 07:50:13 UTC] [Parent Info] ID=1, Code=PAR-2025-0001, IsNew=, Password=NULL
+[22-Dec-2025 07:50:13 UTC] [Student] Created student ID=3 (Xander Teoh)
+[22-Dec-2025 07:50:13 UTC] [Link] Linked student ID=3 to parent ID=1
+[22-Dec-2025 07:50:13 UTC] [DateTime Validation] Invalid form_date '22/12/2025', using current datetime
+[22-Dec-2025 07:50:13 UTC] [Registration] Original form_date: 22/12/2025, Validated: 2025-12-22 07:50:13
+[22-Dec-2025 07:50:13 UTC] [File Helper] Saved file: signatures/signature_WSA2025-9162_20251222075013_26ac6d8e.png (Size: 4165 bytes)
+[22-Dec-2025 07:50:13 UTC] [File Save] Signature saved: signatures/signature_WSA2025-9162_20251222075013_26ac6d8e.png
+[22-Dec-2025 07:50:13 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-9162_20251222075013_089db92c.pdf (Size: 1194769 bytes)
+[22-Dec-2025 07:50:13 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-9162_20251222075013_089db92c.pdf
+[22-Dec-2025 07:50:13 UTC] [File Helper] Saved file: payment_receipts/receipt_3_20251222075013_834b43ca.jpg (Size: 39315 bytes)
+[22-Dec-2025 07:50:13 UTC] [File Save] Payment receipt saved: payment_receipts/receipt_3_20251222075013_834b43ca.jpg
+[22-Dec-2025 07:50:13 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Sun 10am-12pm, SJK(C) Puay Chai 2: Tue 8pm-10pm
+[22-Dec-2025 07:50:13 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Sun 10am-12pm' to 'wsa-sun-10am'
+[22-Dec-2025 07:50:13 UTC] [Schedule Parse] Mapped 'SJK(C) Puay Chai 2: Tue 8pm-10pm' to 'pc2-tue-8pm'
+[22-Dec-2025 07:50:13 UTC] [Auto-Enroll] Starting enrollment for student ID=3, Classes: wsa-sun-10am, pc2-tue-8pm
+[22-Dec-2025 07:50:13 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=3 in class 'Wushu Sport Academy: Sun 10am-12pm' (Code: wsa-sun-10am)
+[22-Dec-2025 07:50:13 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=3 in class 'SJK(C) Puay Chai 2: Tue 8pm-10pm' (Code: pc2-tue-8pm)
+[22-Dec-2025 07:50:13 UTC] [Auto-Enroll] Results - Success: 2, Failed: 0, Skipped: 0
+[22-Dec-2025 07:50:13 UTC] [Invoice Split] Total: 200, Classes: 2, Per Class: 100
+[22-Dec-2025 07:50:13 UTC] [Invoice] Using receipt path: payment_receipts/receipt_3_20251222075013_834b43ca.jpg
+[22-Dec-2025 07:50:13 UTC] [Invoice] Created invoice: INV-REG-202512-5310 (ID: 14) for class wsa-sun-10am, amount=100
+[22-Dec-2025 07:50:13 UTC] [Payment] Created payment record (ID: 7) linked to invoice INV-REG-202512-5310, receipt_path=payment_receipts/receipt_3_20251222075013_834b43ca.jpg
+[22-Dec-2025 07:50:13 UTC] [Invoice] Created invoice: INV-REG-202512-2834 (ID: 15) for class pc2-tue-8pm, amount=100
+[22-Dec-2025 07:50:13 UTC] [Payment] Created payment record (ID: 8) linked to invoice INV-REG-202512-2834, receipt_path=payment_receipts/receipt_3_20251222075013_834b43ca.jpg
+[22-Dec-2025 07:50:13 UTC] [Success] Reg#: WSA2025-9162, Parent: PAR-2025-0001 (ID:1), Student: 3, Invoices: 2, Payment Date: 2025-12-18, Receipt: payment_receipts/receipt_3_20251222075013_834b43ca.jpg
+[22-Dec-2025 07:50:13 UTC] [Email] Sending to: chaichonghern@gmail.com, isNewParent: NO, parentPassword: NULL
+[22-Dec-2025 07:50:14 UTC] [Email] Successfully sent to chaichonghern@gmail.com
+[22-Dec-2025 07:50:14 UTC] [Admin Email] Sending registration notification to admin@wushusportacademy.com
+[22-Dec-2025 07:50:14 UTC] [Admin Email] Successfully sent registration notification
+[22-Dec-2025 07:50:14 UTC] [Admin Notification] Email sent: YES
+[22-Dec-2025 08:01:53 UTC] [Serve File] Serving file: signatures/signature_WSA2025-5737_20251222052010_a4f9a31d.png (Size: 4664 bytes, MIME: image/png)
+[22-Dec-2025 08:01:53 UTC] [Serve File] Serving file: signatures/signature_WSA2025-9162_20251222075013_26ac6d8e.png (Size: 4165 bytes, MIME: image/png)
+[22-Dec-2025 08:01:53 UTC] [Serve File] Serving file: payment_receipts/receipt_3_20251222075013_834b43ca.jpg (Size: 39315 bytes, MIME: image/jpeg)
+[22-Dec-2025 08:01:53 UTC] [Serve File] File not found: /home/wushuspo/public_html/uploads/payment_receipts/receipt_1_20251222052010_3c66a8ff.png
+[22-Dec-2025 16:01:59 Asia/Kuala_Lumpur] [verify_registration] Generated PARENT password from parent IC: 1849
+[22-Dec-2025 16:01:59 Asia/Kuala_Lumpur] [verify_registration] Updated 2 invoices to paid
+[22-Dec-2025 16:01:59 Asia/Kuala_Lumpur] [verify_registration] Found 2 paid invoices
+[22-Dec-2025 16:01:59 Asia/Kuala_Lumpur] [verify_registration] Updated 1 payments for invoice ID 14
+[22-Dec-2025 16:01:59 Asia/Kuala_Lumpur] [verify_registration] Updated 1 payments for invoice ID 15
+[22-Dec-2025 16:01:59 Asia/Kuala_Lumpur] [verify_registration] Total payments updated: 2
+[22-Dec-2025 16:01:59 Asia/Kuala_Lumpur] [verify_registration] IsFirstChild: NO, Parent IC: 030322-10-1849, PARENT Password: 1849
+[22-Dec-2025 16:02:01 Asia/Kuala_Lumpur] [Approval Email] Sent to chaichonghern@gmail.com for child Xander Teoh
+[22-Dec-2025 16:02:01 Asia/Kuala_Lumpur] [Approve] Reg#WSA2025-9162: invoices=2, payments=2, email=sent
+[22-Dec-2025 08:02:01 UTC] [Serve File] File not found: /home/wushuspo/public_html/uploads/payment_receipts/receipt_1_20251222052010_3c66a8ff.png
+[22-Dec-2025 08:02:01 UTC] [Serve File] Serving file: payment_receipts/receipt_3_20251222075013_834b43ca.jpg (Size: 39315 bytes, MIME: image/jpeg)
+[22-Dec-2025 08:02:01 UTC] [Serve File] Serving file: signatures/signature_WSA2025-9162_20251222075013_26ac6d8e.png (Size: 4165 bytes, MIME: image/png)
+[22-Dec-2025 08:02:01 UTC] [Serve File] Serving file: signatures/signature_WSA2025-5737_20251222052010_a4f9a31d.png (Size: 4664 bytes, MIME: image/png)
