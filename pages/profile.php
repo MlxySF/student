@@ -77,17 +77,43 @@ if (!$student) {
 
 // Get PDF path from registrations table (NEW METHOD - using file path instead of base64)
 $pdf_path = null;
+$pdf_debug_info = [];
+
 if ($registration_id) {
+    error_log("[Profile PDF Debug] Registration ID: {$registration_id}");
+    $pdf_debug_info[] = "Registration ID: {$registration_id}";
+    
     $pdf_stmt = $pdo->prepare("SELECT pdf_path FROM registrations WHERE id = ?");
     $pdf_stmt->execute([$registration_id]);
     $pdf_record = $pdf_stmt->fetch();
-    $pdf_path = $pdf_record['pdf_path'] ?? null;
     
-    // Check if file actually exists
-    if ($pdf_path && !file_exists($pdf_path)) {
-        $pdf_path = null; // File doesn't exist, don't show download button
+    $pdf_path = $pdf_record['pdf_path'] ?? null;
+    error_log("[Profile PDF Debug] PDF Path from DB: " . ($pdf_path ?? 'NULL'));
+    $pdf_debug_info[] = "PDF Path from DB: " . ($pdf_path ?? 'NULL');
+    
+    if ($pdf_path) {
+        $file_exists = file_exists($pdf_path);
+        error_log("[Profile PDF Debug] File exists check: " . ($file_exists ? 'YES' : 'NO'));
+        error_log("[Profile PDF Debug] Full path: {$pdf_path}");
+        $pdf_debug_info[] = "File exists: " . ($file_exists ? 'YES' : 'NO');
+        $pdf_debug_info[] = "Full path: {$pdf_path}";
+        
+        if (!$file_exists) {
+            error_log("[Profile PDF Debug] File does not exist, setting pdf_path to null");
+            $pdf_debug_info[] = "File does not exist at path, pdf_path set to null";
+            $pdf_path = null; // File doesn't exist, don't show download button
+        }
+    } else {
+        error_log("[Profile PDF Debug] No PDF path found in database");
+        $pdf_debug_info[] = "No PDF path found in database";
     }
+} else {
+    error_log("[Profile PDF Debug] No registration ID found");
+    $pdf_debug_info[] = "No registration ID found";
 }
+
+error_log("[Profile PDF Debug] Final pdf_path value: " . ($pdf_path ?? 'NULL'));
+$pdf_debug_info[] = "Final pdf_path: " . ($pdf_path ?? 'NULL');
 
 // Get enrolled classes count
 $stmt = $pdo->prepare("SELECT COUNT(*) as class_count FROM enrollments WHERE student_id = ? AND status = 'active'");
@@ -116,6 +142,11 @@ $stmt = $pdo->prepare("
 $stmt->execute([$studentAccountId]);
 $invoice_stats = $stmt->fetch();
 ?>
+
+<!-- PDF Debug Info (view page source to see) -->
+<!-- 
+<?php echo implode("\n", $pdf_debug_info); ?>
+-->
 
 <?php if (isParent()): ?>
 <div class="alert alert-info mb-3">
@@ -297,6 +328,10 @@ $invoice_stats = $stmt->fetch();
                 </div>
             </div>
         </div>
+        <?php else: ?>
+        <!-- DEBUG: PDF not available -->
+        <!-- Registration ID: <?php echo $registration_id ?? 'NULL'; ?> -->
+        <!-- PDF Path: <?php echo $pdf_path ?? 'NULL'; ?> -->
         <?php endif; ?>
     </div>
 </div>
