@@ -7,7 +7,6 @@ require_once 'config.php';
 require_once 'send_approval_email.php'; // Include email function
 require_once 'send_rejection_email.php'; // Include rejection email function
 require_once 'send_payment_approval_email.php'; // ✨ MOVED TO TOP - Include payment approval email
-require_once 'send_invoice_notification.php'; // ✨ NEW: Include invoice notification email
 
 // Log all POST requests to a file for debugging
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -987,8 +986,6 @@ if ($action === 'generate_monthly_invoices') {
         
         $created = 0;
         $skipped = 0;
-        $emailsSent = 0;
-        $emailsFailed = 0;
         
         foreach ($enrollments as $enroll) {
             $check = $pdo->prepare("
@@ -1008,13 +1005,12 @@ if ($action === 'generate_monthly_invoices') {
             $invoiceNumber = 'INV-' . date('Ym') . '-' . rand(1000, 9999);
             $description = "Monthly Fee: {$enroll['class_name']} ({$enroll['class_code']}) - $currentMonth";
             
-            $stmt = $pdo->prepare("
+            $pdo->prepare("
                 INSERT INTO invoices (
                     invoice_number, student_id, class_id, invoice_type,
                     description, amount, due_date, status, created_at
                 ) VALUES (?, ?, ?, 'monthly', ?, ?, ?, 'unpaid', NOW())
-            ");
-            $stmt->execute([
+            ")->execute([
                 $invoiceNumber,
                 $enroll['student_id'],
                 $enroll['class_id'],
@@ -1023,29 +1019,10 @@ if ($action === 'generate_monthly_invoices') {
                 $dueDate
             ]);
             
-            $invoiceId = $pdo->lastInsertId();
             $created++;
-            
-            // ✨ NEW: Send invoice notification email
-            try {
-                if (sendInvoiceNotification($pdo, $invoiceId)) {
-                    $emailsSent++;
-                    error_log("[Generate Invoices] Email sent for invoice {$invoiceNumber}");
-                } else {
-                    $emailsFailed++;
-                    error_log("[Generate Invoices] Email failed for invoice {$invoiceNumber}");
-                }
-            } catch (Exception $e) {
-                $emailsFailed++;
-                error_log("[Generate Invoices] Email exception for invoice {$invoiceNumber}: " . $e->getMessage());
-            }
         }
         
-        $message = "Monthly invoices generated! Created: $created, Skipped: $skipped";
-        if ($created > 0) {
-            $message .= " | Email notifications: {$emailsSent} sent, {$emailsFailed} failed";
-        }
-        $_SESSION['success'] = $message;
+        $_SESSION['success'] = "Monthly invoices generated! Created: $created, Skipped: $skipped";
         
     } catch (Exception $e) {
         $_SESSION['error'] = "Failed to generate invoices: " . $e->getMessage();
