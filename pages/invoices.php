@@ -3,6 +3,8 @@
 // FIXED: Determine student account ID properly for parent portal
 // FIXED: Use invoice's payment_month instead of current date
 // NEW: Added rejected status support and invoice number search
+// FIXED: Show receipt using receipt_path for rejected invoices
+// FIXED: Only highlight admin notes in rejected section, not entire table
 
 // Determine student account ID first
 if (isParent()) {
@@ -41,11 +43,12 @@ $available_months = [];
 // Fetch data if filters are applied (including "All Types" which is empty string but filter_applied is true)
 if ($filter_applied) {
     // Build SQL query - using studentAccountId for multi-child support
+    // UPDATED: Include receipt_path and receipt_filename for file storage
     $sql = "
         SELECT i.*, 
                c.class_code, c.class_name,
                p.id as payment_id, p.verification_status, p.upload_date,
-               p.receipt_data, p.receipt_mime_type, p.admin_notes
+               p.receipt_data, p.receipt_mime_type, p.receipt_path, p.receipt_filename, p.admin_notes
         FROM invoices i
         LEFT JOIN classes c ON i.class_id = c.id
         LEFT JOIN payments p ON i.id = p.invoice_id
@@ -257,6 +260,12 @@ function isClassFeeInvoice($invoice) {
 
 .bank-note i {
     margin-right: 6px;
+}
+
+/* UPDATED: Only highlight admin notes cell in rejected invoices */
+.admin-notes-rejected {
+    background-color: #fee2e2 !important;
+    border-left: 3px solid #ef4444 !important;
 }
 </style>
 
@@ -550,7 +559,7 @@ function isClassFeeInvoice($invoice) {
                         <thead><tr><th>Invoice #</th><th>Date</th><th>Description</th><th class="sp-hide-mobile">Class</th><th>Amount</th><th class="sp-hide-mobile">Admin Notes</th><th>Action</th></tr></thead>
                         <tbody>
                             <?php foreach ($rejected_invoices as $inv): ?>
-                                <tr class="sp-invoice-row table-danger">
+                                <tr class="sp-invoice-row">
                                     <td><strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
                                         <div class="d-md-none"><span class="badge bg-danger"><i class="fas fa-times-circle"></i> Rejected</span></div>
                                         <?php if ($inv['invoice_type'] === 'monthly_fee' && !empty($inv['payment_month'])): ?>
@@ -565,7 +574,7 @@ function isClassFeeInvoice($invoice) {
                                     </td>
                                     <td class="sp-hide-mobile"><?php echo $inv['class_code'] ? '<span class="badge bg-info">' . $inv['class_code'] . '</span>' : '-'; ?></td>
                                     <td><strong class="text-danger"><?php echo formatCurrency($inv['amount']); ?></strong></td>
-                                    <td class="sp-hide-mobile"><span class="text-danger"><?php echo !empty($inv['admin_notes']) ? htmlspecialchars(substr($inv['admin_notes'], 0, 50)) . '...' : 'No notes'; ?></span></td>
+                                    <td class="sp-hide-mobile admin-notes-rejected"><span class="text-danger fw-bold"><?php echo !empty($inv['admin_notes']) ? htmlspecialchars(substr($inv['admin_notes'], 0, 50)) . '...' : 'No notes'; ?></span></td>
                                     <td class="sp-invoice-actions-cell">
                                         <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#invoiceModal<?php echo $inv['id']; ?>"><i class="fas fa-eye"></i> View Details</button>
                                     </td>
@@ -679,12 +688,33 @@ function isClassFeeInvoice($invoice) {
         </table>
 
         <h6>Your Uploaded Receipt</h6>
-        <?php if (!empty($inv['receipt_data'])): ?>
-          <?php if ($inv['receipt_mime_type'] === 'application/pdf'): ?>
-            <embed src="data:<?php echo $inv['receipt_mime_type']; ?>;base64,<?php echo $inv['receipt_data']; ?>" type="<?php echo $inv['receipt_mime_type']; ?>" class="receipt-pdf">
-          <?php else: ?>
-            <img src="data:<?php echo $inv['receipt_mime_type']; ?>;base64,<?php echo $inv['receipt_data']; ?>" alt="Receipt" class="receipt-image">
-          <?php endif; ?>
+        <?php 
+        // UPDATED: Check for receipt_path first (new file storage), then fallback to receipt_data (old base64)
+        if (!empty($inv['receipt_path']) && file_exists($inv['receipt_path'])): 
+            $mime_type = mime_content_type($inv['receipt_path']);
+            $is_pdf = ($mime_type === 'application/pdf');
+        ?>
+            <?php if ($is_pdf): ?>
+                <embed src="<?php echo $inv['receipt_path']; ?>" type="application/pdf" class="receipt-pdf">
+                <div class="mt-2">
+                    <a href="<?php echo $inv['receipt_path']; ?>" class="btn btn-sm btn-primary" download="<?php echo $inv['receipt_filename']; ?>">
+                        <i class="fas fa-download"></i> Download Receipt
+                    </a>
+                </div>
+            <?php else: ?>
+                <img src="<?php echo $inv['receipt_path']; ?>" alt="Receipt" class="receipt-image">
+                <div class="mt-2">
+                    <a href="<?php echo $inv['receipt_path']; ?>" class="btn btn-sm btn-primary" download="<?php echo $inv['receipt_filename']; ?>">
+                        <i class="fas fa-download"></i> Download Receipt
+                    </a>
+                </div>
+            <?php endif; ?>
+        <?php elseif (!empty($inv['receipt_data'])): ?>
+            <?php if ($inv['receipt_mime_type'] === 'application/pdf'): ?>
+                <embed src="data:<?php echo $inv['receipt_mime_type']; ?>;base64,<?php echo $inv['receipt_data']; ?>" type="<?php echo $inv['receipt_mime_type']; ?>" class="receipt-pdf">
+            <?php else: ?>
+                <img src="data:<?php echo $inv['receipt_mime_type']; ?>;base64,<?php echo $inv['receipt_data']; ?>" alt="Receipt" class="receipt-image">
+            <?php endif; ?>
         <?php else: ?>
           <div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Receipt not available.</div>
         <?php endif; ?>
