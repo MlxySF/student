@@ -3,7 +3,7 @@
  * Payment Approval Email Notification System
  * Sends emails to parents/students when payment status changes
  * 
- * FIXED: PHPMailer Exception conflict with PHP's built-in Exception
+ * FIXED: PHPMailer Exception conflict with PHP's built-in Exception - use fully qualified names
  * FIXED: Pass $pdo as parameter instead of using global scope
  * FIXED: Parent email retrieval - join through students.parent_account_id
  * FIXED: Character encoding issues - removed emojis, using HTML entities
@@ -16,14 +16,10 @@
  *   sendPaymentApprovalEmail($pdo, $paymentId, 'verified', $adminNotes);
  */
 
-// ✨ FIX: Use aliases to prevent class name conflicts
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception as PHPMailerException;
-use PHPMailer\PHPMailer\SMTP;
-
-require 'PHPMailer/Exception.php';
-require 'PHPMailer/PHPMailer.php';
-require 'PHPMailer/SMTP.php';
+// ✨ FIX: Only require PHPMailer files, don't import classes to avoid conflicts
+require_once 'PHPMailer/Exception.php';
+require_once 'PHPMailer/PHPMailer.php';
+require_once 'PHPMailer/SMTP.php';
 
 /**
  * Send payment approval/rejection email (NO PDF ATTACHMENT)
@@ -109,17 +105,16 @@ function sendPaymentApprovalEmail($pdo, $paymentId, $status, $adminNotes = '') {
         
         error_log("[Payment Approval Email] Email will be sent to: {$recipientEmail}");
         
-        // Setup email
-        $mail = new PHPMailer(true);
+        // Setup email - use fully qualified class name to avoid conflicts
+        $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
         
         // SMTP Configuration
-        $mail->isSMTP();
         $mail->isSMTP();
         $mail->Host       = 'mail.wushusportacademy.com';
         $mail->SMTPAuth   = true;
         $mail->Username   = 'admin@wushusportacademy.com';
         $mail->Password   = 'UZa;nENf]!xqpRak';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
         $mail->CharSet    = 'UTF-8'; // ✨ Ensure UTF-8 encoding
         $mail->Encoding   = 'base64'; // ✨ Use base64 encoding for better compatibility
@@ -169,7 +164,7 @@ function sendPaymentApprovalEmail($pdo, $paymentId, $status, $adminNotes = '') {
         
         return true;
         
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         error_log("[Payment Approval Email] ❌ EXCEPTION CAUGHT:");
         error_log("[Payment Approval Email] Message: " . $e->getMessage());
         
