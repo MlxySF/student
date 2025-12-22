@@ -6,11 +6,12 @@
  * 
  * FIXED: PHPMailer Exception conflict with PHP's built-in Exception
  * FIXED: FPDF path corrected to main directory
+ * FIXED: Pass $pdo as parameter instead of using global scope
  * ADDED: Extensive debugging to troubleshoot email issues
  * 
  * Usage:
  *   require_once 'send_payment_approval_email.php';
- *   sendPaymentApprovalEmail($paymentId, 'verified', $adminNotes);
+ *   sendPaymentApprovalEmail($pdo, $paymentId, 'verified', $adminNotes);
  */
 
 // ✨ FIX: Use aliases to prevent class name conflicts
@@ -25,14 +26,13 @@ require 'PHPMailer/SMTP.php';
 /**
  * Send payment approval/rejection email with optional PDF receipt
  * 
+ * @param PDO $pdo Database connection
  * @param int $paymentId Payment ID from payments table
  * @param string $status 'verified' or 'rejected'
  * @param string $adminNotes Optional notes from admin
  * @return bool True if email sent successfully
  */
-function sendPaymentApprovalEmail($paymentId, $status, $adminNotes = '') {
-    global $pdo;
-    
+function sendPaymentApprovalEmail($pdo, $paymentId, $status, $adminNotes = '') {
     error_log("========================================");
     error_log("[Payment Approval Email] STARTING");
     error_log("[Payment Approval Email] Payment ID: {$paymentId}");
