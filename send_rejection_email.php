@@ -2,14 +2,12 @@
 /**
  * send_rejection_email.php
  * Sends email notification when a registration is rejected/cancelled
+ * 
+ * FIXED: Use centralized PHPMailer loader to prevent class conflicts
  */
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-require_once 'PHPMailer/Exception.php';
-require_once 'PHPMailer/PHPMailer.php';
-require_once 'PHPMailer/SMTP.php';
+// Load PHPMailer classes (centralized loader prevents duplicate declarations)
+require_once __DIR__ . '/phpmailer_loader.php';
 
 /**
  * Send rejection/cancellation email to parent
@@ -21,7 +19,8 @@ require_once 'PHPMailer/SMTP.php';
  * @return bool True if email sent successfully, false otherwise
  */
 function sendRejectionEmail($toEmail, $studentName, $registrationNumber, $rejectReason = '') {
-    $mail = new PHPMailer(true);
+    // Use fully qualified class name to avoid conflicts
+    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
     
     try {
         error_log("[Rejection Email] Sending to: {$toEmail}, Student: {$studentName}, Reg#: {$registrationNumber}");
@@ -32,7 +31,7 @@ function sendRejectionEmail($toEmail, $studentName, $registrationNumber, $reject
         $mail->SMTPAuth   = true;
         $mail->Username   = 'admin@wushusportacademy.com';
         $mail->Password   = 'UZa;nENf]!xqpRak';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
         // Email Headers
@@ -50,7 +49,7 @@ function sendRejectionEmail($toEmail, $studentName, $registrationNumber, $reject
         error_log("[Rejection Email] Successfully sent to {$toEmail}");
         return true;
         
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         error_log("[Rejection Email] Error: {$mail->ErrorInfo}");
         return false;
     }
@@ -151,3 +150,4 @@ function getRejectionEmailHTML($studentName, $registrationNumber, $rejectReason)
 
     return $html;
 }
+?>
