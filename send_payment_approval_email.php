@@ -7,6 +7,7 @@
  * FIXED: PHPMailer Exception conflict with PHP's built-in Exception
  * FIXED: FPDF path corrected to main directory
  * FIXED: Pass $pdo as parameter instead of using global scope
+ * FIXED: Parent email retrieval - join through students.parent_account_id instead of payments.parent_account_id
  * ADDED: Extensive debugging to troubleshoot email issues
  * 
  * Usage:
@@ -41,7 +42,7 @@ function sendPaymentApprovalEmail($pdo, $paymentId, $status, $adminNotes = '') {
     error_log("========================================");
     
     try {
-        // Get payment details with student and parent information
+        // ✨ FIXED: Get payment details with parent email through students.parent_account_id
         $sql = "
             SELECT 
                 p.id as payment_id,
@@ -53,6 +54,8 @@ function sendPaymentApprovalEmail($pdo, $paymentId, $status, $adminNotes = '') {
                 s.id as student_account_id,
                 s.full_name as student_name,
                 s.student_id as student_number,
+                s.email as student_email,
+                s.parent_account_id,
                 r.name_en as registration_name,
                 c.class_name,
                 c.class_code,
@@ -63,10 +66,10 @@ function sendPaymentApprovalEmail($pdo, $paymentId, $status, $adminNotes = '') {
                 pa.parent_id as parent_number
             FROM payments p
             JOIN students s ON p.student_id = s.id
+            LEFT JOIN parent_accounts pa ON s.parent_account_id = pa.id
             LEFT JOIN registrations r ON s.id = r.student_account_id
             LEFT JOIN classes c ON p.class_id = c.id
             LEFT JOIN invoices i ON p.invoice_id = i.id
-            LEFT JOIN parent_accounts pa ON p.parent_account_id = pa.id
             WHERE p.id = ?
         ";
         
@@ -83,19 +86,28 @@ function sendPaymentApprovalEmail($pdo, $paymentId, $status, $adminNotes = '') {
         
         error_log("[Payment Approval Email] Payment record found:");
         error_log("  - Student Name: " . ($payment['student_name'] ?? 'NULL'));
+        error_log("  - Student Email: " . ($payment['student_email'] ?? 'NULL'));
+        error_log("  - Parent Account ID: " . ($payment['parent_account_id'] ?? 'NULL'));
         error_log("  - Parent Email: " . ($payment['parent_email'] ?? 'NULL'));
+        error_log("  - Parent Name: " . ($payment['parent_name'] ?? 'NULL'));
         error_log("  - Amount: " . ($payment['amount'] ?? 'NULL'));
         
-        // Determine recipient email
+        // Determine recipient email - prioritize parent email, fallback to student email
         $recipientEmail = $payment['parent_email'];
         $recipientName = $payment['parent_name'];
         
         if (empty($recipientEmail)) {
-            error_log("[Payment Approval Email] ERROR: No parent email found for payment ID {$paymentId}");
+            error_log("[Payment Approval Email] WARNING: No parent email found, trying student email");
+            $recipientEmail = $payment['student_email'];
+            $recipientName = $payment['student_name'];
+        }
+        
+        if (empty($recipientEmail)) {
+            error_log("[Payment Approval Email] ERROR: No email found (neither parent nor student) for payment ID {$paymentId}");
             return false;
         }
         
-        error_log("[Payment Approval Email] Email will be sent to: {$recipientEmail}");
+        error_log("[Payment Approval Email] Email will be sent to: {$recipientEmail} ({$recipientName})");
         
         // Setup email
         $mail = new PHPMailer(true);
