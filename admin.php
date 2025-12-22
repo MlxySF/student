@@ -306,6 +306,63 @@ $page = $_GET['page'] ?? 'login';
             -moz-osx-font-smoothing: grayscale;
         }
 
+        /* ============================================
+           LOADING OVERLAY - Prevents duplicate submissions
+           ============================================ */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 400px;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .loading-subtext {
+            font-size: 14px;
+            color: #64748b;
+        }
+
         /* Fixed Top Header */
         .top-header {
             position: fixed;
@@ -616,11 +673,6 @@ $page = $_GET['page'] ?? 'login';
             animation: spin 1s linear infinite;
         }
 
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
         .reload-toast {
             position: fixed;
             top: 90px;
@@ -791,6 +843,11 @@ $page = $_GET['page'] ?? 'login';
                 width: 100%;
                 justify-content: center;
             }
+
+            .loading-content {
+                margin: 20px;
+                padding: 30px 20px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -868,6 +925,15 @@ $page = $_GET['page'] ?? 'login';
 </head>
 <body<?php echo ($page !== 'login') ? ' class="logged-in"' : ''; ?>>
 
+<!-- GLOBAL LOADING OVERLAY -->
+<div class="loading-overlay" id="globalLoadingOverlay">
+    <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Processing...</div>
+        <div class="loading-subtext">Please wait, do not close this window</div>
+    </div>
+</div>
+
 <!-- ✨ NEW: Reload Toast Notification -->
 <div class="reload-toast" id="reloadToast">
     <i class="fas fa-check-circle text-success"></i>
@@ -891,7 +957,7 @@ $page = $_GET['page'] ?? 'login';
                 </div>
             <?php endif; ?>
 
-            <form method="POST" action="">
+            <form method="POST" action="" class="submit-with-loading">
                 <input type="hidden" name="action" value="admin_login">
                 <div class="mb-3">
                     <label class="form-label"><i class="fas fa-user"></i> Username</label>
@@ -1069,6 +1135,33 @@ $page = $_GET['page'] ?? 'login';
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
+    // ============================================================
+    // GLOBAL LOADING OVERLAY HANDLER
+    // Prevents duplicate form submissions
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const overlay = document.getElementById('globalLoadingOverlay');
+        
+        // Find all forms that should show loading overlay
+        const forms = document.querySelectorAll('.submit-with-loading, form[method="POST"]');
+        
+        forms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                // Don't show overlay for search/filter forms (GET method)
+                if (form.method.toLowerCase() === 'post') {
+                    // Show overlay
+                    overlay.classList.add('active');
+                    
+                    // Disable all submit buttons in the form
+                    const submitButtons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+                    submitButtons.forEach(btn => {
+                        btn.disabled = true;
+                    });
+                }
+            });
+        });
+    });
+
     // ✨ NEW: Reload Page Data Function
     function reloadPageData() {
         const reloadBtn = document.querySelector('.btn-reload');
