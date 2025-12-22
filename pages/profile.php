@@ -77,6 +77,7 @@ if (!$student) {
 
 // Get PDF path from registrations table (NEW METHOD - using file path instead of base64)
 $pdf_path = null;
+$pdf_relative_path = null;
 $pdf_debug_info = [];
 
 if ($registration_id) {
@@ -87,21 +88,28 @@ if ($registration_id) {
     $pdf_stmt->execute([$registration_id]);
     $pdf_record = $pdf_stmt->fetch();
     
-    $pdf_path = $pdf_record['pdf_path'] ?? null;
-    error_log("[Profile PDF Debug] PDF Path from DB: " . ($pdf_path ?? 'NULL'));
-    $pdf_debug_info[] = "PDF Path from DB: " . ($pdf_path ?? 'NULL');
+    $pdf_relative_path = $pdf_record['pdf_path'] ?? null;
+    error_log("[Profile PDF Debug] PDF Path from DB (relative): " . ($pdf_relative_path ?? 'NULL'));
+    $pdf_debug_info[] = "PDF Path from DB (relative): " . ($pdf_relative_path ?? 'NULL');
     
-    if ($pdf_path) {
+    if ($pdf_relative_path) {
+        // FIXED: Prepend the uploads directory to the relative path
+        // Database stores: registration_pdfs/file.pdf
+        // Actual location: /uploads/registration_pdfs/file.pdf
+        $pdf_path = __DIR__ . '/../uploads/' . $pdf_relative_path;
+        
+        error_log("[Profile PDF Debug] Full absolute path: {$pdf_path}");
+        $pdf_debug_info[] = "Full absolute path: {$pdf_path}";
+        
         $file_exists = file_exists($pdf_path);
         error_log("[Profile PDF Debug] File exists check: " . ($file_exists ? 'YES' : 'NO'));
-        error_log("[Profile PDF Debug] Full path: {$pdf_path}");
         $pdf_debug_info[] = "File exists: " . ($file_exists ? 'YES' : 'NO');
-        $pdf_debug_info[] = "Full path: {$pdf_path}";
         
         if (!$file_exists) {
             error_log("[Profile PDF Debug] File does not exist, setting pdf_path to null");
             $pdf_debug_info[] = "File does not exist at path, pdf_path set to null";
-            $pdf_path = null; // File doesn't exist, don't show download button
+            $pdf_path = null;
+            $pdf_relative_path = null;
         }
     } else {
         error_log("[Profile PDF Debug] No PDF path found in database");
@@ -114,6 +122,7 @@ if ($registration_id) {
 
 error_log("[Profile PDF Debug] Final pdf_path value: " . ($pdf_path ?? 'NULL'));
 $pdf_debug_info[] = "Final pdf_path: " . ($pdf_path ?? 'NULL');
+$pdf_debug_info[] = "Relative path for download: " . ($pdf_relative_path ?? 'NULL');
 
 // Get enrolled classes count
 $stmt = $pdo->prepare("SELECT COUNT(*) as class_count FROM enrollments WHERE student_id = ? AND status = 'active'");
@@ -314,7 +323,7 @@ $invoice_stats = $stmt->fetch();
             </div>
         </div>
 
-        <?php if (!empty($pdf_path)): ?>
+        <?php if (!empty($pdf_path) && !empty($pdf_relative_path)): ?>
         <div class="card">
             <div class="card-header bg-success text-white"><i class="fas fa-file-contract"></i> Registration Agreement</div>
             <div class="card-body">
@@ -322,7 +331,7 @@ $invoice_stats = $stmt->fetch();
                     <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
                     <p class="mb-3"><strong>Signed Agreement Available</strong></p>
                     <p class="text-muted small mb-3">Download your signed registration agreement PDF</p>
-                    <a href="download_agreement.php?id=<?php echo $registration_id; ?>" class="btn btn-success w-100" target="_blank">
+                    <a href="../uploads/<?php echo e($pdf_relative_path); ?>" class="btn btn-success w-100" target="_blank" download>
                         <i class="fas fa-download"></i> Download Agreement PDF
                     </a>
                 </div>
@@ -331,7 +340,8 @@ $invoice_stats = $stmt->fetch();
         <?php else: ?>
         <!-- DEBUG: PDF not available -->
         <!-- Registration ID: <?php echo $registration_id ?? 'NULL'; ?> -->
-        <!-- PDF Path: <?php echo $pdf_path ?? 'NULL'; ?> -->
+        <!-- PDF Relative Path: <?php echo $pdf_relative_path ?? 'NULL'; ?> -->
+        <!-- PDF Absolute Path: <?php echo $pdf_path ?? 'NULL'; ?> -->
         <?php endif; ?>
     </div>
 </div>
