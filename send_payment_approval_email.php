@@ -3,6 +3,7 @@
  * Payment Approval Email Notification System
  * Sends emails to parents/students when payment status changes
  * 
+ * FIXED: Use centralized PHPMailer loader to prevent class conflicts
  * FIXED: PHPMailer Exception conflict with PHP's built-in Exception - use fully qualified names
  * FIXED: Pass $pdo as parameter instead of using global scope
  * FIXED: Parent email retrieval - join through students.parent_account_id
@@ -16,10 +17,8 @@
  *   sendPaymentApprovalEmail($pdo, $paymentId, 'verified', $adminNotes);
  */
 
-// ✨ FIX: Only require PHPMailer files, don't import classes to avoid conflicts
-require_once 'PHPMailer/Exception.php';
-require_once 'PHPMailer/PHPMailer.php';
-require_once 'PHPMailer/SMTP.php';
+// Load PHPMailer classes (centralized loader prevents duplicate declarations)
+require_once __DIR__ . '/phpmailer_loader.php';
 
 /**
  * Send payment approval/rejection email (NO PDF ATTACHMENT)
