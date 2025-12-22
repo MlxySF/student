@@ -1,4 +1,7 @@
 <?php
+// ✨ IMPORTANT: Start output buffering to prevent any accidental output before JSON
+ob_start();
+
 session_start();
 require_once 'config.php';
 require_once 'send_approval_email.php'; // Include email function
@@ -20,17 +23,25 @@ function isAdminLoggedIn() {
 
 // Handle GET requests for data fetching
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
+    // ✨ Clear any buffered output before sending JSON
+    ob_end_clean();
+    
     header('Content-Type: application/json');
     
     $action = $_GET['action'];
     
     if ($action === 'get_student_details') {
         if (!isAdminLoggedIn()) {
-            echo json_encode(['error' => 'Unauthorized']);
+            echo json_encode(['error' => 'Unauthorized', 'message' => 'Please log in again']);
             exit;
         }
         
         $student_id = $_GET['student_id'] ?? 0;
+        
+        if (empty($student_id)) {
+            echo json_encode(['error' => 'Invalid student ID']);
+            exit;
+        }
         
         try {
             $stmt = $pdo->prepare("
@@ -45,12 +56,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
             $stmt->execute([$student_id]);
             $enrollments = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            echo json_encode(['enrollments' => $enrollments]);
+            echo json_encode([
+                'success' => true,
+                'enrollments' => $enrollments
+            ]);
         } catch (PDOException $e) {
-            echo json_encode(['error' => 'Database error', 'message' => $e->getMessage()]);
+            echo json_encode([
+                'error' => 'Database error', 
+                'message' => $e->getMessage()
+            ]);
         }
         exit;
     }
+    
+    // If action not recognized, return error
+    echo json_encode(['error' => 'Unknown action']);
+    exit;
 }
 
 // Check admin login for POST requests
