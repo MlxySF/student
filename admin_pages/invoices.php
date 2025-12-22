@@ -3,6 +3,7 @@
 $filter_month = isset($_GET['filter_month']) ? trim($_GET['filter_month']) : '';
 $filter_type = isset($_GET['filter_type']) ? trim($_GET['filter_type']) : '';
 $filter_status = isset($_GET['filter_status']) ? trim($_GET['filter_status']) : '';
+$filter_invoice_number = isset($_GET['filter_invoice_number']) ? trim($_GET['filter_invoice_number']) : '';
 
 // Parse the filter_month to handle year-only or year-month format
 $filter_year = '';
@@ -45,6 +46,11 @@ if ($filter_status) {
     $params[] = $filter_status;
 }
 
+if ($filter_invoice_number) {
+    $where_conditions[] = "invoice_number LIKE ?";
+    $params[] = '%' . $filter_invoice_number . '%';
+}
+
 $where_clause = count($where_conditions) > 0 ? " AND " . implode(" AND ", $where_conditions) : "";
 
 // Build WHERE clauses for JOIN queries (with table alias)
@@ -69,6 +75,11 @@ if ($filter_type) {
 if ($filter_status) {
     $where_conditions_join[] = "i.status = ?";
     $params_join[] = $filter_status;
+}
+
+if ($filter_invoice_number) {
+    $where_conditions_join[] = "i.invoice_number LIKE ?";
+    $params_join[] = '%' . $filter_invoice_number . '%';
 }
 
 // Get invoice statistics
@@ -315,8 +326,15 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
         <form method="GET" action="" class="row g-3 align-items-end">
             <input type="hidden" name="page" value="invoices">
             
+            <!-- NEW: Invoice Number Search -->
             <div class="col-md-3">
-                <label class="form-label"><i class="fas fa-tag"></i> Invoice Type</label>
+                <label class="form-label"><i class="fas fa-hashtag"></i> Invoice Number</label>
+                <input type="text" name="filter_invoice_number" class="form-control" value="<?php echo htmlspecialchars($filter_invoice_number); ?>" placeholder="INV-20251222-0001">
+                <small class="text-muted">Enter full or partial invoice number</small>
+            </div>
+            
+            <div class="col-md-2">
+                <label class="form-label"><i class="fas fa-tag"></i> Type</label>
                 <select name="filter_type" class="form-select">
                     <option value="">All Types</option>
                     <option value="monthly_fee" <?php echo $filter_type === 'monthly_fee' ? 'selected' : ''; ?>>Monthly Fee</option>
@@ -336,13 +354,14 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                     <option value="paid" <?php echo $filter_status === 'paid' ? 'selected' : ''; ?>>Paid</option>
                     <option value="overdue" <?php echo $filter_status === 'overdue' ? 'selected' : ''; ?>>Overdue</option>
                     <option value="cancelled" <?php echo $filter_status === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                    <option value="rejected" <?php echo $filter_status === 'rejected' ? 'selected' : ''; ?>>Rejected</option>
                 </select>
             </div>
             
-            <div class="col-md-3">
-                <label class="form-label"><i class="fas fa-calendar"></i> Year or Month</label>
+            <div class="col-md-2">
+                <label class="form-label"><i class="fas fa-calendar"></i> Year/Month</label>
                 <input type="text" name="filter_month" class="form-control" value="<?php echo htmlspecialchars($filter_month); ?>" placeholder="2025 or 2025-12">
-                <small class="text-muted">Enter year (e.g., 2025) or year-month (e.g., 2025-12)</small>
+                <small class="text-muted">Year or Year-Month</small>
             </div>
             
             <div class="col-md-2">
@@ -351,16 +370,19 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                 </button>
             </div>
             
-            <?php if ($filter_month || $filter_type || $filter_status): ?>
-            <div class="col-md-2">
-                <a href="?page=invoices" class="btn btn-secondary w-100"><i class="fas fa-times"></i> Clear</a>
+            <?php if ($filter_month || $filter_type || $filter_status || $filter_invoice_number): ?>
+            <div class="col-md-1">
+                <a href="?page=invoices" class="btn btn-secondary w-100"><i class="fas fa-times"></i></a>
             </div>
             <?php endif; ?>
         </form>
         
-        <?php if ($filter_month || $filter_type || $filter_status): ?>
+        <?php if ($filter_month || $filter_type || $filter_status || $filter_invoice_number): ?>
             <div class="alert alert-info mt-3 mb-0">
                 <i class="fas fa-info-circle"></i> <strong>Active Filters:</strong>
+                <?php if ($filter_invoice_number): ?>
+                    <span class="badge bg-primary ms-2">Invoice: <?php echo htmlspecialchars($filter_invoice_number); ?></span>
+                <?php endif; ?>
                 <?php if ($filter_type): ?>
                     <span class="badge bg-primary ms-2"><?php echo ucfirst(str_replace('_', ' ', $filter_type)); ?></span>
                 <?php endif; ?>
@@ -422,7 +444,10 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
         $export_url .= 'filter_status=' . urlencode($filter_status) . '&';
     }
     if ($filter_month) {
-        $export_url .= 'filter_month=' . urlencode($filter_month);
+        $export_url .= 'filter_month=' . urlencode($filter_month) . '&';
+    }
+    if ($filter_invoice_number) {
+        $export_url .= 'filter_invoice_number=' . urlencode($filter_invoice_number);
     }
     $export_url = rtrim($export_url, '?&');
     ?>
@@ -447,9 +472,9 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                     </thead>
                     <tbody>
 <?php foreach ($all_invoices as $invoice): 
-    $status_badge = $invoice['status'] === 'paid' ? 'success' : ($invoice['status'] === 'pending' ? 'info' : ($invoice['status'] === 'overdue' ? 'danger' : ($invoice['status'] === 'cancelled' ? 'secondary' : 'warning')));
-    $status_text = $invoice['status'] === 'paid' ? 'Paid' : ($invoice['status'] === 'pending' ? 'Pending Verification' : ($invoice['status'] === 'overdue' ? 'Overdue' : ($invoice['status'] === 'cancelled' ? 'Cancelled' : 'Unpaid')));
-    $status_icon = $invoice['status'] === 'paid' ? 'check-circle' : ($invoice['status'] === 'pending' ? 'clock' : ($invoice['status'] === 'overdue' ? 'exclamation-triangle' : ($invoice['status'] === 'cancelled' ? 'ban' : 'exclamation-circle')));
+    $status_badge = $invoice['status'] === 'paid' ? 'success' : ($invoice['status'] === 'pending' ? 'info' : ($invoice['status'] === 'overdue' ? 'danger' : ($invoice['status'] === 'cancelled' ? 'secondary' : ($invoice['status'] === 'rejected' ? 'danger' : 'warning'))));
+    $status_text = $invoice['status'] === 'paid' ? 'Paid' : ($invoice['status'] === 'pending' ? 'Pending Verification' : ($invoice['status'] === 'overdue' ? 'Overdue' : ($invoice['status'] === 'cancelled' ? 'Cancelled' : ($invoice['status'] === 'rejected' ? 'Rejected' : 'Unpaid'))));
+    $status_icon = $invoice['status'] === 'paid' ? 'check-circle' : ($invoice['status'] === 'pending' ? 'clock' : ($invoice['status'] === 'overdue' ? 'exclamation-triangle' : ($invoice['status'] === 'cancelled' ? 'ban' : ($invoice['status'] === 'rejected' ? 'times-circle' : 'exclamation-circle'))));
     $has_payment = !empty($invoice['payment_id']);
 ?>
     <tr>
@@ -495,7 +520,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                 <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editInvoiceModal<?php echo $invoice['id']; ?>"><i class="fas fa-edit"></i></button>
                 <button class="btn btn-danger" onclick="if(confirm('Delete?')) document.getElementById('deleteInvoiceForm<?php echo $invoice['id']; ?>').submit();"><i class="fas fa-trash"></i></button>
             </div>
-            <form id="deleteInvoiceForm<?php echo $invoice['id']; ?>" method="POST" action="admin.php" style="display:none;">
+            <form id="deleteInvoiceForm<?php echo $invoice['id']; ?>" method="POST" action="admin.php" style="display:none;" class="submit-with-loading">
                 <input type="hidden" name="action" value="delete_invoice"><input type="hidden" name="invoice_id" value="<?php echo $invoice['id']; ?>">
             </form>
         </td>
@@ -506,7 +531,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
             </div>
         <?php else: ?>
             <div class="alert alert-info"><i class="fas fa-info-circle"></i> 
-                <?php if ($filter_month || $filter_type || $filter_status): ?>
+                <?php if ($filter_month || $filter_type || $filter_status || $filter_invoice_number): ?>
                     No invoices match your selected filters. Try adjusting your search criteria.
                 <?php else: ?>
                     No invoices found. Use the filter above to search for invoices.
@@ -537,7 +562,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                 <tr><th>Description</th><td><?php echo nl2br(htmlspecialchars($invoice['description'])); ?></td></tr>
                 <tr><th>Amount</th><td><strong><?php echo formatCurrency($invoice['amount']); ?></strong></td></tr>
                 <tr><th>Due Date</th><td><?php echo formatDate($invoice['due_date']); ?></td></tr>
-                <tr><th>Status</th><td><span class="badge bg-<?php echo $invoice['status'] === 'paid' ? 'success' : 'warning'; ?>"><?php echo ucfirst($invoice['status']); ?></span></td></tr>
+                <tr><th>Status</th><td><span class="badge bg-<?php echo $invoice['status'] === 'paid' ? 'success' : ($invoice['status'] === 'rejected' ? 'danger' : 'warning'); ?>"><?php echo ucfirst($invoice['status']); ?></span></td></tr>
                 <?php if ($invoice['paid_date']): ?>
                 <tr><th>Paid Date</th><td><?php echo formatDateTime($invoice['paid_date']); ?></td></tr>
                 <?php endif; ?>
@@ -582,7 +607,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                 <?php if ($invoice['verification_status'] === 'pending'): ?>
                     <hr class="my-4">
                     <h6 class="mb-3">Verify Payment</h6>
-                    <form method="POST" action="admin.php">
+                    <form method="POST" action="admin.php" class="submit-with-loading">
                         <input type="hidden" name="action" value="verify_payment">
                         <input type="hidden" name="payment_id" value="<?php echo $invoice['payment_id']; ?>">
                         <input type="hidden" name="invoice_id" value="<?php echo $invoice['id']; ?>">
@@ -599,7 +624,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                             <i class="fas fa-calendar-check"></i> <strong>Payment Date:</strong> <?php echo formatDate($invoice['payment_date']); ?>
                         </div>
                         <?php endif; ?>
-                        <div class="alert alert-info"><i class="fas fa-info-circle"></i> Approving will automatically mark invoice as PAID.</div>
+                        <div class="alert alert-info"><i class="fas fa-info-circle"></i> Approving will automatically mark invoice as PAID. Rejecting will mark invoice as REJECTED.</div>
                         <div class="mb-3">
                             <label class="form-label">Admin Notes (Optional)</label>
                             <textarea name="admin_notes" class="form-control" rows="3"></textarea>
@@ -620,7 +645,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
     <div class="modal-dialog"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title"><i class="fas fa-edit"></i> Edit Invoice</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <form method="POST" action="admin.php">
+        <form method="POST" action="admin.php" class="submit-with-loading">
             <div class="modal-body">
                 <input type="hidden" name="action" value="edit_invoice">
                 <input type="hidden" name="invoice_id" value="<?php echo $invoice['id']; ?>">
@@ -639,6 +664,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                         <option value="paid" <?php echo $invoice['status'] === 'paid' ? 'selected' : ''; ?>>Paid</option>
                         <option value="overdue" <?php echo $invoice['status'] === 'overdue' ? 'selected' : ''; ?>>Overdue</option>
                         <option value="cancelled" <?php echo $invoice['status'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                        <option value="rejected" <?php echo $invoice['status'] === 'rejected' ? 'selected' : ''; ?>>Rejected</option>
                     </select>
                 </div>
             </div>
@@ -655,7 +681,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
     <div class="modal-dialog"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title"><i class="fas fa-plus"></i> Create New Invoice</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <form method="POST" action="admin.php">
+        <form method="POST" action="admin.php" class="submit-with-loading">
             <div class="modal-body">
                 <input type="hidden" name="action" value="create_invoice">
                 <div class="mb-3"><label class="form-label">Student *</label>
@@ -706,7 +732,7 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
             <h5 class="modal-title"><i class="fas fa-calendar-alt"></i> Generate Monthly Invoices</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
-        <form method="POST" action="admin.php" onsubmit="return confirm('Generate monthly invoices for <?php echo date('F Y'); ?>?\n\nDue date: <?php echo date('F 10, Y'); ?>');">
+        <form method="POST" action="admin.php" class="submit-with-loading" onsubmit="return confirm('Generate monthly invoices for <?php echo date('F Y'); ?>?\n\nDue date: <?php echo date('F 10, Y'); ?>');">
             <div class="modal-body">
                 <input type="hidden" name="action" value="generate_monthly_invoices">
                 <div class="alert alert-info"><h6><i class="fas fa-info-circle"></i> About</h6>
