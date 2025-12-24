@@ -46,14 +46,21 @@ if ($filter_applied) {
     // Build SQL query - using studentAccountId for multi-child support
     // UPDATED: Include receipt_path and receipt_filename for file storage
     $sql = "
-        SELECT i.*, 
-               c.class_code, c.class_name,
-               p.id as payment_id, p.verification_status, p.upload_date,
-               p.receipt_data, p.receipt_mime_type, p.receipt_path, p.receipt_filename, p.admin_notes
-        FROM invoices i
-        LEFT JOIN classes c ON i.class_id = c.id
-        LEFT JOIN payments p ON i.id = p.invoice_id
-        WHERE i.student_id = ?";
+    SELECT i.*, 
+           c.class_code, c.class_name,
+           p.id as payment_id, p.verification_status, p.upload_date,
+           p.receipt_data, p.receipt_mime_type, p.receipt_path, p.receipt_filename, 
+           p.admin_notes, p.receipt_size
+    FROM invoices i
+    LEFT JOIN classes c ON i.class_id = c.id
+    LEFT JOIN payments p ON i.id = p.invoice_id AND p.id = (
+        SELECT id FROM payments 
+        WHERE invoice_id = i.id 
+        ORDER BY id DESC 
+        LIMIT 1
+    )
+    WHERE i.student_id = ?";
+
 
     $params = [$studentAccountId];
 
@@ -139,14 +146,30 @@ function getReceiptPath($receipt_path) {
         return null;
     }
     
+    // If path starts with payment_receipts/ (without uploads/), add uploads/ prefix
+    if (strpos($receipt_path, 'payment_receipts/') === 0) {
+        $full_path = __DIR__ . '/../uploads/' . $receipt_path;
+        return $full_path;
+    }
+    
     // If path starts with uploads/, it's relative to document root
     if (strpos($receipt_path, 'uploads/') === 0) {
         $full_path = __DIR__ . '/../' . $receipt_path;
-    } else {
-        $full_path = $receipt_path;
+        return $full_path;
     }
     
-    return $full_path;
+    // If it's already an absolute path, return as is
+    if (file_exists($receipt_path)) {
+        return $receipt_path;
+    }
+    
+    // Try as relative from root
+    $full_path = __DIR__ . '/../' . $receipt_path;
+    if (file_exists($full_path)) {
+        return $full_path;
+    }
+    
+    return $receipt_path;
 }
 
 // Helper function to get web-accessible receipt URL
@@ -155,12 +178,17 @@ function getReceiptUrl($receipt_path) {
         return null;
     }
     
-    // If path starts with uploads/, make it web-accessible
-    if (strpos($receipt_path, 'uploads/') === 0) {
-        return $receipt_path; // Already relative to web root
+    // If path starts with payment_receipts/ (without uploads/), add uploads/ prefix
+    if (strpos($receipt_path, 'payment_receipts/') === 0) {
+        return '/uploads/' . $receipt_path;
     }
     
-    // If it's an absolute path, try to convert it
+    // If path starts with uploads/, make it web-accessible
+    if (strpos($receipt_path, 'uploads/') === 0) {
+        return '/' . $receipt_path;
+    }
+    
+    // If it's an absolute file path, try to convert it
     if (strpos($receipt_path, '/') === 0 || preg_match('/^[a-zA-Z]:/', $receipt_path)) {
         // Extract the relative part from document root
         $doc_root = $_SERVER['DOCUMENT_ROOT'];
@@ -169,8 +197,10 @@ function getReceiptUrl($receipt_path) {
         }
     }
     
-    return $receipt_path;
+    return '/' . $receipt_path;
 }
+
+
 ?>
 
 <style>
@@ -654,7 +684,7 @@ function getReceiptUrl($receipt_path) {
                                     <td><strong><?php echo formatCurrency($inv['amount']); ?></strong></td>
                                     <td class="sp-hide-mobile"><?php echo $inv['paid_date'] ? date('d M Y', strtotime($inv['paid_date'])) : '-'; ?></td>
                                     <td class="sp-invoice-actions-cell">
-                                        <a href="generate_invoice_pdf.php?invoice_id=<?php echo $inv['id']; ?>" class="btn btn-sm btn-success" target="_blank"><i class="fas fa-download"></i> PDF</a>
+                                        <button type="button" class="btn btn-sm btn-success" onclick="downloadInvoicePDF(<?php echo $inv['id']; ?>)"><i class="fas fa-download"></i> PDF</button>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -709,27 +739,28 @@ function getReceiptUrl($receipt_path) {
         </td></tr>
       </table>
 
-      <?php if (!empty($inv['payment_id'])): ?>
+      <?php 
+      // FIXED: Show payment info for pending/verified invoices only, NOT for rejected
+      if (!empty($inv['payment_id']) && $inv['status'] !== 'rejected'): 
+      ?>
         <hr><h6><i class="fas fa-receipt"></i> Payment Information</h6>
         <table class="table table-bordered mb-3">
           <tr><th width="30%">Upload Date</th><td><?php echo date('d M Y, g:i A', strtotime($inv['upload_date'])); ?></td></tr>
           <tr><th>Status</th><td>
             <?php if ($inv['verification_status'] === 'verified'): ?>
               <span class="badge bg-success"><i class="fas fa-check-circle"></i> Verified</span>
-            <?php elseif ($inv['verification_status'] === 'rejected'): ?>
-              <span class="badge bg-danger"><i class="fas fa-times-circle"></i> Rejected</span>
             <?php else: ?>
               <span class="badge bg-warning"><i class="fas fa-clock"></i> Pending Verification</span>
             <?php endif; ?>
           </td></tr>
           <?php if (!empty($inv['admin_notes'])): ?>
-          <tr><th>Admin Notes</th><td><div class="alert alert-<?php echo $inv['verification_status'] === 'rejected' ? 'danger' : 'info'; ?> mb-0"><?php echo nl2br(htmlspecialchars($inv['admin_notes'])); ?></div></td></tr>
+          <tr><th>Admin Notes</th><td><div class="alert alert-info mb-0"><?php echo nl2br(htmlspecialchars($inv['admin_notes'])); ?></div></td></tr>
           <?php endif; ?>
         </table>
 
         <h6>Your Uploaded Receipt</h6>
         <?php 
-        // FIXED: Proper receipt path resolution for rejected invoices
+        // Proper receipt path resolution
         $receipt_full_path = getReceiptPath($inv['receipt_path']);
         $receipt_url = getReceiptUrl($inv['receipt_path']);
         
@@ -762,7 +793,21 @@ function getReceiptUrl($receipt_path) {
         <?php else: ?>
           <div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Receipt not available.</div>
         <?php endif; ?>
-      <?php elseif (in_array($inv['status'], ['unpaid', 'overdue', 'rejected'])): ?>
+      <?php endif; ?>
+      
+      <?php 
+      // FIXED: Show resubmit form for unpaid, overdue, AND rejected invoices
+      if (in_array($inv['status'], ['unpaid', 'overdue', 'rejected'])): 
+      ?>
+        <?php if ($inv['status'] === 'rejected' && !empty($inv['admin_notes'])): ?>
+          <!-- Show rejection reason for rejected invoices -->
+          <hr>
+          <div class="alert alert-danger">
+            <h6 class="alert-heading"><i class="fas fa-exclamation-circle"></i> Rejection Reason</h6>
+            <p class="mb-0"><?php echo nl2br(htmlspecialchars($inv['admin_notes'])); ?></p>
+          </div>
+        <?php endif; ?>
+        
         <!-- Show Bank Details based on invoice type -->
         <?php if (isClassFeeInvoice($inv)): ?>
           <!-- Bank Details for Class Fees -->
@@ -779,8 +824,8 @@ function getReceiptUrl($receipt_path) {
             <div class="bank-info-row">
               <span class="bank-info-label">Account Number</span>
               <span class="bank-info-value">
-                562123456789
-                <button class="copy-btn" onclick="copyToClipboard('562123456789', this)">
+                505019816740
+                <button class="copy-btn" onclick="copyToClipboard('505019816740', this)">
                   <i class="fas fa-copy"></i> Copy
                 </button>
               </span>
@@ -796,17 +841,17 @@ function getReceiptUrl($receipt_path) {
             <h6><i class="fas fa-shopping-cart"></i> Bank Details for Equipment & Clothing</h6>
             <div class="bank-info-row">
               <span class="bank-info-label">Bank Name</span>
-              <span class="bank-info-value">CIMB Bank</span>
+              <span class="bank-info-value">Public Bank</span>
             </div>
             <div class="bank-info-row">
               <span class="bank-info-label">Account Name</span>
-              <span class="bank-info-value">Wushu Equipment Store</span>
+              <span class="bank-info-value">Chin Woo Sport Academy</span>
             </div>
             <div class="bank-info-row">
               <span class="bank-info-label">Account Number</span>
               <span class="bank-info-value">
-                8001234567890
-                <button class="copy-btn" onclick="copyToClipboard('8001234567890', this)">
+                3244180136
+                <button class="copy-btn" onclick="copyToClipboard('3244180136', this)">
                   <i class="fas fa-copy"></i> Copy
                 </button>
               </span>
@@ -818,11 +863,11 @@ function getReceiptUrl($receipt_path) {
           </div>
         <?php endif; ?>
         
-        <hr><h6><i class="fas fa-upload"></i> Upload Payment Receipt</h6>
+        <hr><h6><i class="fas fa-upload"></i> <?php echo $inv['status'] === 'rejected' ? 'Resubmit Payment Receipt' : 'Upload Payment Receipt'; ?></h6>
         <?php if ($inv['status'] === 'rejected'): ?>
           <div class="alert alert-warning"><i class="fas fa-info-circle"></i> <strong>Resubmit Payment:</strong> Your previous payment was rejected. Please upload a correct payment receipt.</div>
         <?php endif; ?>
-        <form method="POST" action="?page=invoices" enctype="multipart/form-data">
+        <form method="POST" action="?page=invoices" enctype="multipart/form-data" class="submit-with-loading">
           <?php echo csrfField(); ?>
           <input type="hidden" name="action" value="upload_payment">
           <input type="hidden" name="invoice_id" value="<?php echo $inv['id']; ?>">
@@ -848,7 +893,9 @@ function getReceiptUrl($receipt_path) {
             </div>
           </div>
           
-          <button type="submit" class="btn btn-success"><i class="fas fa-upload"></i> <?php echo $inv['status'] === 'rejected' ? 'Resubmit Payment' : 'Submit Payment'; ?></button>
+          <button type="submit" class="btn btn-<?php echo $inv['status'] === 'rejected' ? 'danger' : 'success'; ?>">
+            <i class="fas fa-upload"></i> <?php echo $inv['status'] === 'rejected' ? 'Resubmit Payment' : 'Submit Payment'; ?>
+          </button>
         </form>
       <?php endif; ?>
     </div>
@@ -856,6 +903,7 @@ function getReceiptUrl($receipt_path) {
   </div></div>
 </div>
 <?php endforeach; ?>
+
 
 <script>
 // Initialize DataTables for each invoice section
@@ -914,4 +962,89 @@ function copyToClipboard(text, button) {
         alert('Failed to copy: ' + err);
     });
 }
+
+// Download invoice PDF with loading overlay - uses server-provided filename
+function downloadInvoicePDF(invoiceId) {
+    const overlay = document.getElementById('globalLoadingOverlay');
+    const loadingText = overlay ? overlay.querySelector('.loading-text') : null;
+    const loadingSubtext = overlay ? overlay.querySelector('.loading-subtext') : null;
+    
+    // Show loading overlay with custom message
+    if (overlay) {
+        if (loadingText) loadingText.textContent = 'Generating PDF...';
+        if (loadingSubtext) loadingSubtext.textContent = 'Please wait patiently while we prepare your receipt, this might take 1-2 mins.';
+        overlay.classList.add('active');
+    }
+    
+    // Use fetch to check when file is ready
+    const downloadUrl = 'generate_invoice_pdf.php?invoice_id=' + invoiceId;
+    
+    fetch(downloadUrl, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/pdf'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to generate PDF');
+        }
+        
+        // Extract filename from Content-Disposition header
+        let filename = 'invoice.pdf'; // fallback
+        const contentDisposition = response.headers.get('Content-Disposition');
+        if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+            if (filenameMatch && filenameMatch[1]) {
+                filename = filenameMatch[1];
+            }
+        }
+        
+        // If Content-Disposition not set, extract from URL or use invoice_id
+        if (filename === 'invoice.pdf') {
+            filename = 'Invoice_' + invoiceId + '.pdf';
+        }
+        
+        return response.blob().then(blob => ({ blob, filename }));
+    })
+    .then(({ blob, filename }) => {
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        
+        // Trigger download
+        link.click();
+        
+        // Clean up
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        // Hide overlay after successful download
+        if (overlay) {
+            overlay.classList.remove('active');
+            // Reset text back to default
+            if (loadingText) loadingText.textContent = 'Processing...';
+            if (loadingSubtext) loadingSubtext.textContent = 'Please wait patiently, do not close this window';
+        }
+    })
+    .catch(error => {
+        console.error('Download error:', error);
+        
+        // Hide overlay and show error
+        if (overlay) {
+            overlay.classList.remove('active');
+            if (loadingText) loadingText.textContent = 'Processing...';
+            if (loadingSubtext) loadingSubtext.textContent = 'Please wait, do not close this window';
+        }
+        
+        alert('Failed to download PDF. Please try again or contact support.');
+    });
+}
+
+
 </script>
+

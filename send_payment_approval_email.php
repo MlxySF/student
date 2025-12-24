@@ -104,7 +104,7 @@ function sendPaymentApprovalEmail($pdo, $paymentId, $status, $adminNotes = '') {
         error_log("[Payment Approval Email] Email will be sent to: {$recipientEmail}");
         
         // Setup email
-        $mail = new PHPMailer(true);
+        $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
         
         // SMTP Configuration
         $mail->isSMTP();

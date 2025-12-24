@@ -423,34 +423,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         }
 
         // Get student name for filename
-$stmt = $pdo->prepare("SELECT full_name FROM students WHERE id = ?");
-$stmt->execute([$activeStudentId]);
-$studentData = $stmt->fetch();
-$studentName = $studentData['full_name'] ?? 'Unknown';
+        $stmt = $pdo->prepare("SELECT full_name FROM students WHERE id = ?");
+        $stmt->execute([$activeStudentId]);
+        $studentData = $stmt->fetch();
+        $studentName = $studentData['full_name'] ?? 'Unknown';
 
-// Get invoice NUMBER (not ID) if this is an invoice payment
-$invoiceNumber = '';
-if ($invoice_id) {
-    $stmt = $pdo->prepare("SELECT invoice_number FROM invoices WHERE id = ?");
-    $stmt->execute([$invoice_id]);
-    $invoiceData = $stmt->fetch();
-    $invoiceNumber = $invoiceData['invoice_number'] ?? '';
-    
-    error_log("[Payment Upload] Using invoice NUMBER: {$invoiceNumber} (ID: {$invoice_id})");
-}
+        // Get invoice NUMBER (not ID) if this is an invoice payment
+        $invoiceNumber = '';
+        if ($invoice_id) {
+            $stmt = $pdo->prepare("SELECT invoice_number FROM invoices WHERE id = ?");
+            $stmt->execute([$invoice_id]);
+            $invoiceData = $stmt->fetch();
+            $invoiceNumber = $invoiceData['invoice_number'] ?? '';
+            
+            error_log("[Payment Upload] Using invoice NUMBER: {$invoiceNumber} (ID: {$invoice_id})");
+        }
 
-// Save file using file_helper.php with enhanced naming
-// Now uses invoice NUMBER instead of ID
-$uploadResult = saveUploadedFile(
-    $_FILES['receipt'],
-    'payment_receipts',
-    'receipt',
-    $activeStudentId,           // Student ID as identifier
-    $studentName,                // Student name
-    $invoiceNumber               // Invoice NUMBER (e.g., INV-REG-202512-5678)
-);
-
-
+        // Save file using file_helper.php with enhanced naming
+        // Now uses invoice NUMBER instead of ID
+        $uploadResult = saveUploadedFile(
+            $_FILES['receipt'],
+            'payment_receipts',
+            'receipt',
+            $activeStudentId,           // Student ID as identifier
+            $studentName,                // Student name
+            $invoiceNumber               // Invoice NUMBER (e.g., INV-REG-202512-5678)
+        );
 
         if (!$uploadResult['success']) {
             $_SESSION['error'] = "Failed to save receipt: " . $uploadResult['error'];
@@ -468,35 +466,99 @@ $uploadResult = saveUploadedFile(
         }
 
         try {
-            $stmt = $pdo->prepare("
-                INSERT INTO payments (
-                    student_id, 
-                    class_id, 
-                    amount, 
-                    payment_month,
-                    payment_date,
-                    receipt_path,
-                    receipt_filename,
-                    receipt_size,
-                    admin_notes,
-                    invoice_id,
-                    parent_account_id
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ");
+            // FIXED: Check if payment already exists for this invoice
+            $existing_payment_id = null;
+            $old_receipt_path = null;
+            
+            if ($invoice_id) {
+                $check_stmt = $pdo->prepare("
+                    SELECT id, receipt_path 
+                    FROM payments 
+                    WHERE invoice_id = ? AND student_id = ?
+                    ORDER BY id DESC 
+                    LIMIT 1
+                ");
+                $check_stmt->execute([$invoice_id, $activeStudentId]);
+                $existing_payment = $check_stmt->fetch();
+                
+                if ($existing_payment) {
+                    $existing_payment_id = $existing_payment['id'];
+                    $old_receipt_path = $existing_payment['receipt_path'];
+                    error_log("[Payment Resubmit] Found existing payment ID: {$existing_payment_id}");
+                }
+            }
 
-            $success = $stmt->execute([
-                $activeStudentId, 
-                $class_id,
-                $amount, 
-                $payment_month,
-                $payment_date,
-                $uploadResult['path'],
-                $uploadResult['filename'],
-                $uploadResult['size'],
-                $notes,
-                $invoice_id,
-                $parent_account_id
-            ]);
+            if ($existing_payment_id) {
+                // UPDATE existing payment instead of creating new one
+                $stmt = $pdo->prepare("
+                    UPDATE payments SET
+                        class_id = ?,
+                        amount = ?,
+                        payment_month = ?,
+                        payment_date = ?,
+                        receipt_path = ?,
+                        receipt_filename = ?,
+                        receipt_size = ?,
+                        upload_date = NOW(),
+                        verification_status = 'pending',
+                        verified_by = NULL,
+                        verified_date = NULL,
+                        admin_notes = ''
+                    WHERE id = ?
+                ");
+
+                $success = $stmt->execute([
+                    $class_id,
+                    $amount,
+                    $payment_month,
+                    $payment_date,
+                    $uploadResult['path'],
+                    $uploadResult['filename'],
+                    $uploadResult['size'],
+                    $existing_payment_id
+                ]);
+                
+                // Delete old receipt file if update successful
+                if ($success && $old_receipt_path && file_exists($old_receipt_path)) {
+                    deleteFile($old_receipt_path);
+                    error_log("[Payment Resubmit] Deleted old receipt: {$old_receipt_path}");
+                }
+                
+                $payment_action = 'resubmitted';
+            } else {
+                // INSERT new payment (first time submission)
+                $stmt = $pdo->prepare("
+                    INSERT INTO payments (
+                        student_id, 
+                        class_id, 
+                        amount, 
+                        payment_month,
+                        payment_date,
+                        receipt_path,
+                        receipt_filename,
+                        receipt_size,
+                        admin_notes,
+                        invoice_id,
+                        parent_account_id
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ");
+
+                $success = $stmt->execute([
+                    $activeStudentId, 
+                    $class_id,
+                    $amount, 
+                    $payment_month,
+                    $payment_date,
+                    $uploadResult['path'],
+                    $uploadResult['filename'],
+                    $uploadResult['size'],
+                    $notes,
+                    $invoice_id,
+                    $parent_account_id
+                ]);
+                
+                $payment_action = 'submitted';
+            }
 
             if ($success) {
                 if ($invoice_id) {
@@ -563,7 +625,10 @@ $uploadResult = saveUploadedFile(
                 error_log("[Payment Upload] Admin notification email sent: " . ($adminEmailSent ? 'YES' : 'NO'));
                 
                 if ($invoice_id) {
-                    $_SESSION['success'] = "Payment submitted successfully! Your invoice is now pending verification. Admin has been notified.";
+                    $success_message = $payment_action === 'resubmitted' 
+                        ? "Payment resubmitted successfully! Your invoice is now pending verification. Admin has been notified."
+                        : "Payment submitted successfully! Your invoice is now pending verification. Admin has been notified.";
+                    $_SESSION['success'] = $success_message;
                     header('Location: index.php?page=invoices&t=' . time());
                     exit;
                 } else {
@@ -590,6 +655,7 @@ $uploadResult = saveUploadedFile(
     header('Location: index.php?page=' . $redirect_page);
     exit;
 }
+
 
 $page = $_GET['page'] ?? 'login';
 ?>
@@ -1273,9 +1339,479 @@ $page = $_GET['page'] ?? 'login';
                 font-size: 14px;
             }
         }
+        /* ========================================
+   FLOATING TUTORIAL BUTTON
+   ======================================== */
+.floating-tutorial-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 50px;
+    box-shadow: 0 8px 30px rgba(245, 158, 11, 0.4);
+    cursor: pointer;
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    animation: floatPulse 3s ease-in-out infinite;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.floating-tutorial-btn:hover {
+    transform: translateY(-8px) scale(1.05);
+    box-shadow: 0 15px 40px rgba(245, 158, 11, 0.6);
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+@keyframes floatPulse {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.floating-btn-icon {
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.floating-btn-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.btn-main-text {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.btn-sub-text {
+    font-size: 11px;
+    opacity: 0.9;
+    font-weight: 500;
+    margin-top: 2px;
+}
+
+/* ========================================
+   TUTORIAL MODAL - CLEAN DESIGN
+   ======================================== */
+.modal-tutorial .modal-dialog {
+    max-width: 800px;
+}
+
+.modal-tutorial .modal-content {
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.modal-tutorial .modal-header {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: white;
+    padding: 25px 30px;
+    border: none;
+}
+
+.modal-tutorial .modal-title {
+    font-weight: 700;
+    font-size: 22px;
+    margin: 0;
+}
+
+.modal-tutorial .btn-close {
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
+}
+
+.modal-tutorial .modal-body {
+    padding: 30px;
+}
+
+/* Language Sections */
+.tutorial-section {
+    margin-bottom: 30px;
+}
+
+.tutorial-section:last-child {
+    margin-bottom: 0;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 12px;
+    border-left: 5px solid #4f46e5;
+}
+
+.section-flag {
+    font-size: 36px;
+    line-height: 1;
+}
+
+.section-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.section-subtitle {
+    margin: 5px 0 0 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+/* Video Items Container */
+.videos-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Individual Video Item */
+.tutorial-video-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tutorial-video-item:hover {
+    border-color: #4f46e5;
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.15);
+    background: #f8fafc;
+}
+
+.tutorial-video-icon {
+    width: 60px;
+    height: 60px;
+    min-width: 60px;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    transition: all 0.3s ease;
+}
+
+.tutorial-video-item:hover .tutorial-video-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.tutorial-video-content {
+    flex: 1;
+}
+
+.tutorial-video-title {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.tutorial-video-desc {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+/* Video Player - Clean design without header */
+.video-player-container {
+    display: none;
+    margin: 15px 0;
+    padding: 0;
+    background: transparent;
+    border-radius: 15px;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    position: relative;
+}
+
+.video-player-container.active {
+    display: block;
+    opacity: 1;
+    max-height: 600px;
+    animation: slideDown 0.4s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Floating Close Button - Beautiful Design */
+.floating-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 45px;
+    height: 45px;
+    background: rgba(239, 68, 68, 0.95);
+    color: white;
+    border: 3px solid rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.floating-close-btn:hover {
+    background: rgba(220, 38, 38, 1);
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+}
+
+.floating-close-btn:active {
+    transform: scale(0.95) rotate(90deg);
+}
+
+.floating-close-btn i {
+    pointer-events: none;
+}
+
+.video-iframe-wrapper {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%;
+    background: #000;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.video-iframe-wrapper video,
+.video-iframe-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* ========================================
+   RESPONSIVE - TABLET
+   ======================================== */
+@media (max-width: 768px) {
+    .floating-tutorial-btn {
+        bottom: 20px;
+        right: 20px;
+        padding: 12px 16px;
+        gap: 10px;
+    }
+
+    .floating-btn-icon {
+        width: 45px;
+        height: 45px;
+        min-width: 45px;
+        font-size: 22px;
+    }
+
+    .btn-main-text {
+        font-size: 14px;
+    }
+
+    .btn-sub-text {
+        font-size: 10px;
+    }
+
+    .modal-tutorial .modal-dialog {
+        margin: 0.5rem;
+    }
+
+    .modal-tutorial .modal-header {
+        padding: 20px;
+    }
+
+    .modal-tutorial .modal-title {
+        font-size: 18px;
+    }
+
+    .modal-tutorial .modal-body {
+        padding: 20px;
+    }
+
+    .section-header {
+        padding: 15px;
+    }
+
+    .section-flag {
+        font-size: 28px;
+    }
+
+    .section-title {
+        font-size: 17px;
+    }
+
+    .tutorial-video-item {
+        padding: 12px;
+    }
+
+    .tutorial-video-icon {
+        width: 50px;
+        height: 50px;
+        min-width: 50px;
+        font-size: 20px;
+    }
+
+    .tutorial-video-title {
+        font-size: 14px;
+    }
+
+    .tutorial-video-desc {
+        font-size: 12px;
+    }
+
+    .floating-close-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+        top: 12px;
+        right: 12px;
+    }
+}
+
+/* ========================================
+   RESPONSIVE - MOBILE
+   ======================================== */
+@media (max-width: 480px) {
+    .floating-tutorial-btn {
+        bottom: 15px;
+        right: 15px;
+        padding: 10px 14px;
+    }
+
+    .floating-btn-icon {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        font-size: 20px;
+    }
+
+    .btn-main-text {
+        font-size: 13px;
+    }
+
+    .btn-sub-text {
+        font-size: 9px;
+    }
+
+    .modal-tutorial .modal-body {
+        padding: 15px;
+    }
+
+    .section-header {
+        padding: 12px;
+    }
+
+    .section-flag {
+        font-size: 24px;
+    }
+
+    .section-title {
+        font-size: 16px;
+    }
+
+    .section-subtitle {
+        font-size: 12px;
+    }
+
+    .tutorial-video-item {
+        padding: 10px;
+        gap: 12px;
+    }
+
+    .tutorial-video-icon {
+        width: 45px;
+        height: 45px;
+        min-width: 45px;
+        font-size: 18px;
+    }
+
+    .tutorial-video-title {
+        font-size: 13px;
+    }
+
+    .tutorial-video-desc {
+        font-size: 11px;
+    }
+
+    .floating-close-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+        top: 10px;
+        right: 10px;
+    }
+}
+
+
     </style>
 </head>
 <body<?php echo ($page !== 'login') ? ' class="logged-in"' : ''; ?>>
+    
+    <!-- Floating Tutorial Button -->
+<div class="floating-tutorial-btn" data-bs-toggle="modal" data-bs-target="#tutorialModal">
+    <div class="floating-btn-icon">
+        <i class="fas fa-play-circle"></i>
+    </div>
+    <div class="floating-btn-text">
+        <span class="btn-main-text">Tutorial</span>
+        <span class="btn-sub-text">Help Guide</span>
+    </div>
+</div>
+
 
 <!-- GLOBAL LOADING OVERLAY -->
 <div class="loading-overlay" id="globalLoadingOverlay">
@@ -1544,7 +2080,95 @@ $page = $_GET['page'] ?? 'login';
                 }
             });
         });
+        
+        // Close video when modal is closed - MOVED INSIDE DOMContentLoaded
+        const tutorialModal = document.getElementById('tutorialModal');
+        if (tutorialModal) {
+            tutorialModal.addEventListener('hidden.bs.modal', function () {
+                closeVideo();
+            });
+        }
     });
+    
+    // Tutorial Video Player Functions - Clean design without title
+function playVideo(language, part, element) {
+    const playerId = `player-${language}-${part}`;
+    const playerContainer = document.getElementById(playerId);
+    
+    // Close all other players first
+    const allPlayers = document.querySelectorAll('.video-player-container');
+    allPlayers.forEach(player => {
+        if (player.id !== playerId) {
+            player.classList.remove('active');
+            player.innerHTML = '';
+        }
+    });
+    
+    // Define your video file paths
+    const videos = {
+        'en': {
+            1: 'videos/tutorials/english/Registration Tutorial.mp4',
+            2: 'videos/tutorials/english/Parent System Tutorial.mp4',
+            3: 'videos/tutorials/english/Payment Invoicing System.mp4'
+        },
+        'zh': {
+            1: 'videos/tutorials/chinese/注册教学.mp4',
+            2: 'videos/tutorials/chinese/家长系统教学.mp4',
+            3: 'videos/tutorials/chinese/账单缴付教学.mp4'
+        }
+    };
+    
+    const videoPath = videos[language][part];
+    
+    // Toggle player visibility
+    if (playerContainer.classList.contains('active')) {
+        // If already playing, close it
+        playerContainer.classList.remove('active');
+        playerContainer.innerHTML = '';
+    } else {
+        // Show player with video - NO TITLE, just video and floating close button
+        playerContainer.innerHTML = `
+            <button class="floating-close-btn" onclick="closeVideoPlayer('${playerId}')">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="video-iframe-wrapper">
+                <video controls autoplay style="width: 100%; height: 100%; object-fit: contain;">
+                    <source src="${videoPath}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        `;
+        
+        playerContainer.classList.add('active');
+        
+        // Smooth scroll to the player
+        setTimeout(() => {
+            playerContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+    }
+}
+
+function closeVideoPlayer(playerId) {
+    const playerContainer = document.getElementById(playerId);
+    playerContainer.classList.remove('active');
+    playerContainer.innerHTML = '';
+}
+
+// Close all videos when modal is closed
+document.addEventListener('DOMContentLoaded', function() {
+    const tutorialModal = document.getElementById('tutorialModal');
+    if (tutorialModal) {
+        tutorialModal.addEventListener('hidden.bs.modal', function () {
+            const allPlayers = document.querySelectorAll('.video-player-container');
+            allPlayers.forEach(player => {
+                player.classList.remove('active');
+                player.innerHTML = '';
+            });
+        });
+    }
+});
+
+
 
     function reloadPageData() {
         const reloadBtn = document.querySelector('.btn-reload');
@@ -1607,6 +2231,133 @@ $page = $_GET['page'] ?? 'login';
         });
     });
 </script>
+
+<!-- Tutorial Modal -->
+<div class="modal fade modal-tutorial" id="tutorialModal" tabindex="-1" aria-labelledby="tutorialModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tutorialModalLabel">
+                    <i class="fas fa-graduation-cap"></i> Portal Tutorial Videos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                
+                <!-- Chinese Section -->
+                <div class="tutorial-section">
+                    <div class="section-header">
+                        <div class="section-flag">🇨🇳</div>
+                        <div>
+                            <h3 class="section-title">中文版本 (Chinese Version)</h3>
+                            <p class="section-subtitle">系统教学视频</p>
+                        </div>
+                    </div>
+                    
+                    <div class="videos-container">
+                        <div class="tutorial-video-item" onclick="playVideo('zh', 1, this)">
+                            <div class="tutorial-video-icon">
+                                <i class="fas fa-play"></i>
+                            </div>
+                            <div class="tutorial-video-content">
+                                <h4 class="tutorial-video-title">注册教学</h4>
+                                <p class="tutorial-video-desc">注册表格概述</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Video Player for Chinese Part 1 -->
+                        <div class="video-player-container" id="player-zh-1"></div>
+                        
+                        <div class="tutorial-video-item" onclick="playVideo('zh', 2, this)">
+                            <div class="tutorial-video-icon">
+                                <i class="fas fa-play"></i>
+                            </div>
+                            <div class="tutorial-video-content">
+                                <h4 class="tutorial-video-title">家长系统教学</h4>
+                                <p class="tutorial-video-desc">使用家长系统教学</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Video Player for Chinese Part 2 -->
+                        <div class="video-player-container" id="player-zh-2"></div>
+                        
+                        <div class="tutorial-video-item" onclick="playVideo('zh', 3, this)">
+                            <div class="tutorial-video-icon">
+                                <i class="fas fa-play"></i>
+                            </div>
+                            <div class="tutorial-video-content">
+                                <h4 class="tutorial-video-title">账单缴付教学</h4>
+                                <p class="tutorial-video-desc">使用账单页面教学</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Video Player for Chinese Part 3 -->
+                        <div class="video-player-container" id="player-zh-3"></div>
+                    </div>
+                </div>
+                
+                <!-- English Section -->
+                <div class="tutorial-section">
+                    <div class="section-header">
+                        <div class="section-flag">🇬🇧</div>
+                        <div>
+                            <h3 class="section-title">English Version</h3>
+                            <p class="section-subtitle">Learn how to use the parent portal</p>
+                        </div>
+                    </div>
+                    
+                    <div class="videos-container">
+                        <div class="tutorial-video-item" onclick="playVideo('en', 1, this)">
+                            <div class="tutorial-video-icon">
+                                <i class="fas fa-play"></i>
+                            </div>
+                            <div class="tutorial-video-content">
+                                <h4 class="tutorial-video-title">Registration Tutorial</h4>
+                                <p class="tutorial-video-desc">Registration Form Explanations</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Video Player for English Part 1 -->
+                        <div class="video-player-container" id="player-en-1"></div>
+                        
+                        <div class="tutorial-video-item" onclick="playVideo('en', 2, this)">
+                            <div class="tutorial-video-icon">
+                                <i class="fas fa-play"></i>
+                            </div>
+                            <div class="tutorial-video-content">
+                                <h4 class="tutorial-video-title">Parent's Portal Tutorial</h4>
+                                <p class="tutorial-video-desc">Guides you around the parent's portal</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Video Player for English Part 2 -->
+                        <div class="video-player-container" id="player-en-2"></div>
+                        
+                        <div class="tutorial-video-item" onclick="playVideo('en', 3, this)">
+                            <div class="tutorial-video-icon">
+                                <i class="fas fa-play"></i>
+                            </div>
+                            <div class="tutorial-video-content">
+                                <h4 class="tutorial-video-title">Invoice Payment Tutorial</h4>
+                                <p class="tutorial-video-desc">Guide you through the invoicing system</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Video Player for English Part 3 -->
+                        <div class="video-player-container" id="player-en-3"></div>
+                    </div>
+                </div>
+
+                
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
 </body>
 </html>
 <?php ob_end_flush(); ?>

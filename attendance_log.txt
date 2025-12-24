@@ -553,3 +553,168 @@ POST Data: Array
     [registration_id] => 5
 )
 
+
+=== 2025-12-23 13:17:56 ===
+Action: verify_registration
+POST Data: Array
+(
+    [action] => verify_registration
+    [registration_id] => 6
+)
+
+
+=== 2025-12-23 15:00:38 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 7
+)
+
+
+=== 2025-12-24 04:22:44 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 8
+)
+
+
+=== 2025-12-24 04:22:47 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 6
+)
+
+
+=== 2025-12-24 04:26:18 ===
+Action: verify_registration
+POST Data: Array
+(
+    [action] => verify_registration
+    [registration_id] => 9
+)
+
+
+=== 2025-12-24 04:26:23 ===
+Action: verify_registration
+POST Data: Array
+(
+    [action] => verify_registration
+    [registration_id] => 10
+)
+
+
+=== 2025-12-24 04:45:02 ===
+Action: bulk_attendance
+POST Data: Array
+(
+    [action] => bulk_attendance
+    [class_id] => 3
+    [attendance_date] => 2025-12-21
+    [attendance] => Array
+        (
+            [10] => present
+        )
+
+)
+
+
+BULK ATTENDANCE ACTION STARTED
+Processing student 10 with status present
+Inserted new record
+SUCCESS: Committed transaction, marked 1 students
+
+=== 2025-12-24 04:45:18 ===
+Action: mark_attendance
+POST Data: Array
+(
+    [action] => mark_attendance
+    [student_id] => 9
+    [class_id] => 1
+    [attendance_date] => 2025-12-17
+    [status] => absent
+    [notes] => Sick
+)
+
+
+=== 2025-12-24 04:45:39 ===
+Action: bulk_attendance
+POST Data: Array
+(
+    [action] => bulk_attendance
+    [class_id] => 2
+    [attendance_date] => 2025-12-14
+    [attendance] => Array
+        (
+            [9] => present
+            [10] => present
+        )
+
+)
+
+
+BULK ATTENDANCE ACTION STARTED
+Processing student 9 with status present
+Inserted new record
+Processing student 10 with status present
+Inserted new record
+SUCCESS: Committed transaction, marked 2 students
+
+=== 2025-12-24 04:46:35 ===
+Action: bulk_attendance
+POST Data: Array
+(
+    [action] => bulk_attendance
+    [class_id] => 2
+    [attendance_date] => 2025-12-07
+    [attendance] => Array
+        (
+            [9] => present
+            [10] => present
+        )
+
+)
+
+
+BULK ATTENDANCE ACTION STARTED
+Processing student 9 with status present
+Inserted new record
+Processing student 10 with status present
+Inserted new record
+SUCCESS: Committed transaction, marked 2 students
+
+=== 2025-12-24 04:46:45 ===
+Action: bulk_attendance
+POST Data: Array
+(
+    [action] => bulk_attendance
+    [class_id] => 2
+    [attendance_date] => 2025-11-30
+    [attendance] => Array
+        (
+            [9] => present
+            [10] => present
+        )
+
+)
+
+
+BULK ATTENDANCE ACTION STARTED
+Processing student 9 with status present
+Inserted new record
+Processing student 10 with status present
+Inserted new record
+SUCCESS: Committed transaction, marked 2 students
+
+=== 2025-12-24 06:17:37 ===
+Action: verify_registration
+POST Data: Array
+(
+    [action] => verify_registration
+    [registration_id] => 11
+)
+

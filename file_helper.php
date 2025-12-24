@@ -370,3 +370,71 @@ function getFullFilePath($relativePath) {
 function isAllowedExtension($extension) {
     return in_array(strtolower($extension), ALLOWED_EXTENSIONS);
 }
+
+/**
+ * Rename file to include rejection marker
+ * Used when payment is rejected to mark the receipt file
+ * 
+ * @param string $relativePath Current relative path from uploads/
+ * @return array ['success' => bool, 'new_path' => string, 'error' => string]
+ */
+function renameFileWithRejection($relativePath) {
+    try {
+        if (empty($relativePath)) {
+            throw new Exception('Empty file path provided');
+        }
+        
+        $fullPath = UPLOAD_BASE_DIR . $relativePath;
+        
+        // Check if file exists
+        if (!file_exists($fullPath)) {
+            throw new Exception('File not found: ' . $relativePath);
+        }
+        
+        // Parse path components
+        $pathInfo = pathinfo($relativePath);
+        $directory = $pathInfo['dirname'];
+        $filename = $pathInfo['filename'];
+        $extension = $pathInfo['extension'];
+        
+        // Check if already marked as rejected
+        if (strpos($filename, '_rejected') !== false) {
+            // Already renamed, return current path
+            error_log("[File Helper] File already marked as rejected: {$relativePath}");
+            return [
+                'success' => true,
+                'new_path' => $relativePath,
+                'already_renamed' => true,
+                'error' => null
+            ];
+        }
+        
+        // Generate new filename with rejected marker
+        $newFilename = $filename . '_rejected.' . $extension;
+        $newRelativePath = $directory . '/' . $newFilename;
+        $newFullPath = UPLOAD_BASE_DIR . $newRelativePath;
+        
+        // Rename the file
+        if (!rename($fullPath, $newFullPath)) {
+            throw new Exception('Failed to rename file');
+        }
+        
+        error_log("[File Helper] Renamed file: {$relativePath} -> {$newRelativePath}");
+        
+        return [
+            'success' => true,
+            'new_path' => $newRelativePath,
+            'old_path' => $relativePath,
+            'already_renamed' => false,
+            'error' => null
+        ];
+        
+    } catch (Exception $e) {
+        error_log("[File Helper] Error renaming file: " . $e->getMessage());
+        return [
+            'success' => false,
+            'new_path' => null,
+            'error' => $e->getMessage()
+        ];
+    }
+}

@@ -1,233 +1,271 @@
-[22-Dec-2025 07:30:32 UTC] [Registration] Starting registration for parent email: chaichonghern@gmail.com, child IC: 123123-31-2311, name: Xander Teoh
-[22-Dec-2025 07:30:32 UTC] [Reg Number] Generated unique random registration number: WSA2025-6949
-[22-Dec-2025 07:30:32 UTC] [Password] Using IC last 4 digits: 2311
-[22-Dec-2025 07:30:32 UTC] [Parent] Found existing parent account ID=1 for email=chaichonghern@gmail.com
-[22-Dec-2025 07:30:32 UTC] [Parent Info] ID=1, Code=PAR-2025-0001, IsNew=, Password=NULL
-[22-Dec-2025 07:30:32 UTC] [Student] Created student ID=2 (Xander Teoh)
-[22-Dec-2025 07:30:32 UTC] [Link] Linked student ID=2 to parent ID=1
-[22-Dec-2025 07:30:32 UTC] [DateTime Validation] Invalid form_date '22/12/2025', using current datetime
-[22-Dec-2025 07:30:32 UTC] [Registration] Original form_date: 22/12/2025, Validated: 2025-12-22 07:30:32
-[22-Dec-2025 07:30:32 UTC] [File Helper] Saved file: signatures/signature_WSA2025-6949_20251222073032_36c9eb38.png (Size: 3865 bytes)
-[22-Dec-2025 07:30:32 UTC] [File Save] Signature saved: signatures/signature_WSA2025-6949_20251222073032_36c9eb38.png
-[22-Dec-2025 07:30:32 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-6949_20251222073032_9aad187a.pdf (Size: 1194691 bytes)
-[22-Dec-2025 07:30:32 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-6949_20251222073032_9aad187a.pdf
-[22-Dec-2025 07:30:32 UTC] [File Helper] Saved file: payment_receipts/receipt_2_20251222073032_3e4d1ff1.png (Size: 385364 bytes)
-[22-Dec-2025 07:30:32 UTC] [File Save] Payment receipt saved: payment_receipts/receipt_2_20251222073032_3e4d1ff1.png
-[22-Dec-2025 07:30:32 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Wed 8pm-10pm, SJK(C) Puay Chai 2: Wed 8pm-10pm
-[22-Dec-2025 07:30:32 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Wed 8pm-10pm' to 'wsa-wed-8pm'
-[22-Dec-2025 07:30:32 UTC] [Schedule Parse] Mapped 'SJK(C) Puay Chai 2: Wed 8pm-10pm' to 'pc2-wed-8pm'
-[22-Dec-2025 07:30:32 UTC] [Auto-Enroll] Starting enrollment for student ID=2, Classes: wsa-wed-8pm, pc2-wed-8pm
-[22-Dec-2025 07:30:32 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=2 in class 'Wushu Sport Academy: Wed 8pm-10pm' (Code: wsa-wed-8pm)
-[22-Dec-2025 07:30:32 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=2 in class 'SJK(C) Puay Chai 2: Wed 8pm-10pm' (Code: pc2-wed-8pm)
-[22-Dec-2025 07:30:32 UTC] [Auto-Enroll] Results - Success: 2, Failed: 0, Skipped: 0
-[22-Dec-2025 07:30:32 UTC] [Invoice Split] Total: 200, Classes: 2, Per Class: 100
-[22-Dec-2025 07:30:32 UTC] [Invoice] Using receipt path: payment_receipts/receipt_2_20251222073032_3e4d1ff1.png
-[22-Dec-2025 07:30:32 UTC] [Invoice] Created invoice: INV-REG-202512-8189 (ID: 12) for class wsa-wed-8pm, amount=100
-[22-Dec-2025 07:30:32 UTC] [Payment] Created payment record (ID: 4) linked to invoice INV-REG-202512-8189, receipt_path=payment_receipts/receipt_2_20251222073032_3e4d1ff1.png
-[22-Dec-2025 07:30:32 UTC] [Invoice] Created invoice: INV-REG-202512-6257 (ID: 13) for class pc2-wed-8pm, amount=100
-[22-Dec-2025 07:30:32 UTC] [Payment] Created payment record (ID: 5) linked to invoice INV-REG-202512-6257, receipt_path=payment_receipts/receipt_2_20251222073032_3e4d1ff1.png
-[22-Dec-2025 07:30:32 UTC] [Success] Reg#: WSA2025-6949, Parent: PAR-2025-0001 (ID:1), Student: 2, Invoices: 2, Payment Date: 2025-12-22, Receipt: payment_receipts/receipt_2_20251222073032_3e4d1ff1.png
-[22-Dec-2025 07:30:32 UTC] [Email] Sending to: chaichonghern@gmail.com, isNewParent: NO, parentPassword: NULL
-[22-Dec-2025 07:30:39 UTC] [Email] Successfully sent to chaichonghern@gmail.com
-[22-Dec-2025 07:30:39 UTC] [Admin Email] Sending registration notification to admin@wushusportacademy.com
-[22-Dec-2025 07:30:39 UTC] [Admin Email] Successfully sent registration notification
-[22-Dec-2025 07:30:39 UTC] [Admin Notification] Email sent: YES
-[22-Dec-2025 07:31:31 UTC] [Serve File] Serving file: signatures/signature_WSA2025-6949_20251222073032_36c9eb38.png (Size: 3865 bytes, MIME: image/png)
-[22-Dec-2025 07:31:31 UTC] [Serve File] Serving file: payment_receipts/receipt_1_20251222052010_3c66a8ff.png (Size: 450281 bytes, MIME: image/png)
-[22-Dec-2025 07:31:31 UTC] [Serve File] Serving file: signatures/signature_WSA2025-5737_20251222052010_a4f9a31d.png (Size: 4664 bytes, MIME: image/png)
-[22-Dec-2025 07:31:31 UTC] [Serve File] Serving file: payment_receipts/receipt_2_20251222073032_3e4d1ff1.png (Size: 385364 bytes, MIME: image/png)
-[22-Dec-2025 15:31:39 Asia/Kuala_Lumpur] [reject_registration] Cancelled 2 invoices
-[22-Dec-2025 15:31:39 Asia/Kuala_Lumpur] [reject_registration] Found 2 cancelled invoices
-[22-Dec-2025 15:31:39 Asia/Kuala_Lumpur] [reject_registration] Rejected 1 payments for invoice ID 12
-[22-Dec-2025 15:31:39 Asia/Kuala_Lumpur] [reject_registration] Rejected 1 payments for invoice ID 13
-[22-Dec-2025 15:31:39 Asia/Kuala_Lumpur] [reject_registration] Total payments rejected: 2
-[22-Dec-2025 15:31:39 Asia/Kuala_Lumpur] [Rejection Email] Sending to: chaichonghern@gmail.com, Student: Xander Teoh, Reg#: WSA2025-6949
-[22-Dec-2025 15:31:41 Asia/Kuala_Lumpur] [Rejection Email] Successfully sent to chaichonghern@gmail.com
-[22-Dec-2025 15:31:41 Asia/Kuala_Lumpur] [Reject] Reg#WSA2025-6949: invoices=2, payments=2, email=sent
-[22-Dec-2025 07:31:41 UTC] [Serve File] Serving file: payment_receipts/receipt_2_20251222073032_3e4d1ff1.png (Size: 385364 bytes, MIME: image/png)
-[22-Dec-2025 07:31:41 UTC] [Serve File] Serving file: signatures/signature_WSA2025-5737_20251222052010_a4f9a31d.png (Size: 4664 bytes, MIME: image/png)
-[22-Dec-2025 07:31:41 UTC] [Serve File] Serving file: signatures/signature_WSA2025-6949_20251222073032_36c9eb38.png (Size: 3865 bytes, MIME: image/png)
-[22-Dec-2025 07:31:41 UTC] [Serve File] Serving file: payment_receipts/receipt_1_20251222052010_3c66a8ff.png (Size: 450281 bytes, MIME: image/png)
-[22-Dec-2025 15:33:34 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_1_20251222153334_a5c932d0.jpeg
-[22-Dec-2025 15:33:34 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to admin@wushusportacademy.com
-[22-Dec-2025 15:33:34 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
-[22-Dec-2025 15:33:34 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
-[22-Dec-2025 07:33:49 UTC] [Serve File] Serving file: signatures/signature_WSA2025-5737_20251222052010_a4f9a31d.png (Size: 4664 bytes, MIME: image/png)
-[22-Dec-2025 07:33:49 UTC] [Serve File] Serving file: payment_receipts/receipt_1_20251222052010_3c66a8ff.png (Size: 450281 bytes, MIME: image/png)
-[22-Dec-2025 07:33:49 UTC] [Serve File] Serving file: signatures/signature_WSA2025-6949_20251222073032_36c9eb38.png (Size: 3865 bytes, MIME: image/png)
-[22-Dec-2025 07:33:49 UTC] [Serve File] Serving file: payment_receipts/receipt_2_20251222073032_3e4d1ff1.png (Size: 385364 bytes, MIME: image/png)
-[22-Dec-2025 07:49:24 UTC] [Serve File] Serving file: signatures/signature_WSA2025-6949_20251222073032_36c9eb38.png (Size: 3865 bytes, MIME: image/png)
-[22-Dec-2025 07:49:24 UTC] [Serve File] Serving file: signatures/signature_WSA2025-5737_20251222052010_a4f9a31d.png (Size: 4664 bytes, MIME: image/png)
-[22-Dec-2025 07:49:24 UTC] [Serve File] File not found: /home/wushuspo/public_html/uploads/payment_receipts/receipt_1_20251222052010_3c66a8ff.png
-[22-Dec-2025 07:49:24 UTC] [Serve File] Serving file: payment_receipts/receipt_2_20251222073032_3e4d1ff1.png (Size: 385364 bytes, MIME: image/png)
-[22-Dec-2025 07:50:13 UTC] [Registration] Starting registration for parent email: chaichonghern@gmail.com, child IC: 123123-31-2311, name: Xander Teoh
-[22-Dec-2025 07:50:13 UTC] [IC Override] Found rejected registration with IC: 123123-31-2311. Allowing re-registration.
-[22-Dec-2025 07:50:13 UTC] [Reg Number] Generated unique random registration number: WSA2025-9162
-[22-Dec-2025 07:50:13 UTC] [Password] Using IC last 4 digits: 2311
-[22-Dec-2025 07:50:13 UTC] [Parent] Found existing parent account ID=1 for email=chaichonghern@gmail.com
-[22-Dec-2025 07:50:13 UTC] [Parent Info] ID=1, Code=PAR-2025-0001, IsNew=, Password=NULL
-[22-Dec-2025 07:50:13 UTC] [Student] Created student ID=3 (Xander Teoh)
-[22-Dec-2025 07:50:13 UTC] [Link] Linked student ID=3 to parent ID=1
-[22-Dec-2025 07:50:13 UTC] [DateTime Validation] Invalid form_date '22/12/2025', using current datetime
-[22-Dec-2025 07:50:13 UTC] [Registration] Original form_date: 22/12/2025, Validated: 2025-12-22 07:50:13
-[22-Dec-2025 07:50:13 UTC] [File Helper] Saved file: signatures/signature_WSA2025-9162_20251222075013_26ac6d8e.png (Size: 4165 bytes)
-[22-Dec-2025 07:50:13 UTC] [File Save] Signature saved: signatures/signature_WSA2025-9162_20251222075013_26ac6d8e.png
-[22-Dec-2025 07:50:13 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-9162_20251222075013_089db92c.pdf (Size: 1194769 bytes)
-[22-Dec-2025 07:50:13 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-9162_20251222075013_089db92c.pdf
-[22-Dec-2025 07:50:13 UTC] [File Helper] Saved file: payment_receipts/receipt_3_20251222075013_834b43ca.jpg (Size: 39315 bytes)
-[22-Dec-2025 07:50:13 UTC] [File Save] Payment receipt saved: payment_receipts/receipt_3_20251222075013_834b43ca.jpg
-[22-Dec-2025 07:50:13 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Sun 10am-12pm, SJK(C) Puay Chai 2: Tue 8pm-10pm
-[22-Dec-2025 07:50:13 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Sun 10am-12pm' to 'wsa-sun-10am'
-[22-Dec-2025 07:50:13 UTC] [Schedule Parse] Mapped 'SJK(C) Puay Chai 2: Tue 8pm-10pm' to 'pc2-tue-8pm'
-[22-Dec-2025 07:50:13 UTC] [Auto-Enroll] Starting enrollment for student ID=3, Classes: wsa-sun-10am, pc2-tue-8pm
-[22-Dec-2025 07:50:13 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=3 in class 'Wushu Sport Academy: Sun 10am-12pm' (Code: wsa-sun-10am)
-[22-Dec-2025 07:50:13 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=3 in class 'SJK(C) Puay Chai 2: Tue 8pm-10pm' (Code: pc2-tue-8pm)
-[22-Dec-2025 07:50:13 UTC] [Auto-Enroll] Results - Success: 2, Failed: 0, Skipped: 0
-[22-Dec-2025 07:50:13 UTC] [Invoice Split] Total: 200, Classes: 2, Per Class: 100
-[22-Dec-2025 07:50:13 UTC] [Invoice] Using receipt path: payment_receipts/receipt_3_20251222075013_834b43ca.jpg
-[22-Dec-2025 07:50:13 UTC] [Invoice] Created invoice: INV-REG-202512-5310 (ID: 14) for class wsa-sun-10am, amount=100
-[22-Dec-2025 07:50:13 UTC] [Payment] Created payment record (ID: 7) linked to invoice INV-REG-202512-5310, receipt_path=payment_receipts/receipt_3_20251222075013_834b43ca.jpg
-[22-Dec-2025 07:50:13 UTC] [Invoice] Created invoice: INV-REG-202512-2834 (ID: 15) for class pc2-tue-8pm, amount=100
-[22-Dec-2025 07:50:13 UTC] [Payment] Created payment record (ID: 8) linked to invoice INV-REG-202512-2834, receipt_path=payment_receipts/receipt_3_20251222075013_834b43ca.jpg
-[22-Dec-2025 07:50:13 UTC] [Success] Reg#: WSA2025-9162, Parent: PAR-2025-0001 (ID:1), Student: 3, Invoices: 2, Payment Date: 2025-12-18, Receipt: payment_receipts/receipt_3_20251222075013_834b43ca.jpg
-[22-Dec-2025 07:50:13 UTC] [Email] Sending to: chaichonghern@gmail.com, isNewParent: NO, parentPassword: NULL
-[22-Dec-2025 07:50:14 UTC] [Email] Successfully sent to chaichonghern@gmail.com
-[22-Dec-2025 07:50:14 UTC] [Admin Email] Sending registration notification to admin@wushusportacademy.com
-[22-Dec-2025 07:50:14 UTC] [Admin Email] Successfully sent registration notification
-[22-Dec-2025 07:50:14 UTC] [Admin Notification] Email sent: YES
-[22-Dec-2025 08:01:53 UTC] [Serve File] Serving file: signatures/signature_WSA2025-5737_20251222052010_a4f9a31d.png (Size: 4664 bytes, MIME: image/png)
-[22-Dec-2025 08:01:53 UTC] [Serve File] Serving file: signatures/signature_WSA2025-9162_20251222075013_26ac6d8e.png (Size: 4165 bytes, MIME: image/png)
-[22-Dec-2025 08:01:53 UTC] [Serve File] Serving file: payment_receipts/receipt_3_20251222075013_834b43ca.jpg (Size: 39315 bytes, MIME: image/jpeg)
-[22-Dec-2025 08:01:53 UTC] [Serve File] File not found: /home/wushuspo/public_html/uploads/payment_receipts/receipt_1_20251222052010_3c66a8ff.png
-[22-Dec-2025 16:01:59 Asia/Kuala_Lumpur] [verify_registration] Generated PARENT password from parent IC: 1849
-[22-Dec-2025 16:01:59 Asia/Kuala_Lumpur] [verify_registration] Updated 2 invoices to paid
-[22-Dec-2025 16:01:59 Asia/Kuala_Lumpur] [verify_registration] Found 2 paid invoices
-[22-Dec-2025 16:01:59 Asia/Kuala_Lumpur] [verify_registration] Updated 1 payments for invoice ID 14
-[22-Dec-2025 16:01:59 Asia/Kuala_Lumpur] [verify_registration] Updated 1 payments for invoice ID 15
-[22-Dec-2025 16:01:59 Asia/Kuala_Lumpur] [verify_registration] Total payments updated: 2
-[22-Dec-2025 16:01:59 Asia/Kuala_Lumpur] [verify_registration] IsFirstChild: NO, Parent IC: 030322-10-1849, PARENT Password: 1849
-[22-Dec-2025 16:02:01 Asia/Kuala_Lumpur] [Approval Email] Sent to chaichonghern@gmail.com for child Xander Teoh
-[22-Dec-2025 16:02:01 Asia/Kuala_Lumpur] [Approve] Reg#WSA2025-9162: invoices=2, payments=2, email=sent
-[22-Dec-2025 08:02:01 UTC] [Serve File] File not found: /home/wushuspo/public_html/uploads/payment_receipts/receipt_1_20251222052010_3c66a8ff.png
-[22-Dec-2025 08:02:01 UTC] [Serve File] Serving file: payment_receipts/receipt_3_20251222075013_834b43ca.jpg (Size: 39315 bytes, MIME: image/jpeg)
-[22-Dec-2025 08:02:01 UTC] [Serve File] Serving file: signatures/signature_WSA2025-9162_20251222075013_26ac6d8e.png (Size: 4165 bytes, MIME: image/png)
-[22-Dec-2025 08:02:01 UTC] [Serve File] Serving file: signatures/signature_WSA2025-5737_20251222052010_a4f9a31d.png (Size: 4664 bytes, MIME: image/png)
-[22-Dec-2025 08:35:05 UTC] [Registration] Starting registration for parent email: chaichonghern@gmail.com, child IC: 123123-31-2312, name: Chai Chong Hern
-[22-Dec-2025 08:35:05 UTC] [Reg Number] Generated unique random registration number: WSA2025-7943
-[22-Dec-2025 08:35:05 UTC] [Password] Using IC last 4 digits: 2312
-[22-Dec-2025 08:35:05 UTC] [Password] Using IC last 4 digits: 1849
-[22-Dec-2025 08:35:05 UTC] [Parent] Created NEW parent account ID=2, code=PAR-2025-0001, email=chaichonghern@gmail.com, password=1849
-[22-Dec-2025 08:35:05 UTC] [Parent Info] ID=2, Code=PAR-2025-0001, IsNew=1, Password=1849
-[22-Dec-2025 08:35:05 UTC] [Student] Created student ID=4 (Chai Chong Hern)
-[22-Dec-2025 08:35:05 UTC] [Link] Linked student ID=4 to parent ID=2
-[22-Dec-2025 08:35:05 UTC] [DateTime Validation] Invalid form_date '22/12/2025', using current datetime
-[22-Dec-2025 08:35:05 UTC] [Registration] Original form_date: 22/12/2025, Validated: 2025-12-22 08:35:05
-[22-Dec-2025 08:35:05 UTC] [File Helper] Saved file: signatures/signature_WSA2025-7943_chai_chong_hern_20251222083505_085a1a.png (Size: 3794 bytes)
-[22-Dec-2025 08:35:05 UTC] [File Save] Signature saved: signatures/signature_WSA2025-7943_chai_chong_hern_20251222083505_085a1a.png
-[22-Dec-2025 08:35:05 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-7943_chai_chong_hern_20251222083505_554561.pdf (Size: 1198456 bytes)
-[22-Dec-2025 08:35:05 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-7943_chai_chong_hern_20251222083505_554561.pdf
-[22-Dec-2025 08:35:05 UTC] [File Helper] Saved file: payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png (Size: 613149 bytes)
-[22-Dec-2025 08:35:05 UTC] [File Save] Payment receipt saved: payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png
-[22-Dec-2025 08:35:05 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Wed 8pm-10pm, Wushu Sport Academy: Sun 10am-12pm
-[22-Dec-2025 08:35:05 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Wed 8pm-10pm' to 'wsa-wed-8pm'
-[22-Dec-2025 08:35:05 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Sun 10am-12pm' to 'wsa-sun-10am'
-[22-Dec-2025 08:35:05 UTC] [Auto-Enroll] Starting enrollment for student ID=4, Classes: wsa-wed-8pm, wsa-sun-10am
-[22-Dec-2025 08:35:05 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=4 in class 'Wushu Sport Academy: Wed 8pm-10pm' (Code: wsa-wed-8pm)
-[22-Dec-2025 08:35:05 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=4 in class 'Wushu Sport Academy: Sun 10am-12pm' (Code: wsa-sun-10am)
-[22-Dec-2025 08:35:05 UTC] [Auto-Enroll] Results - Success: 2, Failed: 0, Skipped: 0
-[22-Dec-2025 08:35:05 UTC] [Invoice Split] Total: 200, Classes: 2, Per Class: 100
-[22-Dec-2025 08:35:05 UTC] [Invoice] Using receipt path: payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png
-[22-Dec-2025 08:35:05 UTC] [Invoice] Created invoice: INV-REG-202512-1492 (ID: 16) for class wsa-wed-8pm, amount=100
-[22-Dec-2025 08:35:05 UTC] [Payment] Created payment record (ID: 9) linked to invoice INV-REG-202512-1492, receipt_path=payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png
-[22-Dec-2025 08:35:05 UTC] [Invoice] Created invoice: INV-REG-202512-1039 (ID: 17) for class wsa-sun-10am, amount=100
-[22-Dec-2025 08:35:05 UTC] [Payment] Created payment record (ID: 10) linked to invoice INV-REG-202512-1039, receipt_path=payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png
-[22-Dec-2025 08:35:05 UTC] [Success] Reg#: WSA2025-7943, Parent: PAR-2025-0001 (ID:2), Student: 4, Invoices: 2, Payment Date: 2025-12-22, Receipt: payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png
-[22-Dec-2025 08:35:05 UTC] [Email] Sending to: chaichonghern@gmail.com, isNewParent: YES, parentPassword: 1849
-[22-Dec-2025 08:35:06 UTC] [Email] Successfully sent to chaichonghern@gmail.com
-[22-Dec-2025 08:35:06 UTC] [Admin Email] Sending registration notification to admin@wushusportacademy.com
-[22-Dec-2025 08:35:06 UTC] [Admin Email] Successfully sent registration notification
-[22-Dec-2025 08:35:06 UTC] [Admin Notification] Email sent: YES
-[22-Dec-2025 08:35:13 UTC] [Serve File] Serving file: signatures/signature_WSA2025-7943_chai_chong_hern_20251222083505_085a1a.png (Size: 3794 bytes, MIME: image/png)
-[22-Dec-2025 08:35:13 UTC] [Serve File] Serving file: payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png (Size: 613149 bytes, MIME: image/png)
-[22-Dec-2025 16:35:15 Asia/Kuala_Lumpur] [verify_registration] Generated PARENT password from parent IC: 1849
-[22-Dec-2025 16:35:15 Asia/Kuala_Lumpur] [verify_registration] Updated 2 invoices to paid
-[22-Dec-2025 16:35:15 Asia/Kuala_Lumpur] [verify_registration] Found 2 paid invoices
-[22-Dec-2025 16:35:15 Asia/Kuala_Lumpur] [verify_registration] Updated 1 payments for invoice ID 16
-[22-Dec-2025 16:35:15 Asia/Kuala_Lumpur] [verify_registration] Updated 1 payments for invoice ID 17
-[22-Dec-2025 16:35:15 Asia/Kuala_Lumpur] [verify_registration] Total payments updated: 2
-[22-Dec-2025 16:35:15 Asia/Kuala_Lumpur] [verify_registration] IsFirstChild: YES, Parent IC: 030322-10-1849, PARENT Password: 1849
-[22-Dec-2025 16:35:17 Asia/Kuala_Lumpur] [Approval Email] Sent to chaichonghern@gmail.com for child Chai Chong Hern
-[22-Dec-2025 16:35:17 Asia/Kuala_Lumpur] [Approve] Reg#WSA2025-7943: invoices=2, payments=2, email=sent
-[22-Dec-2025 08:35:17 UTC] [Serve File] Serving file: signatures/signature_WSA2025-7943_chai_chong_hern_20251222083505_085a1a.png (Size: 3794 bytes, MIME: image/png)
-[22-Dec-2025 08:35:17 UTC] [Serve File] Serving file: payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png (Size: 613149 bytes, MIME: image/png)
-[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] === DELETE REGISTRATION STARTED ===
-[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] Reg#: WSA2025-7943, Student: Chai Chong Hern, Student ID: 4, Parent ID: 2
-[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] Files to delete: 3 - uploads/signatures/signature_WSA2025-7943_chai_chong_hern_20251222083505_085a1a.png, uploads/registration_pdfs/pdf_WSA2025-7943_chai_chong_hern_20251222083505_554561.pdf, uploads/payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png
-[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ Registration record deleted
-[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 parent-child relationship(s)
-[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 payment record(s)
-[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 invoice(s)
-[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 0 attendance record(s)
-[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 enrollment(s)
-[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ Student account deleted (ID: 4)
-[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] Parent 'Chai' (ID: 2) has 0 remaining child(ren)
-[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ Parent account DELETED: PAR-2025-0001 (Chai)
-[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ Database transaction committed
-[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/signatures/signature_WSA2025-7943_chai_chong_hern_20251222083505_085a1a.png
-[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/registration_pdfs/pdf_WSA2025-7943_chai_chong_hern_20251222083505_554561.pdf
-[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/payment_receipts/receipt_4_chai_chong_hern_2025-12-22_20251222083505_44a5b3.png
-[22-Dec-2025 16:36:47 Asia/Kuala_Lumpur] === DELETE REGISTRATION COMPLETED ===
-[22-Dec-2025 08:39:25 UTC] [Registration] Starting registration for parent email: chaichonghern@gmail.com, child IC: 123123-31-2312, name: Chai Chong Hern
-[22-Dec-2025 08:39:25 UTC] [Reg Number] Generated unique random registration number: WSA2025-6519
-[22-Dec-2025 08:39:25 UTC] [Password] Using IC last 4 digits: 2312
-[22-Dec-2025 08:39:25 UTC] [Password] Using IC last 4 digits: 1849
-[22-Dec-2025 08:39:26 UTC] [Parent] Created NEW parent account ID=3, code=PAR-2025-0001, email=chaichonghern@gmail.com, password=1849
-[22-Dec-2025 08:39:26 UTC] [Parent Info] ID=3, Code=PAR-2025-0001, IsNew=1, Password=1849
-[22-Dec-2025 08:39:26 UTC] [Student] Created student ID=5 (Chai Chong Hern)
-[22-Dec-2025 08:39:26 UTC] [Link] Linked student ID=5 to parent ID=3
-[22-Dec-2025 08:39:26 UTC] [DateTime Validation] Invalid form_date '22/12/2025', using current datetime
-[22-Dec-2025 08:39:26 UTC] [Registration] Original form_date: 22/12/2025, Validated: 2025-12-22 08:39:26
-[22-Dec-2025 08:39:26 UTC] [File Helper] Saved file: signatures/signature_WSA2025-6519_chai_chong_hern_20251222083926_6c14c7.png (Size: 5272 bytes)
-[22-Dec-2025 08:39:26 UTC] [File Save] Signature saved: signatures/signature_WSA2025-6519_chai_chong_hern_20251222083926_6c14c7.png
-[22-Dec-2025 08:39:26 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-6519_chai_chong_hern_20251222083926_ed91bd.pdf (Size: 1197566 bytes)
-[22-Dec-2025 08:39:26 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-6519_chai_chong_hern_20251222083926_ed91bd.pdf
-[22-Dec-2025 08:39:26 UTC] [File Helper] Saved file: payment_receipts/receipt_5_chai_chong_hern_reg-wsa2025-6519-2025-12-22_20251222083926_02e7dc.png (Size: 613149 bytes)
-[22-Dec-2025 08:39:26 UTC] [File Save] Payment receipt saved: payment_receipts/receipt_5_chai_chong_hern_reg-wsa2025-6519-2025-12-22_20251222083926_02e7dc.png
-[22-Dec-2025 08:39:26 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Wed 8pm-10pm, SJK(C) Puay Chai 2: Tue 8pm-10pm
-[22-Dec-2025 08:39:26 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Wed 8pm-10pm' to 'wsa-wed-8pm'
-[22-Dec-2025 08:39:26 UTC] [Schedule Parse] Mapped 'SJK(C) Puay Chai 2: Tue 8pm-10pm' to 'pc2-tue-8pm'
-[22-Dec-2025 08:39:26 UTC] [Auto-Enroll] Starting enrollment for student ID=5, Classes: wsa-wed-8pm, pc2-tue-8pm
-[22-Dec-2025 08:39:26 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=5 in class 'Wushu Sport Academy: Wed 8pm-10pm' (Code: wsa-wed-8pm)
-[22-Dec-2025 08:39:26 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=5 in class 'SJK(C) Puay Chai 2: Tue 8pm-10pm' (Code: pc2-tue-8pm)
-[22-Dec-2025 08:39:26 UTC] [Auto-Enroll] Results - Success: 2, Failed: 0, Skipped: 0
-[22-Dec-2025 08:39:26 UTC] [Invoice Split] Total: 200, Classes: 2, Per Class: 100
-[22-Dec-2025 08:39:26 UTC] [Invoice] Using receipt path: payment_receipts/receipt_5_chai_chong_hern_reg-wsa2025-6519-2025-12-22_20251222083926_02e7dc.png
-[22-Dec-2025 08:39:26 UTC] [Invoice] Created invoice: INV-REG-202512-9676 (ID: 18) for class wsa-wed-8pm, amount=100
-[22-Dec-2025 08:39:26 UTC] [Payment] Created payment record (ID: 11) linked to invoice INV-REG-202512-9676, receipt_path=payment_receipts/receipt_5_chai_chong_hern_reg-wsa2025-6519-2025-12-22_20251222083926_02e7dc.png
-[22-Dec-2025 08:39:26 UTC] [Invoice] Created invoice: INV-REG-202512-5576 (ID: 19) for class pc2-tue-8pm, amount=100
-[22-Dec-2025 08:39:26 UTC] [Payment] Created payment record (ID: 12) linked to invoice INV-REG-202512-5576, receipt_path=payment_receipts/receipt_5_chai_chong_hern_reg-wsa2025-6519-2025-12-22_20251222083926_02e7dc.png
-[22-Dec-2025 08:39:26 UTC] [Success] Reg#: WSA2025-6519, Parent: PAR-2025-0001 (ID:3), Student: 5, Invoices: 2, Payment Date: 2025-12-22, Receipt: payment_receipts/receipt_5_chai_chong_hern_reg-wsa2025-6519-2025-12-22_20251222083926_02e7dc.png
-[22-Dec-2025 08:39:26 UTC] [Email] Sending to: chaichonghern@gmail.com, isNewParent: YES, parentPassword: 1849
-[22-Dec-2025 08:39:26 UTC] [Email] Successfully sent to chaichonghern@gmail.com
-[22-Dec-2025 08:39:26 UTC] [Admin Email] Sending registration notification to admin@wushusportacademy.com
-[22-Dec-2025 08:39:27 UTC] [Admin Email] Successfully sent registration notification
-[22-Dec-2025 08:39:27 UTC] [Admin Notification] Email sent: YES
-[22-Dec-2025 08:39:59 UTC] [Serve File] Serving file: signatures/signature_WSA2025-6519_chai_chong_hern_20251222083926_6c14c7.png (Size: 5272 bytes, MIME: image/png)
-[22-Dec-2025 08:39:59 UTC] [Serve File] Serving file: payment_receipts/receipt_5_chai_chong_hern_reg-wsa2025-6519-2025-12-22_20251222083926_02e7dc.png (Size: 613149 bytes, MIME: image/png)
-[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] === DELETE REGISTRATION STARTED ===
-[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] Reg#: WSA2025-6519, Student: Chai Chong Hern, Student ID: 5, Parent ID: 3
-[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] Files to delete: 3 - uploads/signatures/signature_WSA2025-6519_chai_chong_hern_20251222083926_6c14c7.png, uploads/registration_pdfs/pdf_WSA2025-6519_chai_chong_hern_20251222083926_ed91bd.pdf, uploads/payment_receipts/receipt_5_chai_chong_hern_reg-wsa2025-6519-2025-12-22_20251222083926_02e7dc.png
-[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ Registration record deleted
-[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 parent-child relationship(s)
-[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 payment record(s)
-[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 invoice(s)
-[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 0 attendance record(s)
-[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 enrollment(s)
-[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ Student account deleted (ID: 5)
-[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] Parent 'Chai' (ID: 3) has 0 remaining child(ren)
-[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ Parent account DELETED: PAR-2025-0001 (Chai)
-[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ Database transaction committed
-[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/signatures/signature_WSA2025-6519_chai_chong_hern_20251222083926_6c14c7.png
-[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/registration_pdfs/pdf_WSA2025-6519_chai_chong_hern_20251222083926_ed91bd.pdf
-[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/payment_receipts/receipt_5_chai_chong_hern_reg-wsa2025-6519-2025-12-22_20251222083926_02e7dc.png
-[22-Dec-2025 16:40:01 Asia/Kuala_Lumpur] === DELETE REGISTRATION COMPLETED ===
+[24-Dec-2025 05:45:06 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 799
+[24-Dec-2025 05:45:06 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 799
+[24-Dec-2025 05:45:06 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 799
+[24-Dec-2025 05:45:18 Asia/Kuala_Lumpur] [Payment Upload] Using invoice NUMBER: INV-20251224-8451 (ID: 32)
+[24-Dec-2025 05:45:18 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_9_test_inv-20251224-8451_20251224054518_a3d2c7.png
+[24-Dec-2025 05:45:18 Asia/Kuala_Lumpur] [Payment Resubmit] Found existing payment ID: 25
+[24-Dec-2025 05:45:18 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to admin@wushusportacademy.com
+[24-Dec-2025 05:45:18 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
+[24-Dec-2025 05:45:18 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
+[24-Dec-2025 05:52:35 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 799
+[24-Dec-2025 05:52:35 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 799
+[24-Dec-2025 05:52:35 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 799
+[24-Dec-2025 05:52:44 Asia/Kuala_Lumpur] [Payment Upload] Using invoice NUMBER: INV-20251224-8451 (ID: 32)
+[24-Dec-2025 05:52:44 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_9_test_inv-20251224-8451_20251224055244_66e8c9.png
+[24-Dec-2025 05:52:44 Asia/Kuala_Lumpur] [Payment Resubmit] Found existing payment ID: 25
+[24-Dec-2025 05:52:44 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to admin@wushusportacademy.com
+[24-Dec-2025 05:52:45 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
+[24-Dec-2025 05:52:45 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
+[24-Dec-2025 05:55:45 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 799
+[24-Dec-2025 05:55:45 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 799
+[24-Dec-2025 05:55:45 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 799
+[24-Dec-2025 05:55:54 Asia/Kuala_Lumpur] [Payment Upload] Using invoice NUMBER: INV-20251224-8451 (ID: 32)
+[24-Dec-2025 05:55:54 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_9_test_inv-20251224-8451_20251224055554_91a733.png
+[24-Dec-2025 05:55:54 Asia/Kuala_Lumpur] [Payment Resubmit] Found existing payment ID: 25
+[24-Dec-2025 05:55:54 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to admin@wushusportacademy.com
+[24-Dec-2025 05:55:54 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
+[24-Dec-2025 05:55:54 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur] [admin.php verify_payment] Renaming receipt file with rejection marker...
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur] [File Helper] Renamed file: payment_receipts/receipt_9_test_inv-20251224-8451_20251224055554_91a733.png -> payment_receipts/receipt_9_test_inv-20251224-8451_20251224055554_91a733_rejected.png
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur] [admin.php verify_payment] Receipt renamed successfully: payment_receipts/receipt_9_test_inv-20251224-8451_20251224055554_91a733.png -> payment_receipts/receipt_9_test_inv-20251224-8451_20251224055554_91a733_rejected.png
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur] [admin.php verify_payment] Invoice marked as REJECTED
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur] [admin.php verify_payment] Attempting to send email notification
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur] ========================================
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur] [Payment Approval Email] STARTING
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur] [Payment Approval Email] Payment ID: 25
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur] [Payment Approval Email] Status: rejected
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur] [Payment Approval Email] Admin Notes: 
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur] ========================================
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur] [Payment Approval Email] SQL Query:              SELECT                  p.id as payment_id,                 p.amount,                 p.payment_month,                 p.receipt_filename,                 p.verification_status,                 p.invoice_id,                 s.id as student_account_id,                 s.full_name as student_name,                 s.student_id as student_number,                 s.email as student_email,                 s.parent_account_id,                 r.name_en as registration_name,                 c.class_name,                 c.class_code,                 i.invoice_number,                 i.description as invoice_description,                 pa.email as parent_email,                 pa.full_name as parent_name,                 pa.parent_id as parent_number             FROM payments p             JOIN students s ON p.student_id = s.id             LEFT JOIN parent_accounts pa ON s.parent_account_id = pa.id             LEFT JOIN registrations r ON s.id = r.student_account_id             LEFT JOIN classes c ON p.class_id = c.id             LEFT JOIN invoices i ON p.invoice_id = i.id             WHERE p.id = ?         
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur] [Payment Approval Email] Payment record found:
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur]   - Student Name: test
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur]   - Student Email: test@gmail.com
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur]   - Parent Email: test@gmail.com
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur]   - Amount: 180.00
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur] [Payment Approval Email] Email will be sent to: test@gmail.com
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur] [Payment Approval Email] SMTP configured
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur] [Payment Approval Email] Preparing REJECTED email
+[24-Dec-2025 05:56:08 Asia/Kuala_Lumpur] [Payment Approval Email] Attempting to send email via SMTP...
+[24-Dec-2025 05:56:09 Asia/Kuala_Lumpur] [Payment Approval Email] ✅ SUCCESS! Email sent to test@gmail.com
+[24-Dec-2025 05:56:09 Asia/Kuala_Lumpur] ========================================
+[24-Dec-2025 05:56:09 Asia/Kuala_Lumpur] [admin.php verify_payment] Email function returned: true
+[24-Dec-2025 05:56:09 Asia/Kuala_Lumpur] [admin.php verify_payment] Rejection email sent successfully
+[24-Dec-2025 05:56:09 Asia/Kuala_Lumpur] [admin.php verify_payment] Redirecting to admin.php?page=invoices
+[24-Dec-2025 05:56:09 Asia/Kuala_Lumpur] ========================================
+[24-Dec-2025 05:57:39 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 799
+[24-Dec-2025 05:57:39 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 799
+[24-Dec-2025 05:57:39 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 799
+[24-Dec-2025 05:58:26 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 05:58:26 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 05:58:26 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:00:33 Asia/Kuala_Lumpur] [Profile PDF Debug] Registration ID: 9
+[24-Dec-2025 06:00:33 Asia/Kuala_Lumpur] [Profile PDF Debug] PDF Path from DB (relative): registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf
+[24-Dec-2025 06:00:33 Asia/Kuala_Lumpur] [Profile PDF Debug] Full absolute path: /home/wushuspo/public_html/pages/../uploads/registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf
+[24-Dec-2025 06:00:33 Asia/Kuala_Lumpur] [Profile PDF Debug] File exists check: YES
+[24-Dec-2025 06:00:33 Asia/Kuala_Lumpur] [Profile PDF Debug] Final pdf_path value: /home/wushuspo/public_html/pages/../uploads/registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf
+[24-Dec-2025 06:06:06 Asia/Kuala_Lumpur] [Profile PDF Debug] Registration ID: 9
+[24-Dec-2025 06:06:06 Asia/Kuala_Lumpur] [Profile PDF Debug] PDF Path from DB (relative): registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf
+[24-Dec-2025 06:06:06 Asia/Kuala_Lumpur] [Profile PDF Debug] Full absolute path: /home/wushuspo/public_html/pages/../uploads/registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf
+[24-Dec-2025 06:06:06 Asia/Kuala_Lumpur] [Profile PDF Debug] File exists check: YES
+[24-Dec-2025 06:06:06 Asia/Kuala_Lumpur] [Profile PDF Debug] Final pdf_path value: /home/wushuspo/public_html/pages/../uploads/registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf
+[24-Dec-2025 06:06:12 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:06:12 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:06:12 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:07:41 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:07:41 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:07:41 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:09:14 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:09:14 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:09:14 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:12:09 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:12:09 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:12:09 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:12:25 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:12:25 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:12:25 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:12:54 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:12:54 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:12:54 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:13:35 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:13:35 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:13:35 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:14:15 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:14:15 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:14:50 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:14:50 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:14:50 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:14:59 Asia/Kuala_Lumpur] [Payment Upload] Using invoice NUMBER: INV-20251224-8451 (ID: 32)
+[24-Dec-2025 06:14:59 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_9_test_inv-20251224-8451_20251224061459_078d1e.png
+[24-Dec-2025 06:14:59 Asia/Kuala_Lumpur] [Payment Resubmit] Found existing payment ID: 25
+[24-Dec-2025 06:14:59 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to admin@wushusportacademy.com
+[24-Dec-2025 06:14:59 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
+[24-Dec-2025 06:14:59 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur] [admin.php verify_payment] Renaming receipt file with rejection marker...
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur] [File Helper] Renamed file: payment_receipts/receipt_9_test_inv-20251224-8451_20251224061459_078d1e.png -> payment_receipts/receipt_9_test_inv-20251224-8451_20251224061459_078d1e_rejected.png
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur] [admin.php verify_payment] Receipt renamed successfully: payment_receipts/receipt_9_test_inv-20251224-8451_20251224061459_078d1e.png -> payment_receipts/receipt_9_test_inv-20251224-8451_20251224061459_078d1e_rejected.png
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur] [admin.php verify_payment] Invoice marked as REJECTED
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur] [admin.php verify_payment] Attempting to send email notification
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur] ========================================
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur] [Payment Approval Email] STARTING
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur] [Payment Approval Email] Payment ID: 25
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur] [Payment Approval Email] Status: rejected
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur] [Payment Approval Email] Admin Notes: Rejected Reason Here
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur] ========================================
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur] [Payment Approval Email] SQL Query:              SELECT                  p.id as payment_id,                 p.amount,                 p.payment_month,                 p.receipt_filename,                 p.verification_status,                 p.invoice_id,                 s.id as student_account_id,                 s.full_name as student_name,                 s.student_id as student_number,                 s.email as student_email,                 s.parent_account_id,                 r.name_en as registration_name,                 c.class_name,                 c.class_code,                 i.invoice_number,                 i.description as invoice_description,                 pa.email as parent_email,                 pa.full_name as parent_name,                 pa.parent_id as parent_number             FROM payments p             JOIN students s ON p.student_id = s.id             LEFT JOIN parent_accounts pa ON s.parent_account_id = pa.id             LEFT JOIN registrations r ON s.id = r.student_account_id             LEFT JOIN classes c ON p.class_id = c.id             LEFT JOIN invoices i ON p.invoice_id = i.id             WHERE p.id = ?         
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur] [Payment Approval Email] Payment record found:
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur]   - Student Name: test
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur]   - Student Email: test@gmail.com
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur]   - Parent Email: test@gmail.com
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur]   - Amount: 180.00
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur] [Payment Approval Email] Email will be sent to: test@gmail.com
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur] [Payment Approval Email] SMTP configured
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur] [Payment Approval Email] Preparing REJECTED email
+[24-Dec-2025 06:15:25 Asia/Kuala_Lumpur] [Payment Approval Email] Attempting to send email via SMTP...
+[24-Dec-2025 06:15:28 Asia/Kuala_Lumpur] [Payment Approval Email] ✅ SUCCESS! Email sent to test@gmail.com
+[24-Dec-2025 06:15:28 Asia/Kuala_Lumpur] ========================================
+[24-Dec-2025 06:15:28 Asia/Kuala_Lumpur] [admin.php verify_payment] Email function returned: true
+[24-Dec-2025 06:15:28 Asia/Kuala_Lumpur] [admin.php verify_payment] Rejection email sent successfully
+[24-Dec-2025 06:15:28 Asia/Kuala_Lumpur] [admin.php verify_payment] Redirecting to admin.php?page=invoices
+[24-Dec-2025 06:15:28 Asia/Kuala_Lumpur] ========================================
+[23-Dec-2025 22:17:28 UTC] [Registration] Starting registration for parent email: chaichonghern@gmail.com, child IC: 123123-12-3123, name: Chai Chong Hern
+[23-Dec-2025 22:17:28 UTC] [Reg Number] Generated unique random registration number: WSA2025-2284
+[23-Dec-2025 22:17:28 UTC] [Password] Using IC last 4 digits: 3123
+[23-Dec-2025 22:17:28 UTC] [Password] Using IC last 4 digits: 1849
+[23-Dec-2025 22:17:28 UTC] [Parent] Created NEW parent account ID=8, code=PAR-2025-0002, email=chaichonghern@gmail.com, password=1849
+[23-Dec-2025 22:17:28 UTC] [Parent Info] ID=8, Code=PAR-2025-0002, IsNew=1, Password=1849
+[23-Dec-2025 22:17:28 UTC] [Student] Created student ID=11 (Chai Chong Hern)
+[23-Dec-2025 22:17:28 UTC] [Link] Linked student ID=11 to parent ID=8
+[23-Dec-2025 22:17:28 UTC] [DateTime Validation] Invalid form_date '24/12/2025', using current datetime
+[23-Dec-2025 22:17:28 UTC] [Registration] Original form_date: 24/12/2025, Validated: 2025-12-23 22:17:28
+[23-Dec-2025 22:17:28 UTC] [File Helper] Saved file: signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png (Size: 6594 bytes)
+[23-Dec-2025 22:17:28 UTC] [File Save] Signature saved: signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png
+[23-Dec-2025 22:17:28 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-2284_chai_chong_hern_20251223221728_527623.pdf (Size: 1184029 bytes)
+[23-Dec-2025 22:17:28 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-2284_chai_chong_hern_20251223221728_527623.pdf
+[23-Dec-2025 22:17:28 UTC] [File Helper] Saved file: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png (Size: 416365 bytes)
+[23-Dec-2025 22:17:28 UTC] [File Save] Payment receipt saved: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png
+[23-Dec-2025 22:17:28 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Wed 8pm-10pm
+[23-Dec-2025 22:17:28 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Wed 8pm-10pm' to 'wsa-wed-8pm'
+[23-Dec-2025 22:17:28 UTC] [Auto-Enroll] Starting enrollment for student ID=11, Classes: wsa-wed-8pm
+[23-Dec-2025 22:17:28 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=11 in class 'Wushu Sport Academy: Wed 8pm-10pm' (Code: wsa-wed-8pm)
+[23-Dec-2025 22:17:28 UTC] [Auto-Enroll] Results - Success: 1, Failed: 0, Skipped: 0
+[23-Dec-2025 22:17:28 UTC] [Invoice Split] Total: 120, Classes: 1, Per Class: 120
+[23-Dec-2025 22:17:28 UTC] [Invoice] Using receipt path: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png
+[23-Dec-2025 22:17:28 UTC] [Invoice] Created invoice: INV-REG-202512-6049 (ID: 34) for class wsa-wed-8pm, amount=120
+[23-Dec-2025 22:17:28 UTC] [Payment] Created payment record (ID: 27) linked to invoice INV-REG-202512-6049, receipt_path=payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png
+[23-Dec-2025 22:17:28 UTC] [Success] Reg#: WSA2025-2284, Parent: PAR-2025-0002 (ID:8), Student: 11, Invoices: 1, Payment Date: 2025-12-23, Receipt: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png
+[23-Dec-2025 22:17:28 UTC] [Email] Sending to: chaichonghern@gmail.com, isNewParent: YES, parentPassword: 1849
+[23-Dec-2025 22:17:29 UTC] [Email] Successfully sent to chaichonghern@gmail.com
+[23-Dec-2025 22:17:29 UTC] [Admin Email] Sending registration notification to admin@wushusportacademy.com
+[23-Dec-2025 22:17:29 UTC] [Admin Email] Successfully sent registration notification
+[23-Dec-2025 22:17:29 UTC] [Admin Notification] Email sent: YES
+[23-Dec-2025 22:17:32 UTC] [Serve File] Serving file: signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png (Size: 6594 bytes, MIME: image/png)
+[23-Dec-2025 22:17:32 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[23-Dec-2025 22:17:32 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[23-Dec-2025 22:17:32 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3596_test_20251223202353_27ea3f.png (Size: 8323 bytes, MIME: image/png)
+[23-Dec-2025 22:17:32 UTC] [Serve File] Serving file: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png (Size: 416365 bytes, MIME: image/png)
+[23-Dec-2025 22:17:32 UTC] [Serve File] Serving file: payment_receipts/receipt_9_test_reg-wsa2025-3596-2025-12-23_20251223202353_e5c9bc.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 06:17:37 Asia/Kuala_Lumpur] [verify_registration] Generated PARENT password from parent IC: 1849
+[24-Dec-2025 06:17:37 Asia/Kuala_Lumpur] [verify_registration] Updated 1 invoices to paid
+[24-Dec-2025 06:17:37 Asia/Kuala_Lumpur] [verify_registration] Found 1 paid invoices
+[24-Dec-2025 06:17:37 Asia/Kuala_Lumpur] [verify_registration] Updated 1 payments for invoice ID 34
+[24-Dec-2025 06:17:37 Asia/Kuala_Lumpur] [verify_registration] Total payments updated: 1
+[24-Dec-2025 06:17:37 Asia/Kuala_Lumpur] [verify_registration] IsFirstChild: YES, Parent IC: 030322-10-1849, PARENT Password: 1849
+[24-Dec-2025 06:17:38 Asia/Kuala_Lumpur] [Approval Email] Sent to chaichonghern@gmail.com for child Chai Chong Hern
+[24-Dec-2025 06:17:38 Asia/Kuala_Lumpur] [Approve] Reg#WSA2025-2284: invoices=1, payments=1, email=sent
+[23-Dec-2025 22:17:38 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[23-Dec-2025 22:17:38 UTC] [Serve File] Serving file: signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png (Size: 6594 bytes, MIME: image/png)
+[23-Dec-2025 22:17:38 UTC] [Serve File] Serving file: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png (Size: 416365 bytes, MIME: image/png)
+[23-Dec-2025 22:17:38 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3596_test_20251223202353_27ea3f.png (Size: 8323 bytes, MIME: image/png)
+[23-Dec-2025 22:17:38 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[23-Dec-2025 22:17:38 UTC] [Serve File] Serving file: payment_receipts/receipt_9_test_reg-wsa2025-3596-2025-12-23_20251223202353_e5c9bc.png (Size: 450281 bytes, MIME: image/png)
+[23-Dec-2025 22:28:12 UTC] [Registration] Starting registration for parent email: mlxysf@gmail.com, child IC: 123341-24-5431, name: omg
+[23-Dec-2025 22:28:12 UTC] [Reg Number] Generated unique random registration number: WSA2025-4852
+[23-Dec-2025 22:28:12 UTC] [Password] Using IC last 4 digits: 5431
+[23-Dec-2025 22:28:12 UTC] [Password] Using IC last 4 digits: 1849
+[23-Dec-2025 22:28:12 UTC] [Parent] Created NEW parent account ID=9, code=PAR-2025-0003, email=mlxysf@gmail.com, password=1849
+[23-Dec-2025 22:28:12 UTC] [Parent Info] ID=9, Code=PAR-2025-0003, IsNew=1, Password=1849
+[23-Dec-2025 22:28:12 UTC] [Student] Created student ID=12 (omg)
+[23-Dec-2025 22:28:12 UTC] [Link] Linked student ID=12 to parent ID=9
+[23-Dec-2025 22:28:12 UTC] [DateTime Validation] Invalid form_date '24/12/2025', using current datetime
+[23-Dec-2025 22:28:12 UTC] [Registration] Original form_date: 24/12/2025, Validated: 2025-12-23 22:28:12
+[23-Dec-2025 22:28:12 UTC] [File Helper] Saved file: signatures/signature_WSA2025-4852_omg_20251223222812_dd4d1b.png (Size: 5597 bytes)
+[23-Dec-2025 22:28:12 UTC] [File Save] Signature saved: signatures/signature_WSA2025-4852_omg_20251223222812_dd4d1b.png
+[23-Dec-2025 22:28:12 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-4852_omg_20251223222812_009bbb.pdf (Size: 1174942 bytes)
+[23-Dec-2025 22:28:12 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-4852_omg_20251223222812_009bbb.pdf
+[23-Dec-2025 22:28:12 UTC] [File Helper] Saved file: payment_receipts/receipt_12_omg_reg-wsa2025-4852-2025-12-23_20251223222812_5d0c9d.jpg (Size: 98572 bytes)
+[23-Dec-2025 22:28:12 UTC] [File Save] Payment receipt saved: payment_receipts/receipt_12_omg_reg-wsa2025-4852-2025-12-23_20251223222812_5d0c9d.jpg
+[23-Dec-2025 22:28:12 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Sun 10am-12pm
+[23-Dec-2025 22:28:12 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Sun 10am-12pm' to 'wsa-sun-10am'
+[23-Dec-2025 22:28:12 UTC] [Auto-Enroll] Starting enrollment for student ID=12, Classes: wsa-sun-10am
+[23-Dec-2025 22:28:12 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=12 in class 'Wushu Sport Academy: Sun 10am-12pm' (Code: wsa-sun-10am)
+[23-Dec-2025 22:28:12 UTC] [Auto-Enroll] Results - Success: 1, Failed: 0, Skipped: 0
+[23-Dec-2025 22:28:12 UTC] [Invoice Split] Total: 120, Classes: 1, Per Class: 120
+[23-Dec-2025 22:28:12 UTC] [Invoice] Using receipt path: payment_receipts/receipt_12_omg_reg-wsa2025-4852-2025-12-23_20251223222812_5d0c9d.jpg
+[23-Dec-2025 22:28:12 UTC] [Invoice] Created invoice: INV-REG-202512-6460 (ID: 35) for class wsa-sun-10am, amount=120
+[23-Dec-2025 22:28:12 UTC] [Payment] Created payment record (ID: 28) linked to invoice INV-REG-202512-6460, receipt_path=payment_receipts/receipt_12_omg_reg-wsa2025-4852-2025-12-23_20251223222812_5d0c9d.jpg
+[23-Dec-2025 22:28:12 UTC] [Success] Reg#: WSA2025-4852, Parent: PAR-2025-0003 (ID:9), Student: 12, Invoices: 1, Payment Date: 2025-12-23, Receipt: payment_receipts/receipt_12_omg_reg-wsa2025-4852-2025-12-23_20251223222812_5d0c9d.jpg
+[23-Dec-2025 22:28:12 UTC] [Email] Sending to: mlxysf@gmail.com, isNewParent: YES, parentPassword: 1849
+[23-Dec-2025 22:28:13 UTC] [Email] Successfully sent to mlxysf@gmail.com
+[23-Dec-2025 22:28:13 UTC] [Admin Email] Sending registration notification to admin@wushusportacademy.com
+[23-Dec-2025 22:28:13 UTC] [Admin Email] Successfully sent registration notification
+[23-Dec-2025 22:28:13 UTC] [Admin Notification] Email sent: YES
+[24-Dec-2025 06:30:16 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:30:24 Asia/Kuala_Lumpur] [Payment Upload] Using invoice NUMBER: INV-20251224-6139 (ID: 36)
+[24-Dec-2025 06:30:24 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_11_chai_chong_hern_inv-20251224-6139_20251224063024_60fbc4.png
+[24-Dec-2025 06:30:24 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to admin@wushusportacademy.com
+[24-Dec-2025 06:30:24 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
+[24-Dec-2025 06:30:24 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
+[24-Dec-2025 06:38:13 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:38:13 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:38:13 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:38:41 Asia/Kuala_Lumpur] [Profile PDF Debug] Registration ID: 9
+[24-Dec-2025 06:38:41 Asia/Kuala_Lumpur] [Profile PDF Debug] PDF Path from DB (relative): registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf
+[24-Dec-2025 06:38:41 Asia/Kuala_Lumpur] [Profile PDF Debug] Full absolute path: /home/wushuspo/public_html/pages/../uploads/registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf
+[24-Dec-2025 06:38:41 Asia/Kuala_Lumpur] [Profile PDF Debug] File exists check: YES
+[24-Dec-2025 06:38:41 Asia/Kuala_Lumpur] [Profile PDF Debug] Final pdf_path value: /home/wushuspo/public_html/pages/../uploads/registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf
+[24-Dec-2025 06:41:56 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:41:56 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:42:07 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:42:07 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:42:07 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:43:25 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:43:25 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:43:25 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:43:49 Asia/Kuala_Lumpur] [Payment Upload] Using invoice NUMBER: INV-20251224-4671 (ID: 30)
+[24-Dec-2025 06:43:49 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_9_test_inv-20251224-4671_20251224064349_d75f50.png
+[24-Dec-2025 06:43:49 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to admin@wushusportacademy.com
+[24-Dec-2025 06:43:50 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
+[24-Dec-2025 06:43:50 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
+[24-Dec-2025 06:46:09 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:46:09 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:46:09 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:49:25 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:49:25 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:49:25 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:49:53 Asia/Kuala_Lumpur] [Payment Upload] Using invoice NUMBER: INV-20251224-3121 (ID: 37)
+[24-Dec-2025 06:49:53 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_9_test_inv-20251224-3121_20251224064953_97c9b3.png
+[24-Dec-2025 06:49:53 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to admin@wushusportacademy.com
+[24-Dec-2025 06:49:53 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
+[24-Dec-2025 06:49:53 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
+[24-Dec-2025 06:49:59 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:49:59 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:49:59 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:50:35 Asia/Kuala_Lumpur] [Payment Upload] Using invoice NUMBER: INV-20251224-8451 (ID: 32)
+[24-Dec-2025 06:50:35 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_9_test_inv-20251224-8451_20251224065035_c4686d.png
+[24-Dec-2025 06:50:35 Asia/Kuala_Lumpur] [Payment Resubmit] Found existing payment ID: 25
+[24-Dec-2025 06:50:35 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to admin@wushusportacademy.com
+[24-Dec-2025 06:50:35 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
+[24-Dec-2025 06:50:35 Asia/Kuala_Lumpur] [Payment Upload] Admin notification email sent: YES
+[24-Dec-2025 06:50:39 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:50:39 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:50:39 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 06:51:11 Asia/Kuala_Lumpur] [Profile PDF Debug] Registration ID: 9
+[24-Dec-2025 06:51:11 Asia/Kuala_Lumpur] [Profile PDF Debug] PDF Path from DB (relative): registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf
+[24-Dec-2025 06:51:11 Asia/Kuala_Lumpur] [Profile PDF Debug] Full absolute path: /home/wushuspo/public_html/pages/../uploads/registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf
+[24-Dec-2025 06:51:11 Asia/Kuala_Lumpur] [Profile PDF Debug] File exists check: YES
+[24-Dec-2025 06:51:11 Asia/Kuala_Lumpur] [Profile PDF Debug] Final pdf_path value: /home/wushuspo/public_html/pages/../uploads/registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf
+[24-Dec-2025 06:51:47 Asia/Kuala_Lumpur] [Profile PDF Debug] Registration ID: 9
+[24-Dec-2025 06:51:47 Asia/Kuala_Lumpur] [Profile PDF Debug] PDF Path from DB (relative): registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf
+[24-Dec-2025 06:51:47 Asia/Kuala_Lumpur] [Profile PDF Debug] Full absolute path: /home/wushuspo/public_html/pages/../uploads/registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf
+[24-Dec-2025 06:51:47 Asia/Kuala_Lumpur] [Profile PDF Debug] File exists check: YES
+[24-Dec-2025 06:51:47 Asia/Kuala_Lumpur] [Profile PDF Debug] Final pdf_path value: /home/wushuspo/public_html/pages/../uploads/registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf

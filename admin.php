@@ -294,57 +294,109 @@ if ($_POST['action'] === 'delete_invoice') {
 
     
     // VERIFY PAYMENT
-    if ($_POST['action'] === 'verify_payment') {
-        $payment_id = $_POST['payment_id'];
-        $invoice_id = $_POST['invoice_id'];
-        $verification_status = $_POST['verification_status'];
-        $admin_notes = $_POST['admin_notes'] ?? '';
+if ($_POST['action'] === 'verify_payment') {
+    $payment_id = $_POST['payment_id'];
+    $invoice_id = $_POST['invoice_id'];
+    $verification_status = $_POST['verification_status'];
+    $admin_notes = $_POST['admin_notes'] ?? '';
+
+    error_log("========================================");
+    error_log("[admin.php verify_payment] Starting - Payment ID: {$payment_id}, Status: {$verification_status}");
+    
+    try {
+        $pdo->beginTransaction();
         
-        error_log("[admin.php verify_payment] Starting - Payment ID: {$payment_id}, Status: {$verification_status}");
+        // ✨ NEW: Get payment receipt path BEFORE updating
+        $stmt = $pdo->prepare("SELECT receipt_path, student_id FROM payments WHERE id = ?");
+        $stmt->execute([$payment_id]);
+        $payment = $stmt->fetch();
+        $receiptPath = $payment['receipt_path'] ?? null;
+        $studentId = $payment['student_id'] ?? null;
+        
+        error_log("[admin.php verify_payment] Receipt path: " . ($receiptPath ?? 'none'));
+        error_log("[admin.php verify_payment] Student ID: " . ($studentId ?? 'none'));
         
         // Update payment verification
-        $stmt = $pdo->prepare("
-            UPDATE payments 
-            SET verification_status = ?, admin_notes = ?, verified_date = NOW(), verified_by = ? 
-            WHERE id = ?
-        ");
+        $stmt = $pdo->prepare("UPDATE payments SET verification_status = ?, admin_notes = ?, verified_date = NOW(), verified_by = ? WHERE id = ?");
         $stmt->execute([$verification_status, $admin_notes, $_SESSION['admin_id'] ?? null, $payment_id]);
         
-        // If verified, update invoice status to paid
+        error_log("[admin.php verify_payment] Payment record updated");
+        
         if ($verification_status === 'verified') {
-            $update_invoice = $pdo->prepare("
-                UPDATE invoices 
-                SET status = 'paid', paid_date = NOW() 
-                WHERE id = ?
-            ");
-            $update_invoice->execute([$invoice_id]);
+            // Update invoice status to paid
+            $updateInvoice = $pdo->prepare("UPDATE invoices SET status = 'paid', paid_date = NOW() WHERE id = ?");
+            $updateInvoice->execute([$invoice_id]);
+            
+            error_log("[admin.php verify_payment] Invoice marked as PAID");
+            
+            $pdo->commit();
+            
             $_SESSION['success'] = "Payment verified and invoice marked as PAID!";
-        } else {
-            // CHANGED: If rejected, set invoice to 'rejected' status
-            $update_invoice = $pdo->prepare("
-                UPDATE invoices 
-                SET status = 'rejected' 
-                WHERE id = ?
-            ");
-            $update_invoice->execute([$invoice_id]);
+            
+        } else if ($verification_status === 'rejected') {
+            // ✨ NEW: Rename receipt file to include "rejected"
+            if (!empty($receiptPath)) {
+                require_once 'file_helper.php';
+                
+                error_log("[admin.php verify_payment] Renaming receipt file with rejection marker...");
+                $renameResult = renameFileWithRejection($receiptPath);
+                
+                if ($renameResult['success']) {
+                    $newPath = $renameResult['new_path'];
+                    
+                    // Update receipt_path in database
+                    $stmt = $pdo->prepare("UPDATE payments SET receipt_path = ? WHERE id = ?");
+                    $stmt->execute([$newPath, $payment_id]);
+                    
+                    if ($renameResult['already_renamed']) {
+                        error_log("[admin.php verify_payment] Receipt already marked as rejected: {$newPath}");
+                    } else {
+                        error_log("[admin.php verify_payment] Receipt renamed successfully: {$receiptPath} -> {$newPath}");
+                    }
+                } else {
+                    error_log("[admin.php verify_payment] WARNING: Failed to rename receipt file: " . $renameResult['error']);
+                    // Continue with rejection even if file rename fails
+                }
+            } else {
+                error_log("[admin.php verify_payment] No receipt path found for this payment");
+            }
+            
+            // Update invoice status to rejected
+            $updateInvoice = $pdo->prepare("UPDATE invoices SET status = 'rejected' WHERE id = ?");
+            $updateInvoice->execute([$invoice_id]);
+            
+            error_log("[admin.php verify_payment] Invoice marked as REJECTED");
+            
+            $pdo->commit();
+            
             $_SESSION['success'] = "Payment rejected and invoice marked as REJECTED!";
+            if (!empty($receiptPath)) {
+                $_SESSION['success'] .= " Receipt file marked as rejected.";
+            }
+        } else {
+            $pdo->commit();
+            $_SESSION['success'] = "Payment status updated!";
         }
         
         // ✨ SEND EMAIL NOTIFICATION
         error_log("[admin.php verify_payment] Attempting to send email notification");
         require_once 'send_payment_approval_email.php';
+        
         try {
             $emailSent = sendPaymentApprovalEmail($pdo, $payment_id, $verification_status, $admin_notes);
             error_log("[admin.php verify_payment] Email function returned: " . ($emailSent ? 'true' : 'false'));
             
-            if ($emailSent && $verification_status === 'verified') {
-                $_SESSION['success'] .= " Approval email with PDF receipt sent to parent.";
-                error_log("[admin.php verify_payment] Approval email sent successfully");
-            } else if ($emailSent && $verification_status === 'rejected') {
-                $_SESSION['success'] .= " Rejection notification sent to parent.";
-                error_log("[admin.php verify_payment] Rejection email sent successfully");
+            if ($emailSent) {
+                if ($verification_status === 'verified') {
+                    $_SESSION['success'] .= " Approval email with PDF receipt sent to parent.";
+                    error_log("[admin.php verify_payment] Approval email sent successfully");
+                } else if ($verification_status === 'rejected') {
+                    $_SESSION['success'] .= " Rejection notification sent to parent.";
+                    error_log("[admin.php verify_payment] Rejection email sent successfully");
+                }
             } else {
                 error_log("[admin.php verify_payment] Email was not sent (emailSent = false)");
+                $_SESSION['success'] .= " (Note: Email notification could not be sent)";
             }
         } catch (Exception $e) {
             error_log("[admin.php verify_payment] Email error: " . $e->getMessage());
@@ -352,9 +404,22 @@ if ($_POST['action'] === 'delete_invoice') {
             $_SESSION['success'] .= " (Note: Email notification could not be sent)";
         }
         
-        header('Location: admin.php?page=invoices');
-        exit;
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        error_log("[admin.php verify_payment] ERROR: " . $e->getMessage());
+        error_log("[admin.php verify_payment] Stack trace: " . $e->getTraceAsString());
+        $_SESSION['error'] = "Failed to verify payment: " . $e->getMessage();
     }
+    
+    error_log("[admin.php verify_payment] Redirecting to admin.php?page=invoices");
+    error_log("========================================");
+    
+    header('Location: admin.php?page=invoices');
+    exit;
+}
+
 }
 
 $page = $_GET['page'] ?? 'login';
