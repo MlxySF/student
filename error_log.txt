@@ -269,3 +269,709 @@
 [24-Dec-2025 06:51:47 Asia/Kuala_Lumpur] [Profile PDF Debug] Full absolute path: /home/wushuspo/public_html/pages/../uploads/registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf
 [24-Dec-2025 06:51:47 Asia/Kuala_Lumpur] [Profile PDF Debug] File exists check: YES
 [24-Dec-2025 06:51:47 Asia/Kuala_Lumpur] [Profile PDF Debug] Final pdf_path value: /home/wushuspo/public_html/pages/../uploads/registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf
+[24-Dec-2025 11:52:43 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 12:15:01 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 04:16:07 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4852_omg_20251223222812_dd4d1b.png (Size: 5597 bytes, MIME: image/png)
+[24-Dec-2025 04:16:07 UTC] [Serve File] Serving file: payment_receipts/receipt_9_test_reg-wsa2025-3596-2025-12-23_20251223202353_e5c9bc.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 04:16:07 UTC] [Serve File] Serving file: payment_receipts/receipt_12_omg_reg-wsa2025-4852-2025-12-23_20251223222812_5d0c9d.jpg (Size: 98572 bytes, MIME: image/jpeg)
+[24-Dec-2025 04:16:07 UTC] [Serve File] Serving file: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png (Size: 416365 bytes, MIME: image/png)
+[24-Dec-2025 04:16:07 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 04:16:07 UTC] [Serve File] Serving file: signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png (Size: 6594 bytes, MIME: image/png)
+[24-Dec-2025 04:16:07 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 04:16:07 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3596_test_20251223202353_27ea3f.png (Size: 8323 bytes, MIME: image/png)
+[24-Dec-2025 06:15:47 UTC] [Registration] Starting registration for parent email: chaichonghern+01@gmail.com, child IC: 374598-34-7593, name: omg2
+[24-Dec-2025 06:15:47 UTC] [Reg Number] Generated unique random registration number: WSA2025-8372
+[24-Dec-2025 06:15:47 UTC] [Password] Using IC last 4 digits: 7593
+[24-Dec-2025 06:15:47 UTC] [Password] Using IC last 4 digits: 1849
+[24-Dec-2025 06:15:48 UTC] [Parent] Created NEW parent account ID=10, code=PAR-2025-0004, email=chaichonghern+01@gmail.com, password=1849
+[24-Dec-2025 06:15:48 UTC] [Parent Info] ID=10, Code=PAR-2025-0004, IsNew=1, Password=1849
+[24-Dec-2025 06:15:48 UTC] [Student] Created student ID=13 (omg2)
+[24-Dec-2025 06:15:48 UTC] [Link] Linked student ID=13 to parent ID=10
+[24-Dec-2025 06:15:48 UTC] [DateTime Validation] Invalid form_date '24/12/2025', using current datetime
+[24-Dec-2025 06:15:48 UTC] [Registration] Original form_date: 24/12/2025, Validated: 2025-12-24 06:15:48
+[24-Dec-2025 06:15:48 UTC] [File Helper] Saved file: signatures/signature_WSA2025-8372_omg2_20251224061548_dfdded.png (Size: 4966 bytes)
+[24-Dec-2025 06:15:48 UTC] [File Save] Signature saved: signatures/signature_WSA2025-8372_omg2_20251224061548_dfdded.png
+[24-Dec-2025 06:15:48 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-8372_omg2_20251224061548_382e31.pdf (Size: 1187520 bytes)
+[24-Dec-2025 06:15:48 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-8372_omg2_20251224061548_382e31.pdf
+[24-Dec-2025 06:15:48 UTC] [Payment Method] Cash payment selected - no receipt required
+[24-Dec-2025 06:15:48 UTC] [Payment] Method: cash, Date: N/A, Receipt: N/A
+[24-Dec-2025 06:15:48 UTC] DB error in process_registration.php: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'payment_date' cannot be null
+[24-Dec-2025 06:18:42 UTC] [Registration] Starting registration for parent email: chaichonghern+01@gmail.com, child IC: 123904-58-6984, name: omg2
+[24-Dec-2025 06:18:42 UTC] [Reg Number] Generated unique random registration number: WSA2025-2954
+[24-Dec-2025 06:18:42 UTC] [Password] Using IC last 4 digits: 6984
+[24-Dec-2025 06:18:42 UTC] [Password] Using IC last 4 digits: 1849
+[24-Dec-2025 06:18:43 UTC] [Parent] Created NEW parent account ID=11, code=PAR-2025-0004, email=chaichonghern+01@gmail.com, password=1849
+[24-Dec-2025 06:18:43 UTC] [Parent Info] ID=11, Code=PAR-2025-0004, IsNew=1, Password=1849
+[24-Dec-2025 06:18:43 UTC] [Student] Created student ID=14 (omg2)
+[24-Dec-2025 06:18:43 UTC] [Link] Linked student ID=14 to parent ID=11
+[24-Dec-2025 06:18:43 UTC] [DateTime Validation] Invalid form_date '24/12/2025', using current datetime
+[24-Dec-2025 06:18:43 UTC] [Registration] Original form_date: 24/12/2025, Validated: 2025-12-24 06:18:43
+[24-Dec-2025 06:18:43 UTC] [File Helper] Saved file: signatures/signature_WSA2025-2954_omg2_20251224061843_22b992.png (Size: 3823 bytes)
+[24-Dec-2025 06:18:43 UTC] [File Save] Signature saved: signatures/signature_WSA2025-2954_omg2_20251224061843_22b992.png
+[24-Dec-2025 06:18:43 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-2954_omg2_20251224061843_0d6b5b.pdf (Size: 1187540 bytes)
+[24-Dec-2025 06:18:43 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-2954_omg2_20251224061843_0d6b5b.pdf
+[24-Dec-2025 06:18:43 UTC] [Payment Method] Cash payment selected - no receipt required
+[24-Dec-2025 06:18:43 UTC] [Payment] Method: cash, Date: N/A, Receipt: N/A
+[24-Dec-2025 06:18:43 UTC] DB error in process_registration.php: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'payment_date' cannot be null
+[24-Dec-2025 06:19:56 UTC] [Registration] Starting registration for parent email: chaichonghern+01@gmail.com, child IC: 123904-58-6984, name: omg2
+[24-Dec-2025 06:19:56 UTC] [Reg Number] Generated unique random registration number: WSA2025-7948
+[24-Dec-2025 06:19:56 UTC] [Password] Using IC last 4 digits: 6984
+[24-Dec-2025 06:19:56 UTC] [Password] Using IC last 4 digits: 1849
+[24-Dec-2025 06:19:56 UTC] [Parent] Created NEW parent account ID=12, code=PAR-2025-0004, email=chaichonghern+01@gmail.com, password=1849
+[24-Dec-2025 06:19:56 UTC] [Parent Info] ID=12, Code=PAR-2025-0004, IsNew=1, Password=1849
+[24-Dec-2025 06:19:56 UTC] [Student] Created student ID=15 (omg2)
+[24-Dec-2025 06:19:56 UTC] [Link] Linked student ID=15 to parent ID=12
+[24-Dec-2025 06:19:56 UTC] [DateTime Validation] Invalid form_date '24/12/2025', using current datetime
+[24-Dec-2025 06:19:56 UTC] [Registration] Original form_date: 24/12/2025, Validated: 2025-12-24 06:19:56
+[24-Dec-2025 06:19:56 UTC] [File Helper] Saved file: signatures/signature_WSA2025-7948_omg2_20251224061956_6da2d7.png (Size: 3823 bytes)
+[24-Dec-2025 06:19:56 UTC] [File Save] Signature saved: signatures/signature_WSA2025-7948_omg2_20251224061956_6da2d7.png
+[24-Dec-2025 06:19:56 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-7948_omg2_20251224061956_f61c3f.pdf (Size: 1187540 bytes)
+[24-Dec-2025 06:19:56 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-7948_omg2_20251224061956_f61c3f.pdf
+[24-Dec-2025 06:19:56 UTC] [Payment Method] Cash payment selected - no receipt required
+[24-Dec-2025 06:19:56 UTC] [Payment] Method: cash, Date: N/A, Receipt: N/A
+[24-Dec-2025 06:19:57 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Wed 8pm-10pm
+[24-Dec-2025 06:19:57 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Wed 8pm-10pm' to 'wsa-wed-8pm'
+[24-Dec-2025 06:19:57 UTC] [Auto-Enroll] Starting enrollment for student ID=15, Classes: wsa-wed-8pm
+[24-Dec-2025 06:19:57 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=15 in class 'Wushu Sport Academy: Wed 8pm-10pm' (Code: wsa-wed-8pm)
+[24-Dec-2025 06:19:57 UTC] [Auto-Enroll] Results - Success: 1, Failed: 0, Skipped: 0
+[24-Dec-2025 06:19:57 UTC] PHP Fatal error:  Uncaught TypeError: createRegistrationInvoicesAndPayments(): Argument #8 ($receiptPath) must be of type string, null given, called in /home/wushuspo/public_html/process_registration.php on line 1164 and defined in /home/wushuspo/public_html/process_registration.php:391
+Stack trace:
+#0 /home/wushuspo/public_html/process_registration.php(1164): createRegistrationInvoicesAndPayments(Object(PDO), 15, 12, 120.0, 'omg2', Array, Array, NULL)
+#1 {main}
+  thrown in /home/wushuspo/public_html/process_registration.php on line 391
+[24-Dec-2025 06:23:15 UTC] [Registration] Starting registration for parent email: chaichonghern+01@gmail.com, child IC: 987485-97-6897, name: omg2
+[24-Dec-2025 06:23:15 UTC] [Reg Number] Generated unique random registration number: WSA2025-5768
+[24-Dec-2025 06:23:15 UTC] [Password] Using IC last 4 digits: 6897
+[24-Dec-2025 06:23:15 UTC] [Password] Using IC last 4 digits: 1849
+[24-Dec-2025 06:23:15 UTC] [Parent] Created NEW parent account ID=13, code=PAR-2025-0004, email=chaichonghern+01@gmail.com, password=1849
+[24-Dec-2025 06:23:15 UTC] [Parent Info] ID=13, Code=PAR-2025-0004, IsNew=1, Password=1849
+[24-Dec-2025 06:23:15 UTC] [Student] Created student ID=16 (omg2)
+[24-Dec-2025 06:23:15 UTC] [Link] Linked student ID=16 to parent ID=13
+[24-Dec-2025 06:23:15 UTC] [DateTime Validation] Invalid form_date '24/12/2025', using current datetime
+[24-Dec-2025 06:23:15 UTC] [Registration] Original form_date: 24/12/2025, Validated: 2025-12-24 06:23:15
+[24-Dec-2025 06:23:15 UTC] [File Helper] Saved file: signatures/signature_WSA2025-5768_omg2_20251224062315_fa523f.png (Size: 3924 bytes)
+[24-Dec-2025 06:23:15 UTC] [File Save] Signature saved: signatures/signature_WSA2025-5768_omg2_20251224062315_fa523f.png
+[24-Dec-2025 06:23:15 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-5768_omg2_20251224062315_59721c.pdf (Size: 1186918 bytes)
+[24-Dec-2025 06:23:15 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-5768_omg2_20251224062315_59721c.pdf
+[24-Dec-2025 06:23:15 UTC] [Payment Method] Cash payment selected - no receipt required
+[24-Dec-2025 06:23:15 UTC] [Payment] Method: cash, Date: N/A, Receipt: N/A
+[24-Dec-2025 06:23:15 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Wed 8pm-10pm
+[24-Dec-2025 06:23:15 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Wed 8pm-10pm' to 'wsa-wed-8pm'
+[24-Dec-2025 06:23:15 UTC] [Auto-Enroll] Starting enrollment for student ID=16, Classes: wsa-wed-8pm
+[24-Dec-2025 06:23:15 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=16 in class 'Wushu Sport Academy: Wed 8pm-10pm' (Code: wsa-wed-8pm)
+[24-Dec-2025 06:23:15 UTC] [Auto-Enroll] Results - Success: 1, Failed: 0, Skipped: 0
+[24-Dec-2025 06:23:15 UTC] [Invoice Split] Total: 120, Classes: 1, Per Class: 120
+[24-Dec-2025 06:23:15 UTC] [Invoice] Using receipt path: 
+[24-Dec-2025 06:23:15 UTC] [Invoice] Created invoice: INV-REG-202512-9884 (ID: 38) for class wsa-wed-8pm, amount=120
+[24-Dec-2025 06:23:15 UTC] [Payment] Created payment record (ID: 32) linked to invoice INV-REG-202512-9884, receipt_path=
+[24-Dec-2025 06:23:15 UTC] [Success] Reg#: WSA2025-5768, Parent: PAR-2025-0004 (ID:13), Student: 16, Invoices: 1, Payment Date: , Receipt: 
+[24-Dec-2025 06:23:15 UTC] [Email] Sending to: chaichonghern+01@gmail.com, isNewParent: YES, parentPassword: 1849
+[24-Dec-2025 06:33:30 UTC] [Registration] Starting registration for parent email: chaichonghern+01@gmail.com, child IC: 987485-97-6897, name: omg2
+[24-Dec-2025 06:33:30 UTC] Error in process_registration.php: A child with this IC number (987485-97-6897) is already registered (Reg#: WSA2025-5768, Status: pending). Please check the IC number.
+[24-Dec-2025 06:33:43 UTC] [Serve File] Serving file: payment_receipts/receipt_12_omg_reg-wsa2025-4852-2025-12-23_20251223222812_5d0c9d.jpg (Size: 98572 bytes, MIME: image/jpeg)
+[24-Dec-2025 06:33:43 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4852_omg_20251223222812_dd4d1b.png (Size: 5597 bytes, MIME: image/png)
+[24-Dec-2025 06:33:43 UTC] [Serve File] Serving file: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png (Size: 416365 bytes, MIME: image/png)
+[24-Dec-2025 06:33:43 UTC] [Serve File] Serving file: payment_receipts/receipt_9_test_reg-wsa2025-3596-2025-12-23_20251223202353_e5c9bc.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 06:33:43 UTC] [Serve File] Serving file: signatures/signature_WSA2025-5768_omg2_20251224062315_fa523f.png (Size: 3924 bytes, MIME: image/png)
+[24-Dec-2025 06:33:43 UTC] [Serve File] Serving file: signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png (Size: 6594 bytes, MIME: image/png)
+[24-Dec-2025 06:33:43 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 06:33:43 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 06:33:43 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3596_test_20251223202353_27ea3f.png (Size: 8323 bytes, MIME: image/png)
+[24-Dec-2025 09:12:21 UTC] Error in process_registration.php: Missing or empty required field: payment_method
+[24-Dec-2025 09:13:13 UTC] Error in process_registration.php: Missing or empty required field: payment_method
+[24-Dec-2025 09:13:32 UTC] Error in process_registration.php: Missing or empty required field: payment_method
+[24-Dec-2025 09:14:11 UTC] Error in process_registration.php: Missing or empty required field: payment_method
+[24-Dec-2025 09:16:52 UTC] Error in process_registration.php: Missing or empty required field: payment_method
+[24-Dec-2025 09:17:28 UTC] Error in process_registration.php: Missing or empty required field: payment_method
+[24-Dec-2025 09:20:48 UTC] Error in process_registration.php: Missing or empty required field: payment_method
+[24-Dec-2025 09:21:27 UTC] [Registration] Starting registration for parent email: chaichonghern+02@gmail.com, child IC: 030322-10-1849, name: omg2
+[24-Dec-2025 09:21:27 UTC] [Duplicate Check] Found existing registration: Name=omg2, Status=pending, RegNum=WSA2025-5768
+[24-Dec-2025 09:21:27 UTC] Error in process_registration.php: A student with the name 'omg2' already has a PENDING registration (Registration #: WSA2025-5768). Please wait for admin approval or contact the academy for assistance. Registration date: Dec 24, 2025
+[24-Dec-2025 09:21:43 UTC] [Serve File] Serving file: signatures/signature_WSA2025-5768_omg2_20251224062315_fa523f.png (Size: 3924 bytes, MIME: image/png)
+[24-Dec-2025 09:21:43 UTC] [Serve File] Serving file: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png (Size: 416365 bytes, MIME: image/png)
+[24-Dec-2025 09:21:43 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3596_test_20251223202353_27ea3f.png (Size: 8323 bytes, MIME: image/png)
+[24-Dec-2025 09:21:43 UTC] [Serve File] Serving file: payment_receipts/receipt_12_omg_reg-wsa2025-4852-2025-12-23_20251223222812_5d0c9d.jpg (Size: 98572 bytes, MIME: image/jpeg)
+[24-Dec-2025 09:21:43 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 09:21:43 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4852_omg_20251223222812_dd4d1b.png (Size: 5597 bytes, MIME: image/png)
+[24-Dec-2025 09:21:43 UTC] [Serve File] Serving file: payment_receipts/receipt_9_test_reg-wsa2025-3596-2025-12-23_20251223202353_e5c9bc.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 09:21:43 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 09:21:44 UTC] [Serve File] Serving file: signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png (Size: 6594 bytes, MIME: image/png)
+[24-Dec-2025 17:21:46 Asia/Kuala_Lumpur] === DELETE REGISTRATION STARTED ===
+[24-Dec-2025 17:21:46 Asia/Kuala_Lumpur] [Delete Registration] Reg#: WSA2025-5768, Student: omg2, Student ID: 16, Parent ID: 13
+[24-Dec-2025 17:21:46 Asia/Kuala_Lumpur] [Delete Registration] Files to delete: 2 - uploads/signatures/signature_WSA2025-5768_omg2_20251224062315_fa523f.png, uploads/registration_pdfs/pdf_WSA2025-5768_omg2_20251224062315_59721c.pdf
+[24-Dec-2025 17:21:46 Asia/Kuala_Lumpur] [Delete Registration] ✅ Registration record deleted
+[24-Dec-2025 17:21:46 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 parent-child relationship(s)
+[24-Dec-2025 17:21:46 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 payment record(s)
+[24-Dec-2025 17:21:46 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 invoice(s)
+[24-Dec-2025 17:21:46 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 0 attendance record(s)
+[24-Dec-2025 17:21:46 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 enrollment(s)
+[24-Dec-2025 17:21:46 Asia/Kuala_Lumpur] [Delete Registration] ✅ Student account deleted (ID: 16)
+[24-Dec-2025 17:21:46 Asia/Kuala_Lumpur] [Delete Registration] Parent 'Chai' (ID: 13) has 0 remaining child(ren)
+[24-Dec-2025 17:21:46 Asia/Kuala_Lumpur] [Delete Registration] ✅ Parent account DELETED: PAR-2025-0004 (Chai)
+[24-Dec-2025 17:21:46 Asia/Kuala_Lumpur] [Delete Registration] ✅ Database transaction committed
+[24-Dec-2025 17:21:46 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/signatures/signature_WSA2025-5768_omg2_20251224062315_fa523f.png
+[24-Dec-2025 17:21:46 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/registration_pdfs/pdf_WSA2025-5768_omg2_20251224062315_59721c.pdf
+[24-Dec-2025 17:21:46 Asia/Kuala_Lumpur] === DELETE REGISTRATION COMPLETED ===
+[24-Dec-2025 09:21:46 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4852_omg_20251223222812_dd4d1b.png (Size: 5597 bytes, MIME: image/png)
+[24-Dec-2025 09:21:46 UTC] [Serve File] Serving file: signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png (Size: 6594 bytes, MIME: image/png)
+[24-Dec-2025 09:21:46 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 09:21:46 UTC] [Serve File] Serving file: payment_receipts/receipt_12_omg_reg-wsa2025-4852-2025-12-23_20251223222812_5d0c9d.jpg (Size: 98572 bytes, MIME: image/jpeg)
+[24-Dec-2025 09:21:46 UTC] [Serve File] Serving file: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png (Size: 416365 bytes, MIME: image/png)
+[24-Dec-2025 09:21:46 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3596_test_20251223202353_27ea3f.png (Size: 8323 bytes, MIME: image/png)
+[24-Dec-2025 09:21:46 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 09:21:46 UTC] [Serve File] Serving file: payment_receipts/receipt_9_test_reg-wsa2025-3596-2025-12-23_20251223202353_e5c9bc.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 17:21:48 Asia/Kuala_Lumpur] === DELETE REGISTRATION STARTED ===
+[24-Dec-2025 17:21:48 Asia/Kuala_Lumpur] [Delete Registration] Reg#: WSA2025-4852, Student: omg, Student ID: 12, Parent ID: 9
+[24-Dec-2025 17:21:48 Asia/Kuala_Lumpur] [Delete Registration] Files to delete: 3 - uploads/signatures/signature_WSA2025-4852_omg_20251223222812_dd4d1b.png, uploads/registration_pdfs/pdf_WSA2025-4852_omg_20251223222812_009bbb.pdf, uploads/payment_receipts/receipt_12_omg_reg-wsa2025-4852-2025-12-23_20251223222812_5d0c9d.jpg
+[24-Dec-2025 17:21:48 Asia/Kuala_Lumpur] [Delete Registration] ✅ Registration record deleted
+[24-Dec-2025 17:21:48 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 parent-child relationship(s)
+[24-Dec-2025 17:21:48 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 payment record(s)
+[24-Dec-2025 17:21:48 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 invoice(s)
+[24-Dec-2025 17:21:48 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 0 attendance record(s)
+[24-Dec-2025 17:21:48 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 enrollment(s)
+[24-Dec-2025 17:21:48 Asia/Kuala_Lumpur] [Delete Registration] ✅ Student account deleted (ID: 12)
+[24-Dec-2025 17:21:48 Asia/Kuala_Lumpur] [Delete Registration] Parent 'Chai' (ID: 9) has 0 remaining child(ren)
+[24-Dec-2025 17:21:48 Asia/Kuala_Lumpur] [Delete Registration] ✅ Parent account DELETED: PAR-2025-0003 (Chai)
+[24-Dec-2025 17:21:48 Asia/Kuala_Lumpur] [Delete Registration] ✅ Database transaction committed
+[24-Dec-2025 17:21:48 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/signatures/signature_WSA2025-4852_omg_20251223222812_dd4d1b.png
+[24-Dec-2025 17:21:48 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/registration_pdfs/pdf_WSA2025-4852_omg_20251223222812_009bbb.pdf
+[24-Dec-2025 17:21:48 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/payment_receipts/receipt_12_omg_reg-wsa2025-4852-2025-12-23_20251223222812_5d0c9d.jpg
+[24-Dec-2025 17:21:48 Asia/Kuala_Lumpur] === DELETE REGISTRATION COMPLETED ===
+[24-Dec-2025 09:21:48 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 09:21:48 UTC] [Serve File] Serving file: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png (Size: 416365 bytes, MIME: image/png)
+[24-Dec-2025 09:21:48 UTC] [Serve File] Serving file: signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png (Size: 6594 bytes, MIME: image/png)
+[24-Dec-2025 09:21:48 UTC] [Serve File] Serving file: payment_receipts/receipt_9_test_reg-wsa2025-3596-2025-12-23_20251223202353_e5c9bc.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 09:21:48 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3596_test_20251223202353_27ea3f.png (Size: 8323 bytes, MIME: image/png)
+[24-Dec-2025 09:21:48 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 17:21:50 Asia/Kuala_Lumpur] === DELETE REGISTRATION STARTED ===
+[24-Dec-2025 17:21:50 Asia/Kuala_Lumpur] [Delete Registration] Reg#: WSA2025-3596, Student: tes, Student ID: 9, Parent ID: 7
+[24-Dec-2025 17:21:50 Asia/Kuala_Lumpur] [Delete Registration] Files to delete: 3 - uploads/signatures/signature_WSA2025-3596_test_20251223202353_27ea3f.png, uploads/registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf, uploads/payment_receipts/receipt_9_test_reg-wsa2025-3596-2025-12-23_20251223202353_e5c9bc.png
+[24-Dec-2025 17:21:50 Asia/Kuala_Lumpur] [Delete Registration] ✅ Registration record deleted
+[24-Dec-2025 17:21:50 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 parent-child relationship(s)
+[24-Dec-2025 17:21:50 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 6 payment record(s)
+[24-Dec-2025 17:21:50 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 6 invoice(s)
+[24-Dec-2025 17:21:50 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 4 attendance record(s)
+[24-Dec-2025 17:21:50 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 3 enrollment(s)
+[24-Dec-2025 17:21:50 Asia/Kuala_Lumpur] [Delete Registration] ✅ Student account deleted (ID: 9)
+[24-Dec-2025 17:21:50 Asia/Kuala_Lumpur] [Delete Registration] Parent 'test' (ID: 7) has 1 remaining child(ren)
+[24-Dec-2025 17:21:50 Asia/Kuala_Lumpur] [Delete Registration] ℹ️ Parent account RETAINED: PAR-2025-0001 (test) - 1 child(ren) remain
+[24-Dec-2025 17:21:50 Asia/Kuala_Lumpur] [Delete Registration] ✅ Database transaction committed
+[24-Dec-2025 17:21:50 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/signatures/signature_WSA2025-3596_test_20251223202353_27ea3f.png
+[24-Dec-2025 17:21:50 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/registration_pdfs/pdf_WSA2025-3596_test_20251223202353_fa2ae6.pdf
+[24-Dec-2025 17:21:50 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/payment_receipts/receipt_9_test_reg-wsa2025-3596-2025-12-23_20251223202353_e5c9bc.png
+[24-Dec-2025 17:21:50 Asia/Kuala_Lumpur] === DELETE REGISTRATION COMPLETED ===
+[24-Dec-2025 09:21:51 UTC] [Serve File] Serving file: signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png (Size: 6594 bytes, MIME: image/png)
+[24-Dec-2025 09:21:51 UTC] [Serve File] Serving file: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png (Size: 416365 bytes, MIME: image/png)
+[24-Dec-2025 09:21:51 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 09:21:51 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 09:22:01 UTC] [Registration] Starting registration for parent email: chaichonghern+02@gmail.com, child IC: 030322-10-1849, name: omg2
+[24-Dec-2025 09:22:01 UTC] [Reg Number] Generated unique random registration number: WSA2025-5893
+[24-Dec-2025 09:22:01 UTC] [Password] Using IC last 4 digits: 1849
+[24-Dec-2025 09:22:01 UTC] [Password] Using IC last 4 digits: 1849
+[24-Dec-2025 09:22:01 UTC] [Parent] Created NEW parent account ID=14, code=PAR-2025-0003, email=chaichonghern+02@gmail.com, password=1849
+[24-Dec-2025 09:22:01 UTC] [Parent Info] ID=14, Code=PAR-2025-0003, IsNew=1, Password=1849
+[24-Dec-2025 09:22:01 UTC] [Student] Created student ID=17 (omg2)
+[24-Dec-2025 09:22:01 UTC] [Link] Linked student ID=17 to parent ID=14
+[24-Dec-2025 09:22:01 UTC] [DateTime Validation] Invalid form_date '24/12/2025', using current datetime
+[24-Dec-2025 09:22:01 UTC] [Registration] Original form_date: 24/12/2025, Validated: 2025-12-24 09:22:01
+[24-Dec-2025 09:22:01 UTC] [File Helper] Saved file: signatures/signature_WSA2025-5893_omg2_20251224092201_1c562a.png (Size: 4884 bytes)
+[24-Dec-2025 09:22:01 UTC] [File Save] Signature saved: signatures/signature_WSA2025-5893_omg2_20251224092201_1c562a.png
+[24-Dec-2025 09:22:01 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-5893_omg2_20251224092201_b38ce8.pdf (Size: 1187829 bytes)
+[24-Dec-2025 09:22:01 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-5893_omg2_20251224092201_b38ce8.pdf
+[24-Dec-2025 09:22:01 UTC] [File Save] Cash payment - no receipt required
+[24-Dec-2025 09:22:01 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Wed 8pm-10pm
+[24-Dec-2025 09:22:01 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Wed 8pm-10pm' to 'wsa-wed-8pm'
+[24-Dec-2025 09:22:01 UTC] [Auto-Enroll] Starting enrollment for student ID=17, Classes: wsa-wed-8pm
+[24-Dec-2025 09:22:01 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=17 in class 'Wushu Sport Academy: Wed 8pm-10pm' (Code: wsa-wed-8pm)
+[24-Dec-2025 09:22:01 UTC] [Auto-Enroll] Results - Success: 1, Failed: 0, Skipped: 0
+[24-Dec-2025 09:22:01 UTC] PHP Fatal error:  Uncaught TypeError: createRegistrationInvoicesAndPayments(): Argument #8 ($receiptPath) must be of type string, null given, called in /home/wushuspo/public_html/process_registration.php on line 1153 and defined in /home/wushuspo/public_html/process_registration.php:391
+Stack trace:
+#0 /home/wushuspo/public_html/process_registration.php(1153): createRegistrationInvoicesAndPayments(Object(PDO), 17, 14, 120.0, 'omg2', Array, Array, NULL)
+#1 {main}
+  thrown in /home/wushuspo/public_html/process_registration.php on line 391
+[24-Dec-2025 09:23:52 UTC] [Serve File] Serving file: signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png (Size: 6594 bytes, MIME: image/png)
+[24-Dec-2025 09:23:52 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 09:23:52 UTC] [Serve File] Serving file: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png (Size: 416365 bytes, MIME: image/png)
+[24-Dec-2025 09:23:52 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 09:24:29 UTC] [Registration] Starting registration for parent email: chaichonghern+02@gmail.com, child IC: 030322-10-1849, name: omg2
+[24-Dec-2025 09:24:29 UTC] [Reg Number] Generated unique random registration number: WSA2025-1941
+[24-Dec-2025 09:24:29 UTC] [Password] Using IC last 4 digits: 1849
+[24-Dec-2025 09:24:29 UTC] [Password] Using IC last 4 digits: 1849
+[24-Dec-2025 09:24:30 UTC] [Parent] Created NEW parent account ID=15, code=PAR-2025-0003, email=chaichonghern+02@gmail.com, password=1849
+[24-Dec-2025 09:24:30 UTC] [Parent Info] ID=15, Code=PAR-2025-0003, IsNew=1, Password=1849
+[24-Dec-2025 09:24:30 UTC] [Student] Created student ID=18 (omg2)
+[24-Dec-2025 09:24:30 UTC] [Link] Linked student ID=18 to parent ID=15
+[24-Dec-2025 09:24:30 UTC] [DateTime Validation] Invalid form_date '24/12/2025', using current datetime
+[24-Dec-2025 09:24:30 UTC] [Registration] Original form_date: 24/12/2025, Validated: 2025-12-24 09:24:30
+[24-Dec-2025 09:24:30 UTC] [File Helper] Saved file: signatures/signature_WSA2025-1941_omg2_20251224092430_44ff77.png (Size: 4367 bytes)
+[24-Dec-2025 09:24:30 UTC] [File Save] Signature saved: signatures/signature_WSA2025-1941_omg2_20251224092430_44ff77.png
+[24-Dec-2025 09:24:30 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-1941_omg2_20251224092430_ffd492.pdf (Size: 1187331 bytes)
+[24-Dec-2025 09:24:30 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-1941_omg2_20251224092430_ffd492.pdf
+[24-Dec-2025 09:24:30 UTC] [File Save] Cash payment - no receipt required, receiptPath set to empty string
+[24-Dec-2025 09:24:30 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Wed 8pm-10pm
+[24-Dec-2025 09:24:30 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Wed 8pm-10pm' to 'wsa-wed-8pm'
+[24-Dec-2025 09:24:30 UTC] [Auto-Enroll] Starting enrollment for student ID=18, Classes: wsa-wed-8pm
+[24-Dec-2025 09:24:30 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=18 in class 'Wushu Sport Academy: Wed 8pm-10pm' (Code: wsa-wed-8pm)
+[24-Dec-2025 09:24:30 UTC] [Auto-Enroll] Results - Success: 1, Failed: 0, Skipped: 0
+[24-Dec-2025 09:24:30 UTC] [Invoice Split] Total: 120, Classes: 1, Per Class: 120
+[24-Dec-2025 09:24:30 UTC] [Invoice] Using receipt path: 
+[24-Dec-2025 09:24:30 UTC] [Invoice] Created invoice: INV-REG-202512-2368 (ID: 39) for class wsa-wed-8pm, amount=120
+[24-Dec-2025 09:24:30 UTC] [Payment] Created payment record (ID: 33) linked to invoice INV-REG-202512-2368, receipt_path=
+[24-Dec-2025 09:24:30 UTC] [Success] Reg#: WSA2025-1941, Parent: PAR-2025-0003 (ID:15), Student: 18, Invoices: 1, Payment Date: 2025-12-24, Receipt: 
+[24-Dec-2025 09:24:30 UTC] [Email] Sending to: chaichonghern+02@gmail.com, isNewParent: YES, parentPassword: 1849
+[24-Dec-2025 09:26:15 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1941_omg2_20251224092430_44ff77.png (Size: 4367 bytes, MIME: image/png)
+[24-Dec-2025 09:26:15 UTC] [Serve File] Serving file: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png (Size: 416365 bytes, MIME: image/png)
+[24-Dec-2025 09:26:15 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 09:26:15 UTC] [Serve File] Serving file: signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png (Size: 6594 bytes, MIME: image/png)
+[24-Dec-2025 09:26:15 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 09:35:19 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1941_omg2_20251224092430_44ff77.png (Size: 4367 bytes, MIME: image/png)
+[24-Dec-2025 09:35:19 UTC] [Serve File] Serving file: signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png (Size: 6594 bytes, MIME: image/png)
+[24-Dec-2025 09:35:19 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 09:35:19 UTC] [Serve File] Serving file: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png (Size: 416365 bytes, MIME: image/png)
+[24-Dec-2025 09:35:19 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 09:42:18 UTC] [Serve File] Serving file: signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png (Size: 6594 bytes, MIME: image/png)
+[24-Dec-2025 09:42:18 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 09:42:18 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1941_omg2_20251224092430_44ff77.png (Size: 4367 bytes, MIME: image/png)
+[24-Dec-2025 09:42:18 UTC] [Serve File] Serving file: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png (Size: 416365 bytes, MIME: image/png)
+[24-Dec-2025 09:42:18 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 09:51:00 UTC] [Serve File] Serving file: signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png (Size: 6594 bytes, MIME: image/png)
+[24-Dec-2025 09:51:00 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 09:51:00 UTC] [Serve File] Serving file: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png (Size: 416365 bytes, MIME: image/png)
+[24-Dec-2025 09:51:00 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1941_omg2_20251224092430_44ff77.png (Size: 4367 bytes, MIME: image/png)
+[24-Dec-2025 09:51:00 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 17:55:35 Asia/Kuala_Lumpur] [verify_registration] Generated PARENT password from parent IC: 1849
+[24-Dec-2025 17:55:35 Asia/Kuala_Lumpur] [verify_registration] Updated 0 invoices to paid
+[24-Dec-2025 17:55:35 Asia/Kuala_Lumpur] [verify_registration] IsFirstChild: YES, Parent IC: 030322-10-1849, PARENT Password: 1849
+[24-Dec-2025 17:55:37 Asia/Kuala_Lumpur] [Approval Email] Sent to chaichonghern+02@gmail.com for child omg2
+[24-Dec-2025 17:55:37 Asia/Kuala_Lumpur] [Approve] Reg#WSA2025-1941: invoices=0, payments=0, email=sent
+[24-Dec-2025 09:55:37 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 09:55:37 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 09:55:37 UTC] [Serve File] Serving file: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png (Size: 416365 bytes, MIME: image/png)
+[24-Dec-2025 09:55:37 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1941_omg2_20251224092430_44ff77.png (Size: 4367 bytes, MIME: image/png)
+[24-Dec-2025 09:55:37 UTC] [Serve File] Serving file: signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png (Size: 6594 bytes, MIME: image/png)
+[24-Dec-2025 18:15:00 Asia/Kuala_Lumpur] [Payment Upload Error] SQLSTATE[42S22]: Column not found: 1054 Unknown column 'payment_method' in 'field list'
+[24-Dec-2025 18:17:42 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to admin@wushusportacademy.com
+[24-Dec-2025 18:17:42 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
+[24-Dec-2025 18:23:29 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to admin@wushusportacademy.com
+[24-Dec-2025 18:23:29 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
+[24-Dec-2025 11:34:03 UTC] [Registration] Starting registration for parent email: chaichonghern@gmail.com, child IC: 123123-12-3321, name: omg3
+[24-Dec-2025 11:34:03 UTC] [Reg Number] Generated unique random registration number: WSA2025-2526
+[24-Dec-2025 11:34:03 UTC] [Password] Using IC last 4 digits: 3321
+[24-Dec-2025 11:34:03 UTC] [Parent] Found existing parent account ID=8 for email=chaichonghern@gmail.com
+[24-Dec-2025 11:34:03 UTC] [Parent Info] ID=8, Code=PAR-2025-0002, IsNew=, Password=NULL
+[24-Dec-2025 11:34:03 UTC] [Student] Created student ID=19 (omg3)
+[24-Dec-2025 11:34:03 UTC] [Link] Linked student ID=19 to parent ID=8
+[24-Dec-2025 11:34:03 UTC] [DateTime Validation] Invalid form_date '24/12/2025', using current datetime
+[24-Dec-2025 11:34:03 UTC] [Registration] Original form_date: 24/12/2025, Validated: 2025-12-24 11:34:03
+[24-Dec-2025 11:34:03 UTC] [File Helper] Saved file: signatures/signature_WSA2025-2526_omg3_20251224113403_d6158f.png (Size: 4903 bytes)
+[24-Dec-2025 11:34:03 UTC] [File Save] Signature saved: signatures/signature_WSA2025-2526_omg3_20251224113403_d6158f.png
+[24-Dec-2025 11:34:03 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-2526_omg3_20251224113403_c8fe95.pdf (Size: 1184313 bytes)
+[24-Dec-2025 11:34:03 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-2526_omg3_20251224113403_c8fe95.pdf
+[24-Dec-2025 11:34:03 UTC] [File Save] Cash payment - no receipt required, receiptPath set to empty string
+[24-Dec-2025 11:34:03 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Wed 8pm-10pm
+[24-Dec-2025 11:34:03 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Wed 8pm-10pm' to 'wsa-wed-8pm'
+[24-Dec-2025 11:34:03 UTC] [Auto-Enroll] Starting enrollment for student ID=19, Classes: wsa-wed-8pm
+[24-Dec-2025 11:34:03 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=19 in class 'Wushu Sport Academy: Wed 8pm-10pm' (Code: wsa-wed-8pm)
+[24-Dec-2025 11:34:03 UTC] [Auto-Enroll] Results - Success: 1, Failed: 0, Skipped: 0
+[24-Dec-2025 11:34:03 UTC] [Invoice Split] Total: 120, Classes: 1, Per Class: 120
+[24-Dec-2025 11:34:03 UTC] [Invoice] Using receipt path: 
+[24-Dec-2025 11:34:03 UTC] [Invoice] Created invoice: INV-REG-202512-4302 (ID: 41) for class wsa-wed-8pm, amount=120
+[24-Dec-2025 11:34:03 UTC] [Payment] Created payment record (ID: 35) linked to invoice INV-REG-202512-4302, receipt_path=
+[24-Dec-2025 11:34:03 UTC] [Success] Reg#: WSA2025-2526, Parent: PAR-2025-0002 (ID:8), Student: 19, Invoices: 1, Payment Date: 2025-12-24, Receipt: 
+[24-Dec-2025 11:34:03 UTC] [Email] Sending to: chaichonghern@gmail.com, isNewParent: NO, parentPassword: NULL
+[24-Dec-2025 11:34:04 UTC] [Email] Successfully sent to chaichonghern@gmail.com
+[24-Dec-2025 11:34:04 UTC] [Admin Email] Sending registration notification to admin@wushusportacademy.com
+[24-Dec-2025 11:34:06 UTC] [Admin Email] Error: SMTP Error: Could not authenticate.
+[24-Dec-2025 11:34:06 UTC] [Admin Notification] Email sent: NO
+[24-Dec-2025 12:10:30 UTC] [Serve File] Serving file: signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png (Size: 6594 bytes, MIME: image/png)
+[24-Dec-2025 12:10:30 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 12:10:30 UTC] [Serve File] Serving file: signatures/signature_WSA2025-2526_omg3_20251224113403_d6158f.png (Size: 4903 bytes, MIME: image/png)
+[24-Dec-2025 12:10:30 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1941_omg2_20251224092430_44ff77.png (Size: 4367 bytes, MIME: image/png)
+[24-Dec-2025 12:10:30 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 12:10:30 UTC] [Serve File] Serving file: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png (Size: 416365 bytes, MIME: image/png)
+[24-Dec-2025 20:10:33 Asia/Kuala_Lumpur] === DELETE REGISTRATION STARTED ===
+[24-Dec-2025 20:10:33 Asia/Kuala_Lumpur] [Delete Registration] Reg#: WSA2025-2526, Student: omg3, Student ID: 19, Parent ID: 8
+[24-Dec-2025 20:10:33 Asia/Kuala_Lumpur] [Delete Registration] Files to delete: 2 - uploads/signatures/signature_WSA2025-2526_omg3_20251224113403_d6158f.png, uploads/registration_pdfs/pdf_WSA2025-2526_omg3_20251224113403_c8fe95.pdf
+[24-Dec-2025 20:10:33 Asia/Kuala_Lumpur] [Delete Registration] ✅ Registration record deleted
+[24-Dec-2025 20:10:33 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 parent-child relationship(s)
+[24-Dec-2025 20:10:33 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 payment record(s)
+[24-Dec-2025 20:10:33 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 invoice(s)
+[24-Dec-2025 20:10:33 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 0 attendance record(s)
+[24-Dec-2025 20:10:33 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 enrollment(s)
+[24-Dec-2025 20:10:33 Asia/Kuala_Lumpur] [Delete Registration] ✅ Student account deleted (ID: 19)
+[24-Dec-2025 20:10:33 Asia/Kuala_Lumpur] [Delete Registration] Parent 'Chai' (ID: 8) has 1 remaining child(ren)
+[24-Dec-2025 20:10:33 Asia/Kuala_Lumpur] [Delete Registration] ℹ️ Parent account RETAINED: PAR-2025-0002 (Chai) - 1 child(ren) remain
+[24-Dec-2025 20:10:33 Asia/Kuala_Lumpur] [Delete Registration] ✅ Database transaction committed
+[24-Dec-2025 20:10:33 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/signatures/signature_WSA2025-2526_omg3_20251224113403_d6158f.png
+[24-Dec-2025 20:10:33 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/registration_pdfs/pdf_WSA2025-2526_omg3_20251224113403_c8fe95.pdf
+[24-Dec-2025 20:10:33 Asia/Kuala_Lumpur] === DELETE REGISTRATION COMPLETED ===
+[24-Dec-2025 12:10:33 UTC] [Serve File] Serving file: signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png (Size: 6594 bytes, MIME: image/png)
+[24-Dec-2025 12:10:33 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1941_omg2_20251224092430_44ff77.png (Size: 4367 bytes, MIME: image/png)
+[24-Dec-2025 12:10:33 UTC] [Serve File] Serving file: payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png (Size: 416365 bytes, MIME: image/png)
+[24-Dec-2025 12:10:33 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 12:10:33 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 20:10:35 Asia/Kuala_Lumpur] === DELETE REGISTRATION STARTED ===
+[24-Dec-2025 20:10:35 Asia/Kuala_Lumpur] [Delete Registration] Reg#: WSA2025-2284, Student: Chai Chong Hern, Student ID: 11, Parent ID: 8
+[24-Dec-2025 20:10:35 Asia/Kuala_Lumpur] [Delete Registration] Files to delete: 3 - uploads/signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png, uploads/registration_pdfs/pdf_WSA2025-2284_chai_chong_hern_20251223221728_527623.pdf, uploads/payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png
+[24-Dec-2025 20:10:35 Asia/Kuala_Lumpur] [Delete Registration] ✅ Registration record deleted
+[24-Dec-2025 20:10:35 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 parent-child relationship(s)
+[24-Dec-2025 20:10:35 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 payment record(s)
+[24-Dec-2025 20:10:35 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 invoice(s)
+[24-Dec-2025 20:10:35 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 0 attendance record(s)
+[24-Dec-2025 20:10:35 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 enrollment(s)
+[24-Dec-2025 20:10:35 Asia/Kuala_Lumpur] [Delete Registration] ✅ Student account deleted (ID: 11)
+[24-Dec-2025 20:10:35 Asia/Kuala_Lumpur] [Delete Registration] Parent 'Chai' (ID: 8) has 0 remaining child(ren)
+[24-Dec-2025 20:10:35 Asia/Kuala_Lumpur] [Delete Registration] ✅ Parent account DELETED: PAR-2025-0002 (Chai)
+[24-Dec-2025 20:10:35 Asia/Kuala_Lumpur] [Delete Registration] ✅ Database transaction committed
+[24-Dec-2025 20:10:35 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/signatures/signature_WSA2025-2284_chai_chong_hern_20251223221728_622197.png
+[24-Dec-2025 20:10:35 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/registration_pdfs/pdf_WSA2025-2284_chai_chong_hern_20251223221728_527623.pdf
+[24-Dec-2025 20:10:35 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/payment_receipts/receipt_11_chai_chong_hern_reg-wsa2025-2284-2025-12-23_20251223221728_dbe912.png
+[24-Dec-2025 20:10:35 Asia/Kuala_Lumpur] === DELETE REGISTRATION COMPLETED ===
+[24-Dec-2025 12:10:35 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1941_omg2_20251224092430_44ff77.png (Size: 4367 bytes, MIME: image/png)
+[24-Dec-2025 12:10:35 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 12:10:35 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 20:10:37 Asia/Kuala_Lumpur] === DELETE REGISTRATION STARTED ===
+[24-Dec-2025 20:10:37 Asia/Kuala_Lumpur] [Delete Registration] Reg#: WSA2025-1941, Student: omg2, Student ID: 18, Parent ID: 15
+[24-Dec-2025 20:10:37 Asia/Kuala_Lumpur] [Delete Registration] Files to delete: 2 - uploads/signatures/signature_WSA2025-1941_omg2_20251224092430_44ff77.png, uploads/registration_pdfs/pdf_WSA2025-1941_omg2_20251224092430_ffd492.pdf
+[24-Dec-2025 20:10:37 Asia/Kuala_Lumpur] [Delete Registration] ✅ Registration record deleted
+[24-Dec-2025 20:10:37 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 parent-child relationship(s)
+[24-Dec-2025 20:10:37 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 payment record(s)
+[24-Dec-2025 20:10:37 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 invoice(s)
+[24-Dec-2025 20:10:37 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 0 attendance record(s)
+[24-Dec-2025 20:10:37 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 enrollment(s)
+[24-Dec-2025 20:10:37 Asia/Kuala_Lumpur] [Delete Registration] ✅ Student account deleted (ID: 18)
+[24-Dec-2025 20:10:37 Asia/Kuala_Lumpur] [Delete Registration] Parent 'Chai' (ID: 15) has 0 remaining child(ren)
+[24-Dec-2025 20:10:37 Asia/Kuala_Lumpur] [Delete Registration] ✅ Parent account DELETED: PAR-2025-0003 (Chai)
+[24-Dec-2025 20:10:37 Asia/Kuala_Lumpur] [Delete Registration] ✅ Database transaction committed
+[24-Dec-2025 20:10:37 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/signatures/signature_WSA2025-1941_omg2_20251224092430_44ff77.png
+[24-Dec-2025 20:10:37 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/registration_pdfs/pdf_WSA2025-1941_omg2_20251224092430_ffd492.pdf
+[24-Dec-2025 20:10:37 Asia/Kuala_Lumpur] === DELETE REGISTRATION COMPLETED ===
+[24-Dec-2025 12:10:37 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 12:10:37 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 12:12:32 UTC] [Registration] Starting registration for parent email: chaichonghern@gmail.com, child IC: 818929-38-3929, name: test
+[24-Dec-2025 12:12:32 UTC] [Reg Number] Generated unique random registration number: WSA2025-4906
+[24-Dec-2025 12:12:32 UTC] [Password] Using IC last 4 digits: 3929
+[24-Dec-2025 12:12:33 UTC] [Password] Using IC last 4 digits: 1849
+[24-Dec-2025 12:12:33 UTC] [Parent] Created NEW parent account ID=16, code=PAR-2025-0002, email=chaichonghern@gmail.com, password=1849
+[24-Dec-2025 12:12:33 UTC] [Parent Info] ID=16, Code=PAR-2025-0002, IsNew=1, Password=1849
+[24-Dec-2025 12:12:33 UTC] [Student] Created student ID=20 (test)
+[24-Dec-2025 12:12:33 UTC] [Link] Linked student ID=20 to parent ID=16
+[24-Dec-2025 12:12:33 UTC] [DateTime Validation] Invalid form_date '24/12/2025', using current datetime
+[24-Dec-2025 12:12:33 UTC] [Registration] Original form_date: 24/12/2025, Validated: 2025-12-24 12:12:33
+[24-Dec-2025 12:12:33 UTC] [File Helper] Saved file: signatures/signature_WSA2025-4906_test_20251224121233_41a117.png (Size: 3837 bytes)
+[24-Dec-2025 12:12:33 UTC] [File Save] Signature saved: signatures/signature_WSA2025-4906_test_20251224121233_41a117.png
+[24-Dec-2025 12:12:33 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-4906_test_20251224121233_0b4b90.pdf (Size: 1376948 bytes)
+[24-Dec-2025 12:12:33 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-4906_test_20251224121233_0b4b90.pdf
+[24-Dec-2025 12:12:33 UTC] [File Save] Cash payment - no receipt required, receiptPath set to empty string
+[24-Dec-2025 12:12:33 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Wed 8pm-10pm
+[24-Dec-2025 12:12:33 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Wed 8pm-10pm' to 'wsa-wed-8pm'
+[24-Dec-2025 12:12:33 UTC] [Auto-Enroll] Starting enrollment for student ID=20, Classes: wsa-wed-8pm
+[24-Dec-2025 12:12:33 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=20 in class 'Wushu Sport Academy: Wed 8pm-10pm' (Code: wsa-wed-8pm)
+[24-Dec-2025 12:12:33 UTC] [Auto-Enroll] Results - Success: 1, Failed: 0, Skipped: 0
+[24-Dec-2025 12:12:33 UTC] [Invoice Split] Total: 120, Classes: 1, Per Class: 120
+[24-Dec-2025 12:12:33 UTC] [Invoice] Using receipt path: 
+[24-Dec-2025 12:12:33 UTC] [Invoice] Created invoice: INV-REG-202512-4171 (ID: 42) for class wsa-wed-8pm, amount=120
+[24-Dec-2025 12:12:33 UTC] [Payment] Created payment record (ID: 36) linked to invoice INV-REG-202512-4171, receipt_path=
+[24-Dec-2025 12:12:33 UTC] [Success] Reg#: WSA2025-4906, Parent: PAR-2025-0002 (ID:16), Student: 20, Invoices: 1, Payment Date: 2025-12-24, Receipt: 
+[24-Dec-2025 12:12:33 UTC] [Email] Sending to: chaichonghern@gmail.com, isNewParent: YES, parentPassword: 1849
+[24-Dec-2025 12:12:34 UTC] [Email] Successfully sent to chaichonghern@gmail.com
+[24-Dec-2025 12:12:34 UTC] [Admin Email] Sending registration notification to admin@wushusportacademy.com
+[24-Dec-2025 12:12:36 UTC] [Admin Email] Error: SMTP Error: Could not authenticate.
+[24-Dec-2025 12:12:36 UTC] [Admin Notification] Email sent: NO
+[24-Dec-2025 12:14:23 UTC] [Registration] Starting registration for parent email: chaichonghern@gmail.com, child IC: 829383-73-8922, name: Test2222
+[24-Dec-2025 12:14:23 UTC] [Reg Number] Generated unique random registration number: WSA2025-3362
+[24-Dec-2025 12:14:23 UTC] [Password] Using IC last 4 digits: 8922
+[24-Dec-2025 12:14:23 UTC] [Parent] Found existing parent account ID=16 for email=chaichonghern@gmail.com
+[24-Dec-2025 12:14:23 UTC] [Parent Info] ID=16, Code=PAR-2025-0002, IsNew=, Password=NULL
+[24-Dec-2025 12:14:23 UTC] [Student] Created student ID=21 (Test2222)
+[24-Dec-2025 12:14:23 UTC] [Link] Linked student ID=21 to parent ID=16
+[24-Dec-2025 12:14:23 UTC] [DateTime Validation] Invalid form_date '24/12/2025', using current datetime
+[24-Dec-2025 12:14:23 UTC] [Registration] Original form_date: 24/12/2025, Validated: 2025-12-24 12:14:23
+[24-Dec-2025 12:14:23 UTC] [File Helper] Saved file: signatures/signature_WSA2025-3362_test2222_20251224121423_52ebce.png (Size: 2581 bytes)
+[24-Dec-2025 12:14:23 UTC] [File Save] Signature saved: signatures/signature_WSA2025-3362_test2222_20251224121423_52ebce.png
+[24-Dec-2025 12:14:23 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-3362_test2222_20251224121423_081658.pdf (Size: 1380271 bytes)
+[24-Dec-2025 12:14:23 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-3362_test2222_20251224121423_081658.pdf
+[24-Dec-2025 12:14:23 UTC] [File Save] Cash payment - no receipt required, receiptPath set to empty string
+[24-Dec-2025 12:14:23 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Wed 8pm-10pm
+[24-Dec-2025 12:14:23 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Wed 8pm-10pm' to 'wsa-wed-8pm'
+[24-Dec-2025 12:14:23 UTC] [Auto-Enroll] Starting enrollment for student ID=21, Classes: wsa-wed-8pm
+[24-Dec-2025 12:14:23 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=21 in class 'Wushu Sport Academy: Wed 8pm-10pm' (Code: wsa-wed-8pm)
+[24-Dec-2025 12:14:23 UTC] [Auto-Enroll] Results - Success: 1, Failed: 0, Skipped: 0
+[24-Dec-2025 12:14:23 UTC] [Invoice Split] Total: 120, Classes: 1, Per Class: 120
+[24-Dec-2025 12:14:23 UTC] [Invoice] Using receipt path: 
+[24-Dec-2025 12:14:23 UTC] [Invoice] Created invoice: INV-REG-202512-2724 (ID: 43) for class wsa-wed-8pm, amount=120
+[24-Dec-2025 12:14:23 UTC] [Payment] Created payment record (ID: 37) linked to invoice INV-REG-202512-2724, receipt_path=
+[24-Dec-2025 12:14:23 UTC] [Success] Reg#: WSA2025-3362, Parent: PAR-2025-0002 (ID:16), Student: 21, Invoices: 1, Payment Date: 2025-12-16, Receipt: 
+[24-Dec-2025 12:14:23 UTC] [Email] Sending to: chaichonghern@gmail.com, isNewParent: NO, parentPassword: NULL
+[24-Dec-2025 12:14:25 UTC] [Email] Successfully sent to chaichonghern@gmail.com
+[24-Dec-2025 12:14:25 UTC] [Admin Email] Sending registration notification to admin@wushusportacademy.com
+[24-Dec-2025 12:14:27 UTC] [Admin Email] Error: SMTP Error: Could not authenticate.
+[24-Dec-2025 12:14:27 UTC] [Admin Notification] Email sent: NO
+[24-Dec-2025 12:38:31 UTC] [Registration] Starting registration for parent email: chaichonghern@gmail.com, child IC: 123123-12-3123, name: test234234
+[24-Dec-2025 12:38:31 UTC] [Reg Number] Generated unique random registration number: WSA2025-4425
+[24-Dec-2025 12:38:31 UTC] [Password] Using IC last 4 digits: 3123
+[24-Dec-2025 12:38:31 UTC] [Parent] Found existing parent account ID=16 for email=chaichonghern@gmail.com
+[24-Dec-2025 12:38:31 UTC] [Parent Info] ID=16, Code=PAR-2025-0002, IsNew=, Password=NULL
+[24-Dec-2025 12:38:31 UTC] [Student] Created student ID=22 (test234234)
+[24-Dec-2025 12:38:31 UTC] [Link] Linked student ID=22 to parent ID=16
+[24-Dec-2025 12:38:31 UTC] [DateTime Validation] Invalid form_date '24/12/2025', using current datetime
+[24-Dec-2025 12:38:31 UTC] [Registration] Original form_date: 24/12/2025, Validated: 2025-12-24 12:38:31
+[24-Dec-2025 12:38:31 UTC] [File Helper] Saved file: signatures/signature_WSA2025-4425_test234234_20251224123831_fee1f1.png (Size: 3997 bytes)
+[24-Dec-2025 12:38:31 UTC] [File Save] Signature saved: signatures/signature_WSA2025-4425_test234234_20251224123831_fee1f1.png
+[24-Dec-2025 12:38:31 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-4425_test234234_20251224123831_e8429a.pdf (Size: 1188238 bytes)
+[24-Dec-2025 12:38:31 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-4425_test234234_20251224123831_e8429a.pdf
+[24-Dec-2025 12:38:31 UTC] [File Helper] Saved file: payment_receipts/receipt_22_test234234_reg-wsa2025-4425-2025-12-24_20251224123831_499390.png (Size: 6805 bytes)
+[24-Dec-2025 12:38:31 UTC] [File Save] Bank transfer receipt saved: payment_receipts/receipt_22_test234234_reg-wsa2025-4425-2025-12-24_20251224123831_499390.png
+[24-Dec-2025 12:38:31 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Wed 8pm-10pm
+[24-Dec-2025 12:38:31 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Wed 8pm-10pm' to 'wsa-wed-8pm'
+[24-Dec-2025 12:38:31 UTC] [Auto-Enroll] Starting enrollment for student ID=22, Classes: wsa-wed-8pm
+[24-Dec-2025 12:38:31 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=22 in class 'Wushu Sport Academy: Wed 8pm-10pm' (Code: wsa-wed-8pm)
+[24-Dec-2025 12:38:31 UTC] [Auto-Enroll] Results - Success: 1, Failed: 0, Skipped: 0
+[24-Dec-2025 12:38:31 UTC] [Invoice Split] Total: 120, Classes: 1, Per Class: 120
+[24-Dec-2025 12:38:31 UTC] [Invoice] Using receipt path: payment_receipts/receipt_22_test234234_reg-wsa2025-4425-2025-12-24_20251224123831_499390.png
+[24-Dec-2025 12:38:31 UTC] [Invoice] Created invoice: INV-REG-202512-7211 (ID: 44) for class wsa-wed-8pm, amount=120
+[24-Dec-2025 12:38:31 UTC] [Payment] Created payment record (ID: 38) linked to invoice INV-REG-202512-7211, receipt_path=payment_receipts/receipt_22_test234234_reg-wsa2025-4425-2025-12-24_20251224123831_499390.png
+[24-Dec-2025 12:38:31 UTC] [Success] Reg#: WSA2025-4425, Parent: PAR-2025-0002 (ID:16), Student: 22, Invoices: 1, Payment Date: 2025-12-24, Receipt: payment_receipts/receipt_22_test234234_reg-wsa2025-4425-2025-12-24_20251224123831_499390.png
+[24-Dec-2025 12:38:31 UTC] [Email] Sending to: chaichonghern@gmail.com, isNewParent: NO, parentPassword: NULL
+[24-Dec-2025 12:38:32 UTC] [Email] Successfully sent to chaichonghern@gmail.com
+[24-Dec-2025 12:38:32 UTC] [Admin Email] Sending registration notification to admin@wushusportacademy.com
+[24-Dec-2025 12:38:34 UTC] [Admin Email] Error: SMTP Error: Could not authenticate.
+[24-Dec-2025 12:38:34 UTC] [Admin Notification] Email sent: NO
+[24-Dec-2025 12:40:17 UTC] [Registration] Starting registration for parent email: chaichonghern@gmail.com, child IC: 123123-12-3122, name: test213212
+[24-Dec-2025 12:40:17 UTC] [Reg Number] Generated unique random registration number: WSA2025-7257
+[24-Dec-2025 12:40:17 UTC] [Password] Using IC last 4 digits: 3122
+[24-Dec-2025 12:40:18 UTC] [Parent] Found existing parent account ID=16 for email=chaichonghern@gmail.com
+[24-Dec-2025 12:40:18 UTC] [Parent Info] ID=16, Code=PAR-2025-0002, IsNew=, Password=NULL
+[24-Dec-2025 12:40:18 UTC] [Student] Created student ID=23 (test213212)
+[24-Dec-2025 12:40:18 UTC] [Link] Linked student ID=23 to parent ID=16
+[24-Dec-2025 12:40:18 UTC] [DateTime Validation] Invalid form_date '24/12/2025', using current datetime
+[24-Dec-2025 12:40:18 UTC] [Registration] Original form_date: 24/12/2025, Validated: 2025-12-24 12:40:18
+[24-Dec-2025 12:40:18 UTC] [File Helper] Saved file: signatures/signature_WSA2025-7257_test213212_20251224124018_4613c5.png (Size: 5330 bytes)
+[24-Dec-2025 12:40:18 UTC] [File Save] Signature saved: signatures/signature_WSA2025-7257_test213212_20251224124018_4613c5.png
+[24-Dec-2025 12:40:18 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-7257_test213212_20251224124018_d147d4.pdf (Size: 1187822 bytes)
+[24-Dec-2025 12:40:18 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-7257_test213212_20251224124018_d147d4.pdf
+[24-Dec-2025 12:40:18 UTC] [File Helper] Saved file: payment_receipts/receipt_23_test213212_reg-wsa2025-7257-2025-12-24_20251224124018_7ce79f.png (Size: 6805 bytes)
+[24-Dec-2025 12:40:18 UTC] [File Save] Bank transfer receipt saved: payment_receipts/receipt_23_test213212_reg-wsa2025-7257-2025-12-24_20251224124018_7ce79f.png
+[24-Dec-2025 12:40:18 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Wed 8pm-10pm
+[24-Dec-2025 12:40:18 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Wed 8pm-10pm' to 'wsa-wed-8pm'
+[24-Dec-2025 12:40:18 UTC] [Auto-Enroll] Starting enrollment for student ID=23, Classes: wsa-wed-8pm
+[24-Dec-2025 12:40:18 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=23 in class 'Wushu Sport Academy: Wed 8pm-10pm' (Code: wsa-wed-8pm)
+[24-Dec-2025 12:40:18 UTC] [Auto-Enroll] Results - Success: 1, Failed: 0, Skipped: 0
+[24-Dec-2025 12:40:18 UTC] [Invoice Split] Total: 120, Classes: 1, Per Class: 120
+[24-Dec-2025 12:40:18 UTC] [Invoice] Using receipt path: payment_receipts/receipt_23_test213212_reg-wsa2025-7257-2025-12-24_20251224124018_7ce79f.png
+[24-Dec-2025 12:40:18 UTC] [Invoice] Created invoice: INV-REG-202512-7250 (ID: 45) for class wsa-wed-8pm, amount=120
+[24-Dec-2025 12:40:18 UTC] [Payment] Created payment record (ID: 39) linked to invoice INV-REG-202512-7250, receipt_path=payment_receipts/receipt_23_test213212_reg-wsa2025-7257-2025-12-24_20251224124018_7ce79f.png
+[24-Dec-2025 12:40:18 UTC] [Success] Reg#: WSA2025-7257, Parent: PAR-2025-0002 (ID:16), Student: 23, Invoices: 1, Payment Date: 2025-12-24, Receipt: payment_receipts/receipt_23_test213212_reg-wsa2025-7257-2025-12-24_20251224124018_7ce79f.png
+[24-Dec-2025 12:40:18 UTC] [Email] Sending to: chaichonghern@gmail.com, isNewParent: NO, parentPassword: NULL
+[24-Dec-2025 12:40:25 UTC] [Email] Successfully sent to chaichonghern@gmail.com
+[24-Dec-2025 12:40:25 UTC] [Admin Email] Sending registration notification to admin@wushusportacademy.com
+[24-Dec-2025 12:40:27 UTC] [Admin Email] Error: SMTP Error: Could not authenticate.
+[24-Dec-2025 12:40:27 UTC] [Admin Notification] Email sent: NO
+[24-Dec-2025 12:41:18 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4906_test_20251224121233_41a117.png (Size: 3837 bytes, MIME: image/png)
+[24-Dec-2025 12:41:18 UTC] [Serve File] Serving file: payment_receipts/receipt_22_test234234_reg-wsa2025-4425-2025-12-24_20251224123831_499390.png (Size: 6805 bytes, MIME: image/png)
+[24-Dec-2025 12:41:18 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4425_test234234_20251224123831_fee1f1.png (Size: 3997 bytes, MIME: image/png)
+[24-Dec-2025 12:41:18 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 12:41:18 UTC] [Serve File] Serving file: payment_receipts/receipt_23_test213212_reg-wsa2025-7257-2025-12-24_20251224124018_7ce79f.png (Size: 6805 bytes, MIME: image/png)
+[24-Dec-2025 12:41:18 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 12:41:18 UTC] [Serve File] Serving file: signatures/signature_WSA2025-7257_test213212_20251224124018_4613c5.png (Size: 5330 bytes, MIME: image/png)
+[24-Dec-2025 12:41:18 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3362_test2222_20251224121423_52ebce.png (Size: 2581 bytes, MIME: image/png)
+[24-Dec-2025 12:43:14 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4906_test_20251224121233_41a117.png (Size: 3837 bytes, MIME: image/png)
+[24-Dec-2025 12:43:14 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4425_test234234_20251224123831_fee1f1.png (Size: 3997 bytes, MIME: image/png)
+[24-Dec-2025 12:43:14 UTC] [Serve File] Serving file: payment_receipts/receipt_23_test213212_reg-wsa2025-7257-2025-12-24_20251224124018_7ce79f.png (Size: 6805 bytes, MIME: image/png)
+[24-Dec-2025 12:43:14 UTC] [Serve File] Serving file: payment_receipts/receipt_22_test234234_reg-wsa2025-4425-2025-12-24_20251224123831_499390.png (Size: 6805 bytes, MIME: image/png)
+[24-Dec-2025 12:43:14 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 12:43:14 UTC] [Serve File] Serving file: signatures/signature_WSA2025-7257_test213212_20251224124018_4613c5.png (Size: 5330 bytes, MIME: image/png)
+[24-Dec-2025 12:43:14 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3362_test2222_20251224121423_52ebce.png (Size: 2581 bytes, MIME: image/png)
+[24-Dec-2025 12:43:14 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 20:43:22 Asia/Kuala_Lumpur] [verify_registration] Generated PARENT password from parent IC: 1849
+[24-Dec-2025 20:43:22 Asia/Kuala_Lumpur] [verify_registration] Updated 1 invoices to paid
+[24-Dec-2025 20:43:22 Asia/Kuala_Lumpur] [verify_registration] Found 1 paid invoices
+[24-Dec-2025 20:43:22 Asia/Kuala_Lumpur] [verify_registration] Updated 1 payments for invoice ID 45
+[24-Dec-2025 20:43:22 Asia/Kuala_Lumpur] [verify_registration] Total payments updated: 1
+[24-Dec-2025 20:43:22 Asia/Kuala_Lumpur] [verify_registration] IsFirstChild: NO, Parent IC: 030322-10-1849, PARENT Password: 1849
+[24-Dec-2025 20:43:23 Asia/Kuala_Lumpur] [Approval Email] Sent to chaichonghern@gmail.com for child test213212
+[24-Dec-2025 20:43:23 Asia/Kuala_Lumpur] [Approve] Reg#WSA2025-7257: invoices=1, payments=1, email=sent
+[24-Dec-2025 12:43:23 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4906_test_20251224121233_41a117.png (Size: 3837 bytes, MIME: image/png)
+[24-Dec-2025 12:43:23 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 12:43:23 UTC] [Serve File] Serving file: payment_receipts/receipt_23_test213212_reg-wsa2025-7257-2025-12-24_20251224124018_7ce79f.png (Size: 6805 bytes, MIME: image/png)
+[24-Dec-2025 12:43:23 UTC] [Serve File] Serving file: signatures/signature_WSA2025-7257_test213212_20251224124018_4613c5.png (Size: 5330 bytes, MIME: image/png)
+[24-Dec-2025 12:43:23 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4425_test234234_20251224123831_fee1f1.png (Size: 3997 bytes, MIME: image/png)
+[24-Dec-2025 12:43:23 UTC] [Serve File] Serving file: payment_receipts/receipt_22_test234234_reg-wsa2025-4425-2025-12-24_20251224123831_499390.png (Size: 6805 bytes, MIME: image/png)
+[24-Dec-2025 12:43:23 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 12:43:23 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3362_test2222_20251224121423_52ebce.png (Size: 2581 bytes, MIME: image/png)
+[24-Dec-2025 20:43:35 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 12:43:56 UTC] [Serve File] Serving file: signatures/signature_WSA2025-7257_test213212_20251224124018_4613c5.png (Size: 5330 bytes, MIME: image/png)
+[24-Dec-2025 12:43:56 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4906_test_20251224121233_41a117.png (Size: 3837 bytes, MIME: image/png)
+[24-Dec-2025 12:43:56 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 12:43:56 UTC] [Serve File] Serving file: payment_receipts/receipt_23_test213212_reg-wsa2025-7257-2025-12-24_20251224124018_7ce79f.png (Size: 6805 bytes, MIME: image/png)
+[24-Dec-2025 12:43:56 UTC] [Serve File] Serving file: payment_receipts/receipt_22_test234234_reg-wsa2025-4425-2025-12-24_20251224123831_499390.png (Size: 6805 bytes, MIME: image/png)
+[24-Dec-2025 12:43:56 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4425_test234234_20251224123831_fee1f1.png (Size: 3997 bytes, MIME: image/png)
+[24-Dec-2025 12:43:56 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3362_test2222_20251224121423_52ebce.png (Size: 2581 bytes, MIME: image/png)
+[24-Dec-2025 12:43:56 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 20:47:30 Asia/Kuala_Lumpur] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/wushuspo/public_html/pages/invoices.php on line 781
+[24-Dec-2025 13:38:33 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4906_test_20251224121233_41a117.png (Size: 3837 bytes, MIME: image/png)
+[24-Dec-2025 13:38:33 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3362_test2222_20251224121423_52ebce.png (Size: 2581 bytes, MIME: image/png)
+[24-Dec-2025 13:38:33 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4425_test234234_20251224123831_fee1f1.png (Size: 3997 bytes, MIME: image/png)
+[24-Dec-2025 13:38:33 UTC] [Serve File] Serving file: signatures/signature_WSA2025-7257_test213212_20251224124018_4613c5.png (Size: 5330 bytes, MIME: image/png)
+[24-Dec-2025 13:38:33 UTC] [Serve File] Serving file: payment_receipts/receipt_22_test234234_reg-wsa2025-4425-2025-12-24_20251224123831_499390.png (Size: 6805 bytes, MIME: image/png)
+[24-Dec-2025 13:38:33 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 13:38:33 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 13:38:33 UTC] [Serve File] Serving file: payment_receipts/receipt_23_test213212_reg-wsa2025-7257-2025-12-24_20251224124018_7ce79f.png (Size: 6805 bytes, MIME: image/png)
+[24-Dec-2025 14:23:22 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4906_test_20251224121233_41a117.png (Size: 3837 bytes, MIME: image/png)
+[24-Dec-2025 14:23:22 UTC] [Serve File] Serving file: signatures/signature_WSA2025-7257_test213212_20251224124018_4613c5.png (Size: 5330 bytes, MIME: image/png)
+[24-Dec-2025 14:23:22 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 14:23:22 UTC] [Serve File] Serving file: payment_receipts/receipt_22_test234234_reg-wsa2025-4425-2025-12-24_20251224123831_499390.png (Size: 6805 bytes, MIME: image/png)
+[24-Dec-2025 14:23:22 UTC] [Serve File] Serving file: payment_receipts/receipt_23_test213212_reg-wsa2025-7257-2025-12-24_20251224124018_7ce79f.png (Size: 6805 bytes, MIME: image/png)
+[24-Dec-2025 14:23:22 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4425_test234234_20251224123831_fee1f1.png (Size: 3997 bytes, MIME: image/png)
+[24-Dec-2025 14:23:22 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 14:23:22 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3362_test2222_20251224121423_52ebce.png (Size: 2581 bytes, MIME: image/png)
+[24-Dec-2025 22:23:25 Asia/Kuala_Lumpur] === DELETE REGISTRATION STARTED ===
+[24-Dec-2025 22:23:25 Asia/Kuala_Lumpur] [Delete Registration] Reg#: WSA2025-7257, Student: test213212, Student ID: 23, Parent ID: 16
+[24-Dec-2025 22:23:25 Asia/Kuala_Lumpur] [Delete Registration] Files to delete: 3 - uploads/signatures/signature_WSA2025-7257_test213212_20251224124018_4613c5.png, uploads/registration_pdfs/pdf_WSA2025-7257_test213212_20251224124018_d147d4.pdf, uploads/payment_receipts/receipt_23_test213212_reg-wsa2025-7257-2025-12-24_20251224124018_7ce79f.png
+[24-Dec-2025 22:23:25 Asia/Kuala_Lumpur] [Delete Registration] ✅ Registration record deleted
+[24-Dec-2025 22:23:25 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 parent-child relationship(s)
+[24-Dec-2025 22:23:25 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 payment record(s)
+[24-Dec-2025 22:23:25 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 invoice(s)
+[24-Dec-2025 22:23:25 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 0 attendance record(s)
+[24-Dec-2025 22:23:25 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 enrollment(s)
+[24-Dec-2025 22:23:25 Asia/Kuala_Lumpur] [Delete Registration] ✅ Student account deleted (ID: 23)
+[24-Dec-2025 22:23:25 Asia/Kuala_Lumpur] [Delete Registration] Parent 'Chai' (ID: 16) has 3 remaining child(ren)
+[24-Dec-2025 22:23:25 Asia/Kuala_Lumpur] [Delete Registration] ℹ️ Parent account RETAINED: PAR-2025-0002 (Chai) - 3 child(ren) remain
+[24-Dec-2025 22:23:25 Asia/Kuala_Lumpur] [Delete Registration] ✅ Database transaction committed
+[24-Dec-2025 22:23:25 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/signatures/signature_WSA2025-7257_test213212_20251224124018_4613c5.png
+[24-Dec-2025 22:23:25 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/registration_pdfs/pdf_WSA2025-7257_test213212_20251224124018_d147d4.pdf
+[24-Dec-2025 22:23:25 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/payment_receipts/receipt_23_test213212_reg-wsa2025-7257-2025-12-24_20251224124018_7ce79f.png
+[24-Dec-2025 22:23:25 Asia/Kuala_Lumpur] === DELETE REGISTRATION COMPLETED ===
+[24-Dec-2025 14:23:25 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4425_test234234_20251224123831_fee1f1.png (Size: 3997 bytes, MIME: image/png)
+[24-Dec-2025 14:23:25 UTC] [Serve File] Serving file: payment_receipts/receipt_22_test234234_reg-wsa2025-4425-2025-12-24_20251224123831_499390.png (Size: 6805 bytes, MIME: image/png)
+[24-Dec-2025 14:23:25 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3362_test2222_20251224121423_52ebce.png (Size: 2581 bytes, MIME: image/png)
+[24-Dec-2025 14:23:25 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4906_test_20251224121233_41a117.png (Size: 3837 bytes, MIME: image/png)
+[24-Dec-2025 14:23:25 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 14:23:25 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 14:24:08 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4425_test234234_20251224123831_fee1f1.png (Size: 3997 bytes, MIME: image/png)
+[24-Dec-2025 14:24:08 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 14:24:08 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4906_test_20251224121233_41a117.png (Size: 3837 bytes, MIME: image/png)
+[24-Dec-2025 14:24:08 UTC] [Serve File] Serving file: payment_receipts/receipt_22_test234234_reg-wsa2025-4425-2025-12-24_20251224123831_499390.png (Size: 6805 bytes, MIME: image/png)
+[24-Dec-2025 14:24:08 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 14:24:08 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3362_test2222_20251224121423_52ebce.png (Size: 2581 bytes, MIME: image/png)
+[24-Dec-2025 22:24:12 Asia/Kuala_Lumpur] === DELETE REGISTRATION STARTED ===
+[24-Dec-2025 22:24:12 Asia/Kuala_Lumpur] [Delete Registration] Reg#: WSA2025-4906, Student: test, Student ID: 20, Parent ID: 16
+[24-Dec-2025 22:24:12 Asia/Kuala_Lumpur] [Delete Registration] Files to delete: 2 - uploads/signatures/signature_WSA2025-4906_test_20251224121233_41a117.png, uploads/registration_pdfs/pdf_WSA2025-4906_test_20251224121233_0b4b90.pdf
+[24-Dec-2025 22:24:12 Asia/Kuala_Lumpur] [Delete Registration] ✅ Registration record deleted
+[24-Dec-2025 22:24:12 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 parent-child relationship(s)
+[24-Dec-2025 22:24:12 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 payment record(s)
+[24-Dec-2025 22:24:12 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 invoice(s)
+[24-Dec-2025 22:24:12 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 0 attendance record(s)
+[24-Dec-2025 22:24:12 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 enrollment(s)
+[24-Dec-2025 22:24:12 Asia/Kuala_Lumpur] [Delete Registration] ✅ Student account deleted (ID: 20)
+[24-Dec-2025 22:24:12 Asia/Kuala_Lumpur] [Delete Registration] Parent 'Chai' (ID: 16) has 2 remaining child(ren)
+[24-Dec-2025 22:24:12 Asia/Kuala_Lumpur] [Delete Registration] ℹ️ Parent account RETAINED: PAR-2025-0002 (Chai) - 2 child(ren) remain
+[24-Dec-2025 22:24:12 Asia/Kuala_Lumpur] [Delete Registration] ✅ Database transaction committed
+[24-Dec-2025 22:24:12 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/signatures/signature_WSA2025-4906_test_20251224121233_41a117.png
+[24-Dec-2025 22:24:12 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/registration_pdfs/pdf_WSA2025-4906_test_20251224121233_0b4b90.pdf
+[24-Dec-2025 22:24:12 Asia/Kuala_Lumpur] === DELETE REGISTRATION COMPLETED ===
+[24-Dec-2025 14:24:13 UTC] [Serve File] Serving file: signatures/signature_WSA2025-4425_test234234_20251224123831_fee1f1.png (Size: 3997 bytes, MIME: image/png)
+[24-Dec-2025 14:24:13 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 14:24:13 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3362_test2222_20251224121423_52ebce.png (Size: 2581 bytes, MIME: image/png)
+[24-Dec-2025 14:24:13 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 14:24:13 UTC] [Serve File] Serving file: payment_receipts/receipt_22_test234234_reg-wsa2025-4425-2025-12-24_20251224123831_499390.png (Size: 6805 bytes, MIME: image/png)
+[24-Dec-2025 22:24:15 Asia/Kuala_Lumpur] === DELETE REGISTRATION STARTED ===
+[24-Dec-2025 22:24:15 Asia/Kuala_Lumpur] [Delete Registration] Reg#: WSA2025-4425, Student: test234234, Student ID: 22, Parent ID: 16
+[24-Dec-2025 22:24:15 Asia/Kuala_Lumpur] [Delete Registration] Files to delete: 3 - uploads/signatures/signature_WSA2025-4425_test234234_20251224123831_fee1f1.png, uploads/registration_pdfs/pdf_WSA2025-4425_test234234_20251224123831_e8429a.pdf, uploads/payment_receipts/receipt_22_test234234_reg-wsa2025-4425-2025-12-24_20251224123831_499390.png
+[24-Dec-2025 22:24:15 Asia/Kuala_Lumpur] [Delete Registration] ✅ Registration record deleted
+[24-Dec-2025 22:24:15 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 parent-child relationship(s)
+[24-Dec-2025 22:24:15 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 payment record(s)
+[24-Dec-2025 22:24:15 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 invoice(s)
+[24-Dec-2025 22:24:15 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 0 attendance record(s)
+[24-Dec-2025 22:24:15 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 enrollment(s)
+[24-Dec-2025 22:24:15 Asia/Kuala_Lumpur] [Delete Registration] ✅ Student account deleted (ID: 22)
+[24-Dec-2025 22:24:15 Asia/Kuala_Lumpur] [Delete Registration] Parent 'Chai' (ID: 16) has 1 remaining child(ren)
+[24-Dec-2025 22:24:15 Asia/Kuala_Lumpur] [Delete Registration] ℹ️ Parent account RETAINED: PAR-2025-0002 (Chai) - 1 child(ren) remain
+[24-Dec-2025 22:24:15 Asia/Kuala_Lumpur] [Delete Registration] ✅ Database transaction committed
+[24-Dec-2025 22:24:15 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/signatures/signature_WSA2025-4425_test234234_20251224123831_fee1f1.png
+[24-Dec-2025 22:24:15 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/registration_pdfs/pdf_WSA2025-4425_test234234_20251224123831_e8429a.pdf
+[24-Dec-2025 22:24:15 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/payment_receipts/receipt_22_test234234_reg-wsa2025-4425-2025-12-24_20251224123831_499390.png
+[24-Dec-2025 22:24:15 Asia/Kuala_Lumpur] === DELETE REGISTRATION COMPLETED ===
+[24-Dec-2025 14:24:15 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 14:24:15 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 14:24:15 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3362_test2222_20251224121423_52ebce.png (Size: 2581 bytes, MIME: image/png)
+[24-Dec-2025 22:24:17 Asia/Kuala_Lumpur] === DELETE REGISTRATION STARTED ===
+[24-Dec-2025 22:24:17 Asia/Kuala_Lumpur] [Delete Registration] Reg#: WSA2025-3362, Student: Test2222, Student ID: 21, Parent ID: 16
+[24-Dec-2025 22:24:17 Asia/Kuala_Lumpur] [Delete Registration] Files to delete: 2 - uploads/signatures/signature_WSA2025-3362_test2222_20251224121423_52ebce.png, uploads/registration_pdfs/pdf_WSA2025-3362_test2222_20251224121423_081658.pdf
+[24-Dec-2025 22:24:17 Asia/Kuala_Lumpur] [Delete Registration] ✅ Registration record deleted
+[24-Dec-2025 22:24:17 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 parent-child relationship(s)
+[24-Dec-2025 22:24:17 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 payment record(s)
+[24-Dec-2025 22:24:17 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 invoice(s)
+[24-Dec-2025 22:24:17 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 0 attendance record(s)
+[24-Dec-2025 22:24:17 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 enrollment(s)
+[24-Dec-2025 22:24:17 Asia/Kuala_Lumpur] [Delete Registration] ✅ Student account deleted (ID: 21)
+[24-Dec-2025 22:24:17 Asia/Kuala_Lumpur] [Delete Registration] Parent 'Chai' (ID: 16) has 0 remaining child(ren)
+[24-Dec-2025 22:24:17 Asia/Kuala_Lumpur] [Delete Registration] ✅ Parent account DELETED: PAR-2025-0002 (Chai)
+[24-Dec-2025 22:24:17 Asia/Kuala_Lumpur] [Delete Registration] ✅ Database transaction committed
+[24-Dec-2025 22:24:17 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/signatures/signature_WSA2025-3362_test2222_20251224121423_52ebce.png
+[24-Dec-2025 22:24:17 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/registration_pdfs/pdf_WSA2025-3362_test2222_20251224121423_081658.pdf
+[24-Dec-2025 22:24:17 Asia/Kuala_Lumpur] === DELETE REGISTRATION COMPLETED ===
+[24-Dec-2025 14:24:17 UTC] [Serve File] Serving file: payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png (Size: 450281 bytes, MIME: image/png)
+[24-Dec-2025 14:24:17 UTC] [Serve File] Serving file: signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png (Size: 7837 bytes, MIME: image/png)
+[24-Dec-2025 22:24:19 Asia/Kuala_Lumpur] === DELETE REGISTRATION STARTED ===
+[24-Dec-2025 22:24:19 Asia/Kuala_Lumpur] [Delete Registration] Reg#: WSA2025-1929, Student: test2, Student ID: 10, Parent ID: 7
+[24-Dec-2025 22:24:19 Asia/Kuala_Lumpur] [Delete Registration] Files to delete: 3 - uploads/signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png, uploads/registration_pdfs/pdf_WSA2025-1929_test2_20251223202541_e0f54e.pdf, uploads/payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png
+[24-Dec-2025 22:24:19 Asia/Kuala_Lumpur] [Delete Registration] ✅ Registration record deleted
+[24-Dec-2025 22:24:19 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 1 parent-child relationship(s)
+[24-Dec-2025 22:24:19 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 payment record(s)
+[24-Dec-2025 22:24:19 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 invoice(s)
+[24-Dec-2025 22:24:19 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 4 attendance record(s)
+[24-Dec-2025 22:24:19 Asia/Kuala_Lumpur] [Delete Registration] ✅ Deleted 2 enrollment(s)
+[24-Dec-2025 22:24:19 Asia/Kuala_Lumpur] [Delete Registration] ✅ Student account deleted (ID: 10)
+[24-Dec-2025 22:24:19 Asia/Kuala_Lumpur] [Delete Registration] Parent 'test' (ID: 7) has 0 remaining child(ren)
+[24-Dec-2025 22:24:19 Asia/Kuala_Lumpur] [Delete Registration] ✅ Parent account DELETED: PAR-2025-0001 (test)
+[24-Dec-2025 22:24:19 Asia/Kuala_Lumpur] [Delete Registration] ✅ Database transaction committed
+[24-Dec-2025 22:24:19 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/signatures/signature_WSA2025-1929_test2_20251223202541_1e2eab.png
+[24-Dec-2025 22:24:19 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/registration_pdfs/pdf_WSA2025-1929_test2_20251223202541_e0f54e.pdf
+[24-Dec-2025 22:24:19 Asia/Kuala_Lumpur] [Delete Registration] ✅ File deleted: uploads/payment_receipts/receipt_10_test2_reg-wsa2025-1929-2025-12-23_20251223202541_f300c6.png
+[24-Dec-2025 22:24:19 Asia/Kuala_Lumpur] === DELETE REGISTRATION COMPLETED ===
+[24-Dec-2025 15:01:09 UTC] [Registration] Starting registration for parent email: chaichonghern@gmail.com, child IC: 123123-12-3123, name: test
+[24-Dec-2025 15:01:09 UTC] [Reg Number] Generated unique random registration number: WSA2025-3422
+[24-Dec-2025 15:01:09 UTC] [Password] Using IC last 4 digits: 3123
+[24-Dec-2025 15:01:09 UTC] [Password] Using IC last 4 digits: 1849
+[24-Dec-2025 15:01:09 UTC] [Parent] Created NEW parent account ID=17, code=PAR-2025-0001, email=chaichonghern@gmail.com, password=1849
+[24-Dec-2025 15:01:09 UTC] [Parent Info] ID=17, Code=PAR-2025-0001, IsNew=1, Password=1849
+[24-Dec-2025 15:01:09 UTC] [Student] Created student ID=24 (test)
+[24-Dec-2025 15:01:09 UTC] [Link] Linked student ID=24 to parent ID=17
+[24-Dec-2025 15:01:09 UTC] [DateTime Validation] Invalid form_date '24/12/2025', using current datetime
+[24-Dec-2025 15:01:09 UTC] [Registration] Original form_date: 24/12/2025, Validated: 2025-12-24 15:01:09
+[24-Dec-2025 15:01:10 UTC] [File Helper] Saved file: signatures/signature_WSA2025-3422_test_20251224150110_3fc1d1.png (Size: 5296 bytes)
+[24-Dec-2025 15:01:10 UTC] [File Save] Signature saved: signatures/signature_WSA2025-3422_test_20251224150110_3fc1d1.png
+[24-Dec-2025 15:01:10 UTC] [File Helper] Saved file: registration_pdfs/pdf_WSA2025-3422_test_20251224150110_123f01.pdf (Size: 1186291 bytes)
+[24-Dec-2025 15:01:10 UTC] [File Save] PDF saved: registration_pdfs/pdf_WSA2025-3422_test_20251224150110_123f01.pdf
+[24-Dec-2025 15:01:10 UTC] [File Save] Cash payment - no receipt required, receiptPath set to empty string
+[24-Dec-2025 15:01:10 UTC] [Auto-Enroll] Schedule string: Wushu Sport Academy: Wed 8pm-10pm
+[24-Dec-2025 15:01:10 UTC] [Schedule Parse] Mapped 'Wushu Sport Academy: Wed 8pm-10pm' to 'wsa-wed-8pm'
+[24-Dec-2025 15:01:10 UTC] [Auto-Enroll] Starting enrollment for student ID=24, Classes: wsa-wed-8pm
+[24-Dec-2025 15:01:10 UTC] [Auto-Enroll] SUCCESS: Enrolled student ID=24 in class 'Wushu Sport Academy: Wed 8pm-10pm' (Code: wsa-wed-8pm)
+[24-Dec-2025 15:01:10 UTC] [Auto-Enroll] Results - Success: 1, Failed: 0, Skipped: 0
+[24-Dec-2025 15:01:10 UTC] [Invoice Split] Total: 120, Classes: 1, Per Class: 120
+[24-Dec-2025 15:01:10 UTC] [Invoice] Using receipt path: 
+[24-Dec-2025 15:01:10 UTC] [Invoice] Created invoice: INV-REG-202512-5103 (ID: 47) for class wsa-wed-8pm, amount=120
+[24-Dec-2025 15:01:10 UTC] [Payment] Created payment record (ID: 40) linked to invoice INV-REG-202512-5103, receipt_path=
+[24-Dec-2025 15:01:10 UTC] [Success] Reg#: WSA2025-3422, Parent: PAR-2025-0001 (ID:17), Student: 24, Invoices: 1, Payment Date: 2025-12-24, Receipt: 
+[24-Dec-2025 15:01:10 UTC] [Email] Sending to: chaichonghern@gmail.com, isNewParent: YES, parentPassword: 1849
+[24-Dec-2025 15:01:12 UTC] [Email] Successfully sent to chaichonghern@gmail.com
+[24-Dec-2025 15:01:12 UTC] [Admin Email] Sending registration notification to admin@wushusportacademy.com
+[24-Dec-2025 15:01:14 UTC] [Admin Email] Error: SMTP Error: Could not authenticate.
+[24-Dec-2025 15:01:14 UTC] [Admin Notification] Email sent: NO
+[24-Dec-2025 15:02:01 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3422_test_20251224150110_3fc1d1.png (Size: 5296 bytes, MIME: image/png)
+[24-Dec-2025 23:02:04 Asia/Kuala_Lumpur] [verify_registration] Generated PARENT password from parent IC: 1849
+[24-Dec-2025 23:02:04 Asia/Kuala_Lumpur] [verify_registration] Updated 1 invoices to paid
+[24-Dec-2025 23:02:04 Asia/Kuala_Lumpur] [verify_registration] Found 1 paid invoices
+[24-Dec-2025 23:02:04 Asia/Kuala_Lumpur] [verify_registration] Updated 1 payments for invoice ID 47
+[24-Dec-2025 23:02:04 Asia/Kuala_Lumpur] [verify_registration] Total payments updated: 1
+[24-Dec-2025 23:02:04 Asia/Kuala_Lumpur] [verify_registration] IsFirstChild: YES, Parent IC: 030322-10-1849, PARENT Password: 1849
+[24-Dec-2025 23:02:06 Asia/Kuala_Lumpur] [Approval Email] Sent to chaichonghern@gmail.com for child test
+[24-Dec-2025 23:02:06 Asia/Kuala_Lumpur] [Approve] Reg#WSA2025-3422: invoices=1, payments=1, email=sent
+[24-Dec-2025 15:02:06 UTC] [Serve File] Serving file: signatures/signature_WSA2025-3422_test_20251224150110_3fc1d1.png (Size: 5296 bytes, MIME: image/png)
+[24-Dec-2025 23:21:09 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to admin@wushusportacademy.com
+[24-Dec-2025 23:21:09 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
+[24-Dec-2025 23:24:12 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_24_test_inv-20251224-9883_20251224232412_3f4eef.png
+[24-Dec-2025 23:24:12 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to admin@wushusportacademy.com
+[24-Dec-2025 23:24:13 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification

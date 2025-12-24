@@ -598,6 +598,15 @@ document.head.appendChild(style);
         try {
             const { classCount, totalFee } = calculateFees();
             const paymentDate = document.getElementById('payment-date').value;
+            
+            // Collect payment method
+        const paymentMethod = document.getElementById('payment-method').value;
+        
+        // Collect receipt (only for bank transfer)
+        let receiptData = null;
+        if (paymentMethod === 'bank_transfer') {
+            receiptData = receiptBase64;
+        }
 
             const payload = {
                 name_cn: registrationData.nameCn || '',
@@ -618,6 +627,7 @@ document.head.appendChild(style);
                 signed_pdf_base64: registrationData.pdfBase64,
                 password_type: registrationData.passwordType,
                 custom_password: registrationData.customPassword,
+                payment_method: paymentMethod,
                 payment_amount: totalFee,
                 payment_date: paymentDate,
                 payment_receipt_base64: receiptBase64,
@@ -832,18 +842,31 @@ document.head.appendChild(style);
         }
 
         if (step === 6) {
-            const paymentDate = document.getElementById('payment-date').value;
-            
-            if (!paymentDate) {
-                Swal.fire('Error', 'Please select payment date', 'error');
-                return false;
-            }
-            
-            if (!receiptBase64) {
-                Swal.fire('Error', 'Please upload payment receipt', 'error');
-                return false;
-            }
+    const paymentMethod = document.getElementById('payment-method').value;
+    
+    // Check if payment method is selected
+    if (!paymentMethod) {
+        Swal.fire('Error', 'Please select a payment method!\n请选择付款方式！', 'error');
+        return false;
+    }
+    
+    // If bank transfer is selected, validate date and receipt
+    if (paymentMethod === 'bank_transfer') {
+        const paymentDate = document.getElementById('payment-date').value;
+        
+        if (!paymentDate) {
+            Swal.fire('Error', 'Please select payment date\n请选择付款日期', 'error');
+            return false;
         }
+        
+        if (!receiptBase64) {
+            Swal.fire('Error', 'Please upload payment receipt\n请上传付款收据', 'error');
+            return false;
+        }
+    }
+    // For cash payment, no additional validation needed
+}
+
 
         return true;
     }
@@ -900,6 +923,7 @@ document.head.appendChild(style);
             const formDate = document.getElementById('today-date').value;
             let passwordType = 'ic_last4'; // Default
             let customPassword = null;
+
 
 // Only collect password data if this is a NEW parent
 if (!isExistingParent) {
@@ -1211,57 +1235,187 @@ const customPassword = passwordType === 'custom' ? document.getElementById('cust
         }
         document.getElementById('payment-status').innerText = status;
     }
+    
+    // Toggle payment method sections
+function togglePaymentMethod() {
+    const paymentMethod = document.getElementById('payment-method').value;
+    const bankTransferSection = document.getElementById('bank-transfer-section');
+    const cashPaymentNote = document.getElementById('cash-payment-note');
+    const paymentDate = document.getElementById('payment-date');
+    const receiptUpload = document.getElementById('receipt-upload');
+    
+    // Hide both sections initially
+    bankTransferSection.style.display = 'none';
+    cashPaymentNote.style.display = 'none';
+    
+    // Remove required attribute from bank transfer fields
+    if (paymentDate) paymentDate.removeAttribute('required');
+    if (receiptUpload) receiptUpload.removeAttribute('required');
+    
+    if (paymentMethod === 'bank_transfer') {
+        // Show bank transfer section
+        bankTransferSection.style.display = 'block';
+        // Make fields required
+        if (paymentDate) paymentDate.setAttribute('required', 'required');
+        if (receiptUpload) receiptUpload.setAttribute('required', 'required');
+    } else if (paymentMethod === 'cash') {
+        // Show cash payment note
+        cashPaymentNote.style.display = 'block';
+        // Update cash amount
+        const totalAmount = document.getElementById('payment-total').textContent;
+        document.getElementById('cash-amount').textContent = totalAmount;
+    }
+}
 
-    function copyAccountNumber() {
-        const accountNumber = '5621 2345 6789';
-        navigator.clipboard.writeText(accountNumber).then(() => {
-            Swal.fire({
-                icon: 'success',
-                title: 'Copied!',
-                text: 'Account number copied to clipboard',
-                timer: 1500,
-                showConfirmButton: false
-            });
-        });
+// Copy account number to clipboard
+function copyAccountNumber() {
+    const accountNumber = '5050 1981 6740';
+    navigator.clipboard.writeText(accountNumber).then(function() {
+        // Show success message
+        alert('Account number copied! 账户号码已复制！');
+    }, function(err) {
+        console.error('Could not copy text: ', err);
+    });
+}
+
+// Handle receipt upload
+// Handle receipt upload
+function handleReceiptUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Check file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB!');
+        event.target.value = '';
+        return;
     }
 
-    function handleReceiptUpload(event) {
-        const file = event.target.files[0];
-        if (!file) return;
+    // Show preview
+    const uploadPrompt = document.getElementById('upload-prompt');
+    const uploadPreview = document.getElementById('upload-preview');
+    const previewImage = document.getElementById('preview-image');
+    const previewFilename = document.getElementById('preview-filename');
 
-        if (file.size > 5 * 1024 * 1024) {
-            Swal.fire('Error', 'File size must be less than 5MB', 'error');
-            return;
+    uploadPrompt.classList.add('hidden');
+    uploadPreview.classList.remove('hidden');
+
+    // Set filename
+    previewFilename.textContent = file.name;
+
+    // Convert to base64 and store in receiptBase64
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        receiptBase64 = e.target.result; // ✅ STORE BASE64 DATA
+        console.log('[Receipt Upload] File converted to base64, size:', receiptBase64.length);
+        
+        // Show image preview if it's an image
+        if (file.type.startsWith('image/')) {
+            previewImage.src = e.target.result;
+            previewImage.style.display = 'block';
+        } else {
+            // For PDF, show PDF icon
+            previewImage.style.display = 'none';
         }
+    };
+    reader.readAsDataURL(file);
+}
 
-        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
-        if (!validTypes.includes(file.type)) {
-            Swal.fire('Error', 'Only JPG, PNG, and PDF files are allowed', 'error');
-            return;
-        }
 
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            receiptBase64 = e.target.result;
-            
-            document.getElementById('upload-prompt').classList.add('hidden');
-            document.getElementById('upload-preview').classList.remove('hidden');
-            
-            if (file.type === 'application/pdf') {
-                document.getElementById('preview-image').style.display = 'none';
-            } else {
-                document.getElementById('preview-image').src = receiptBase64;
-                document.getElementById('preview-image').style.display = 'block';
-            }
-            
-            document.getElementById('preview-filename').innerText = file.name;
-        };
-        reader.readAsDataURL(file);
+// Remove receipt
+function removeReceipt() {
+    const uploadPrompt = document.getElementById('upload-prompt');
+    const uploadPreview = document.getElementById('upload-preview');
+    const receiptUpload = document.getElementById('receipt-upload');
+    const previewImage = document.getElementById('preview-image');
+    
+    uploadPreview.classList.add('hidden');
+    uploadPrompt.classList.remove('hidden');
+    receiptUpload.value = '';
+    previewImage.src = '';
+}
+
+
+    // Copy account number to clipboard
+function copyAccountNumber() {
+    const accountNumber = '5050 1981 6740';
+    navigator.clipboard.writeText(accountNumber).then(function() {
+        // Show success message
+        alert('Account number copied! 账户号码已复制！');
+    }, function(err) {
+        console.error('Could not copy text: ', err);
+    });
+}
+
+// Handle receipt upload
+function handleReceiptUpload(event) {
+    const file = event.target.files[0];
+    if (!file) {
+        console.log('[Receipt Upload] No file selected');
+        return;
     }
 
-    function removeReceipt() {
+    console.log('[Receipt Upload] File selected:', file.name, 'Size:', file.size);
+
+    // Check file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+        Swal.fire('Error', 'File size must be less than 5MB!', 'error');
+        event.target.value = '';
         receiptBase64 = null;
-        document.getElementById('receipt-upload').value = '';
-        document.getElementById('upload-prompt').classList.remove('hidden');
-        document.getElementById('upload-preview').classList.add('hidden');
+        return;
     }
+
+    // Show preview
+    const uploadPrompt = document.getElementById('upload-prompt');
+    const uploadPreview = document.getElementById('upload-preview');
+    const previewImage = document.getElementById('preview-image');
+    const previewFilename = document.getElementById('preview-filename');
+
+    uploadPrompt.classList.add('hidden');
+    uploadPreview.classList.remove('hidden');
+
+    // Set filename
+    previewFilename.textContent = file.name;
+
+    // Convert to base64 and store
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        receiptBase64 = e.target.result;
+        console.log('[Receipt Upload] ✅ File converted to base64, length:', receiptBase64.length);
+        
+        // Show image preview if it's an image
+        if (file.type.startsWith('image/')) {
+            previewImage.src = e.target.result;
+            previewImage.style.display = 'block';
+        } else {
+            // For PDF, hide image and just show filename
+            previewImage.style.display = 'none';
+        }
+    };
+    
+    reader.onerror = function(error) {
+        console.error('[Receipt Upload] ❌ Error reading file:', error);
+        Swal.fire('Error', 'Failed to read file. Please try again.', 'error');
+        receiptBase64 = null;
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+// Remove receipt
+function removeReceipt() {
+    const uploadPrompt = document.getElementById('upload-prompt');
+    const uploadPreview = document.getElementById('upload-preview');
+    const receiptUpload = document.getElementById('receipt-upload');
+    const previewImage = document.getElementById('preview-image');
+
+    uploadPreview.classList.add('hidden');
+    uploadPrompt.classList.remove('hidden');
+    receiptUpload.value = '';
+    previewImage.src = '';
+    
+    // Clear base64 data
+    receiptBase64 = null;
+    console.log('[Receipt Upload] Receipt removed, receiptBase64 cleared');
+}
+

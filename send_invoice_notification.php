@@ -92,28 +92,18 @@ function sendInvoiceNotification($pdo, $invoiceId) {
         $mail->Host       = 'mail.wushusportacademy.com';
         $mail->SMTPAuth   = true;
         $mail->Username   = 'admin@wushusportacademy.com';
-        $mail->Password   = 'UZa;nENf]!xqpRak';
+        $mail->Password   = 'P1}tKwojKgl0vdMv';
         $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
         $mail->CharSet    = 'UTF-8';
         $mail->Encoding   = 'base64';
-        
-        // Anti-spam optimizations
-        $mail->XMailer = ' ';
-        $mail->Priority = 3;
-
-// ✨ NEW: Anti-spam headers
-$mail->addCustomHeader('X-Mailer', 'Wushu Sport Academy');
-$mail->addCustomHeader('X-Priority', '3');
-$mail->addCustomHeader('Importance', 'Normal');
-$mail->addCustomHeader('List-Unsubscribe', '<mailto:admin@wushusportacademy.com>');
-
         
         error_log("[Invoice Notification] SMTP configured");
         
         // Recipients
         $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
         $mail->addAddress($recipientEmail, $recipientName);
+        $mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
         
         // Email content
         $mail->isHTML(true);

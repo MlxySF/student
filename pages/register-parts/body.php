@@ -486,16 +486,16 @@ if (empty($_SESSION['csrf_token'])) {
 
     <!-- Fee Info -->
     <div class="bg-amber-50 text-amber-900 p-4 rounded-xl text-xs mb-8 border border-amber-100">
-        <p class="font-bold mb-1"><i class="fas fa-info-circle"></i> 注明 (Remark)：州队运动员需至少选择 两堂课。</p>
-        <p>• 选择 一堂课：收费 <strong>RM 120</strong></p>
-        <p>• 选择 二堂课：收费 <strong>RM 200</strong></p>
-        <p>• 选择 三堂课：收费 <strong>RM 280</strong></p>
-        <p>• 选择 四堂课：收费 <strong>RM 320</strong></p>
-        <p class="font-bold mt-1"><br>State team athletes must choose at least two classes.</p>
-        <p>• Choose one class: <strong>RM 120</strong></p>
-        <p>• Choose two classes: <strong>RM 200</strong></p>
-        <p>• Choose three classes: <strong>RM 280</strong></p>
-        <p>• Choose four classes: <strong>RM 320</strong></p>
+        <p class="font-bold mb-1 text-m" style="font-size: 16px;"><i class="fas fa-info-circle"></i> 注明 (Remark)：州队运动员需至少选择 两堂课。</p>
+        <p style="font-size: 15px;">• 选择 一堂课：收费 <strong>RM 120</strong></p>
+        <p style="font-size: 15px;">• 选择 二堂课：收费 <strong>RM 200</strong></p>
+        <p style="font-size: 15px;">• 选择 三堂课：收费 <strong>RM 280</strong></p>
+        <p style="font-size: 15px;">• 选择 四堂课：收费 <strong>RM 320</strong></p>
+        <p class="font-bold mt-1" style="font-size: 16px;"><br>State team athletes must choose at least two classes.</p>
+        <p style="font-size: 15px;">• Choose one class: <strong>RM 120</strong></p>
+        <p style="font-size: 15px;">• Choose two classes: <strong>RM 200</strong></p>
+        <p style="font-size: 15px;">• Choose three classes: <strong>RM 280</strong></p>
+        <p style="font-size: 15px;">• Choose four classes: <strong>RM 320</strong></p>
     </div>
 
     <div class="space-y-4">
@@ -835,93 +835,174 @@ if (empty($_SESSION['csrf_token'])) {
                 </div>
             </div>
         </div>
-        <div class="bg-blue-50 border-l-4 border-blue-500 p-3 text-xs text-blue-800">
-            <p class="font-semibold mb-1"><i class="fas fa-info-circle"></i> 收费标准 Fee Structure:</p>
-            <p>• 1 堂课 (1 class): RM 120</p>
-            <p>• 2 堂课 (2 classes): RM 200</p>
-            <p>• 3 堂课 (3 classes): RM 280</p>
-            <p>• 4 堂课或以上 (4+ classes): RM 320</p>
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-3 text-lg text-blue-800">
+            <p class="font-semibold mb-1"><i class="fas fa-info-circle"></i> 收费标准:</p>
+            <p>• 1 堂课: RM 120</p>
+            <p>• 2 堂课: RM 200</p>
+            <p>• 3 堂课: RM 280</p>
+            <p>• 4 堂课或以上: RM 320</p>
+            <p><br></p>
+            <p class="font-semibold mb-1"><i class="fas fa-info-circle"></i> Fee Structure:</p>
+            <p>• 1 class: RM 120</p>
+            <p>• 2 classes: RM 200</p>
+            <p>• 3 classes: RM 280</p>
+            <p>• 4 classes: RM 320</p>
         </div>
     </div>
 
-    <!-- Bank Details -->
-    <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6">
-        <h3 class="font-bold text-slate-800 text-base mb-4 flex items-center gap-2">
-            <i class="fas fa-building-columns text-blue-600"></i> 银行详情 Bank Details
-        </h3>
-        <div class="space-y-3 text-sm">
-            <div class="flex items-start gap-3 bg-white p-3 rounded-lg">
-                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-bank text-blue-600 text-sm"></i>
-                </div>
-                <div class="flex-1">
-                    <p class="text-xs text-slate-500 mb-1">Bank Name 银行名称</p>
-                    <p class="font-bold text-slate-800">Maybank</p>
-                </div>
-            </div>
-            <div class="flex items-start gap-3 bg-white p-3 rounded-lg">
-                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-user text-green-600 text-sm"></i>
-                </div>
-                <div class="flex-1">
-                    <p class="text-xs text-slate-500 mb-1">Account Name 户口名称</p>
-                    <p class="font-bold text-slate-800">Wushu Sport Academy</p>
-                </div>
-            </div>
-            <div class="flex items-start gap-3 bg-white p-3 rounded-lg">
-                <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-hashtag text-amber-600 text-sm"></i>
-                </div>
-                <div class="flex-1">
-                    <p class="text-xs text-slate-500 mb-1">Account Number 户口号码</p>
-                    <p class="font-bold text-slate-800 text-lg">5050 1981 6740</p>
-                    <button onclick="copyAccountNumber()" class="text-xs text-blue-600 hover:text-blue-800 mt-1 flex items-center gap-1">
-                        <i class="fas fa-copy"></i> Copy 复制
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Upload Receipt -->
-    <div class="bg-white border-2 border-slate-200 rounded-xl p-5">
-        <h3 class="font-bold text-slate-800 text-base mb-4 flex items-center gap-2">
-            <i class="fas fa-receipt text-purple-600"></i> 上传收据 Upload Payment Receipt *
+    <!-- Payment Method Selection -->
+    <div class="bg-white border-2 border-slate-200 rounded-xl p-5 mb-6">
+        <h3 class="font-bold text-slate-800 text-base mb-4 flex items-center gap-2" style="font-size: 17px;">
+            <i class="fas fa-wallet text-green-600"></i> 选择付款方式 *
         </h3>
         
-        <div class="mb-4">
-            <label class="block text-sm font-semibold text-slate-700 mb-2">
-                付款日期 Payment Date *
+        <div class="space-y-2 mb-4">
+            <label class="text-sm font-semibold text-slate-700 mb-2 block">
+                Select Payment Method *
             </label>
-            <input type="date" id="payment-date" class="w-full p-3 border border-slate-300 rounded-lg text-sm" required>
+            <select id="payment-method" class="w-full p-3 border border-slate-300 rounded-lg text-sm focus:border-amber-500 focus:outline-none" required onchange="togglePaymentMethod()">
+                <option value="">-- Select Payment Method --</option>
+                <option value="cash">Cash 现金</option>
+                <option value="bank_transfer">Bank Transfer 银行转账</option>
+            </select>
         </div>
 
-        <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-amber-400 transition-all cursor-pointer" id="upload-area">
-            <input type="file" id="receipt-upload" accept="image/*,.pdf" class="hidden" onchange="handleReceiptUpload(event)">
-            <div id="upload-prompt">
-                <i class="fas fa-cloud-upload-alt text-4xl text-slate-400 mb-3"></i>
-                <p class="text-sm font-semibold text-slate-700 mb-1">点击上传收据 Click to Upload Receipt</p>
-                <p class="text-xs text-slate-500">支持 JPG, PNG, PDF (最大 5MB)</p>
-                <button type="button" onclick="document.getElementById('receipt-upload').click()" class="mt-3 bg-slate-800 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-slate-700">
-                    选择文件 Choose File
-                </button>
-            </div>
-            <div id="upload-preview" class="hidden">
-                <img id="preview-image" src="" class="max-w-full max-h-64 mx-auto mb-3 rounded-lg border border-slate-200">
-                <p id="preview-filename" class="text-sm font-semibold text-slate-800 mb-2"></p>
-                <button type="button" onclick="removeReceipt()" class="text-xs text-red-600 hover:text-red-800 font-semibold">
-                    <i class="fas fa-trash"></i> 删除 Remove
-                </button>
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 text-lg text-yellow-800">
+            <p class="font-semibold mb-1 text-lg"><i class="fas fa-info-circle"></i> 付款说明:</p>
+            <p>• <strong>现金:</strong> 训练时直接交给教练</p>
+            <p>• <strong>银行转账:</strong> 转账至提供的银行账户并上传收据<br></p>
+            <p><br></p>
+            <p class="font-semibold mb-1"><i class="fas fa-info-circle"></i> Payment Instructions:</p>
+            <p>• <strong>Cash:</strong> Pay directly to coach during training</p>
+            <p>• <strong>Bank Transfer:</strong> Transfer to provided bank account and upload receipt</p>
+        </div>
+    </div>
+
+    <!-- Bank Transfer Section (Hidden by default) -->
+    <div id="bank-transfer-section" style="display: none;">
+        <!-- Bank Details -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6">
+            <h3 class="font-bold text-slate-800 text-base mb-4 flex items-center gap-2">
+                <i class="fas fa-building-columns text-blue-600"></i> 银行详情 Bank Details
+            </h3>
+            <div class="space-y-3 text-sm">
+                <div class="flex items-start gap-3 bg-white p-3 rounded-lg">
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-bank text-blue-600 text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs text-slate-500 mb-1">Bank Name 银行名称</p>
+                        <p class="font-bold text-slate-800">Maybank</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3 bg-white p-3 rounded-lg">
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-user text-green-600 text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs text-slate-500 mb-1">Account Name 户口名称</p>
+                        <p class="font-bold text-slate-800">Wushu Sport Academy</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3 bg-white p-3 rounded-lg">
+                    <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-hashtag text-amber-600 text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs text-slate-500 mb-1">Account Number 户口号码</p>
+                        <p class="font-bold text-slate-800 text-lg">5050 1981 6740</p>
+                        <button onclick="copyAccountNumber()" class="text-xs text-blue-600 hover:text-blue-800 mt-1 flex items-center gap-1">
+                            <i class="fas fa-copy"></i> Copy 复制
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mt-4 text-xs text-yellow-800">
-            <p class="font-semibold mb-1"><i class="fas fa-exclamation-triangle"></i> 重要提示 Important Note:</p>
-            <p>请确保收据清晰可见，包含付款金额、日期及银行信息。</p>
-            <p class="mt-1">Please ensure the receipt is clear and shows payment amount, date, and bank details.</p>
+        <!-- Upload Receipt -->
+<div class="bg-white border-2 border-slate-200 rounded-xl p-5">
+    <h3 class="font-bold text-slate-800 text-base mb-4 flex items-center gap-2">
+        <i class="fas fa-receipt text-purple-600"></i> Upload Payment Receipt
+    </h3>
+    
+    <div class="mb-4">
+        <label class="block text-sm font-semibold text-slate-700 mb-2">Payment Date</label>
+        <input type="date" id="payment-date" class="w-full p-3 border border-slate-300 rounded-lg text-sm">
+    </div>
+
+    <!-- Upload Area -->
+    <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-amber-400 transition-all cursor-pointer" 
+         id="upload-area" 
+         onclick="document.getElementById('receipt-upload').click()">
+        
+        <!-- Hidden file input -->
+        <input type="file" 
+               id="receipt-upload" 
+               accept="image/*,.pdf" 
+               class="hidden" 
+               onchange="handleReceiptUpload(event)">
+        
+        <!-- Upload Prompt -->
+        <div id="upload-prompt">
+            <i class="fas fa-cloud-upload-alt text-4xl text-slate-400 mb-3"></i>
+            <p class="text-sm font-semibold text-slate-700 mb-1">Click to Upload Receipt</p>
+            <p class="text-xs text-slate-500">JPG, PNG, PDF (Max 5MB)</p>
+            <button type="button" 
+                    onclick="event.stopPropagation(); document.getElementById('receipt-upload').click()" 
+                    class="mt-3 bg-slate-800 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-slate-700">
+                Choose File
+            </button>
+        </div>
+
+        <!-- Upload Preview -->
+        <div id="upload-preview" class="hidden">
+            <img id="preview-image" src="" class="max-w-full max-h-64 mx-auto mb-3 rounded-lg border border-slate-200">
+            <p id="preview-filename" class="text-sm font-semibold text-slate-800 mb-2"></p>
+            <button type="button" 
+                    onclick="event.stopPropagation(); removeReceipt()" 
+                    class="text-xs text-red-600 hover:text-red-800 font-semibold">
+                <i class="fas fa-trash"></i> Remove
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mt-4 text-xs text-yellow-800">
+        <p class="font-semibold mb-1">
+            <i class="fas fa-exclamation-triangle"></i> Important Note
+        </p>
+        <p class="mt-1">Please ensure the receipt is clear and shows payment amount, date, and bank details.</p>
+    </div>
+</div>
+
+    </div>
+
+    <!-- Cash Payment Note (Hidden by default) -->
+    <div id="cash-payment-note" style="display: none;">
+        <div class="bg-green-50 border-2 border-green-400 rounded-xl p-6 text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-money-bill-wave text-green-600 text-2xl"></i>
+            </div>
+            <h3 class="font-bold text-green-800 text-lg mb-2">现金付款<br>Cash Payment</h3>
+            <p class="text-sm text-green-700 mb-3">
+                Please pay <strong id="cash-amount" class="text-green-900">RM 0</strong> to Coach Lim Kim and your payment record card during the training session.
+            </p>
+            <p class="text-sm text-green-700">
+                请在训练课程中把<strong class="text-green-900"> 现金</strong> 交给林金教练并且记录在 Payment Record Card。
+            </p>
+            <!-- <div class="bg-white border border-green-200 rounded-lg p-3 mt-4 text-xs text-green-800">
+                <p class="font-semibold mb-1"><i class="fas fa-check-circle"></i> 重要提醒 :</p>
+                <p>• 现金交给林金教练并且记录在 Record Card<br></p>
+                <p>• 请在每月10号前缴付<br></p>
+                <p class="font-semibold mb-1"><i class="fas fa-check-circle"></i> Important Reminder:</p>
+                <p>• Pass your cash and record card to Coach Lim Kim for Cash Payments<br></p>
+                <p>• Payment must be made by the 10th of every month</p>
+                
+            </div>-->
         </div>
     </div>
 </div>
+
+
 
 <!-- STEP 7: Success -->
 <div id="step-7" class="step-content">

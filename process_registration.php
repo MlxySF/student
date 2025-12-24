@@ -388,7 +388,7 @@ function autoEnrollStudent(PDO $conn, int $studentId, string $scheduleString): a
  * UPDATED: Now saves receipt to file and stores path
  * UPDATED: Receipt path is passed in, not created here
  */
-function createRegistrationInvoicesAndPayments(PDO $conn, int $studentId, int $parentAccountId, float $totalAmount, string $studentName, array $enrolledClasses, array $paymentData, string $receiptPath): array {
+function createRegistrationInvoicesAndPayments(PDO $conn, int $studentId, int $parentAccountId, float $totalAmount, string $studentName, array $enrolledClasses, array $paymentData, ?string $receiptPath): array {
     try {
         $results = [];
         $classCount = count($enrolledClasses);
@@ -521,12 +521,13 @@ function sendRegistrationEmail($toEmail, $studentName, $registrationNumber, $chi
         $mail->Host       = 'mail.wushusportacademy.com';
         $mail->SMTPAuth   = true;
         $mail->Username   = 'admin@wushusportacademy.com';
-        $mail->Password   = 'UZa;nENf]!xqpRak';
+        $mail->Password   = 'P1}tKwojKgl0vdMv';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
         $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
         $mail->addAddress($toEmail);
+        $mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
 
         $mail->isHTML(true);
         $mail->CharSet = 'UTF-8';
@@ -853,17 +854,26 @@ try {
     }
 
     $required = [
-        'name_en', 'ic', 'age', 'school', 'status', 'phone', 'email',
-        'events', 'schedule', 'parent_name', 'parent_ic',
-        'form_date', 'signature_base64', 'signed_pdf_base64',
-        'payment_amount', 'payment_date', 'payment_receipt_base64', 'class_count'
-    ];
+    'name_en', 'ic', 'age', 'school', 'status', 'phone', 'email',
+    'events', 'schedule', 'parent_name', 'parent_ic',
+    'form_date', 'signature_base64', 'signed_pdf_base64',
+    'payment_amount', 'payment_method', 'class_count'
+];
 
-    foreach ($required as $field) {
-        if (!isset($data[$field]) || (is_string($data[$field]) && trim($data[$field]) === '')) {
-            throw new Exception("Missing or empty required field: {$field}");
-        }
+foreach ($required as $field) {
+    if (!isset($data[$field]) || (is_string($data[$field]) && trim($data[$field]) === '')) {
+        throw new Exception("Missing or empty required field: {$field}");
     }
+}
+
+// Additional validation: receipt required for bank transfer
+$paymentMethod = trim($data['payment_method']);
+if ($paymentMethod === 'bank_transfer') {
+    if (!isset($data['payment_receipt_base64']) || trim($data['payment_receipt_base64']) === '') {
+        throw new Exception("Payment receipt is required for bank transfer");
+    }
+}
+
 
     $host = 'localhost';
     $dbname = 'wushuspo_portal';
@@ -1029,26 +1039,44 @@ try {
     $pdfPath = $pdfResult['path'];
     error_log("[File Save] PDF saved: {$pdfPath}");
     
-    // Save payment receipt with user name AND payment date
-// For registration, we don't have invoice number yet, use reg number + payment date
-$additionalInfo = "REG-{$regNumber}-{$paymentDate}";
+// ==========================
+// Save payment receipt (only for bank transfer)
+// For cash payment, receipt_path will be NULL
+// ==========================
 
-$receiptResult = saveBase64ToFile(
-    $data['payment_receipt_base64'],
-    'payment_receipts',
-    'receipt',
-    $studentAccountId,
-    $childNameEn,      // User name
-    $additionalInfo    // Registration number + payment date
-);
+$receiptPath = ''; // Initialize as empty string instead of null
+$paymentMethod = isset($data['payment_method']) ? trim($data['payment_method']) : 'bank_transfer';
+$paymentDate = isset($data['payment_date']) ? trim($data['payment_date']) : date('Y-m-d');
 
+if ($paymentMethod === 'bank_transfer') {
+    // Bank transfer requires receipt
+    if (!isset($data['payment_receipt_base64']) || empty($data['payment_receipt_base64'])) {
+        throw new Exception('Payment receipt is required for bank transfer');
+    }
+    
+    $additionalInfo = "REG-{$regNumber}-{$paymentDate}";
+    
+    $receiptResult = saveBase64ToFile(
+        $data['payment_receipt_base64'],
+        'payment_receipts',
+        'receipt',
+        $studentAccountId,
+        $childNameEn,
+        $additionalInfo
+    );
     
     if (!$receiptResult['success']) {
         throw new Exception('Failed to save payment receipt: ' . $receiptResult['error']);
     }
     
     $receiptPath = $receiptResult['path'];
-    error_log("[File Save] Payment receipt saved: {$receiptPath}");
+    error_log("[File Save] Bank transfer receipt saved: {$receiptPath}");
+} else {
+    // Cash payment - no receipt needed, use empty string
+    $receiptPath = '';
+    error_log("[File Save] Cash payment - no receipt required, receiptPath set to empty string");
+}
+
     
     // ==========================
     // Insert Registration Record
@@ -1057,49 +1085,51 @@ $receiptResult = saveBase64ToFile(
     // ==========================
 
     $sql = "INSERT INTO registrations (
-        registration_number, name_cn, name_en, ic, age, school, student_status,
-        phone, email, level, events, schedule, parent_name, parent_ic,
-        form_date, signature_path, pdf_path,
-        payment_amount, payment_date, payment_receipt_path, payment_status, class_count,
-        student_account_id, account_created, password_generated,
-        parent_account_id, registration_type, is_additional_child, created_at
-    ) VALUES (
-        ?, ?, ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?, ?, ?,
-        ?, ?, ?,
-        ?, ?, ?, 'pending', ?,
-        ?, 'yes', ?,
-        ?, 'parent_managed', ?, NOW()
-    )";
+    registration_number, name_cn, name_en, ic, age, school, student_status,
+    phone, email, level, events, schedule, parent_name, parent_ic,
+    form_date, signature_path, pdf_path,
+    payment_amount, payment_method, payment_date, payment_receipt_path, payment_status, class_count,
+    student_account_id, account_created, password_generated,
+    parent_account_id, registration_type, is_additional_child, created_at
+) VALUES (
+    ?, ?, ?, ?, ?, ?, ?,
+    ?, ?, ?, ?, ?, ?, ?,
+    ?, ?, ?,
+    ?, ?, ?, ?, 'pending', ?,
+    ?, 'yes', ?,
+    ?, 'parent_managed', ?, NOW()
+)";
 
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([
-        $regNumber,
-        isset($data['name_cn']) ? trim($data['name_cn']) : '',
-        $fullName,
-        $childIC,
-        (int)$data['age'],
-        trim($data['school']),
-        $studentStatus,
-        $phone,
-        $parentEmail,
-        isset($data['level']) ? trim($data['level']) : '',
-        trim($data['events']),
-        trim($data['schedule']),
-        trim($data['parent_name']),
-        trim($data['parent_ic']),
-        $validatedFormDateTime,
-        $signaturePath, // Store file path
-        $pdfPath, // Store file path
-        $paymentAmount,
-        $paymentDate,
-        $receiptPath, // FIXED: Store receipt file path
-        (int)$data['class_count'],
-        $studentAccountId,
-        $generatedPassword,
-        $parentAccountId,
-        $isNewParentAccount ? 0 : 1,
-    ]);
+$stmt = $conn->prepare($sql);
+$stmt->execute([
+    $regNumber,
+    isset($data['name_cn']) ? trim($data['name_cn']) : '',
+    $fullName,
+    $childIC,
+    (int)$data['age'],
+    trim($data['school']),
+    $studentStatus,
+    $phone,
+    $parentEmail,
+    isset($data['level']) ? trim($data['level']) : '',
+    trim($data['events']),
+    trim($data['schedule']),
+    trim($data['parent_name']),
+    trim($data['parent_ic']),
+    $validatedFormDateTime,
+    $signaturePath,
+    $pdfPath,
+    $paymentAmount,
+    $paymentMethod,        // NEW: Payment method
+    $paymentDate,
+    $receiptPath,          // Can be NULL for cash payment
+    (int)$data['class_count'],
+    $studentAccountId,
+    $generatedPassword,
+    $parentAccountId,
+    $isNewParentAccount ? 0 : 1,
+]);
+
 
     // ===============================
     // AUTO-ENROLL INTO CLASSES

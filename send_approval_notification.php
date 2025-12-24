@@ -46,12 +46,13 @@ function sendApprovalNotification($registrationId, $conn) {
         $mail->Host       = 'mail.wushusportacademy.com';
         $mail->SMTPAuth   = true;
         $mail->Username   = 'admin@wushusportacademy.com';
-        $mail->Password   = 'UZa;nENf]!xqpRak';
+        $mail->Password   = 'P1}tKwojKgl0vdMv';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
         $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
         $mail->addAddress($reg['email']);
+        $mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
 
         $mail->isHTML(true);
         $mail->CharSet = 'UTF-8';

@@ -45,6 +45,7 @@ function sendPaymentApprovalEmail($pdo, $paymentId, $status, $adminNotes = '') {
                 p.amount,
                 p.payment_month,
                 p.receipt_filename,
+                p.payment_method,
                 p.verification_status,
                 p.invoice_id,
                 s.id as student_account_id,
@@ -112,21 +113,18 @@ function sendPaymentApprovalEmail($pdo, $paymentId, $status, $adminNotes = '') {
         $mail->Host       = 'mail.wushusportacademy.com';
         $mail->SMTPAuth   = true;
         $mail->Username   = 'admin@wushusportacademy.com';
-        $mail->Password   = 'UZa;nENf]!xqpRak';
+        $mail->Password   = 'P1}tKwojKgl0vdMv';
         $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
         $mail->CharSet    = 'UTF-8'; // ✨ Ensure UTF-8 encoding
         $mail->Encoding   = 'base64'; // ✨ Use base64 encoding for better compatibility
-        
-        // ✨ Anti-spam optimizations
-        $mail->XMailer = ' '; // Remove PHPMailer signature
-        $mail->Priority = 3; // Normal priority (not urgent)
         
         error_log("[Payment Approval Email] SMTP configured");
         
         // Recipients
         $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
         $mail->addAddress($recipientEmail, $recipientName);
+        $mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
         
         // Email content based on status
         $mail->isHTML(true);
@@ -181,13 +179,14 @@ function sendPaymentApprovalEmail($pdo, $paymentId, $status, $adminNotes = '') {
  * ✨ FIXED: Removed emojis, using HTML symbols and entities instead
  */
 function getApprovedPaymentEmailHTML($payment, $adminNotes) {
-    $studentName = htmlspecialchars($payment['student_name'], ENT_QUOTES, 'UTF-8');
-    $invoiceNumber = htmlspecialchars($payment['invoice_number'], ENT_QUOTES, 'UTF-8');
-    $amount = number_format($payment['amount'], 2);
-    $className = htmlspecialchars($payment['class_name'], ENT_QUOTES, 'UTF-8');
-    $classCode = htmlspecialchars($payment['class_code'], ENT_QUOTES, 'UTF-8');
-    $paymentMonth = htmlspecialchars($payment['payment_month'], ENT_QUOTES, 'UTF-8');
+    $studentName = htmlspecialchars($payment['student_name'] ?? '', ENT_QUOTES, 'UTF-8');
+    $invoiceNumber = htmlspecialchars($payment['invoice_number'] ?? 'N/A', ENT_QUOTES, 'UTF-8');
+    $amount = number_format($payment['amount'] ?? 0, 2);
+    $className = htmlspecialchars($payment['class_name'] ?? 'N/A', ENT_QUOTES, 'UTF-8');
+    $classCode = htmlspecialchars($payment['class_code'] ?? '', ENT_QUOTES, 'UTF-8');
+    $paymentMonth = htmlspecialchars($payment['payment_month'] ?? '', ENT_QUOTES, 'UTF-8');
     $notes = !empty($adminNotes) ? htmlspecialchars($adminNotes, ENT_QUOTES, 'UTF-8') : 'No additional notes';
+    $paymentMethod = ucfirst(str_replace('_', ' ', $payment['payment_method'] ?? 'Bank Transfer'));
     
     // Portal URL for downloading receipt
     $portalUrl = 'https://wushusportacademy.app.tc/student/';
@@ -305,12 +304,13 @@ function getApprovedPaymentEmailHTML($payment, $adminNotes) {
  * ✨ FIXED: Removed emojis, using HTML symbols and entities instead
  */
 function getRejectedPaymentEmailHTML($payment, $adminNotes) {
-    $studentName = htmlspecialchars($payment['student_name'], ENT_QUOTES, 'UTF-8');
+    $studentName = htmlspecialchars($payment['student_name'] ?? '', ENT_QUOTES, 'UTF-8');
     $invoiceNumber = htmlspecialchars($payment['invoice_number'] ?? 'N/A', ENT_QUOTES, 'UTF-8');
-    $amount = number_format($payment['amount'], 2);
-    $className = htmlspecialchars($payment['class_name'], ENT_QUOTES, 'UTF-8');
-    $paymentMonth = htmlspecialchars($payment['payment_month'], ENT_QUOTES, 'UTF-8');
+    $amount = number_format($payment['amount'] ?? 0, 2);
+    $className = htmlspecialchars($payment['class_name'] ?? 'N/A', ENT_QUOTES, 'UTF-8');
+    $paymentMonth = htmlspecialchars($payment['payment_month'] ?? '', ENT_QUOTES, 'UTF-8');
     $notes = !empty($adminNotes) ? htmlspecialchars($adminNotes, ENT_QUOTES, 'UTF-8') : 'Receipt unclear or payment details do not match';
+    $paymentMethod = ucfirst(str_replace('_', ' ', $payment['payment_method'] ?? 'Bank Transfer'));
     
     $portalUrl = 'https://wushusportacademy.com/';
     

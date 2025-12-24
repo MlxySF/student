@@ -718,3 +718,129 @@ POST Data: Array
     [registration_id] => 11
 )
 
+
+=== 2025-12-24 17:21:46 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 14
+)
+
+
+=== 2025-12-24 17:21:48 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 12
+)
+
+
+=== 2025-12-24 17:21:50 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 9
+)
+
+
+=== 2025-12-24 17:55:35 ===
+Action: verify_registration
+POST Data: Array
+(
+    [action] => verify_registration
+    [registration_id] => 16
+)
+
+
+=== 2025-12-24 20:10:33 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 17
+)
+
+
+=== 2025-12-24 20:10:35 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 11
+)
+
+
+=== 2025-12-24 20:10:37 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 16
+)
+
+
+=== 2025-12-24 20:43:22 ===
+Action: verify_registration
+POST Data: Array
+(
+    [action] => verify_registration
+    [registration_id] => 21
+)
+
+
+=== 2025-12-24 22:23:25 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 21
+)
+
+
+=== 2025-12-24 22:24:12 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 18
+)
+
+
+=== 2025-12-24 22:24:15 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 20
+)
+
+
+=== 2025-12-24 22:24:17 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 19
+)
+
+
+=== 2025-12-24 22:24:19 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 10
+)
+
+
+=== 2025-12-24 23:02:04 ===
+Action: verify_registration
+POST Data: Array
+(
+    [action] => verify_registration
+    [registration_id] => 22
+)
+

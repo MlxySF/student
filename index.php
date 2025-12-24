@@ -38,12 +38,13 @@ function sendAdminPaymentNotification($paymentData) {
         $mail->Host       = 'mail.wushusportacademy.com';
         $mail->SMTPAuth   = true;
         $mail->Username   = 'admin@wushusportacademy.com';
-        $mail->Password   = 'UZa;nENf]!xqpRak';
+        $mail->Password   = 'P1}tKwojKgl0vdMv';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
         $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
         $mail->addAddress(ADMIN_EMAIL, ADMIN_NAME);
+        $mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
 
         $mail->isHTML(true);
         $mail->CharSet = 'UTF-8';
@@ -365,7 +366,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-// Handle Payment Upload - NOW USING FILE STORAGE
+
+// Handle Payment Upload - NOW USING FILE STORAGE WITH CASH PAYMENT SUPPORT
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'upload_payment') {
     redirectIfNotLoggedIn();
     verifyCSRF();
@@ -373,6 +375,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $invoice_id = !empty($_POST['invoice_id']) ? sanitizeInt($_POST['invoice_id']) : null;
     $is_invoice_payment = !empty($invoice_id);
     $payment_date = !empty($_POST['payment_date']) ? sanitizeString($_POST['payment_date']) : date('Y-m-d');
+    
+    // Get payment method (default to bank_transfer for backward compatibility)
+    $payment_method = isset($_POST['payment_method']) ? sanitizeString($_POST['payment_method']) : 'bank_transfer';
+    $is_cash_payment = ($payment_method === 'cash');
 
     if ($invoice_id) {
         $class_id = !empty($_POST['invoice_class_id']) ? sanitizeInt($_POST['invoice_class_id']) : null;
@@ -400,7 +406,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         exit;
     }
 
-    if (isset($_FILES['receipt']) && $_FILES['receipt']['error'] === 0) {
+    // Initialize receipt variables
+    $uploadResult = null;
+    $receipt_path = null;
+    $receipt_filename = null;
+    $receipt_size = null;
+
+    // Only process file upload if NOT cash payment
+    if (!$is_cash_payment) {
+        // Validate receipt file upload for bank transfers
+        if (!isset($_FILES['receipt']) || $_FILES['receipt']['error'] !== 0) {
+            $_SESSION['error'] = "Please select a receipt file for bank transfer payments.";
+            $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
+            header('Location: index.php?page=' . $redirect_page);
+            exit;
+        }
+
         $fileValidation = isValidFileUpload($_FILES['receipt']);
         
         if (!$fileValidation['valid']) {
@@ -410,7 +431,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             exit;
         }
 
-        // USE FILE STORAGE INSTEAD OF BASE64
+        // Process file upload
         $activeStudentId = !empty($_POST['student_account_id']) ? 
                            intval($_POST['student_account_id']) : 
                            getActiveStudentId();
@@ -435,19 +456,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $stmt->execute([$invoice_id]);
             $invoiceData = $stmt->fetch();
             $invoiceNumber = $invoiceData['invoice_number'] ?? '';
-            
-            error_log("[Payment Upload] Using invoice NUMBER: {$invoiceNumber} (ID: {$invoice_id})");
         }
 
-        // Save file using file_helper.php with enhanced naming
-        // Now uses invoice NUMBER instead of ID
+        // Save file
         $uploadResult = saveUploadedFile(
             $_FILES['receipt'],
             'payment_receipts',
             'receipt',
-            $activeStudentId,           // Student ID as identifier
-            $studentName,                // Student name
-            $invoiceNumber               // Invoice NUMBER (e.g., INV-REG-202512-5678)
+            $activeStudentId,
+            $studentName,
+            $invoiceNumber
         );
 
         if (!$uploadResult['success']) {
@@ -457,204 +475,226 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             exit;
         }
 
-        $parent_account_id = null;
-        if (isStudent()) {
-            $studentData = getActiveStudentData($pdo);
-            $parent_account_id = $studentData['parent_account_id'];
-        } else if (isParent()) {
-            $parent_account_id = getUserId();
+        $receipt_path = $uploadResult['path'];
+        $receipt_filename = $uploadResult['filename'];
+        $receipt_size = $uploadResult['size'];
+    } else {
+        // Cash payment - use student ID for identification
+        $activeStudentId = !empty($_POST['student_account_id']) ? 
+                           intval($_POST['student_account_id']) : 
+                           getActiveStudentId();
+        
+        if (!$activeStudentId) {
+            $_SESSION['error'] = "Unable to identify student account. Please log out and log in again.";
+            $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
+            header('Location: index.php?page=' . $redirect_page);
+            exit;
+        }
+    }
+
+    $parent_account_id = null;
+    if (isStudent()) {
+        $studentData = getActiveStudentData($pdo);
+        $parent_account_id = $studentData['parent_account_id'];
+    } else if (isParent()) {
+        $parent_account_id = getUserId();
+    }
+
+    try {
+        // Check if payment already exists for this invoice
+        $existing_payment_id = null;
+        $old_receipt_path = null;
+        
+        if ($invoice_id) {
+            $check_stmt = $pdo->prepare("
+                SELECT id, receipt_path 
+                FROM payments 
+                WHERE invoice_id = ? AND student_id = ?
+                ORDER BY id DESC 
+                LIMIT 1
+            ");
+            $check_stmt->execute([$invoice_id, $activeStudentId]);
+            $existing_payment = $check_stmt->fetch();
+            
+            if ($existing_payment) {
+                $existing_payment_id = $existing_payment['id'];
+                $old_receipt_path = $existing_payment['receipt_path'];
+            }
         }
 
-        try {
-            // FIXED: Check if payment already exists for this invoice
-            $existing_payment_id = null;
-            $old_receipt_path = null;
+        if ($existing_payment_id) {
+            // UPDATE existing payment
+            $stmt = $pdo->prepare("
+                UPDATE payments SET
+                    class_id = ?,
+                    amount = ?,
+                    payment_month = ?,
+                    payment_date = ?,
+                    receipt_path = ?,
+                    receipt_filename = ?,
+                    receipt_size = ?,
+                    payment_method = ?,
+                    upload_date = NOW(),
+                    verification_status = 'pending',
+                    verified_by = NULL,
+                    verified_date = NULL,
+                    admin_notes = ''
+                WHERE id = ?
+            ");
+
+            $success = $stmt->execute([
+                $class_id,
+                $amount,
+                $payment_month,
+                $payment_date,
+                $receipt_path,
+                $receipt_filename,
+                $receipt_size,
+                $payment_method,
+                $existing_payment_id
+            ]);
+            
+            // Delete old receipt file if update successful and not cash payment
+            if ($success && !$is_cash_payment && $old_receipt_path && file_exists($old_receipt_path)) {
+                deleteFile($old_receipt_path);
+            }
+            
+            $payment_action = 'resubmitted';
+        } else {
+            // INSERT new payment
+            $stmt = $pdo->prepare("
+                INSERT INTO payments (
+                    student_id, 
+                    class_id, 
+                    amount, 
+                    payment_month,
+                    payment_date,
+                    receipt_path,
+                    receipt_filename,
+                    receipt_size,
+                    payment_method,
+                    admin_notes,
+                    invoice_id,
+                    parent_account_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+
+            $success = $stmt->execute([
+                $activeStudentId, 
+                $class_id,
+                $amount, 
+                $payment_month,
+                $payment_date,
+                $receipt_path,
+                $receipt_filename,
+                $receipt_size,
+                $payment_method,
+                $notes,
+                $invoice_id,
+                $parent_account_id
+            ]);
+            
+            $payment_action = 'submitted';
+        }
+
+        if ($success) {
+            if ($invoice_id) {
+                $update = $pdo->prepare("UPDATE invoices SET status = 'pending' WHERE id = ?");
+                $update->execute([$invoice_id]);
+            }
+            
+            // Send admin notification email
+            $stmt = $pdo->prepare("SELECT full_name, student_id FROM students WHERE id = ?");
+            $stmt->execute([$activeStudentId]);
+            $student = $stmt->fetch();
+            
+            $class_code = 'N/A';
+            $class_name = 'No Class Assigned';
+            if ($class_id) {
+                $stmt = $pdo->prepare("SELECT class_code, class_name FROM classes WHERE id = ?");
+                $stmt->execute([$class_id]);
+                $class = $stmt->fetch();
+                if ($class) {
+                    $class_code = $class['class_code'];
+                    $class_name = $class['class_name'];
+                }
+            }
+            
+            $invoice_number = '';
+            $invoice_description = '';
+            if ($invoice_id) {
+                $stmt = $pdo->prepare("SELECT invoice_number, description FROM invoices WHERE id = ?");
+                $stmt->execute([$invoice_id]);
+                $invoice = $stmt->fetch();
+                $invoice_number = $invoice['invoice_number'] ?? '';
+                $invoice_description = $invoice['description'] ?? '';
+            }
+            
+            $parent_name = '';
+            $parent_email = '';
+            if ($parent_account_id) {
+                $stmt = $pdo->prepare("SELECT full_name, email FROM parent_accounts WHERE id = ?");
+                $stmt->execute([$parent_account_id]);
+                $parent = $stmt->fetch();
+                $parent_name = $parent['full_name'] ?? '';
+                $parent_email = $parent['email'] ?? '';
+            }
+            
+            $file_size_formatted = $is_cash_payment ? 'N/A (Cash Payment)' : formatFileSize($receipt_size);
+            $receipt_filename_display = $is_cash_payment ? 'N/A (Cash Payment)' : $receipt_filename;
+            
+            $adminNotificationData = [
+                'student_name' => $student['full_name'],
+                'student_id' => $student['student_id'],
+                'class_code' => $class_code,
+                'class_name' => $class_name,
+                'payment_month' => $payment_month,
+                'amount' => number_format($amount, 2),
+                'receipt_filename' => $receipt_filename_display,
+                'receipt_size' => $file_size_formatted,
+                'upload_date' => date('Y-m-d H:i:s'),
+                'invoice_number' => $invoice_number,
+                'invoice_description' => $invoice_description,
+                'parent_name' => $parent_name,
+                'parent_email' => $parent_email
+            ];
+            
+            sendAdminPaymentNotification($adminNotificationData);
             
             if ($invoice_id) {
-                $check_stmt = $pdo->prepare("
-                    SELECT id, receipt_path 
-                    FROM payments 
-                    WHERE invoice_id = ? AND student_id = ?
-                    ORDER BY id DESC 
-                    LIMIT 1
-                ");
-                $check_stmt->execute([$invoice_id, $activeStudentId]);
-                $existing_payment = $check_stmt->fetch();
-                
-                if ($existing_payment) {
-                    $existing_payment_id = $existing_payment['id'];
-                    $old_receipt_path = $existing_payment['receipt_path'];
-                    error_log("[Payment Resubmit] Found existing payment ID: {$existing_payment_id}");
-                }
-            }
-
-            if ($existing_payment_id) {
-                // UPDATE existing payment instead of creating new one
-                $stmt = $pdo->prepare("
-                    UPDATE payments SET
-                        class_id = ?,
-                        amount = ?,
-                        payment_month = ?,
-                        payment_date = ?,
-                        receipt_path = ?,
-                        receipt_filename = ?,
-                        receipt_size = ?,
-                        upload_date = NOW(),
-                        verification_status = 'pending',
-                        verified_by = NULL,
-                        verified_date = NULL,
-                        admin_notes = ''
-                    WHERE id = ?
-                ");
-
-                $success = $stmt->execute([
-                    $class_id,
-                    $amount,
-                    $payment_month,
-                    $payment_date,
-                    $uploadResult['path'],
-                    $uploadResult['filename'],
-                    $uploadResult['size'],
-                    $existing_payment_id
-                ]);
-                
-                // Delete old receipt file if update successful
-                if ($success && $old_receipt_path && file_exists($old_receipt_path)) {
-                    deleteFile($old_receipt_path);
-                    error_log("[Payment Resubmit] Deleted old receipt: {$old_receipt_path}");
-                }
-                
-                $payment_action = 'resubmitted';
+                $payment_type = $is_cash_payment ? 'Cash payment' : 'Payment';
+                $success_message = $payment_action === 'resubmitted' 
+                    ? "{$payment_type} resubmitted successfully! Your invoice is now pending verification."
+                    : "{$payment_type} submitted successfully! Your invoice is now pending verification.";
+                $_SESSION['success'] = $success_message;
+                header('Location: index.php?page=invoices&t=' . time());
+                exit;
             } else {
-                // INSERT new payment (first time submission)
-                $stmt = $pdo->prepare("
-                    INSERT INTO payments (
-                        student_id, 
-                        class_id, 
-                        amount, 
-                        payment_month,
-                        payment_date,
-                        receipt_path,
-                        receipt_filename,
-                        receipt_size,
-                        admin_notes,
-                        invoice_id,
-                        parent_account_id
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ");
-
-                $success = $stmt->execute([
-                    $activeStudentId, 
-                    $class_id,
-                    $amount, 
-                    $payment_month,
-                    $payment_date,
-                    $uploadResult['path'],
-                    $uploadResult['filename'],
-                    $uploadResult['size'],
-                    $notes,
-                    $invoice_id,
-                    $parent_account_id
-                ]);
-                
-                $payment_action = 'submitted';
+                $_SESSION['success'] = "Payment uploaded successfully! Waiting for admin verification.";
+                header('Location: index.php?page=payments');
+                exit;
             }
-
-            if ($success) {
-                if ($invoice_id) {
-                    $update = $pdo->prepare("UPDATE invoices SET status = 'pending' WHERE id = ?");
-                    $update->execute([$invoice_id]);
-                }
-                
-                // Send admin notification email
-                $stmt = $pdo->prepare("SELECT full_name, student_id FROM students WHERE id = ?");
-                $stmt->execute([$activeStudentId]);
-                $student = $stmt->fetch();
-                
-                $class_code = 'N/A';
-                $class_name = 'No Class Assigned';
-                if ($class_id) {
-                    $stmt = $pdo->prepare("SELECT class_code, class_name FROM classes WHERE id = ?");
-                    $stmt->execute([$class_id]);
-                    $class = $stmt->fetch();
-                    if ($class) {
-                        $class_code = $class['class_code'];
-                        $class_name = $class['class_name'];
-                    }
-                }
-                
-                $invoice_number = '';
-                $invoice_description = '';
-                if ($invoice_id) {
-                    $stmt = $pdo->prepare("SELECT invoice_number, description FROM invoices WHERE id = ?");
-                    $stmt->execute([$invoice_id]);
-                    $invoice = $stmt->fetch();
-                    $invoice_number = $invoice['invoice_number'] ?? '';
-                    $invoice_description = $invoice['description'] ?? '';
-                }
-                
-                $parent_name = '';
-                $parent_email = '';
-                if ($parent_account_id) {
-                    $stmt = $pdo->prepare("SELECT full_name, email FROM parent_accounts WHERE id = ?");
-                    $stmt->execute([$parent_account_id]);
-                    $parent = $stmt->fetch();
-                    $parent_name = $parent['full_name'] ?? '';
-                    $parent_email = $parent['email'] ?? '';
-                }
-                
-                $file_size_formatted = formatFileSize($uploadResult['size']);
-                
-                $adminNotificationData = [
-                    'student_name' => $student['full_name'],
-                    'student_id' => $student['student_id'],
-                    'class_code' => $class_code,
-                    'class_name' => $class_name,
-                    'payment_month' => $payment_month,
-                    'amount' => number_format($amount, 2),
-                    'receipt_filename' => $uploadResult['filename'],
-                    'receipt_size' => $file_size_formatted,
-                    'upload_date' => date('Y-m-d H:i:s'),
-                    'invoice_number' => $invoice_number,
-                    'invoice_description' => $invoice_description,
-                    'parent_name' => $parent_name,
-                    'parent_email' => $parent_email
-                ];
-                
-                $adminEmailSent = sendAdminPaymentNotification($adminNotificationData);
-                error_log("[Payment Upload] Admin notification email sent: " . ($adminEmailSent ? 'YES' : 'NO'));
-                
-                if ($invoice_id) {
-                    $success_message = $payment_action === 'resubmitted' 
-                        ? "Payment resubmitted successfully! Your invoice is now pending verification. Admin has been notified."
-                        : "Payment submitted successfully! Your invoice is now pending verification. Admin has been notified.";
-                    $_SESSION['success'] = $success_message;
-                    header('Location: index.php?page=invoices&t=' . time());
-                    exit;
-                } else {
-                    $_SESSION['success'] = "Payment uploaded successfully! Waiting for admin verification. Admin has been notified.";
-                    header('Location: index.php?page=payments');
-                    exit;
-                }
-            } else {
-                // Delete uploaded file if database insert fails
-                deleteFile($uploadResult['path']);
-                $_SESSION['error'] = "Failed to save payment record.";
+        } else {
+            // Delete uploaded file if database insert fails (only if not cash payment)
+            if (!$is_cash_payment && $receipt_path) {
+                deleteFile($receipt_path);
             }
-        } catch (PDOException $e) {
-            // Delete uploaded file on error
-            deleteFile($uploadResult['path']);
-            error_log("[Payment Upload Error] " . $e->getMessage());
-            $_SESSION['error'] = "Database error: Unable to save payment. Please contact support if this persists.";
+            $_SESSION['error'] = "Failed to save payment record.";
         }
-    } else {
-        $_SESSION['error'] = "Please select a receipt file.";
+    } catch (PDOException $e) {
+        // Delete uploaded file on error (only if not cash payment)
+        if (!$is_cash_payment && $receipt_path) {
+            deleteFile($receipt_path);
+        }
+        error_log("[Payment Upload Error] " . $e->getMessage());
+        $_SESSION['error'] = "Database error: Unable to save payment. Please contact support if this persists.";
     }
 
     $redirect_page = $is_invoice_payment ? 'invoices' : 'payments';
     header('Location: index.php?page=' . $redirect_page);
     exit;
 }
+
 
 
 $page = $_GET['page'] ?? 'login';
@@ -1828,14 +1868,27 @@ $page = $_GET['page'] ?? 'login';
 </div>
 
 <?php if ($page === 'login'): ?>
-    <div class="login-container animate__animated animate__fadeIn">
+        <div class="login-container animate__animated animate__fadeIn">
         <div class="login-card">
             <div class="text-center mb-4">
                 <img src="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png" 
                      alt="Wushu Sport Academy Logo" 
                      class="login-logo">
                 <h2>Parent Portal</h2>
-                <p class="text-muted">Sign in to your account</p>
+                <p class="text-muted">Welcome to Wushu Sport Academy</p>
+            </div>
+
+            <!-- MOVED & RESIZED: Register Section (Now Above Login) -->
+            <div class="text-center mb-4 pb-4 border-bottom" style="background-color: #f0fdf4; padding: 25px; border-radius: 15px; border: 2px solid #10b981;">
+                <h3 style="color: #059669; font-weight: 800; margin-bottom: 15px; font-size: 21px;">
+                    <i class="fas fa-user-plus"></i> NEW STUDENT?
+                </h3>
+                <a href="pages/register.php" class="btn btn-success w-100" style="padding: 15px 20px; font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); border-radius: 12px;">
+                    <i class="fas fa-pen-to-square"></i> Register for 2026 Class
+                </a>
+                <p class="text-muted mt-3 mb-0" style="font-size: 15px; font-weight: 600;">
+                    Click the big green button above to join our academy!
+                </p>
             </div>
 
             <?php if (isset($_SESSION['error'])): ?>
@@ -1861,6 +1914,10 @@ $page = $_GET['page'] ?? 'login';
                 </div>
             <?php endif; ?>
 
+            <div class="text-center mb-3">
+                <p class="text-muted fw-bold">OR LOGIN TO YOUR ACCOUNT</p>
+            </div>
+
             <form method="POST" action="" class="submit-with-loading">
                 <?php echo csrfField(); ?>
                 <input type="hidden" name="action" value="login">
@@ -1872,24 +1929,13 @@ $page = $_GET['page'] ?? 'login';
                     <label class="form-label"><i class="fas fa-lock"></i> Password</label>
                     <input type="password" name="password" class="form-control form-control-lg" required>
                 </div>
-                <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
+                <button type="submit" class="btn btn-outline-primary btn-lg w-100 mb-3">
                     <i class="fas fa-sign-in-alt"></i> Login
                 </button>
             </form>
-
-            <div class="text-center mt-4 pt-3 border-top">
-                <p class="text-muted mb-2">
-                    <i class="fas fa-user-plus"></i> New Student?
-                </p>
-                <a href="pages/register.php" class="btn btn-outline-primary btn-lg w-100">
-                    <i class="fas fa-pen-to-square"></i> Register for 2026 Wushu Training
-                </a>
-                <p class="text-muted mt-2" style="font-size: 12px;">
-                    Complete your registration form and join our academy
-                </p>
-            </div>
         </div>
     </div>
+
 
 <?php else: ?>
     <?php redirectIfNotLoggedIn(); ?>

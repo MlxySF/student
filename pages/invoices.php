@@ -808,95 +808,117 @@ function getReceiptUrl($receipt_path) {
           </div>
         <?php endif; ?>
         
-        <!-- Show Bank Details based on invoice type -->
-        <?php if (isClassFeeInvoice($inv)): ?>
-          <!-- Bank Details for Class Fees -->
-          <div class="bank-details-card">
-            <h6><i class="fas fa-university"></i> Bank Details for Class Fees</h6>
-            <div class="bank-info-row">
-              <span class="bank-info-label">Bank Name</span>
-              <span class="bank-info-value">Maybank</span>
-            </div>
-            <div class="bank-info-row">
-              <span class="bank-info-label">Account Name</span>
-              <span class="bank-info-value">Wushu Sport Academy</span>
-            </div>
-            <div class="bank-info-row">
-              <span class="bank-info-label">Account Number</span>
-              <span class="bank-info-value">
-                505019816740
-                <button class="copy-btn" onclick="copyToClipboard('505019816740', this)">
-                  <i class="fas fa-copy"></i> Copy
-                </button>
-              </span>
-            </div>
-            <div class="bank-note">
-              <i class="fas fa-info-circle"></i>
-              <strong>Note:</strong> Please use this bank account for class fees, registration fees, and monthly payments only.
-            </div>
-          </div>
-        <?php else: ?>
-          <!-- Bank Details for Equipment & Clothing -->
-          <div class="bank-details-card equipment-bank">
-            <h6><i class="fas fa-shopping-cart"></i> Bank Details for Equipment & Clothing</h6>
-            <div class="bank-info-row">
-              <span class="bank-info-label">Bank Name</span>
-              <span class="bank-info-value">Public Bank</span>
-            </div>
-            <div class="bank-info-row">
-              <span class="bank-info-label">Account Name</span>
-              <span class="bank-info-value">Chin Woo Sport Academy</span>
-            </div>
-            <div class="bank-info-row">
-              <span class="bank-info-label">Account Number</span>
-              <span class="bank-info-value">
-                3244180136
-                <button class="copy-btn" onclick="copyToClipboard('3244180136', this)">
-                  <i class="fas fa-copy"></i> Copy
-                </button>
-              </span>
-            </div>
-            <div class="bank-note">
-              <i class="fas fa-info-circle"></i>
-              <strong>Note:</strong> Please use this bank account for equipment, uniforms, and clothing purchases only.
-            </div>
-          </div>
-        <?php endif; ?>
-        
-        <hr><h6><i class="fas fa-upload"></i> <?php echo $inv['status'] === 'rejected' ? 'Resubmit Payment Receipt' : 'Upload Payment Receipt'; ?></h6>
-        <?php if ($inv['status'] === 'rejected'): ?>
-          <div class="alert alert-warning"><i class="fas fa-info-circle"></i> <strong>Resubmit Payment:</strong> Your previous payment was rejected. Please upload a correct payment receipt.</div>
-        <?php endif; ?>
-        <form method="POST" action="?page=invoices" enctype="multipart/form-data" class="submit-with-loading">
-          <?php echo csrfField(); ?>
-          <input type="hidden" name="action" value="upload_payment">
-          <input type="hidden" name="invoice_id" value="<?php echo $inv['id']; ?>">
-          <input type="hidden" name="student_account_id" value="<?php echo $studentAccountId; ?>">
-          <input type="hidden" name="invoice_class_id" value="<?php echo $inv['class_id']; ?>">
-          <input type="hidden" name="invoice_amount" value="<?php echo $inv['amount']; ?>">
-          <input type="hidden" name="invoice_payment_month" value="<?php echo !empty($inv['payment_month']) ? $inv['payment_month'] : date('M Y'); ?>">
-          
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label"><i class="fas fa-calendar-day"></i> Payment Date *</label>
-              <input type="date" name="payment_date" class="form-control" 
-                     value="<?php echo date('Y-m-d'); ?>" 
-                     max="<?php echo date('Y-m-d'); ?>" 
-                     required>
-              <div class="form-text">Date on your payment receipt</div>
-            </div>
-            
-            <div class="col-md-6 mb-3">
-              <label class="form-label"><i class="fas fa-receipt"></i> Receipt (Image/PDF) *</label>
-              <input type="file" name="receipt" class="form-control" accept="image/*,.pdf" required>
-              <div class="form-text">Max 5MB | JPG, PNG, PDF</div>
-            </div>
-          </div>
-          
-          <button type="submit" class="btn btn-<?php echo $inv['status'] === 'rejected' ? 'danger' : 'success'; ?>">
-            <i class="fas fa-upload"></i> <?php echo $inv['status'] === 'rejected' ? 'Resubmit Payment' : 'Submit Payment'; ?>
+        <!-- Show Bank Details based on invoice type (hidden by default, shown when bank transfer selected) -->
+<div id="bankDetails<?php echo $inv['id']; ?>" style="display: none;">
+  <?php if (isClassFeeInvoice($inv)): ?>
+    <!-- Bank Details for Class Fees -->
+    <div class="bank-details-card">
+      <h6><i class="fas fa-university"></i> Bank Details for Class Fees</h6>
+      <div class="bank-info-row">
+        <span class="bank-info-label">Bank Name</span>
+        <span class="bank-info-value">Maybank</span>
+      </div>
+      <div class="bank-info-row">
+        <span class="bank-info-label">Account Name</span>
+        <span class="bank-info-value">Wushu Sport Academy</span>
+      </div>
+      <div class="bank-info-row">
+        <span class="bank-info-label">Account Number</span>
+        <span class="bank-info-value">
+          505019816740
+          <button class="copy-btn" onclick="copyToClipboard('505019816740', this)">
+            <i class="fas fa-copy"></i> Copy
           </button>
-        </form>
+        </span>
+      </div>
+      <div class="bank-note">
+        <i class="fas fa-info-circle"></i>
+        <strong>Note:</strong> Please use this bank account for class fees, registration fees, and monthly payments only.
+      </div>
+    </div>
+  <?php else: ?>
+    <!-- Bank Details for Equipment & Clothing -->
+    <div class="bank-details-card equipment-bank">
+      <h6><i class="fas fa-shopping-cart"></i> Bank Details for Equipment & Clothing</h6>
+      <div class="bank-info-row">
+        <span class="bank-info-label">Bank Name</span>
+        <span class="bank-info-value">Public Bank</span>
+      </div>
+      <div class="bank-info-row">
+        <span class="bank-info-label">Account Name</span>
+        <span class="bank-info-value">Chin Woo Sport Academy</span>
+      </div>
+      <div class="bank-info-row">
+        <span class="bank-info-label">Account Number</span>
+        <span class="bank-info-value">
+          3244180136
+          <button class="copy-btn" onclick="copyToClipboard('3244180136', this)">
+            <i class="fas fa-copy"></i> Copy
+          </button>
+        </span>
+      </div>
+      <div class="bank-note">
+        <i class="fas fa-info-circle"></i>
+        <strong>Note:</strong> Please use this bank account for equipment, uniforms, and clothing purchases only.
+      </div>
+    </div>
+  <?php endif; ?>
+</div>
+
+        
+        <hr><h6><i class="fas fa-upload"></i> <?php echo $inv['status'] === 'rejected' ? 'Resubmit Payment' : 'Submit Payment'; ?></h6>
+<?php if ($inv['status'] === 'rejected'): ?>
+  <div class="alert alert-warning"><i class="fas fa-info-circle"></i> <strong>Resubmit Payment:</strong> Your previous payment was rejected. Please upload a correct payment receipt.</div>
+<?php endif; ?>
+<form method="POST" action="?page=invoices" enctype="multipart/form-data" class="submit-with-loading" id="paymentForm<?php echo $inv['id']; ?>">
+  <?php echo csrfField(); ?>
+  <input type="hidden" name="action" value="upload_payment">
+  <input type="hidden" name="invoice_id" value="<?php echo $inv['id']; ?>">
+  <input type="hidden" name="student_account_id" value="<?php echo $studentAccountId; ?>">
+  <input type="hidden" name="invoice_class_id" value="<?php echo $inv['class_id']; ?>">
+  <input type="hidden" name="invoice_amount" value="<?php echo $inv['amount']; ?>">
+  <input type="hidden" name="invoice_payment_month" value="<?php echo !empty($inv['payment_month']) ? $inv['payment_month'] : date('M Y'); ?>">
+  
+  <div class="row">
+    <div class="col-md-12 mb-3">
+      <label class="form-label"><i class="fas fa-credit-card"></i> Payment Method *</label>
+      <select name="payment_method" class="form-select" id="paymentMethod<?php echo $inv['id']; ?>" onchange="toggleReceiptField(<?php echo $inv['id']; ?>)" required>
+        <option value="">Select Payment Method</option>
+        <option value="bank_transfer">Bank Transfer (Upload Receipt)</option>
+        <option value="cash">Cash Payment (No Receipt)</option>
+      </select>
+      <div class="form-text">Choose how you paid for this invoice</div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <label class="form-label"><i class="fas fa-calendar-day"></i> Payment Date *</label>
+      <input type="date" name="payment_date" class="form-control" 
+             value="<?php echo date('Y-m-d'); ?>" 
+             max="<?php echo date('Y-m-d'); ?>" 
+             required>
+      <div class="form-text">Date when you made the payment</div>
+    </div>
+    
+    <div class="col-md-6 mb-3" id="receiptUpload<?php echo $inv['id']; ?>" style="display: none;">
+      <label class="form-label"><i class="fas fa-receipt"></i> Receipt (Image/PDF) *</label>
+      <input type="file" name="receipt" class="form-control" accept="image/*,.pdf" id="receiptFile<?php echo $inv['id']; ?>">
+      <div class="form-text">Max 5MB | JPG, PNG, PDF</div>
+    </div>
+    
+    <div class="col-md-6 mb-3" id="cashInfo<?php echo $inv['id']; ?>" style="display: none;">
+      <div class="alert alert-info mb-0">
+        <i class="fas fa-money-bill-wave"></i> <strong>Cash Payment</strong>
+        <p class="mb-0 mt-2 small">No receipt upload required. Admin will verify your payment.</p>
+      </div>
+    </div>
+  </div>
+  
+  <button type="submit" class="btn btn-<?php echo $inv['status'] === 'rejected' ? 'danger' : 'success'; ?>">
+    <i class="fas fa-upload"></i> <?php echo $inv['status'] === 'rejected' ? 'Resubmit Payment' : 'Submit Payment'; ?>
+  </button>
+</form>
       <?php endif; ?>
     </div>
     <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div>
@@ -1044,6 +1066,38 @@ function downloadInvoicePDF(invoiceId) {
         alert('Failed to download PDF. Please try again or contact support.');
     });
 }
+
+// Toggle receipt upload field based on payment method
+function toggleReceiptField(invoiceId) {
+    const paymentMethod = document.getElementById('paymentMethod' + invoiceId).value;
+    const receiptUpload = document.getElementById('receiptUpload' + invoiceId);
+    const receiptFile = document.getElementById('receiptFile' + invoiceId);
+    const cashInfo = document.getElementById('cashInfo' + invoiceId);
+    const bankDetails = document.getElementById('bankDetails' + invoiceId);
+    
+    if (paymentMethod === 'bank_transfer') {
+        // Show bank details and receipt upload, hide cash info
+        bankDetails.style.display = 'block';
+        receiptUpload.style.display = 'block';
+        cashInfo.style.display = 'none';
+        receiptFile.required = true;
+    } else if (paymentMethod === 'cash') {
+        // Hide bank details and receipt upload, show cash info
+        bankDetails.style.display = 'none';
+        receiptUpload.style.display = 'none';
+        cashInfo.style.display = 'block';
+        receiptFile.required = false;
+        receiptFile.value = ''; // Clear file input
+    } else {
+        // Hide everything if no method selected
+        bankDetails.style.display = 'none';
+        receiptUpload.style.display = 'none';
+        cashInfo.style.display = 'none';
+        receiptFile.required = false;
+    }
+}
+
+
 
 
 </script>

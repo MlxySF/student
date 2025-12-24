@@ -109,11 +109,14 @@ $sql = "
            s.student_id, s.full_name, s.email, 
            c.class_code, c.class_name,
            p.id as payment_id, p.verification_status, 
-           p.upload_date, p.payment_date, p.admin_notes
+           p.upload_date, p.payment_date, p.admin_notes, p.receipt_path,
+           r.payment_method
     FROM invoices i
     JOIN students s ON i.student_id = s.id
     LEFT JOIN classes c ON i.class_id = c.id
-    LEFT JOIN payments p ON i.id = p.invoice_id";
+    LEFT JOIN payments p ON i.id = p.invoice_id
+    LEFT JOIN registrations r ON i.student_id = r.student_account_id";
+
 
 if (count($where_conditions_join) > 0) {
     $sql .= " WHERE " . implode(" AND ", $where_conditions_join);
@@ -570,16 +573,32 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
             </table>
 
             <?php if (!empty($invoice['payment_id'])): ?>
-                <hr class="my-4">
-                <h6 class="mb-3"><i class="fas fa-receipt"></i> Payment Information</h6>
-                <table class="table table-bordered">
-                    <?php if (!empty($invoice['payment_date'])): ?>
-                    <tr>
-                        <th width="30%" class="bg-success text-white"><i class="fas fa-calendar-check"></i> Payment Date (Actual)</th>
-                        <td class="fw-bold text-success"><?php echo formatDate($invoice['payment_date']); ?></td>
-                    </tr>
-                    <?php endif; ?>
-                    <tr><th width="30%">Upload Date</th><td><?php echo formatDateTime($invoice['upload_date']); ?></td></tr>
+    <?php 
+    // Define payment method variables FIRST
+    $isCashPayment = (!empty($invoice['payment_method']) && $invoice['payment_method'] === 'cash');
+    $hasReceipt = !empty($invoice['receipt_path']);
+    ?>
+    
+    <hr class="my-4">
+    <h6 class="mb-3"><i class="fas fa-receipt"></i> Payment Information</h6>
+    <table class="table table-bordered">
+        <tr>
+            <th width="30%"><i class="fas fa-credit-card"></i> Payment Method</th>
+            <td>
+                <?php if ($isCashPayment): ?>
+                    <span class="badge bg-success"><i class="fas fa-money-bill-wave"></i> Cash Payment</span>
+                <?php else: ?>
+                    <span class="badge bg-info"><i class="fas fa-university"></i> Bank Transfer</span>
+                <?php endif; ?>
+            </td>
+        </tr>
+    <?php if (!empty($invoice['payment_date'])): ?>
+    <tr>
+        <th width="30%" class="bg-success text-white"><i class="fas fa-calendar-check"></i> Payment Date (Actual)</th>
+        <td class="fw-bold text-success"><?php echo formatDate($invoice['payment_date']); ?></td>
+    </tr>
+    <?php endif; ?>
+    <tr><th width="30%">Upload Date</th><td><?php echo formatDateTime($invoice['upload_date']); ?></td></tr>
                     <tr><th>Verification Status</th><td>
                         <?php if ($invoice['verification_status'] === 'verified'): ?>
                             <span class="badge bg-success"><i class="fas fa-check-circle"></i> Verified</span>
@@ -594,15 +613,32 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                     <?php endif; ?>
                 </table>
 
-                <h6 class="mb-3">Payment Receipt</h6>
-                <div id="receiptContainer<?php echo $invoice['id']; ?>">
-                    <div class="receipt-loading">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="mt-2 text-muted">Loading receipt...</p>
-                    </div>
-                </div>
+<?php if ($isCashPayment): ?>
+    <!-- Cash Payment - No Receipt -->
+    <h6 class="mb-3">Payment Method</h6>
+    <div class="alert alert-success">
+        <i class="fas fa-money-bill-wave"></i> <strong>Cash Payment</strong>
+        <p class="mb-0 mt-2">This invoice was paid in cash. No receipt upload required.</p>
+    </div>
+<?php elseif ($hasReceipt): ?>
+    <!-- Bank Transfer - Show Receipt -->
+    <h6 class="mb-3">Payment Receipt (Bank Transfer)</h6>
+    <div id="receiptContainer<?php echo $invoice['id']; ?>">
+        <div class="receipt-loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Loading receipt...</p>
+        </div>
+    </div>
+<?php else: ?>
+    <!-- No receipt available -->
+    <h6 class="mb-3">Payment Receipt</h6>
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i> No receipt uploaded yet.
+    </div>
+<?php endif; ?>
+
 
                 <?php if ($invoice['verification_status'] === 'pending'): ?>
                     <hr class="my-4">
@@ -768,8 +804,8 @@ function loadReceipt(invoiceId) {
     
     const container = document.getElementById('receiptContainer' + invoiceId);
     if (!container) {
-        console.error('Receipt container not found for invoice:', invoiceId);
-        return;
+        console.log('Receipt container not found for invoice:', invoiceId, '(likely cash payment)');
+        return; // Exit gracefully for cash payments
     }
     
     // Build API URL - relative to the root where admin.php is located
@@ -789,11 +825,10 @@ function loadReceipt(invoiceId) {
                 // Mark as loaded
                 loadedReceipts.add(invoiceId);
                 
-                // ✨ COMPACT: Just buttons linking to actual file path
                 if (data.receipt_mime_type === 'application/pdf') {
                     // PDF Receipt - Download button + link to actual file
                     const downloadUrl = 'data:' + data.receipt_mime_type + ';base64,' + data.receipt_data;
-                    const fileUrl = 'uploads/' + data.receipt_path; // Direct link to file on server
+                    const fileUrl = '../' + data.receipt_path; // Direct link to file on server
                     
                     container.innerHTML = `
                         <div class="alert alert-info">
@@ -824,4 +859,5 @@ function loadReceipt(invoiceId) {
             container.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Failed to load receipt. Please try again.</div>';
         });
 }
+
 </script>

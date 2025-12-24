@@ -32,13 +32,14 @@ function sendApprovalEmail($parentEmail, $studentName, $registrationNumber, $stu
         $mail->Host       = 'mail.wushusportacademy.com';
         $mail->SMTPAuth   = true;
         $mail->Username   = 'admin@wushusportacademy.com';
-        $mail->Password   = 'UZa;nENf]!xqpRak';
+        $mail->Password   = 'P1}tKwojKgl0vdMv';
         $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
         // Recipients
         $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
         $mail->addAddress($parentEmail);
+        $mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
 
         // Content
         $mail->isHTML(true);
