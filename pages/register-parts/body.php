@@ -978,16 +978,16 @@ if (empty($_SESSION['csrf_token'])) {
 
     <!-- Cash Payment Note (Hidden by default) -->
     <div id="cash-payment-note" style="display: none;">
-        <div class="bg-green-50 border-2 border-green-400 rounded-xl p-6 text-center">
-            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-money-bill-wave text-green-600 text-2xl"></i>
+        <div class="bg-blue-50 border-2 border-blue-400 rounded-xl p-6 text-center">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-money-bill-wave text-blue-600 text-2xl"></i>
             </div>
-            <h3 class="font-bold text-green-800 text-lg mb-2">现金付款<br>Cash Payment</h3>
-            <p class="text-sm text-green-700 mb-3">
-                Please pay <strong id="cash-amount" class="text-green-900">RM 0</strong> to Coach Lim Kim and your payment record card during the training session.
+            <h3 class="font-bold text-blue-800 text-lg mb-2">现金付款<br>Cash Payment</h3>
+            <p class="text-sm text-blue-700 mb-3">
+                Please pay <strong id="cash-amount" class="text-blue-900">RM 0</strong> in cash to Coach Lim Kim. He will record the payment and sign ✍🏼 on the training record card. As the payment is made in cash, no official receipt will be issued.
             </p>
-            <p class="text-sm text-green-700">
-                请在训练课程中把<strong class="text-green-900"> 现金</strong> 交给林金教练并且记录在 Payment Record Card。
+            <p class="text-sm text-blue-700">
+                請將學費以<strong class="text-blue-1200">現金</strong>付款方式交于林金教練，他将会记录与簽名✍🏼在學費卡上；由於現金付款 將不會有正式收据.
             </p>
             <!-- <div class="bg-white border border-green-200 rounded-lg p-3 mt-4 text-xs text-green-800">
                 <p class="font-semibold mb-1"><i class="fas fa-check-circle"></i> 重要提醒 :</p>

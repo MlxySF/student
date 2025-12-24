@@ -975,3 +975,13 @@ Stack trace:
 [24-Dec-2025 23:24:12 Asia/Kuala_Lumpur] [File Helper] Uploaded file: payment_receipts/receipt_24_test_inv-20251224-9883_20251224232412_3f4eef.png
 [24-Dec-2025 23:24:12 Asia/Kuala_Lumpur] [Admin Email] Sending payment notification to admin@wushusportacademy.com
 [24-Dec-2025 23:24:13 Asia/Kuala_Lumpur] [Admin Email] Successfully sent payment notification
+[24-Dec-2025 23:59:37 Asia/Kuala_Lumpur] [Profile PDF Debug] Registration ID: 22
+[24-Dec-2025 23:59:37 Asia/Kuala_Lumpur] [Profile PDF Debug] PDF Path from DB (relative): registration_pdfs/pdf_WSA2025-3422_test_20251224150110_123f01.pdf
+[24-Dec-2025 23:59:37 Asia/Kuala_Lumpur] [Profile PDF Debug] Full absolute path: /home/wushuspo/public_html/pages/../uploads/registration_pdfs/pdf_WSA2025-3422_test_20251224150110_123f01.pdf
+[24-Dec-2025 23:59:37 Asia/Kuala_Lumpur] [Profile PDF Debug] File exists check: YES
+[24-Dec-2025 23:59:37 Asia/Kuala_Lumpur] [Profile PDF Debug] Final pdf_path value: /home/wushuspo/public_html/pages/../uploads/registration_pdfs/pdf_WSA2025-3422_test_20251224150110_123f01.pdf
+[24-Dec-2025 23:59:50 Asia/Kuala_Lumpur] [Profile PDF Debug] Registration ID: 22
+[24-Dec-2025 23:59:50 Asia/Kuala_Lumpur] [Profile PDF Debug] PDF Path from DB (relative): registration_pdfs/pdf_WSA2025-3422_test_20251224150110_123f01.pdf
+[24-Dec-2025 23:59:50 Asia/Kuala_Lumpur] [Profile PDF Debug] Full absolute path: /home/wushuspo/public_html/pages/../uploads/registration_pdfs/pdf_WSA2025-3422_test_20251224150110_123f01.pdf
+[24-Dec-2025 23:59:50 Asia/Kuala_Lumpur] [Profile PDF Debug] File exists check: YES
+[24-Dec-2025 23:59:50 Asia/Kuala_Lumpur] [Profile PDF Debug] Final pdf_path value: /home/wushuspo/public_html/pages/../uploads/registration_pdfs/pdf_WSA2025-3422_test_20251224150110_123f01.pdf

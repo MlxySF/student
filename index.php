@@ -1874,20 +1874,20 @@ $page = $_GET['page'] ?? 'login';
                 <img src="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png" 
                      alt="Wushu Sport Academy Logo" 
                      class="login-logo">
-                <h2>Parent Portal</h2>
+                <h2>Training Registrations</h2>
                 <p class="text-muted">Welcome to Wushu Sport Academy</p>
             </div>
 
             <!-- MOVED & RESIZED: Register Section (Now Above Login) -->
-            <div class="text-center mb-4 pb-4 border-bottom" style="background-color: #f0fdf4; padding: 25px; border-radius: 15px; border: 2px solid #10b981;">
-                <h3 style="color: #059669; font-weight: 800; margin-bottom: 15px; font-size: 21px;">
+            <div class="text-center mb-4 pb-4 border-bottom" style="background-color: #F0F8FF; padding: 25px; border-radius: 15px; border: 2px solid #4169E1;">
+                <h3 style="color: #4169E1; font-weight: 800; margin-bottom: 15px; font-size: 21px;">
                     <i class="fas fa-user-plus"></i> NEW STUDENT?
                 </h3>
-                <a href="pages/register.php" class="btn btn-success w-100" style="padding: 15px 20px; font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); border-radius: 12px;">
+                <a href="pages/register.php" class="btn btn-success w-100" style="padding: 15px 20px; font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 10px 20px rgba(3, 138, 255, 0.3); border-radius: 12px; background-color: #4169E1;">
                     <i class="fas fa-pen-to-square"></i> Register for 2026 Class
                 </a>
                 <p class="text-muted mt-3 mb-0" style="font-size: 15px; font-weight: 600;">
-                    Click the big green button above to join our academy!
+                    Click to register!
                 </p>
             </div>
 
@@ -1914,10 +1914,6 @@ $page = $_GET['page'] ?? 'login';
                 </div>
             <?php endif; ?>
 
-            <div class="text-center mb-3">
-                <p class="text-muted fw-bold">OR LOGIN TO YOUR ACCOUNT</p>
-            </div>
-
             <form method="POST" action="" class="submit-with-loading">
                 <?php echo csrfField(); ?>
                 <input type="hidden" name="action" value="login">
@@ -1933,6 +1929,10 @@ $page = $_GET['page'] ?? 'login';
                     <i class="fas fa-sign-in-alt"></i> Login
                 </button>
             </form>
+            
+            <div class="text-center mb-3">
+                <p class="text-muted fw-bold">TO PREVIEW YOUR PERSONAL DATA, PLEASE LOG IN USING YOUR PREVIOUS SET EMAIL ADDRESS AND PASSWORD.</p>
+            </div>
         </div>
     </div>
 
@@ -1951,7 +1951,7 @@ $page = $_GET['page'] ?? 'login';
                      alt="WSA Logo">
                 <div class="logo-text">
                     <span class="logo-title">Wushu Sport Academy</span>
-                    <span class="logo-subtitle">Parent Portal</span>
+                    <span class="logo-subtitle">System</span>
                 </div>
             </a>
         </div>
