@@ -12,20 +12,20 @@ require_once '../../config.php';
 
 // Debug: Log session info (remove this after fixing)
 error_log('Session ID: ' . session_id());
-error_log('User ID in session: ' . ($_SESSION['user_id'] ?? 'NOT SET'));
-error_log('Role in session: ' . ($_SESSION['role'] ?? 'NOT SET'));
+error_log('Admin ID in session: ' . ($_SESSION['admin_id'] ?? 'NOT SET'));
+error_log('Admin Role in session: ' . ($_SESSION['admin_role'] ?? 'NOT SET'));
 
-// Check if user is logged in and is admin
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    error_log('Authorization failed - User ID: ' . ($_SESSION['user_id'] ?? 'none') . ', Role: ' . ($_SESSION['role'] ?? 'none'));
+// Check if admin is logged in (using correct session variables from admin.php)
+if (!isset($_SESSION['admin_id'])) {
+    error_log('Authorization failed - Admin ID: ' . ($_SESSION['admin_id'] ?? 'none') . ', Role: ' . ($_SESSION['admin_role'] ?? 'none'));
     echo json_encode([
         'success' => false, 
-        'message' => 'Unauthorized access',
+        'message' => 'Unauthorized access. Please log in as admin.',
         'debug' => [
             'session_id' => session_id(),
-            'has_user_id' => isset($_SESSION['user_id']),
-            'has_role' => isset($_SESSION['role']),
-            'role_value' => $_SESSION['role'] ?? 'not set'
+            'has_admin_id' => isset($_SESSION['admin_id']),
+            'has_admin_role' => isset($_SESSION['admin_role']),
+            'admin_role_value' => $_SESSION['admin_role'] ?? 'not set'
         ]
     ]);
     exit();
