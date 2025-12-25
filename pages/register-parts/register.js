@@ -60,7 +60,7 @@ async function loadHolidays() {
         const result = await response.json();
         
         if (result.success) {
-            classHolidays = result.holidays.map(h => h.holiday_date);
+            classHolidays = result.holidays;
             console.log('✅ Holidays loaded:', classHolidays);
         } else {
             console.error('❌ Failed to load holidays:', result.message);
@@ -101,55 +101,52 @@ function calculateActualClassCounts() {
     };
 }
 
-// ========================================
-// CALCULATE CLASSES FOR A SINGLE SCHEDULE
-// ========================================
 function calculateClassesForSchedule(scheduleText, holidays) {
-    // Parse schedule to extract day
     let dayOfWeek = null;
     
     if (scheduleText.includes('Wed') || scheduleText.includes('Wednesday')) {
-        dayOfWeek = 3; // Wednesday
+        dayOfWeek = 3;
     } else if (scheduleText.includes('Sun') || scheduleText.includes('Sunday')) {
-        dayOfWeek = 0; // Sunday
+        dayOfWeek = 0;
     } else if (scheduleText.includes('Tue') || scheduleText.includes('Tuesday')) {
-        dayOfWeek = 2; // Tuesday
+        dayOfWeek = 2;
     } else if (scheduleText.includes('Fri') || scheduleText.includes('Friday')) {
-        dayOfWeek = 5; // Friday
+        dayOfWeek = 5;
     }
     
     if (dayOfWeek === null) {
         console.warn('Could not parse day from schedule:', scheduleText);
-        return 4; // Default to 12 if parsing fails
+        return 4;
     }
     
-    // Get current date
     const now = new Date();
-    const currentMonth = now.getMonth(); // 0-11
+    const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
     
-    // Calculate first and last day of current month
     const startDate = new Date(currentYear, currentMonth, 1);
-    const endDate = new Date(currentYear, currentMonth + 1, 0); // Last day of month
+    const endDate = new Date(currentYear, currentMonth + 1, 0);
     
-    // Generate all dates for 2026 (Jan-Mar) for this day of week
     const allDates = [];
     
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
         if (d.getDay() === dayOfWeek) {
-            const dateStr = d.toISOString().split('T')[0];
+            // ✅ Use local timezone instead of UTC
+            const dateStr = d.getFullYear() + '-' + 
+                            String(d.getMonth() + 1).padStart(2, '0') + '-' + 
+                            String(d.getDate()).padStart(2, '0');
             allDates.push(dateStr);
         }
     }
     
-    // Filter out holidays
     const validDates = allDates.filter(date => !holidays.includes(date));
     
     const monthName = startDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    console.log('Valid dates:', validDates);
     console.log(`📅 ${scheduleText} (${monthName}): ${allDates.length} total, ${validDates.length} after holidays`);
     
     return validDates.length;
 }
+
 
     // ========================================
     // SCROLL TO TOP HELPER FUNCTION
