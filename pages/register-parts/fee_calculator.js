@@ -1,31 +1,29 @@
 /**
- * Fee Calculator Module - Updated for January 2026
+ * Fee Calculator Module - CORRECTED for January 2026
  * Calculates monthly fees based on:
- * - Number of classes enrolled (new tiered pricing)
- * - Available dates in the month (excluding holidays)
- * - New pricing tiers for 2026
+ * - Number of classes enrolled
+ * - Number of sessions per class in the month
+ * - Per-session pricing: 1st class RM30, 2nd class RM27, 3rd class RM24, 4th class RM21
+ * 
+ * EXAMPLES:
+ * - Tuesday (3 sessions) + Wednesday (3 sessions) = (3×RM30) + (3×RM27) = RM90 + RM81 = RM171
+ * - Tuesday (3 sessions) + Sunday (2 sessions) = (3×RM30) + (2×RM27) = RM90 + RM54 = RM144
  */
 
 const FeeCalculator = {
-    // NEW PRICING STRUCTURE FOR JANUARY 2026
-    // Scenario 1: 1 class = RM30
-    // Scenario 2: 2 classes = RM30 + RM27 = RM57
-    // Scenario 3: 3 classes = RM30 + RM27 + RM24 = RM81
-    // Scenario 4: 4 classes = RM30 + RM27 + RM24 + RM21 = RM102
-    pricing: {
-        1: { total: 30, perClass: 30.00 },      // 1 class: RM30 total
-        2: { total: 57, perClass: 28.50 },      // 2 classes: RM57 total (avg RM28.50/class)
-        3: { total: 81, perClass: 27.00 },      // 3 classes: RM81 total (avg RM27/class)
-        4: { total: 102, perClass: 25.50 }      // 4 classes: RM102 total (avg RM25.50/class)
-    },
+    // Per-session pricing for January 2026
+    // 1st class: RM30 per session
+    // 2nd class: RM27 per session
+    // 3rd class: RM24 per session
+    // 4th class: RM21 per session
+    sessionPricing: [30, 27, 24, 21],
 
     /**
-     * Get pricing info based on number of classes enrolled
+     * Get price per session for a specific class position
+     * @param {number} classPosition - 0-indexed position (0=first class, 1=second class, etc.)
      */
-    getPricingInfo: function(numClasses) {
-        // Cap at 4 classes maximum
-        const classCount = Math.min(numClasses, 4);
-        return this.pricing[classCount] || this.pricing[1];
+    getPricePerSession: function(classPosition) {
+        return this.sessionPricing[classPosition] || this.sessionPricing[this.sessionPricing.length - 1];
     },
 
     /**
@@ -73,34 +71,52 @@ const FeeCalculator = {
     },
 
     /**
-     * Calculate total monthly fee - UPDATED FOR 2026
-     * @param {number} numClasses - Number of classes enrolled
-     * @param {number} classesPerMonth - Available classes per month
+     * Calculate total monthly fee - CORRECTED FORMULA
+     * Each class is charged at its position rate × number of sessions
+     * @param {Array} classesData - Array of class data with session counts
      * @returns {Object} Fee breakdown
      */
-    calculateMonthlyFee: function(numClasses, classesPerMonth) {
-        // Get the base pricing for this number of classes
-        const pricingInfo = this.getPricingInfo(numClasses);
+    calculateMonthlyFee: function(classesData) {
+        let totalFee = 0;
+        let breakdown = [];
+        let totalSessions = 0;
         
-        // Calculate total fee = base rate per class × number of available class days
-        const totalFee = pricingInfo.perClass * classesPerMonth;
+        // Calculate fee for each class based on its position
+        classesData.forEach((classData, index) => {
+            const pricePerSession = this.getPricePerSession(index);
+            const sessionCount = classData.classCount;
+            const classFee = pricePerSession * sessionCount;
+            
+            totalFee += classFee;
+            totalSessions += sessionCount;
+            
+            breakdown.push({
+                position: index + 1,
+                className: classData.className,
+                schedule: classData.schedule,
+                pricePerSession: pricePerSession,
+                sessionCount: sessionCount,
+                classFee: classFee,
+                formatted: {
+                    pricePerSession: `RM${pricePerSession.toFixed(2)}`,
+                    classFee: `RM${classFee.toFixed(2)}`
+                }
+            });
+        });
         
         return {
-            numClasses: numClasses,
-            baseTotal: pricingInfo.total,  // Base total for reference (e.g., RM57 for 2 classes)
-            pricePerClass: pricingInfo.perClass,
-            classesPerMonth: classesPerMonth,
+            numClasses: classesData.length,
+            totalSessions: totalSessions,
+            breakdown: breakdown,
             totalFee: totalFee,
             formatted: {
-                baseTotal: `RM${pricingInfo.total.toFixed(2)}`,
-                pricePerClass: `RM${pricingInfo.perClass.toFixed(2)}`,
                 totalFee: `RM${totalFee.toFixed(2)}`
             }
         };
     },
 
     /**
-     * Display fee breakdown in the UI - UPDATED FOR 2026
+     * Display fee breakdown in the UI - UPDATED WITH CORRECTED FORMULA
      * @param {Object} feeData - Fee calculation data
      * @param {Array} classesData - Available dates data for each class
      */
@@ -108,29 +124,17 @@ const FeeCalculator = {
         const container = document.getElementById('feeBreakdownContainer');
         if (!container) return;
 
-        // Calculate the pricing breakdown based on number of classes
-        let pricingExplanation = '';
-        switch(feeData.numClasses) {
-            case 1:
-                pricingExplanation = '<small class="text-muted">(RM30 per class)</small>';
-                break;
-            case 2:
-                pricingExplanation = '<small class="text-muted">(RM30 + RM27 = RM57 base)</small>';
-                break;
-            case 3:
-                pricingExplanation = '<small class="text-muted">(RM30 + RM27 + RM24 = RM81 base)</small>';
-                break;
-            case 4:
-                pricingExplanation = '<small class="text-muted">(RM30 + RM27 + RM24 + RM21 = RM102 base)</small>';
-                break;
-        }
-
         let html = `
             <div class="card border-primary mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="fas fa-calculator"></i> Monthly Fee Calculation (January 2026)</h5>
                 </div>
                 <div class="card-body">
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle"></i> <strong>Pricing Formula:</strong><br>
+                        1st class: RM30/session | 2nd class: RM27/session | 3rd class: RM24/session | 4th class: RM21/session
+                    </div>
+                    
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <strong>Number of Classes Enrolled:</strong>
@@ -139,31 +143,49 @@ const FeeCalculator = {
                             ${feeData.numClasses} class${feeData.numClasses > 1 ? 'es' : ''}
                         </div>
                     </div>
+                    
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <strong>Base Rate Per Class Day:</strong><br>
-                            ${pricingExplanation}
+                            <strong>Total Sessions This Month:</strong>
                         </div>
                         <div class="col-md-6 text-end">
-                            ${feeData.formatted.pricePerClass}
+                            ${feeData.totalSessions} session${feeData.totalSessions > 1 ? 's' : ''}
                         </div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <strong>Available Class Days This Month:</strong>
-                        </div>
-                        <div class="col-md-6 text-end">
-                            ${feeData.classesPerMonth} day${feeData.classesPerMonth > 1 ? 's' : ''}
-                        </div>
-                    </div>
+                    
                     <hr>
+                    
+                    <h6 class="mb-3"><i class="fas fa-list"></i> Per-Class Breakdown:</h6>
+        `;
+
+        // Display breakdown for each class
+        feeData.breakdown.forEach(item => {
+            html += `
+                <div class="card mb-2" style="background-color: #f8f9fa;">
+                    <div class="card-body py-2">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <strong>${item.position}${this.getOrdinalSuffix(item.position)} Class:</strong> ${item.className}<br>
+                                <small class="text-muted">${item.schedule} - ${item.sessionCount} session${item.sessionCount > 1 ? 's' : ''}</small>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <span class="text-muted">${item.sessionCount} × ${item.formatted.pricePerSession} = </span>
+                                <strong class="text-primary">${item.formatted.classFee}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                    <hr class="mt-3">
                     <div class="row">
                         <div class="col-md-6">
-                            <strong>Total Monthly Fee:</strong><br>
-                            <small class="text-muted">(${feeData.formatted.pricePerClass} × ${feeData.classesPerMonth} days)</small>
+                            <h5 class="mb-0"><strong>Total Monthly Fee:</strong></h5>
                         </div>
                         <div class="col-md-6 text-end">
-                            <h4 class="text-primary mb-0">${feeData.formatted.totalFee}</h4>
+                            <h3 class="text-primary mb-0">${feeData.formatted.totalFee}</h3>
                         </div>
                     </div>
                 </div>
@@ -180,11 +202,15 @@ const FeeCalculator = {
                     <div class="card-body">
             `;
 
-            classesData.forEach(classData => {
+            classesData.forEach((classData, index) => {
+                const pricePerSession = this.getPricePerSession(index);
                 html += `
                     <div class="mb-3">
-                        <h6 class="text-primary">${classData.className} - ${classData.schedule}</h6>
-                        <p class="mb-2"><strong>${classData.classCount} classes available</strong></p>
+                        <h6 class="text-primary">${index + 1}${this.getOrdinalSuffix(index + 1)} Class: ${classData.className} - ${classData.schedule}</h6>
+                        <p class="mb-2">
+                            <strong>${classData.classCount} sessions available</strong>
+                            <span class="badge bg-primary ms-2">RM${pricePerSession}/session</span>
+                        </p>
                 `;
 
                 if (classData.availableDates.length > 0) {
@@ -201,7 +227,10 @@ const FeeCalculator = {
                     html += '<p class="text-muted">No classes available this month</p>';
                 }
 
-                html += '</div><hr class="my-3">';
+                html += '</div>';
+                if (index < classesData.length - 1) {
+                    html += '<hr class="my-3">';
+                }
             });
 
             html += `
@@ -211,6 +240,15 @@ const FeeCalculator = {
         }
 
         container.innerHTML = html;
+    },
+
+    /**
+     * Helper function to get ordinal suffix (1st, 2nd, 3rd, 4th)
+     */
+    getOrdinalSuffix: function(num) {
+        const suffixes = ['th', 'st', 'nd', 'rd'];
+        const v = num % 100;
+        return (suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0]);
     },
 
     /**
@@ -254,11 +292,8 @@ const FeeCalculator = {
             // Fetch available dates for each selected class
             const classesData = await this.fetchAvailableDates(selectedClasses, month, year);
 
-            // Calculate average or use the first class's count (they should all be the same month)
-            const classesPerMonth = classesData[0]?.classCount || 0;
-
-            // Calculate fee based on number of classes enrolled (NEW 2026 PRICING)
-            const feeData = this.calculateMonthlyFee(selectedClasses.length, classesPerMonth);
+            // Calculate fee using the CORRECTED formula (per-session pricing)
+            const feeData = this.calculateMonthlyFee(classesData);
 
             // Display the results
             this.displayFeeBreakdown(feeData, classesData);
