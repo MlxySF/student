@@ -13,7 +13,7 @@ header('Content-Type: application/json');
 // Get parameters
 $month = isset($_GET['month']) ? intval($_GET['month']) : date('n');
 $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
-$class_schedule = isset($_GET['class_schedule']) ? $_GET['class_schedule'] : '';
+$class_code = isset($_GET['class_code']) ? $_GET['class_code'] : '';
 
 // Validate month and year
 if ($month < 1 || $month > 12 || $year < 2000 || $year > 2100) {
@@ -22,6 +22,30 @@ if ($month < 1 || $month > 12 || $year < 2000 || $year > 2100) {
 }
 
 try {
+    // Extract day from class_code (e.g., "wsa-sun-10am" -> "Sunday")
+    // Map short day names to full names
+    $dayMap = [
+        'sun' => 'Sunday',
+        'mon' => 'Monday',
+        'tue' => 'Tuesday',
+        'wed' => 'Wednesday',
+        'thu' => 'Thursday',
+        'fri' => 'Friday',
+        'sat' => 'Saturday'
+    ];
+    
+    $dayName = '';
+    if ($class_code) {
+        // Extract day part from class code (e.g., "wsa-sun-10am" -> "sun")
+        $parts = explode('-', $class_code);
+        if (count($parts) >= 2) {
+            $dayShort = strtolower($parts[1]); // Get the day part (sun, mon, tue, etc.)
+            if (isset($dayMap[$dayShort])) {
+                $dayName = $dayMap[$dayShort];
+            }
+        }
+    }
+    
     // Get holidays for the specified month
     $holidays_query = "SELECT holiday_date FROM class_holidays 
                        WHERE MONTH(holiday_date) = :month AND YEAR(holiday_date) = :year";
@@ -43,38 +67,31 @@ try {
     for ($day = 1; $day <= $total_days; $day++) {
         $date = sprintf("%04d-%02d-%02d", $year, $month, $day);
         $day_of_week = date('w', strtotime($date)); // 0 = Sunday, 6 = Saturday
-        $day_name = date('l', strtotime($date));
+        $current_day_name = date('l', strtotime($date));
         
         $all_dates[] = [
             'date' => $date,
             'day' => $day,
             'day_of_week' => $day_of_week,
-            'day_name' => $day_name,
+            'day_name' => $current_day_name,
             'is_holiday' => in_array($date, $holidays)
         ];
         
-        // If not a holiday, add to available dates
+        // If not a holiday and matches the class day, add to available dates
         if (!in_array($date, $holidays)) {
-            // If class_schedule is provided, filter by day of week
-            if ($class_schedule) {
-                // Parse class schedule (e.g., "Monday", "Tuesday", etc.)
-                $schedule_days = explode(',', $class_schedule);
-                $schedule_days = array_map('trim', $schedule_days);
-                
-                if (in_array($day_name, $schedule_days)) {
-                    $available_dates[] = [
-                        'date' => $date,
-                        'day' => $day,
-                        'day_name' => $day_name,
-                        'formatted' => date('D, d M Y', strtotime($date))
-                    ];
-                }
-            } else {
-                // No schedule filter, all non-holiday dates are available
+            if ($dayName && $current_day_name === $dayName) {
                 $available_dates[] = [
                     'date' => $date,
                     'day' => $day,
-                    'day_name' => $day_name,
+                    'day_name' => $current_day_name,
+                    'formatted' => date('D, d M Y', strtotime($date))
+                ];
+            } elseif (!$dayName) {
+                // No specific day filter, return all non-holiday dates
+                $available_dates[] = [
+                    'date' => $date,
+                    'day' => $day,
+                    'day_name' => $current_day_name,
                     'formatted' => date('D, d M Y', strtotime($date))
                 ];
             }
@@ -86,6 +103,8 @@ try {
     
     echo json_encode([
         'success' => true,
+        'class_code' => $class_code,
+        'day_name' => $dayName,
         'month' => $month,
         'year' => $year,
         'total_days' => $total_days,
