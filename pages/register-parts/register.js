@@ -1274,8 +1274,8 @@ const customPassword = passwordType === 'custom' ? document.getElementById('cust
     let receiptBase64 = null;
 
 // CORRECTED FEE CALCULATION - January 2026 Per-Session Pricing
-// IMPORTANT: Classes with FEWER sessions get LOWER pricing (last position)
-// Sort by session count DESCENDING, then apply pricing
+// ✅ FIXED: Sort ASCENDING so classes with FEWER sessions get positioned LAST
+// This ensures they get the LOWER pricing rates (RM21, RM24, etc.)
 function calculateFees() {
     const schedules = document.querySelectorAll('input[name="sch"]:checked');
     const scheduleCount = schedules.length;
@@ -1287,9 +1287,9 @@ function calculateFees() {
     // Get actual class counts using breakdown
     const { breakdown } = calculateActualClassCounts();
     
-    // ✅ SORT by session count DESCENDING (most sessions first, least sessions last)
-    // This ensures classes with fewer sessions get the lower price
-    const sortedBreakdown = breakdown.sort((a, b) => b.classes - a.classes);
+    // ✅ SORT ASCENDING (fewest sessions first → positioned first → gets RM30)
+    // This way: 3 sessions gets RM30, 4 sessions gets RM27, 4 sessions gets RM24, 5 sessions gets RM21
+    const sortedBreakdown = breakdown.sort((a, b) => a.classes - b.classes);
     
     // Per-session pricing based on class position
     const sessionPricing = [30, 27, 24, 21]; // RM30, RM27, RM24, RM21
