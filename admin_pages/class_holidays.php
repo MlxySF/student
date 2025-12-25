@@ -330,6 +330,7 @@ $base_url = rtrim(SITE_URL, '/');
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'same-origin', // Include cookies for session
                 body: JSON.stringify({
                     action: 'add',
                     holiday_date: date,
@@ -361,6 +362,7 @@ $base_url = rtrim(SITE_URL, '/');
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'same-origin', // Include cookies for session
                 body: JSON.stringify({
                     action: 'delete',
                     holiday_date: date
