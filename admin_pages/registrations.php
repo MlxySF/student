@@ -1,6 +1,6 @@
 <?php
 // admin_pages/registrations.php - View registrations with proper status colors
-// UPDATED 2025-12-26: Fixed payment receipt display to handle both images and PDFs
+// UPDATED 2025-12-21: Changed from base64 display to file serving
 
 // Get filter parameter from URL, default to 'all'
 $statusFilter = isset($_GET['status']) ? $_GET['status'] : 'all';
@@ -407,21 +407,6 @@ $totalCount = array_sum($statusCounts);
 
 <!-- View Modals (Outside the table) -->
 <?php foreach ($registrations as $reg): ?>
-<?php 
-// Helper function to detect if file is PDF or image
-function getFileExtension($path) {
-    return strtolower(pathinfo($path, PATHINFO_EXTENSION));
-}
-
-function isPdf($path) {
-    return !empty($path) && getFileExtension($path) === 'pdf';
-}
-
-function isImage($path) {
-    $ext = getFileExtension($path);
-    return in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
-}
-?>
 <div class="modal fade" id="viewModal<?php echo $reg['id']; ?>" tabindex="-1">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -520,10 +505,9 @@ function isImage($path) {
                                     <strong>Parent Signature:</strong>
                                     <div class="border p-2 mt-2 bg-light text-center">
                                         <?php if (!empty($reg['signature_path'])): ?>
-                                            <img src="../serve_file.php?path=<?php echo urlencode($reg['signature_path']); ?>" 
+                                            <img src="serve_file.php?path=<?php echo urlencode($reg['signature_path']); ?>" 
                                                  alt="Signature" 
-                                                 style="max-width: 200px; max-height: 100px;"
-                                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%27100%27%3E%3Ctext x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27 fill=%27%23999%27%3ESignature not available%3C/text%3E%3C/svg%3E';">
+                                                 style="max-width: 200px; max-height: 100px;">
                                         <?php else: ?>
                                             <p class="text-muted mb-0">No signature available</p>
                                         <?php endif; ?>
@@ -604,39 +588,12 @@ function isImage($path) {
                                 
                                 <div class="mt-3">
                                     <strong>Payment Receipt:</strong>
-                                    <div class="border p-2 mt-2 text-center" style="min-height: 150px;">
+                                    <div class="border p-2 mt-2 text-center">
                                         <?php if (!empty($reg['payment_receipt_path'])): ?>
-                                            <?php if (isPdf($reg['payment_receipt_path'])): ?>
-                                                <!-- PDF Receipt - Show link and preview button -->
-                                                <div class="d-flex flex-column align-items-center gap-2">
-                                                    <i class="fas fa-file-pdf text-danger" style="font-size: 48px;"></i>
-                                                    <p class="mb-2">PDF Receipt Uploaded</p>
-                                                    <a href="../serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>" 
-                                                       class="btn btn-sm btn-danger" 
-                                                       target="_blank">
-                                                        <i class="fas fa-external-link-alt"></i> Open PDF Receipt
-                                                    </a>
-                                                </div>
-                                            <?php elseif (isImage($reg['payment_receipt_path'])): ?>
-                                                <!-- Image Receipt - Show inline -->
-                                                <img src="../serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>" 
-                                                     alt="Payment Receipt" 
-                                                     class="img-fluid" 
-                                                     style="max-height: 300px; cursor: pointer;"
-                                                     onclick="window.open('../serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>', '_blank')"
-                                                     onerror="this.parentElement.innerHTML='<p class=\"text-danger mb-0\"><i class=\"fas fa-exclamation-triangle\"></i> Error loading receipt</p>';">
-                                                <p class="text-muted mt-2 mb-0"><small><i class="fas fa-info-circle"></i> Click to view full size</small></p>
-                                            <?php else: ?>
-                                                <!-- Unknown file type -->
-                                                <p class="text-warning mb-0">
-                                                    <i class="fas fa-question-circle"></i> Unknown file type<br>
-                                                    <a href="../serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>" 
-                                                       class="btn btn-sm btn-secondary mt-2" 
-                                                       target="_blank">
-                                                        <i class="fas fa-download"></i> Download File
-                                                    </a>
-                                                </p>
-                                            <?php endif; ?>
+                                            <img src="serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>" 
+                                                 alt="Payment Receipt" 
+                                                 class="img-fluid" 
+                                                 style="max-height: 300px;">
                                         <?php else: ?>
                                             <p class="text-muted mb-0">No receipt available</p>
                                         <?php endif; ?>
@@ -645,11 +602,38 @@ function isImage($path) {
                             </div>
                         </div>
                     </div>
+
+                    <!-- Account Information -->
+                    <!-- <div class="col-md-12 mb-4">
+                        <div class="card border-success">
+                            <div class="card-header bg-success text-white">
+                                <strong><i class="fas fa-key"></i> Student Account Credentials</strong>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <strong>Student ID:</strong>
+                                        <p class="mb-0"><?php echo htmlspecialchars($reg['registration_number']); ?></p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Email:</strong>
+                                        <p class="mb-0"><?php echo htmlspecialchars($reg['email']); ?></p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Password:</strong>
+                                        <p class="mb-0">
+                                            <code class="text-danger fs-5"><?php echo htmlspecialchars($reg['password_generated']); ?></code>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> -->
                 </div>
             </div>
             <div class="modal-footer">
                 <?php if (!empty($reg['pdf_path'])): ?>
-                <a href="../serve_file.php?path=<?php echo urlencode($reg['pdf_path']); ?>" 
+                <a href="serve_file.php?path=<?php echo urlencode($reg['pdf_path']); ?>" 
                    class="btn btn-info" 
                    target="_blank"
                    title="View/Download signed registration agreement PDF">
