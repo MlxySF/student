@@ -10,6 +10,7 @@
     const totalSteps = 7;
     let registrationData = null;
     let savedPdfBlob = null;
+    let classHolidays = []; // Store holidays loaded from API
 
     // ========================================
     // DOM CONTENT LOADED
@@ -45,7 +46,102 @@
         setTimeout(function() {
             updateEventAvailability();
         }, 100);
+        
+        // Load holidays on page load
+        loadHolidays();
     });
+
+// ========================================
+// LOAD HOLIDAYS FROM API
+// ========================================
+async function loadHolidays() {
+    try {
+        const response = await fetch('../api/get_holidays.php');
+        const result = await response.json();
+        
+        if (result.success) {
+            classHolidays = result.holidays.map(h => h.holiday_date);
+            console.log('✅ Holidays loaded:', classHolidays);
+        } else {
+            console.error('❌ Failed to load holidays:', result.message);
+            classHolidays = [];
+        }
+    } catch (error) {
+        console.error('❌ Error loading holidays:', error);
+        classHolidays = [];
+    }
+}
+
+// ========================================
+// CALCULATE CLASS COUNTS FOR EACH SELECTED SCHEDULE
+// ========================================
+function calculateActualClassCounts() {
+    const selectedSchedules = Array.from(document.querySelectorAll('input[name="sch"]:checked'))
+        .map(cb => cb.value);
+    
+    if (selectedSchedules.length === 0) {
+        return { totalClasses: 0, breakdown: [] };
+    }
+    
+    const breakdown = [];
+    let totalClassesAfterDeductions = 0;
+    
+    selectedSchedules.forEach(schedule => {
+        const classCount = calculateClassesForSchedule(schedule, classHolidays);
+        breakdown.push({
+            schedule: schedule,
+            classes: classCount
+        });
+        totalClassesAfterDeductions += classCount;
+    });
+    
+    return {
+        totalClasses: totalClassesAfterDeductions,
+        breakdown: breakdown
+    };
+}
+
+// ========================================
+// CALCULATE CLASSES FOR A SINGLE SCHEDULE
+// ========================================
+function calculateClassesForSchedule(scheduleText, holidays) {
+    // Parse schedule to extract day
+    let dayOfWeek = null;
+    
+    if (scheduleText.includes('Wed') || scheduleText.includes('Wednesday')) {
+        dayOfWeek = 3; // Wednesday
+    } else if (scheduleText.includes('Sun') || scheduleText.includes('Sunday')) {
+        dayOfWeek = 0; // Sunday
+    } else if (scheduleText.includes('Tue') || scheduleText.includes('Tuesday')) {
+        dayOfWeek = 2; // Tuesday
+    } else if (scheduleText.includes('Fri') || scheduleText.includes('Friday')) {
+        dayOfWeek = 5; // Friday
+    }
+    
+    if (dayOfWeek === null) {
+        console.warn('Could not parse day from schedule:', scheduleText);
+        return 12; // Default to 12 if parsing fails
+    }
+    
+    // Generate all dates for 2026 (Jan-Mar) for this day of week
+    const allDates = [];
+    const startDate = new Date('2026-01-01');
+    const endDate = new Date('2026-03-31');
+    
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        if (d.getDay() === dayOfWeek) {
+            const dateStr = d.toISOString().split('T')[0];
+            allDates.push(dateStr);
+        }
+    }
+    
+    // Filter out holidays
+    const validDates = allDates.filter(date => !holidays.includes(date));
+    
+    console.log(`📅 ${scheduleText}: ${allDates.length} total, ${validDates.length} after holidays`);
+    
+    return validDates.length;
+}
 
     // ========================================
     // SCROLL TO TOP HELPER FUNCTION
@@ -1171,70 +1267,77 @@ const customPassword = passwordType === 'custom' ? document.getElementById('cust
     // ========================================
     let receiptBase64 = null;
 
-    function calculateFees() {
-        const schedules = document.querySelectorAll('input[name="sch"]:checked');
-        const classCount = schedules.length;
-        
-        let totalFee = 0;
-        if (classCount === 1) totalFee = 120;
-        else if (classCount === 2) totalFee = 200;
-        else if (classCount === 3) totalFee = 280;
-        else if (classCount >= 4) totalFee = 320;
-        
-        return { classCount, totalFee };
-    }
+function calculateFees() {
+    const schedules = document.querySelectorAll('input[name="sch"]:checked');
+    const scheduleCount = schedules.length;
+    
+    // Get actual class counts after holiday deductions
+    const { totalClasses } = calculateActualClassCounts();
+    
+    let totalFee = 0;
+    if (scheduleCount === 1) totalFee = 120;
+    else if (scheduleCount === 2) totalFee = 200;
+    else if (scheduleCount === 3) totalFee = 280;
+    else if (scheduleCount >= 4) totalFee = 320;
+    
+    return { classCount: totalClasses, totalFee };
+}
 
-    function updatePaymentDisplay() {
-        const { classCount, totalFee } = calculateFees();
+function updatePaymentDisplay() {
+    const { classCount, totalFee } = calculateFees();
+    const { breakdown } = calculateActualClassCounts();
+    
+    // Get selected schedules
+    const scheduleCheckboxes = document.querySelectorAll('input[name="sch"]:checked');
+    const selectedClasses = Array.from(scheduleCheckboxes).map(cb => cb.value);
+    
+    // Update class count
+    document.getElementById('payment-class-count').innerText = classCount;
+    
+    // Create a detailed list of selected classes with actual class counts
+    let classListHTML = '';
+    if (selectedClasses.length > 0) {
+        classListHTML = '<div style="margin-top: 8px; padding: 8px; background: #f8fafc; border-radius: 6px; border-left: 3px solid #7c3aed;">';
+        classListHTML += '<div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 4px; text-transform: uppercase;">📅 Selected Classes (After Holiday Deductions):</div>';
         
-        // Get selected schedules
-        const scheduleCheckboxes = document.querySelectorAll('input[name="sch"]:checked');
-        const selectedClasses = Array.from(scheduleCheckboxes).map(cb => cb.value);
+        breakdown.forEach(({ schedule, classes }) => {
+            classListHTML += `<div style="font-size: 12px; color: #1e293b; padding: 3px 0;">• ${schedule} <span style="color: #16a34a; font-weight: 600;">(${classes} classes)</span></div>`;
+        });
         
-        // Update class count
-        document.getElementById('payment-class-count').innerText = classCount;
-        
-        // Create a list of selected classes to display
-        let classListHTML = '';
-        if (selectedClasses.length > 0) {
-            classListHTML = '<div style="margin-top: 8px; padding: 8px; background: #f8fafc; border-radius: 6px; border-left: 3px solid #7c3aed;">';
-            classListHTML += '<div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 4px; text-transform: uppercase;">📅 Selected Classes:</div>';
-            selectedClasses.forEach((cls, index) => {
-                classListHTML += `<div style="font-size: 12px; color: #1e293b; padding: 3px 0;">• ${cls}</div>`;
-            });
-            classListHTML += '</div>';
-        }
-        
-        // Find the parent container and update it
-        const classCountElement = document.getElementById('payment-class-count');
-        const parentDiv = classCountElement.closest('.flex.justify-between.items-center');
-        
-        // Remove any existing class list
-        const existingList = parentDiv.parentElement.querySelector('.selected-classes-list');
-        if (existingList) existingList.remove();
-        
-        // Add the new class list after the count div
-        if (classListHTML) {
-            const listContainer = document.createElement('div');
-            listContainer.className = 'selected-classes-list';
-            listContainer.innerHTML = classListHTML;
-            parentDiv.parentElement.insertBefore(listContainer, parentDiv.nextSibling);
-        }
-        
-        // Update total
-        document.getElementById('payment-total').innerText = `RM ${totalFee}`;
-        
-        // Update status
-        const statusRadios = document.getElementsByName('status');
-        let status = '';
-        for (const radio of statusRadios) {
-            if (radio.checked) {
-                status = radio.value;
-                break;
-            }
-        }
-        document.getElementById('payment-status').innerText = status;
+        classListHTML += `<div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #e2e8f0; font-weight: 600; color: #7c3aed; font-size: 13px;">Total Classes: ${classCount}</div>`;
+        classListHTML += '</div>';
     }
+    
+    // Find the parent container and update it
+    const classCountElement = document.getElementById('payment-class-count');
+    const parentDiv = classCountElement.closest('.flex.justify-between.items-center');
+    
+    // Remove any existing class list
+    const existingList = parentDiv.parentElement.querySelector('.selected-classes-list');
+    if (existingList) existingList.remove();
+    
+    // Add the new class list after the count div
+    if (classListHTML) {
+        const listContainer = document.createElement('div');
+        listContainer.className = 'selected-classes-list';
+        listContainer.innerHTML = classListHTML;
+        parentDiv.parentElement.insertBefore(listContainer, parentDiv.nextSibling);
+    }
+    
+    // Update total
+    document.getElementById('payment-total').innerText = `RM ${totalFee}`;
+    
+    // Update status
+    const statusRadios = document.getElementsByName('status');
+    let status = '';
+    for (const radio of statusRadios) {
+        if (radio.checked) {
+            status = radio.value;
+            break;
+        }
+    }
+    document.getElementById('payment-status').innerText = status;
+}
     
     // Toggle payment method sections
 function togglePaymentMethod() {
@@ -1418,4 +1521,3 @@ function removeReceipt() {
     receiptBase64 = null;
     console.log('[Receipt Upload] Receipt removed, receiptBase64 cleared');
 }
-
