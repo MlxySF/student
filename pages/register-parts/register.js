@@ -1274,8 +1274,8 @@ const customPassword = passwordType === 'custom' ? document.getElementById('cust
     let receiptBase64 = null;
 
 // CORRECTED FEE CALCULATION - January 2026 Per-Session Pricing
-// ✅ FIXED: Sort ASCENDING so classes with FEWER sessions get positioned LAST
-// This ensures they get the LOWER pricing rates (RM21, RM24, etc.)
+// ✅ MORE SESSIONS → HIGHER RATE (RM30, RM27, RM24, RM21)
+// ✅ FEWER SESSIONS → LOWER RATE
 function calculateFees() {
     const schedules = document.querySelectorAll('input[name="sch"]:checked');
     const scheduleCount = schedules.length;
@@ -1287,9 +1287,9 @@ function calculateFees() {
     // Get actual class counts using breakdown
     const { breakdown } = calculateActualClassCounts();
     
-    // ✅ SORT ASCENDING (fewest sessions first → positioned first → gets RM30)
-    // This way: 3 sessions gets RM30, 4 sessions gets RM27, 4 sessions gets RM24, 5 sessions gets RM21
-    const sortedBreakdown = breakdown.sort((a, b) => a.classes - b.classes);
+    // ✅ SORT DESCENDING (most sessions first → positioned first → gets RM30)
+    // Example: 5 sessions gets RM30, 4 sessions gets RM27, 4 sessions gets RM24, 3 sessions gets RM21
+    const sortedBreakdown = breakdown.sort((a, b) => b.classes - a.classes);
     
     // Per-session pricing based on class position
     const sessionPricing = [30, 27, 24, 21]; // RM30, RM27, RM24, RM21
@@ -1324,48 +1324,10 @@ function calculateFees() {
 
 
 function updatePaymentDisplay() {
-    const { classCount, totalFee, sortedBreakdown } = calculateFees();
+    const { classCount, totalFee } = calculateFees();
     
-    // Get selected schedules
-    const scheduleCheckboxes = document.querySelectorAll('input[name="sch"]:checked');
-    const selectedClasses = Array.from(scheduleCheckboxes).map(cb => cb.value);
-    
-    // Update class count
+    // Update class count (just the number, no breakdown)
     document.getElementById('payment-class-count').innerText = classCount;
-    
-    // Create a detailed list of selected classes with pricing (SORTED by session count)
-    let classListHTML = '';
-    if (selectedClasses.length > 0 && sortedBreakdown) {
-        const sessionPricing = [30, 27, 24, 21];
-        
-        classListHTML = '<div style="margin-top: 8px; padding: 8px; background: #f8fafc; border-radius: 6px; border-left: 3px solid #7c3aed;">';
-        classListHTML += '<div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 4px; text-transform: uppercase;">📅 Fee Calculation (Sorted by Sessions):</div>';
-        
-        sortedBreakdown.forEach((classData, index) => {
-            const pricePerSession = sessionPricing[index] || sessionPricing[sessionPricing.length - 1];
-            const classFee = pricePerSession * classData.classes;
-            classListHTML += `<div style="font-size: 12px; color: #1e293b; padding: 3px 0;">• ${classData.schedule} <span style="color: #7c3aed; font-weight: 600;">(${classData.classes} × RM${pricePerSession} = RM${classFee})</span></div>`;
-        });
-        
-        classListHTML += `<div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #e2e8f0; font-weight: 600; color: #16a34a; font-size: 13px;">Total: ${classCount} sessions = RM${totalFee}</div>`;
-        classListHTML += '</div>';
-    }
-    
-    // Find the parent container and update it
-    const classCountElement = document.getElementById('payment-class-count');
-    const parentDiv = classCountElement.closest('.flex.justify-between.items-center');
-    
-    // Remove any existing class list
-    const existingList = parentDiv.parentElement.querySelector('.selected-classes-list');
-    if (existingList) existingList.remove();
-    
-    // Add the new class list after the count div
-    if (classListHTML) {
-        const listContainer = document.createElement('div');
-        listContainer.className = 'selected-classes-list';
-        listContainer.innerHTML = classListHTML;
-        parentDiv.parentElement.insertBefore(listContainer, parentDiv.nextSibling);
-    }
     
     // Update total
     document.getElementById('payment-total').innerText = `RM ${totalFee}`;
@@ -1414,75 +1376,6 @@ function togglePaymentMethod() {
 }
 
 // Copy account number to clipboard
-function copyAccountNumber() {
-    const accountNumber = '5050 1981 6740';
-    navigator.clipboard.writeText(accountNumber).then(function() {
-        // Show success message
-        alert('Account number copied! 账户号码已复制！');
-    }, function(err) {
-        console.error('Could not copy text: ', err);
-    });
-}
-
-// Handle receipt upload
-// Handle receipt upload
-function handleReceiptUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    // Check file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB!');
-        event.target.value = '';
-        return;
-    }
-
-    // Show preview
-    const uploadPrompt = document.getElementById('upload-prompt');
-    const uploadPreview = document.getElementById('upload-preview');
-    const previewImage = document.getElementById('preview-image');
-    const previewFilename = document.getElementById('preview-filename');
-
-    uploadPrompt.classList.add('hidden');
-    uploadPreview.classList.remove('hidden');
-
-    // Set filename
-    previewFilename.textContent = file.name;
-
-    // Convert to base64 and store in receiptBase64
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        receiptBase64 = e.target.result; // ✅ STORE BASE64 DATA
-        console.log('[Receipt Upload] File converted to base64, size:', receiptBase64.length);
-        
-        // Show image preview if it's an image
-        if (file.type.startsWith('image/')) {
-            previewImage.src = e.target.result;
-            previewImage.style.display = 'block';
-        } else {
-            // For PDF, show PDF icon
-            previewImage.style.display = 'none';
-        }
-    };
-    reader.readAsDataURL(file);
-}
-
-
-// Remove receipt
-function removeReceipt() {
-    const uploadPrompt = document.getElementById('upload-prompt');
-    const uploadPreview = document.getElementById('upload-preview');
-    const receiptUpload = document.getElementById('receipt-upload');
-    const previewImage = document.getElementById('preview-image');
-    
-    uploadPreview.classList.add('hidden');
-    uploadPrompt.classList.remove('hidden');
-    receiptUpload.value = '';
-    previewImage.src = '';
-}
-
-
-    // Copy account number to clipboard
 function copyAccountNumber() {
     const accountNumber = '5050 1981 6740';
     navigator.clipboard.writeText(accountNumber).then(function() {
