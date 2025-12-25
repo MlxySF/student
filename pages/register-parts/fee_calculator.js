@@ -5,9 +5,12 @@
  * - Number of sessions per class in the month
  * - Per-session pricing: 1st class RM30, 2nd class RM27, 3rd class RM24, 4th class RM21
  * 
+ * IMPORTANT RULE: Classes are SORTED by session count (descending)
+ * Classes with FEWER sessions get LOWER pricing (last position)
+ * 
  * EXAMPLES:
- * - Tuesday (3 sessions) + Wednesday (3 sessions) = (3×RM30) + (3×RM27) = RM90 + RM81 = RM171
- * - Tuesday (3 sessions) + Sunday (2 sessions) = (3×RM30) + (2×RM27) = RM90 + RM54 = RM144
+ * - Wed (3), Tue (3), Fri (3), Sun (2) → Sorted as: 3,3,3,2 → Pricing: RM30,RM27,RM24,RM21
+ * - Result: (3×RM30) + (3×RM27) + (3×RM24) + (2×RM21) = RM90 + RM81 + RM72 + RM42 = RM285
  */
 
 const FeeCalculator = {
@@ -71,18 +74,23 @@ const FeeCalculator = {
     },
 
     /**
-     * Calculate total monthly fee - CORRECTED FORMULA
-     * Each class is charged at its position rate × number of sessions
+     * Calculate total monthly fee - CORRECTED FORMULA WITH SORTING
+     * Classes are SORTED by session count (descending) before pricing
+     * This ensures classes with fewer sessions get the lower pricing
      * @param {Array} classesData - Array of class data with session counts
      * @returns {Object} Fee breakdown
      */
     calculateMonthlyFee: function(classesData) {
+        // ✅ SORT classes by session count DESCENDING (most sessions first)
+        // This ensures classes with fewer sessions get the lower price (last position)
+        const sortedClasses = [...classesData].sort((a, b) => b.classCount - a.classCount);
+        
         let totalFee = 0;
         let breakdown = [];
         let totalSessions = 0;
         
-        // Calculate fee for each class based on its position
-        classesData.forEach((classData, index) => {
+        // Calculate fee for each class based on its SORTED position
+        sortedClasses.forEach((classData, index) => {
             const pricePerSession = this.getPricePerSession(index);
             const sessionCount = classData.classCount;
             const classFee = pricePerSession * sessionCount;
@@ -104,6 +112,12 @@ const FeeCalculator = {
             });
         });
         
+        console.log('💰 Fee Calculation (Sorted by Sessions):');
+        breakdown.forEach(item => {
+            console.log(`   ${item.position}. ${item.className}: ${item.sessionCount} sessions × RM${item.pricePerSession} = RM${item.classFee}`);
+        });
+        console.log(`   TOTAL: ${totalSessions} sessions = RM${totalFee}`);
+        
         return {
             numClasses: classesData.length,
             totalSessions: totalSessions,
@@ -116,7 +130,7 @@ const FeeCalculator = {
     },
 
     /**
-     * Display fee breakdown in the UI - UPDATED WITH CORRECTED FORMULA
+     * Display fee breakdown in the UI - UPDATED WITH SORTING INFO
      * @param {Object} feeData - Fee calculation data
      * @param {Array} classesData - Available dates data for each class
      */
@@ -132,7 +146,8 @@ const FeeCalculator = {
                 <div class="card-body">
                     <div class="alert alert-info mb-3">
                         <i class="fas fa-info-circle"></i> <strong>Pricing Formula:</strong><br>
-                        1st class: RM30/session | 2nd class: RM27/session | 3rd class: RM24/session | 4th class: RM21/session
+                        Classes sorted by session count (most → least)<br>
+                        1st: RM30/session | 2nd: RM27/session | 3rd: RM24/session | 4th: RM21/session
                     </div>
                     
                     <div class="row mb-3">
@@ -155,10 +170,10 @@ const FeeCalculator = {
                     
                     <hr>
                     
-                    <h6 class="mb-3"><i class="fas fa-list"></i> Per-Class Breakdown:</h6>
+                    <h6 class="mb-3"><i class="fas fa-list"></i> Per-Class Breakdown (Sorted by Sessions):</h6>
         `;
 
-        // Display breakdown for each class
+        // Display breakdown for each class (already sorted)
         feeData.breakdown.forEach(item => {
             html += `
                 <div class="card mb-2" style="background-color: #f8f9fa;">
@@ -192,17 +207,20 @@ const FeeCalculator = {
             </div>
         `;
 
-        // Add available dates for each class
+        // Add available dates for each class (show in sorted order)
         if (classesData && classesData.length > 0) {
+            // Sort classesData by classCount to match the breakdown
+            const sortedClassesData = [...classesData].sort((a, b) => b.classCount - a.classCount);
+            
             html += `
                 <div class="card border-info">
                     <div class="card-header bg-info text-white">
-                        <h6 class="mb-0"><i class="fas fa-calendar-check"></i> Available Class Dates</h6>
+                        <h6 class="mb-0"><i class="fas fa-calendar-check"></i> Available Class Dates (Sorted by Sessions)</h6>
                     </div>
                     <div class="card-body">
             `;
 
-            classesData.forEach((classData, index) => {
+            sortedClassesData.forEach((classData, index) => {
                 const pricePerSession = this.getPricePerSession(index);
                 html += `
                     <div class="mb-3">
@@ -228,7 +246,7 @@ const FeeCalculator = {
                 }
 
                 html += '</div>';
-                if (index < classesData.length - 1) {
+                if (index < sortedClassesData.length - 1) {
                     html += '<hr class="my-3">';
                 }
             });
@@ -292,7 +310,7 @@ const FeeCalculator = {
             // Fetch available dates for each selected class
             const classesData = await this.fetchAvailableDates(selectedClasses, month, year);
 
-            // Calculate fee using the CORRECTED formula (per-session pricing)
+            // Calculate fee using CORRECTED formula with SORTING
             const feeData = this.calculateMonthlyFee(classesData);
 
             // Display the results
