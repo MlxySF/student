@@ -39,208 +39,615 @@ $base_url = rtrim(SITE_URL, '/');
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .calendar-day {
-            padding: 10px;
-            border: 1px solid #ddd;
-            min-height: 80px;
-            cursor: pointer;
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            --info-gradient: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .calendar-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .calendar-header-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .calendar-title {
+            font-size: 32px;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .calendar-subtitle {
+            color: #64748b;
+            font-size: 16px;
+        }
+
+        /* Month/Year Selector */
+        .selector-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .form-select {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-weight: 600;
             transition: all 0.3s;
         }
-        .calendar-day:hover {
-            background-color: #f8f9fa;
+
+        .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
         }
-        .calendar-day.holiday {
-            background-color: #fee;
-            border-color: #f88;
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s;
         }
-        .calendar-day.today {
-            border: 2px solid #007bff;
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
         }
-        .calendar-header {
-            background-color: #007bff;
+
+        /* Statistics Cards */
+        .stats-row {
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+        }
+
+        .stat-card.danger::before {
+            background: var(--danger-gradient);
+        }
+
+        .stat-card.success::before {
+            background: var(--success-gradient);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 15px;
+            background: var(--primary-gradient);
             color: white;
-            padding: 10px;
-            font-weight: bold;
         }
-        .stats-card {
-            border-left: 4px solid #007bff;
+
+        .stat-card.danger .stat-icon {
+            background: var(--danger-gradient);
+        }
+
+        .stat-card.success .stat-icon {
+            background: var(--success-gradient);
+        }
+
+        .stat-value {
+            font-size: 42px;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Calendar View */
+        .calendar-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .calendar-card-header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f1f5f9;
+            margin-bottom: 25px;
+        }
+
+        .calendar-month-title {
+            font-size: 28px;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+        }
+
+        .calendar-instruction {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        /* Day Headers */
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .weekday-header {
+            text-align: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            background: var(--primary-gradient);
+        }
+
+        /* Calendar Grid */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 10px;
+            position: relative;
+        }
+
+        .calendar-day:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+
+        .calendar-day.holiday {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border-color: #ef4444;
+        }
+
+        .calendar-day.holiday:hover {
+            background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+            border-color: #dc2626;
+        }
+
+        .calendar-day.today {
+            border: 3px solid #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+        }
+
+        .calendar-day.today::after {
+            content: 'Today';
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #667eea;
+            color: white;
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        .day-number {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+
+        .holiday .day-number {
+            color: #dc2626;
+        }
+
+        .holiday-reason {
+            font-size: 11px;
+            color: #dc2626;
+            text-align: center;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Holidays List */
+        .holidays-list-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+
+        .table thead th {
+            border: none;
+            color: #1e293b;
+            font-weight: 700;
+            padding: 15px;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .table tbody tr {
+            transition: all 0.3s;
+        }
+
+        .table tbody tr:hover {
+            background: #f8fafc;
+            transform: scale(1.01);
+        }
+
+        .table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+            border-color: #f1f5f9;
+        }
+
+        .btn-danger {
+            background: var(--danger-gradient);
+            border: none;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Modal */
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            border-bottom: 2px solid #f1f5f9;
+            padding: 25px 30px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .modal-title {
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .modal-footer {
+            border-top: 2px solid #f1f5f9;
+            padding: 20px 30px;
+        }
+
+        .form-control {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-secondary {
+            background: #64748b;
+            border: none;
+            border-radius: 12px;
+            padding: 10px 25px;
+            font-weight: 600;
+        }
+
+        .alert {
+            border-radius: 15px;
+            border: none;
+            padding: 20px;
+            font-weight: 600;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1e40af;
+        }
+
+        @media (max-width: 768px) {
+            .calendar-title {
+                font-size: 24px;
+            }
+
+            .calendar-month-title {
+                font-size: 22px;
+            }
+
+            .stat-value {
+                font-size: 32px;
+            }
+
+            .weekday-header {
+                font-size: 12px;
+                padding: 8px;
+            }
+
+            .day-number {
+                font-size: 16px;
+            }
+
+            .holiday-reason {
+                font-size: 9px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container-fluid mt-4">
-        <div class="row">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2><i class="fas fa-calendar-times"></i> Class Holidays Management</h2>
-                    <a href="admin.php" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Back to Admin
-                    </a>
+    <div class="container-fluid calendar-container mt-4">
+        <!-- Header -->
+        <div class="calendar-header-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="calendar-title">
+                        <i class="fas fa-calendar-times"></i> Class Holidays Management
+                    </h1>
+                    <p class="calendar-subtitle">Manage non-class days and holidays for your school</p>
                 </div>
+                <a href="admin.php?page=dashboard" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
 
-                <!-- Month/Year Selector -->
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <form method="GET" action="class_holidays.php" class="row g-3">
-                            <div class="col-md-5">
-                                <label class="form-label">Month</label>
-                                <select name="month" class="form-select">
-                                    <?php for ($m = 1; $m <= 12; $m++): ?>
-                                        <option value="<?php echo $m; ?>" <?php echo $m == $current_month ? 'selected' : ''; ?>>
-                                            <?php echo $month_names[$m]; ?>
-                                        </option>
-                                    <?php endfor; ?>
-                                </select>
-                            </div>
-                            <div class="col-md-5">
-                                <label class="form-label">Year</label>
-                                <select name="year" class="form-select">
-                                    <?php for ($y = 2025; $y <= 2027; $y++): ?>
-                                        <option value="<?php echo $y; ?>" <?php echo $y == $current_year ? 'selected' : ''; ?>>
-                                            <?php echo $y; ?>
-                                        </option>
-                                    <?php endfor; ?>
-                                </select>
-                            </div>
-                            <div class="col-md-2 d-flex align-items-end">
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="fas fa-search"></i> View
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+        <!-- Month/Year Selector -->
+        <div class="selector-card">
+            <form method="GET" action="admin.php" class="row g-3 align-items-end">
+                <input type="hidden" name="page" value="holidays">
+                <div class="col-md-5">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-calendar"></i> Select Month
+                    </label>
+                    <select name="month" class="form-select">
+                        <?php for ($m = 1; $m <= 12; $m++): ?>
+                            <option value="<?php echo $m; ?>" <?php echo $m == $current_month ? 'selected' : ''; ?>>
+                                <?php echo $month_names[$m]; ?>
+                            </option>
+                        <?php endfor; ?>
+                    </select>
                 </div>
-
-                <!-- Statistics -->
-                <div class="row mb-4">
-                    <div class="col-md-4">
-                        <div class="card stats-card">
-                            <div class="card-body">
-                                <h6 class="text-muted">Total Days in Month</h6>
-                                <h3><?php echo $total_days; ?></h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card stats-card" style="border-left-color: #dc3545;">
-                            <div class="card-body">
-                                <h6 class="text-muted">Holidays/Non-Class Days</h6>
-                                <h3><?php echo count($holidays); ?></h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card stats-card" style="border-left-color: #28a745;">
-                            <div class="card-body">
-                                <h6 class="text-muted">Available Class Days</h6>
-                                <h3><?php echo $available_days; ?></h3>
-                            </div>
-                        </div>
-                    </div>
+                <div class="col-md-5">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-calendar-alt"></i> Select Year
+                    </label>
+                    <select name="year" class="form-select">
+                        <?php for ($y = 2025; $y <= 2027; $y++): ?>
+                            <option value="<?php echo $y; ?>" <?php echo $y == $current_year ? 'selected' : ''; ?>>
+                                <?php echo $y; ?>
+                            </option>
+                        <?php endfor; ?>
+                    </select>
                 </div>
-
-                <!-- Calendar View -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0"><?php echo $month_names[$current_month] . ' ' . $current_year; ?> Calendar</h5>
-                        <small class="text-muted">Click on any date to mark/unmark as holiday</small>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-2">
-                            <!-- Day headers -->
-                            <?php
-                            $day_names = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                            foreach ($day_names as $day) {
-                                echo '<div class="col calendar-header text-center">' . $day . '</div>';
-                            }
-                            ?>
-                        </div>
-                        <div class="row g-2 mt-1">
-                            <?php
-                            // Get first day of month (0 = Sunday, 6 = Saturday)
-                            $first_day = date('w', strtotime("$current_year-$current_month-1"));
-                            
-                            // Empty cells before first day
-                            for ($i = 0; $i < $first_day; $i++) {
-                                echo '<div class="col"></div>';
-                            }
-                            
-                            // Create array of holiday dates for easy checking
-                            $holiday_dates = array_column($holidays, 'holiday_date');
-                            
-                            // Days of month
-                            for ($day = 1; $day <= $total_days; $day++) {
-                                $date = sprintf("%04d-%02d-%02d", $current_year, $current_month, $day);
-                                $is_holiday = in_array($date, $holiday_dates);
-                                $is_today = ($date == date('Y-m-d'));
-                                
-                                $classes = 'calendar-day';
-                                if ($is_holiday) $classes .= ' holiday';
-                                if ($is_today) $classes .= ' today';
-                                
-                                echo '<div class="col">';
-                                echo '<div class="' . $classes . '" onclick="toggleHoliday(\'' . $date . '\')">';
-                                echo '<strong>' . $day . '</strong>';
-                                if ($is_holiday) {
-                                    // Find the holiday reason
-                                    $reason = '';
-                                    foreach ($holidays as $h) {
-                                        if ($h['holiday_date'] == $date) {
-                                            $reason = $h['reason'];
-                                            break;
-                                        }
-                                    }
-                                    echo '<br><small class="text-danger"><i class="fas fa-times-circle"></i> ' . htmlspecialchars($reason) . '</small>';
-                                }
-                                echo '</div>';
-                                echo '</div>';
-                            }
-                            ?>
-                        </div>
-                    </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> View
+                    </button>
                 </div>
+            </form>
+        </div>
 
-                <!-- Holidays List -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Holidays & Non-Class Days List</h5>
+        <!-- Statistics -->
+        <div class="row stats-row">
+            <div class="col-md-4 mb-3">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-day"></i>
                     </div>
-                    <div class="card-body">
-                        <?php if (count($holidays) > 0): ?>
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Day</th>
-                                            <th>Reason</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($holidays as $holiday): ?>
-                                            <tr>
-                                                <td><?php echo date('d M Y', strtotime($holiday['holiday_date'])); ?></td>
-                                                <td><?php echo date('l', strtotime($holiday['holiday_date'])); ?></td>
-                                                <td><?php echo htmlspecialchars($holiday['reason']); ?></td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-danger" onclick="deleteHoliday('<?php echo $holiday['holiday_date']; ?>')">
-                                                        <i class="fas fa-trash"></i> Remove
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php else: ?>
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle"></i> No holidays marked for this month. Click on calendar dates to add holidays.
-                            </div>
-                        <?php endif; ?>
-                    </div>
+                    <div class="stat-value"><?php echo $total_days; ?></div>
+                    <div class="stat-label">Total Days in Month</div>
                 </div>
             </div>
+            <div class="col-md-4 mb-3">
+                <div class="stat-card danger">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-times"></i>
+                    </div>
+                    <div class="stat-value"><?php echo count($holidays); ?></div>
+                    <div class="stat-label">Holidays / Non-Class Days</div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="stat-card success">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-value"><?php echo $available_days; ?></div>
+                    <div class="stat-label">Available Class Days</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar View -->
+        <div class="calendar-card">
+            <div class="calendar-card-header">
+                <h2 class="calendar-month-title">
+                    <?php echo $month_names[$current_month] . ' ' . $current_year; ?>
+                </h2>
+                <p class="calendar-instruction">
+                    <i class="fas fa-mouse-pointer"></i> Click on any date to mark/unmark as holiday
+                </p>
+            </div>
+            
+            <!-- Weekday Headers -->
+            <div class="calendar-weekdays">
+                <?php
+                $day_names = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                foreach ($day_names as $day) {
+                    echo '<div class="weekday-header">' . $day . '</div>';
+                }
+                ?>
+            </div>
+
+            <!-- Calendar Grid -->
+            <div class="calendar-grid">
+                <?php
+                // Get first day of month (0 = Sunday, 6 = Saturday)
+                $first_day = date('w', strtotime("$current_year-$current_month-1"));
+                
+                // Empty cells before first day
+                for ($i = 0; $i < $first_day; $i++) {
+                    echo '<div></div>';
+                }
+                
+                // Create array of holiday dates for easy checking
+                $holiday_dates = array_column($holidays, 'holiday_date');
+                
+                // Days of month
+                for ($day = 1; $day <= $total_days; $day++) {
+                    $date = sprintf("%04d-%02d-%02d", $current_year, $current_month, $day);
+                    $is_holiday = in_array($date, $holiday_dates);
+                    $is_today = ($date == date('Y-m-d'));
+                    
+                    $classes = 'calendar-day';
+                    if ($is_holiday) $classes .= ' holiday';
+                    if ($is_today) $classes .= ' today';
+                    
+                    echo '<div class="' . $classes . '" onclick="toggleHoliday(\'' . $date . '\')">';
+                    echo '<div class="day-number">' . $day . '</div>';
+                    if ($is_holiday) {
+                        // Find the holiday reason
+                        $reason = '';
+                        foreach ($holidays as $h) {
+                            if ($h['holiday_date'] == $date) {
+                                $reason = $h['reason'];
+                                break;
+                            }
+                        }
+                        echo '<div class="holiday-reason">';
+                        echo '<i class="fas fa-times-circle"></i>';
+                        echo '<span>' . htmlspecialchars($reason) . '</span>';
+                        echo '</div>';
+                    }
+                    echo '</div>';
+                }
+                ?>
+            </div>
+        </div>
+
+        <!-- Holidays List -->
+        <div class="holidays-list-card">
+            <h4 class="mb-4">
+                <i class="fas fa-list"></i> Holidays & Non-Class Days List
+            </h4>
+            <?php if (count($holidays) > 0): ?>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-calendar-day"></i> Date</th>
+                                <th><i class="fas fa-clock"></i> Day</th>
+                                <th><i class="fas fa-info-circle"></i> Reason</th>
+                                <th><i class="fas fa-cog"></i> Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($holidays as $holiday): ?>
+                                <tr>
+                                    <td>
+                                        <strong><?php echo date('d M Y', strtotime($holiday['holiday_date'])); ?></strong>
+                                    </td>
+                                    <td><?php echo date('l', strtotime($holiday['holiday_date'])); ?></td>
+                                    <td><?php echo htmlspecialchars($holiday['reason']); ?></td>
+                                    <td>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteHoliday('<?php echo $holiday['holiday_date']; ?>')">
+                                            <i class="fas fa-trash"></i> Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php else: ?>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> No holidays marked for this month. Click on calendar dates to add holidays.
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -249,26 +656,36 @@ $base_url = rtrim(SITE_URL, '/');
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Mark as Holiday/Non-Class Day</h5>
+                    <h5 class="modal-title">
+                        <i class="fas fa-calendar-plus"></i> Mark as Holiday/Non-Class Day
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <form id="holidayForm">
                         <input type="hidden" id="holiday_date" name="holiday_date">
                         <div class="mb-3">
-                            <label class="form-label">Date</label>
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-calendar"></i> Date
+                            </label>
                             <input type="text" class="form-control" id="display_date" readonly>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Reason</label>
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-edit"></i> Reason
+                            </label>
                             <input type="text" class="form-control" id="reason" name="reason" 
                                    placeholder="e.g., Public Holiday, School Break, etc." required>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="saveHoliday()">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="saveHoliday()">
+                        <i class="fas fa-save"></i> Save
+                    </button>
                 </div>
             </div>
         </div>
