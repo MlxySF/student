@@ -39,38 +39,32 @@ try {
         $reason = $input['reason'] ?? 'Holiday';
         
         // Check if holiday already exists
-        $check_query = "SELECT id FROM class_holidays WHERE holiday_date = ?";
-        $stmt = $conn->prepare($check_query);
-        $stmt->bind_param("s", $holiday_date);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $check_query = "SELECT id FROM class_holidays WHERE holiday_date = :holiday_date";
+        $stmt = $pdo->prepare($check_query);
+        $stmt->execute(['holiday_date' => $holiday_date]);
         
-        if ($result->num_rows > 0) {
+        if ($stmt->fetch()) {
             echo json_encode(['success' => false, 'message' => 'Holiday already exists for this date']);
             exit();
         }
-        $stmt->close();
         
         // Insert new holiday
-        $insert_query = "INSERT INTO class_holidays (holiday_date, reason, created_at) VALUES (?, ?, NOW())";
-        $stmt = $conn->prepare($insert_query);
-        $stmt->bind_param("ss", $holiday_date, $reason);
+        $insert_query = "INSERT INTO class_holidays (holiday_date, reason, created_at) VALUES (:holiday_date, :reason, NOW())";
+        $stmt = $pdo->prepare($insert_query);
         
-        if ($stmt->execute()) {
+        if ($stmt->execute(['holiday_date' => $holiday_date, 'reason' => $reason])) {
             echo json_encode(['success' => true, 'message' => 'Holiday added successfully']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to add holiday']);
         }
-        $stmt->close();
         
     } elseif ($action === 'delete') {
         // Delete holiday
-        $delete_query = "DELETE FROM class_holidays WHERE holiday_date = ?";
-        $stmt = $conn->prepare($delete_query);
-        $stmt->bind_param("s", $holiday_date);
+        $delete_query = "DELETE FROM class_holidays WHERE holiday_date = :holiday_date";
+        $stmt = $pdo->prepare($delete_query);
         
-        if ($stmt->execute()) {
-            if ($stmt->affected_rows > 0) {
+        if ($stmt->execute(['holiday_date' => $holiday_date])) {
+            if ($stmt->rowCount() > 0) {
                 echo json_encode(['success' => true, 'message' => 'Holiday removed successfully']);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Holiday not found']);
@@ -78,7 +72,6 @@ try {
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to remove holiday']);
         }
-        $stmt->close();
         
     } else {
         echo json_encode(['success' => false, 'message' => 'Invalid action']);
@@ -87,6 +80,4 @@ try {
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
 }
-
-$conn->close();
 ?>
