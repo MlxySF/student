@@ -20,17 +20,11 @@ $current_year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
 
 // Fetch existing holidays for the selected month
 $holidays_query = "SELECT * FROM class_holidays 
-                   WHERE MONTH(holiday_date) = ? AND YEAR(holiday_date) = ? 
+                   WHERE MONTH(holiday_date) = :month AND YEAR(holiday_date) = :year 
                    ORDER BY holiday_date";
-$stmt = $conn->prepare($holidays_query);
-$stmt->bind_param("ii", $current_month, $current_year);
-$stmt->execute();
-$holidays_result = $stmt->get_result();
-$holidays = [];
-while ($row = $holidays_result->fetch_assoc()) {
-    $holidays[] = $row;
-}
-$stmt->close();
+$stmt = $pdo->prepare($holidays_query);
+$stmt->execute(['month' => $current_month, 'year' => $current_year]);
+$holidays = $stmt->fetchAll();
 
 // Calculate available class days for the month
 $total_days = cal_days_in_month(CAL_GREGORIAN, $current_month, $current_year);
