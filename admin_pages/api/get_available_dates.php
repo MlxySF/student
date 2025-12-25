@@ -24,17 +24,14 @@ if ($month < 1 || $month > 12 || $year < 2000 || $year > 2100) {
 try {
     // Get holidays for the specified month
     $holidays_query = "SELECT holiday_date FROM class_holidays 
-                       WHERE MONTH(holiday_date) = ? AND YEAR(holiday_date) = ?";
-    $stmt = $conn->prepare($holidays_query);
-    $stmt->bind_param("ii", $month, $year);
-    $stmt->execute();
-    $result = $stmt->get_result();
+                       WHERE MONTH(holiday_date) = :month AND YEAR(holiday_date) = :year";
+    $stmt = $pdo->prepare($holidays_query);
+    $stmt->execute(['month' => $month, 'year' => $year]);
     
     $holidays = [];
-    while ($row = $result->fetch_assoc()) {
+    while ($row = $stmt->fetch()) {
         $holidays[] = $row['holiday_date'];
     }
-    $stmt->close();
     
     // Calculate total days in month
     $total_days = cal_days_in_month(CAL_GREGORIAN, $month, $year);
@@ -102,6 +99,4 @@ try {
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
 }
-
-$conn->close();
 ?>
