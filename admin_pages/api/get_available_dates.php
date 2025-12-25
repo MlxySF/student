@@ -10,9 +10,9 @@ require_once '../../config.php';
 // Set JSON header
 header('Content-Type: application/json');
 
-// Get parameters
-$month = isset($_GET['month']) ? intval($_GET['month']) : date('n');
-$year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
+// Get parameters - DEFAULT TO JANUARY 2026
+$month = isset($_GET['month']) ? intval($_GET['month']) : 1;  // Changed: Default to January (1)
+$year = isset($_GET['year']) ? intval($_GET['year']) : 2026;  // Changed: Default to 2026
 $class_code = isset($_GET['class_code']) ? $_GET['class_code'] : '';
 
 // Validate month and year

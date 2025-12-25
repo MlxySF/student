@@ -3,20 +3,9 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
-// Include necessary files
-require_once '../config.php';
-require_once '../security.php';
-
-// Check if user is logged in and is admin
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    header('Location: ../index.php');
-    exit();
-}
-
 // Get current month and year, or from query params
-$current_month = isset($_GET['month']) ? intval($_GET['month']) : date('n');
-$current_year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
+$current_month = isset($_GET['month']) ? intval($_GET['month']) : 1;  // Default to January
+$current_year = isset($_GET['year']) ? intval($_GET['year']) : 2026;  // Default to 2026
 
 // Fetch existing holidays for the selected month
 $holidays_query = "SELECT * FROM class_holidays 
@@ -84,7 +73,7 @@ $base_url = rtrim(SITE_URL, '/');
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2><i class="fas fa-calendar-times"></i> Class Holidays Management</h2>
-                    <a href="../admin.php" class="btn btn-secondary">
+                    <a href="admin.php" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Back to Admin
                     </a>
                 </div>
@@ -92,7 +81,7 @@ $base_url = rtrim(SITE_URL, '/');
                 <!-- Month/Year Selector -->
                 <div class="card mb-4">
                     <div class="card-body">
-                        <form method="GET" class="row g-3">
+                        <form method="GET" action="class_holidays.php" class="row g-3">
                             <div class="col-md-5">
                                 <label class="form-label">Month</label>
                                 <select name="month" class="form-select">
@@ -106,7 +95,7 @@ $base_url = rtrim(SITE_URL, '/');
                             <div class="col-md-5">
                                 <label class="form-label">Year</label>
                                 <select name="year" class="form-select">
-                                    <?php for ($y = date('Y') - 1; $y <= date('Y') + 2; $y++): ?>
+                                    <?php for ($y = 2025; $y <= 2027; $y++): ?>
                                         <option value="<?php echo $y; ?>" <?php echo $y == $current_year ? 'selected' : ''; ?>>
                                             <?php echo $y; ?>
                                         </option>

@@ -813,6 +813,10 @@ if (empty($_SESSION['csrf_token'])) {
     <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
         <i class="fa-solid fa-credit-card text-amber-500"></i> 学费缴付 Fee Payment
     </h2>
+    
+    <div id="feeBreakdownContainer" class="mt-4">
+        <!-- Fee breakdown will appear here -->
+    </div>
 
     <!-- Fee Calculation -->
     <div class="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-400 rounded-xl p-6 mb-6">

@@ -1197,6 +1197,10 @@ $page = $_GET['page'] ?? 'login';
                 <i class="fas fa-calendar-check"></i>
                 <span>Attendance</span>
             </a>
+            <a class="nav-link <?php echo $page === 'holidays' ? 'active' : ''; ?>" href="?page=holidays">
+                <i class="fas fa-calendar-times"></i>
+                <span>Manage Holidays</span>
+            </a>
             <hr class="text-white mx-3">
             <a class="nav-link" href="?logout=1">
                 <i class="fas fa-sign-out-alt"></i>
@@ -1215,7 +1219,8 @@ $page = $_GET['page'] ?? 'login';
                             ($page === 'registrations' ? 'user-plus' :
                             ($page === 'students' ? 'users' : 
                             ($page === 'classes' ? 'chalkboard-teacher' : 
-                            ($page === 'invoices' ? 'file-invoice-dollar' : 'calendar-check')))); 
+                            ($page === 'holidays' ? 'calendar-times' : 
+                            ($page === 'invoices' ? 'file-invoice-dollar' : 'calendar-check' ))))); 
                     ?>"></i>
                     <?php echo ucfirst($page); ?>
                 </h3>
@@ -1279,6 +1284,11 @@ $page = $_GET['page'] ?? 'login';
                 case 'attendance':
                     if (file_exists($pages_dir . 'attendance.php')) {
                         include $pages_dir . 'attendance.php';
+                    }
+                    break;
+                case 'holidays':
+                    if (file_exists($pages_dir . 'class_holidays.php')) {
+                        include $pages_dir . 'class_holidays.php';
                     }
                     break;
                 default:

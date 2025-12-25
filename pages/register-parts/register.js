@@ -101,6 +101,7 @@ function calculateActualClassCounts() {
     };
 }
 
+// 1. UPDATE calculateClassesForSchedule function (around line 96-145)
 function calculateClassesForSchedule(scheduleText, holidays) {
     let dayOfWeek = null;
     
@@ -119,9 +120,9 @@ function calculateClassesForSchedule(scheduleText, holidays) {
         return 4;
     }
     
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+    // ✅ CHANGED: Use January 2026 instead of current date
+    const currentMonth = 0;  // January (0-indexed)
+    const currentYear = 2026;
     
     const startDate = new Date(currentYear, currentMonth, 1);
     const endDate = new Date(currentYear, currentMonth + 1, 0);
@@ -130,7 +131,6 @@ function calculateClassesForSchedule(scheduleText, holidays) {
     
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
         if (d.getDay() === dayOfWeek) {
-            // ✅ Use local timezone instead of UTC
             const dateStr = d.getFullYear() + '-' + 
                             String(d.getMonth() + 1).padStart(2, '0') + '-' + 
                             String(d.getDate()).padStart(2, '0');
@@ -146,6 +146,7 @@ function calculateClassesForSchedule(scheduleText, holidays) {
     
     return validDates.length;
 }
+
 
 
     // ========================================
@@ -1272,6 +1273,7 @@ const customPassword = passwordType === 'custom' ? document.getElementById('cust
     // ========================================
     let receiptBase64 = null;
 
+// 2. UPDATE calculateFees function (around line 1130-1225)
 function calculateFees() {
     const schedules = document.querySelectorAll('input[name="sch"]:checked');
     const scheduleCount = schedules.length;
@@ -1297,10 +1299,9 @@ function calculateFees() {
     
     const deductionRate = deductionRates[scheduleCount] || deductionRates[4];
     
-    // Get current date info
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+    // ✅ CHANGED: Use January 2026 instead of current date
+    const currentMonth = 0;  // January (0-indexed)
+    const currentYear = 2026;
     
     // Count total holidays that affect selected schedules
     let totalMissedClasses = 0;
@@ -1317,7 +1318,7 @@ function calculateFees() {
         
         if (dayOfWeek === null) return;
         
-        // Get all dates for this day in current month
+        // Get all dates for this day in January 2026
         const startDate = new Date(currentYear, currentMonth, 1);
         const endDate = new Date(currentYear, currentMonth + 1, 0);
         const allDates = [];
@@ -1345,7 +1346,7 @@ function calculateFees() {
     // Get actual class counts
     const { totalClasses } = calculateActualClassCounts();
     
-    console.log(`💰 Fee Calculation:`);
+    console.log(`💰 Fee Calculation (January 2026):`);
     console.log(`   Base Fee: RM${baseFee}`);
     console.log(`   Schedules: ${scheduleCount}`);
     console.log(`   Deduction Rate: RM${deductionRate} per holiday`);
@@ -1361,6 +1362,7 @@ function calculateFees() {
         missedClasses: totalMissedClasses
     };
 }
+
 
 
 function updatePaymentDisplay() {

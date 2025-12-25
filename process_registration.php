@@ -901,7 +901,7 @@ if ($paymentMethod === 'bank_transfer') {
         
         if ($status === 'approved') {
             throw new Exception(
-                "A student with the name '{$childNameEn}' is already registered and APPROVED (Registration #: {$duplicateCheck['registration_number']}). ".                "If this is a different student, please use a slightly different English name (e.g., add middle name or initial). ".                "Contact admin at {$duplicateCheck['email']} if you need assistance."
+                "A student with the name '{$childNameEn}' is already registered and APPROVED (Registration #: {$duplicateCheck['registration_number']}). ".                "If this is a different student, please use a slightly different English name (e.g., add middle name or initial). ".                "Contact admin at admin@wushusportacademy.com if you need assistance."
             );
         } elseif ($status === 'pending') {
             throw new Exception(
