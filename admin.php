@@ -60,62 +60,7 @@ if (isset($_GET['logout'])) {
     exit;
 }
 
-// ========================================
-// GET AVAILABLE EVENTS (for edit modal)
-// THIS MUST BE OUTSIDE THE POST BLOCK!
-// ========================================
-if (isset($_GET['action']) && $_GET['action'] === 'get_available_events') {
-    redirectIfNotAdmin();
-    header('Content-Type: application/json');
-    
-    try {
-        // Get all unique events from registrations
-        $eventsStmt = $pdo->query("
-            SELECT DISTINCT 
-                TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(events, ',', numbers.n), ',', -1)) as event_name
-            FROM 
-                registrations
-            CROSS JOIN 
-                (SELECT 1 n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 
-                 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) numbers
-            WHERE 
-                CHAR_LENGTH(events) - CHAR_LENGTH(REPLACE(events, ',', '')) >= numbers.n - 1
-                AND events IS NOT NULL 
-                AND events != ''
-            ORDER BY event_name
-        ");
-        
-        $events = [];
-        $eventNames = $eventsStmt->fetchAll(PDO::FETCH_COLUMN);
-        
-        foreach ($eventNames as $index => $name) {
-            $name = trim($name);
-            if (!empty($name)) {
-                // Try to categorize
-                $category = 'Other';
-                if (stripos($name, '基础') !== false || stripos($name, 'Basic') !== false) {
-                    $category = 'Basic';
-                } elseif (stripos($name, '高级') !== false || stripos($name, 'Advanced') !== false) {
-                    $category = 'Advanced';
-                }
-                
-                $events[] = [
-                    'id' => $index + 1,
-                    'name' => $name,
-                    'category' => $category
-                ];
-            }
-        }
-        
-        echo json_encode(['success' => true, 'events' => $events]);
-        
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
-    }
-    exit;
-}
-
-// Handle Invoice Actions (POST ONLY!)
+// Handle Invoice Actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     redirectIfNotAdmin();
     
@@ -178,110 +123,38 @@ if ($_POST['action'] === 'create_invoice') {
     
     // GENERATE MONTHLY INVOICES
 if ($_POST['action'] === 'generate_monthly_invoices') {
-    // Include the fee calculator helper
-    require_once __DIR__ . '/fee_calculator.php';
-    
-    // Define date variables FIRST
     $current_month = date('M Y');
-    $month_number = 1; // January
-    $year_number = 2026; // Year 2026
     $due_date = date('Y-m-10');
-    
     $generated_count = 0;
-    $emailsSent = 0;
-    $emailsFailed = 0;
+    $emailsSent = 0;        // ✨ NEW
+    $emailsFailed = 0;      // ✨ NEW
     
-    try {
-        // Load holidays for January 2026 from database
-        $classHolidays = loadClassHolidays($pdo, $month_number, $year_number);
-        error_log("[Generate Invoices] Loaded " . count($classHolidays) . " holidays for {$year_number}-{$month_number}");
+    // ... existing enrollment query ...
+    
+    foreach ($enrollments as $enrollment) {
+        // ... existing duplicate check ...
         
-        // Get all active students
-        $studentsStmt = $pdo->query("
-            SELECT DISTINCT s.id as student_id, s.full_name, s.email
-            FROM students s
-            INNER JOIN enrollments e ON s.id = e.student_id
-            WHERE e.status = 'active'
-        ");
-        $students = $studentsStmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        error_log("[Generate Invoices] Found " . count($students) . " active students");
-        
-        foreach ($students as $student) {
-            $studentId = $student['student_id'];
-            
-            // Check if invoice already exists for this month
-            $check_stmt = $pdo->prepare("
-                SELECT id FROM invoices 
-                WHERE student_id = ? 
-                  AND payment_month = ? 
-                  AND invoice_type = 'monthly_fee'
-            ");
-            $check_stmt->execute([$studentId, $current_month]);
-            
-            if ($check_stmt->rowCount() > 0) {
-                error_log("[Generate Invoices] Invoice already exists for student {$studentId}");
-                continue;
-            }
-            
-            // Get all enrolled classes for this student
-            $enrollmentsStmt = $pdo->prepare("
-                SELECT c.class_code, c.class_name, c.day_of_week
-                FROM enrollments e
-                INNER JOIN classes c ON e.class_id = c.id
-                WHERE e.student_id = ? AND e.status = 'active'
-            ");
-            $enrollmentsStmt->execute([$studentId]);
-            $enrolledClasses = $enrollmentsStmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            if (empty($enrolledClasses)) {
-                error_log("[Generate Invoices] No active classes for student {$studentId}");
-                continue;
-            }
-            
-            // Calculate fees using the shared helper
-            $feeData = calculateMonthlyFee($enrolledClasses, $classHolidays, $month_number, $year_number);
-            $totalFee = $feeData['totalFee'];
-            $totalClasses = $feeData['totalClasses'];
-            
-            // Build description with breakdown
-            $description = "Monthly Fee - $current_month\n";
-            foreach ($feeData['breakdown'] as $item) {
-                $description .= "{$item['class_name']} ({$item['classes']} classes)\n";
-            }
-            $description .= "Total: {$totalClasses} classes";
-            
-            // Create invoice
+        if ($check_stmt->rowCount() == 0) {
             $invoice_number = 'INV-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+            $description = "Monthly Fee - $current_month";
             
             $insert_stmt = $pdo->prepare("
-                INSERT INTO invoices (
-                    student_id, 
-                    invoice_number, 
-                    invoice_type, 
-                    class_id, 
-                    description, 
-                    amount, 
-                    due_date, 
-                    payment_month, 
-                    status, 
-                    created_at
-                ) 
-                VALUES (?, ?, 'monthly_fee', NULL, ?, ?, ?, ?, 'unpaid', NOW())
+                INSERT INTO invoices (student_id, invoice_number, invoice_type, class_id, description, amount, due_date, payment_month, status, created_at) 
+                VALUES (?, ?, 'monthly_fee', ?, ?, ?, ?, ?, 'unpaid', NOW())
             ");
             
             if ($insert_stmt->execute([
-                $studentId,
+                $enrollment['student_id'],
                 $invoice_number,
+                $enrollment['class_id'],
                 $description,
-                $totalFee,
+                $enrollment['monthly_fee'],
                 $due_date,
                 $current_month
             ])) {
                 $generated_count++;
-                error_log("[Generate Invoices] ✅ Created invoice {$invoice_number} for student {$studentId}: RM{$totalFee} ({$totalClasses} classes)");
                 
-                // Send email notification
+                // ✨ NEW: Send email notification
                 $invoiceId = $pdo->lastInsertId();
                 require_once 'send_invoice_notification.php';
                 try {
@@ -296,82 +169,18 @@ if ($_POST['action'] === 'generate_monthly_invoices') {
                 }
             }
         }
-        
-        // Success message
-        $message = "Generated $generated_count monthly invoices for $current_month!";
-        if ($generated_count > 0) {
-            $message .= " | Email notifications: {$emailsSent} sent, {$emailsFailed} failed";
-        }
-        $_SESSION['success'] = $message;
-        
-    } catch (Exception $e) {
-        error_log("[Generate Invoices] Error: " . $e->getMessage());
-        $_SESSION['error'] = "Failed to generate invoices: " . $e->getMessage();
     }
+    
+    // ✨ UPDATED: Enhanced success message
+    $message = "Generated $generated_count monthly invoices for $current_month!";
+    if ($generated_count > 0) {
+        $message .= " | Email notifications: {$emailsSent} sent, {$emailsFailed} failed";
+    }
+    $_SESSION['success'] = $message;
     
     header('Location: admin.php?page=invoices');
     exit;
 }
-
-
-/**
- * Calculate number of classes for a schedule after holiday deductions
- * EXACT SAME LOGIC as register.js calculateClassesForSchedule()
- */
-/**
- * Calculate number of classes for a schedule after holiday deductions
- * EXACT SAME LOGIC as register.js calculateClassesForSchedule()
- */
-function calculateClassesForSchedule($scheduleName, $dayOfWeek, $holidays) {
-    // Map day names to numbers (0 = Sunday, 6 = Saturday)
-    $dayMap = [
-        'Sunday' => 0,
-        'Monday' => 1,
-        'Tuesday' => 2,
-        'Wednesday' => 3,
-        'Thursday' => 4,
-        'Friday' => 5,
-        'Saturday' => 6
-    ];
-    
-    $dayNum = $dayMap[$dayOfWeek] ?? null;
-    
-    if ($dayNum === null) {
-        error_log("[calculateClassesForSchedule] Could not parse day: {$dayOfWeek}");
-        return 4; // Default fallback
-    }
-    
-    // Use January 2026 (same as register.js)
-    $month = 1;  // January
-    $year = 2026;
-    
-    $startDate = new DateTime("{$year}-{$month}-01");
-    $endDate = new DateTime("{$year}-{$month}-" . date('t', strtotime("{$year}-{$month}-01")));
-    
-    $allDates = [];
-    
-    // Get all dates matching the day of week
-    $currentDate = clone $startDate;
-    while ($currentDate <= $endDate) {
-        if ($currentDate->format('w') == $dayNum) {
-            $dateStr = $currentDate->format('Y-m-d');
-            $allDates[] = $dateStr;
-        }
-        $currentDate->modify('+1 day');
-    }
-    
-    // Filter out holidays
-    $validDates = array_filter($allDates, function($date) use ($holidays) {
-        return !in_array($date, $holidays);
-    });
-    
-    $monthName = $startDate->format('F Y');
-    error_log("[calculateClassesForSchedule] {$scheduleName} ({$dayOfWeek}, {$monthName}): " . 
-              count($allDates) . " total, " . count($validDates) . " after holidays");
-    
-    return count($validDates);
-}
-
 
     
     // EDIT INVOICE
@@ -482,6 +291,8 @@ if ($_POST['action'] === 'delete_invoice') {
     exit;
 }
 
+
+    
     // VERIFY PAYMENT
 if ($_POST['action'] === 'verify_payment') {
     $payment_id = $_POST['payment_id'];
@@ -568,7 +379,7 @@ if ($_POST['action'] === 'verify_payment') {
         }
         
         // ✨ SEND EMAIL NOTIFICATION
-        error_log("[admin.php verify_payment] Attempting to send email notification...");
+        error_log("[admin.php verify_payment] Attempting to send email notification");
         require_once 'send_payment_approval_email.php';
         
         try {
@@ -608,58 +419,6 @@ if ($_POST['action'] === 'verify_payment') {
     header('Location: admin.php?page=invoices');
     exit;
 }
-
-    // EDIT STUDENT REGISTRATION (including events)
-    if ($_POST['action'] === 'edit_student_registration') {
-        $registrationId = $_POST['registration_id'];
-        $nameEn = $_POST['name_en'];
-        $nameCn = $_POST['name_cn'] ?? '';
-        $age = $_POST['age'];
-        $school = $_POST['school'];
-        $phone = $_POST['phone'];
-        $ic = $_POST['ic'] ?? '';
-        $studentStatus = $_POST['student_status'];
-        
-        // Get selected events from checkboxes
-        $events = isset($_POST['events']) ? implode(', ', $_POST['events']) : '';
-        
-        try {
-            $stmt = $pdo->prepare("
-                UPDATE registrations 
-                SET name_en = ?,
-                    name_cn = ?,
-                    age = ?,
-                    school = ?,
-                    phone = ?,
-                    ic = ?,
-                    student_status = ?,
-                    events = ?
-                WHERE id = ?
-            ");
-            
-            if ($stmt->execute([
-                $nameEn,
-                $nameCn,
-                $age,
-                $school,
-                $phone,
-                $ic,
-                $studentStatus,
-                $events,
-                $registrationId
-            ])) {
-                $_SESSION['success'] = "Student information and events updated successfully!";
-            } else {
-                $_SESSION['error'] = "Failed to update student information.";
-            }
-            
-        } catch (Exception $e) {
-            $_SESSION['error'] = "Error: " . $e->getMessage();
-        }
-        
-        header('Location: admin.php?page=students');
-        exit;
-    }
 
 }
 
