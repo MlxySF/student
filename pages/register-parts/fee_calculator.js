@@ -38,8 +38,9 @@ const FeeCalculator = {
                 // Extract day name from schedule (e.g., "Monday 4:00 PM" -> "Monday")
                 const dayName = classSchedule.schedule.split(' ')[0];
                 
+                // Use the correct API path - go up to root then to admin_pages
                 const response = await fetch(
-                    `../admin_pages/api/get_available_dates.php?month=${month}&year=${year}&class_schedule=${dayName}`
+                    `../../admin_pages/api/get_available_dates.php?month=${month}&year=${year}&class_schedule=${dayName}`
                 );
                 
                 if (!response.ok) {
