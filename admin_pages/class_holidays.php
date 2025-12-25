@@ -46,6 +46,10 @@ $base_url = rtrim(SITE_URL, '/');
             --info-gradient: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
         }
 
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
@@ -54,18 +58,19 @@ $base_url = rtrim(SITE_URL, '/');
         .calendar-container {
             max-width: 1400px;
             margin: 0 auto;
+            padding: 15px;
         }
 
         .calendar-header-card {
             background: white;
             border-radius: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            padding: 30px;
-            margin-bottom: 30px;
+            padding: 20px;
+            margin-bottom: 20px;
         }
 
         .calendar-title {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 700;
             background: var(--primary-gradient);
             -webkit-background-clip: text;
@@ -76,7 +81,7 @@ $base_url = rtrim(SITE_URL, '/');
 
         .calendar-subtitle {
             color: #64748b;
-            font-size: 16px;
+            font-size: 14px;
         }
 
         /* Month/Year Selector */
@@ -84,8 +89,8 @@ $base_url = rtrim(SITE_URL, '/');
             background: white;
             border-radius: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            padding: 25px;
-            margin-bottom: 30px;
+            padding: 20px;
+            margin-bottom: 20px;
         }
 
         .form-select {
@@ -117,17 +122,18 @@ $base_url = rtrim(SITE_URL, '/');
 
         /* Statistics Cards */
         .stats-row {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         .stat-card {
             background: white;
             border-radius: 20px;
-            padding: 25px;
+            padding: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
             transition: all 0.3s;
             position: relative;
             overflow: hidden;
+            margin-bottom: 15px;
         }
 
         .stat-card::before {
@@ -182,7 +188,7 @@ $base_url = rtrim(SITE_URL, '/');
         }
 
         .stat-label {
-            font-size: 14px;
+            font-size: 12px;
             color: #64748b;
             font-weight: 600;
             text-transform: uppercase;
@@ -194,19 +200,19 @@ $base_url = rtrim(SITE_URL, '/');
             background: white;
             border-radius: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            padding: 30px;
-            margin-bottom: 30px;
+            padding: 20px;
+            margin-bottom: 20px;
         }
 
         .calendar-card-header {
             text-align: center;
-            padding-bottom: 20px;
+            padding-bottom: 15px;
             border-bottom: 2px solid #f1f5f9;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .calendar-month-title {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 700;
             background: var(--primary-gradient);
             -webkit-background-clip: text;
@@ -217,24 +223,24 @@ $base_url = rtrim(SITE_URL, '/');
 
         .calendar-instruction {
             color: #64748b;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         /* Day Headers */
         .calendar-weekdays {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 8px;
+            margin-bottom: 10px;
         }
 
         .weekday-header {
             text-align: center;
             font-weight: 700;
-            font-size: 14px;
+            font-size: 12px;
             color: white;
-            padding: 12px;
-            border-radius: 12px;
+            padding: 10px 5px;
+            border-radius: 10px;
             background: var(--primary-gradient);
         }
 
@@ -242,7 +248,7 @@ $base_url = rtrim(SITE_URL, '/');
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 10px;
+            gap: 8px;
         }
 
         .calendar-day {
@@ -251,13 +257,14 @@ $base_url = rtrim(SITE_URL, '/');
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 15px;
+            border-radius: 12px;
             border: 2px solid #e2e8f0;
             background: white;
             cursor: pointer;
             transition: all 0.3s;
-            padding: 10px;
+            padding: 8px 4px;
             position: relative;
+            min-height: 60px;
         }
 
         .calendar-day:hover {
@@ -278,27 +285,27 @@ $base_url = rtrim(SITE_URL, '/');
 
         .calendar-day.today {
             border: 3px solid #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
         }
 
         .calendar-day.today::after {
             content: 'Today';
             position: absolute;
-            top: 5px;
-            right: 5px;
+            top: 3px;
+            right: 3px;
             background: #667eea;
             color: white;
-            font-size: 8px;
-            padding: 2px 6px;
+            font-size: 7px;
+            padding: 2px 4px;
             border-radius: 4px;
             font-weight: 700;
         }
 
         .day-number {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 700;
             color: #1e293b;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
 
         .holiday .day-number {
@@ -306,13 +313,15 @@ $base_url = rtrim(SITE_URL, '/');
         }
 
         .holiday-reason {
-            font-size: 11px;
+            font-size: 9px;
             color: #dc2626;
             text-align: center;
             font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 2px;
+            line-height: 1.2;
+            word-break: break-word;
         }
 
         /* Holidays List */
@@ -320,7 +329,7 @@ $base_url = rtrim(SITE_URL, '/');
             background: white;
             border-radius: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            padding: 30px;
+            padding: 20px;
         }
 
         .table {
@@ -337,7 +346,7 @@ $base_url = rtrim(SITE_URL, '/');
             font-weight: 700;
             padding: 15px;
             text-transform: uppercase;
-            font-size: 12px;
+            font-size: 11px;
             letter-spacing: 0.5px;
         }
 
@@ -430,30 +439,191 @@ $base_url = rtrim(SITE_URL, '/');
             color: #1e40af;
         }
 
+        /* Mobile Optimizations */
         @media (max-width: 768px) {
-            .calendar-title {
-                font-size: 24px;
+            .calendar-container {
+                padding: 10px;
             }
 
-            .calendar-month-title {
+            .calendar-header-card {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            .calendar-title {
+                font-size: 20px;
+            }
+
+            .calendar-subtitle {
+                font-size: 12px;
+            }
+
+            .selector-card {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            .btn-primary {
+                padding: 10px 20px;
+            }
+
+            .stat-card {
+                padding: 15px;
+                margin-bottom: 10px;
+            }
+
+            .stat-icon {
+                width: 50px;
+                height: 50px;
                 font-size: 22px;
+                margin-bottom: 10px;
             }
 
             .stat-value {
                 font-size: 32px;
             }
 
+            .stat-label {
+                font-size: 11px;
+            }
+
+            .calendar-card {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            .calendar-month-title {
+                font-size: 20px;
+            }
+
+            .calendar-instruction {
+                font-size: 11px;
+            }
+
+            .calendar-weekdays {
+                gap: 4px;
+                margin-bottom: 8px;
+            }
+
             .weekday-header {
-                font-size: 12px;
-                padding: 8px;
+                font-size: 10px;
+                padding: 8px 2px;
+                border-radius: 8px;
+            }
+
+            .calendar-grid {
+                gap: 4px;
+            }
+
+            .calendar-day {
+                border-radius: 8px;
+                padding: 4px 2px;
+                min-height: 50px;
+                border-width: 1.5px;
+            }
+
+            .calendar-day.today {
+                border-width: 2px;
+                box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+            }
+
+            .calendar-day.today::after {
+                font-size: 6px;
+                padding: 1px 3px;
+                top: 2px;
+                right: 2px;
             }
 
             .day-number {
-                font-size: 16px;
+                font-size: 13px;
+                margin-bottom: 2px;
             }
 
             .holiday-reason {
+                font-size: 7px;
+                gap: 1px;
+            }
+
+            .holiday-reason i {
+                font-size: 7px;
+            }
+
+            .holidays-list-card {
+                padding: 15px;
+            }
+
+            .holidays-list-card h4 {
+                font-size: 18px;
+            }
+
+            .table thead th {
+                font-size: 10px;
+                padding: 10px 8px;
+            }
+
+            .table tbody td {
+                font-size: 12px;
+                padding: 10px 8px;
+            }
+
+            .btn-danger {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            /* Make header buttons wrap better on mobile */
+            .calendar-header-card .d-flex {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .btn-secondary {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .calendar-container {
+                padding: 8px;
+            }
+
+            .calendar-header-card,
+            .selector-card,
+            .calendar-card,
+            .holidays-list-card {
+                border-radius: 15px;
+            }
+
+            .calendar-title {
+                font-size: 18px;
+            }
+
+            .weekday-header {
                 font-size: 9px;
+                padding: 6px 1px;
+            }
+
+            .calendar-day {
+                min-height: 45px;
+            }
+
+            .day-number {
+                font-size: 12px;
+            }
+
+            .holiday-reason {
+                font-size: 6px;
+            }
+
+            .stat-value {
+                font-size: 28px;
+            }
+        }
+
+        /* Landscape phone optimization */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .stats-row .col-md-4 {
+                margin-bottom: 10px;
             }
         }
     </style>
@@ -465,9 +635,9 @@ $base_url = rtrim(SITE_URL, '/');
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h1 class="calendar-title">
-                        <i class="fas fa-calendar-times"></i> Class Holidays Management
+                        <i class="fas fa-calendar-times"></i> Class Holidays
                     </h1>
-                    <p class="calendar-subtitle">Manage non-class days and holidays for your school</p>
+                    <p class="calendar-subtitle">Manage non-class days and holidays</p>
                 </div>
                 <a href="admin.php?page=dashboard" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back
@@ -479,7 +649,7 @@ $base_url = rtrim(SITE_URL, '/');
         <div class="selector-card">
             <form method="GET" action="admin.php" class="row g-3 align-items-end">
                 <input type="hidden" name="page" value="holidays">
-                <div class="col-md-5">
+                <div class="col-md-5 col-12">
                     <label class="form-label fw-bold">
                         <i class="fas fa-calendar"></i> Select Month
                     </label>
@@ -491,7 +661,7 @@ $base_url = rtrim(SITE_URL, '/');
                         <?php endfor; ?>
                     </select>
                 </div>
-                <div class="col-md-5">
+                <div class="col-md-5 col-12">
                     <label class="form-label fw-bold">
                         <i class="fas fa-calendar-alt"></i> Select Year
                     </label>
@@ -503,7 +673,7 @@ $base_url = rtrim(SITE_URL, '/');
                         <?php endfor; ?>
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-2 col-12">
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="fas fa-search"></i> View
                     </button>
@@ -513,7 +683,7 @@ $base_url = rtrim(SITE_URL, '/');
 
         <!-- Statistics -->
         <div class="row stats-row">
-            <div class="col-md-4 mb-3">
+            <div class="col-md-4 col-12">
                 <div class="stat-card">
                     <div class="stat-icon">
                         <i class="fas fa-calendar-day"></i>
@@ -522,7 +692,7 @@ $base_url = rtrim(SITE_URL, '/');
                     <div class="stat-label">Total Days in Month</div>
                 </div>
             </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-md-4 col-12">
                 <div class="stat-card danger">
                     <div class="stat-icon">
                         <i class="fas fa-calendar-times"></i>
@@ -531,7 +701,7 @@ $base_url = rtrim(SITE_URL, '/');
                     <div class="stat-label">Holidays / Non-Class Days</div>
                 </div>
             </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-md-4 col-12">
                 <div class="stat-card success">
                     <div class="stat-icon">
                         <i class="fas fa-calendar-check"></i>
