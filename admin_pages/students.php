@@ -341,18 +341,31 @@ function viewStudent(registrationId, studentAccountId) {
                                 <td>${student.parent_name || 'N/A'}</td>
                             </tr>
                             <tr>
-                                <th>Status:</th>
-                                <td>
-                                    <span class="badge ${student.student_status.includes('State Team') ? 'badge-state-team' : 
-                                        (student.student_status.includes('Backup Team') ? 'badge-backup-team' : 'badge-student')}">
-                                        ${student.student_status}
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>Registered:</th>
-                                <td>${new Date(student.created_at).toLocaleDateString()}</td>
-                            </tr>
+    <th>Status:</th>
+    <td>
+        <span class="badge ${student.student_status.includes('State Team') ? 'badge-state-team' : 
+            (student.student_status.includes('Backup Team') ? 'badge-backup-team' : 'badge-student')}">
+            ${student.student_status}
+        </span>
+    </td>
+</tr>
+${student.events ? `
+<tr>
+    <th>Registered Events:</th>
+    <td>
+        <div class="small">
+            ${student.events.split(',').map(event => 
+                `<span class="badge bg-success me-1 mb-1">${event.trim()}</span>`
+            ).join('')}
+        </div>
+    </td>
+</tr>
+` : ''}
+<tr>
+    <th>Registered:</th>
+    <td>${new Date(student.created_at).toLocaleDateString()}</td>
+</tr>
+
                         </table>
                     </div>
                     <div class="col-md-6">
