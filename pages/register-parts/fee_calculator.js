@@ -15,12 +15,40 @@ const FeeCalculator = {
         4: 20.00   // RM20 per class if 4+ classes enrolled
     },
 
+    // Map abbreviated day names to full names
+    dayNameMap: {
+        'Sun': 'Sunday',
+        'Mon': 'Monday',
+        'Tue': 'Tuesday',
+        'Wed': 'Wednesday',
+        'Thu': 'Thursday',
+        'Fri': 'Friday',
+        'Sat': 'Saturday'
+    },
+
     /**
      * Get price per class based on number of classes enrolled
      */
     getPricePerClass: function(numClasses) {
         if (numClasses >= 4) return this.pricing[4];
         return this.pricing[numClasses] || this.pricing[1];
+    },
+
+    /**
+     * Extract full day name from schedule string
+     * @param {string} schedule - e.g., "Sun 10am-12pm" or "Monday 4:00 PM"
+     * @returns {string} Full day name like "Sunday" or "Monday"
+     */
+    extractDayName: function(schedule) {
+        const firstWord = schedule.split(' ')[0];
+        
+        // If it's abbreviated (3 letters), convert to full name
+        if (firstWord.length === 3 && this.dayNameMap[firstWord]) {
+            return this.dayNameMap[firstWord];
+        }
+        
+        // Otherwise assume it's already a full day name
+        return firstWord;
     },
 
     /**
@@ -35,12 +63,14 @@ const FeeCalculator = {
             const results = [];
             
             for (const classSchedule of selectedClasses) {
-                // Extract day name from schedule (e.g., "Monday 4:00 PM" -> "Monday")
-                const dayName = classSchedule.schedule.split(' ')[0];
+                // Extract and convert day name (e.g., "Sun 10am-12pm" -> "Sunday")
+                const dayName = this.extractDayName(classSchedule.schedule);
+                
+                console.log('Fetching dates for:', classSchedule.name, 'Day:', dayName);
                 
                 // Use the correct API path - go up to root then to admin_pages
                 const response = await fetch(
-                    `../../admin_pages/api/get_available_dates.php?month=${month}&year=${year}&class_schedule=${dayName}`
+                    `../../admin_pages/api/get_available_dates.php?month=${month}&year=${year}&class_schedule=${encodeURIComponent(dayName)}`
                 );
                 
                 if (!response.ok) {
@@ -48,6 +78,8 @@ const FeeCalculator = {
                 }
                 
                 const data = await response.json();
+                
+                console.log('API response for', dayName, ':', data);
                 
                 if (data.success) {
                     results.push({
@@ -209,6 +241,8 @@ const FeeCalculator = {
             month = month || (now.getMonth() + 1);
             year = year || now.getFullYear();
 
+            console.log('Calculating fees for month:', month, 'year:', year);
+
             // Show loading state
             const container = document.getElementById('feeBreakdownContainer');
             if (container) {
@@ -225,11 +259,18 @@ const FeeCalculator = {
             // Fetch available dates for each selected class
             const classesData = await this.fetchAvailableDates(selectedClasses, month, year);
 
-            // Calculate average or use the first class's count (they should all be the same month)
-            const classesPerMonth = classesData[0]?.classCount || 0;
+            console.log('Classes data:', classesData);
+
+            // Calculate total classes per month (sum of all class counts)
+            let totalClassesPerMonth = 0;
+            classesData.forEach(classData => {
+                totalClassesPerMonth += classData.classCount;
+            });
+
+            console.log('Total classes per month:', totalClassesPerMonth);
 
             // Calculate fee based on number of classes enrolled
-            const feeData = this.calculateMonthlyFee(selectedClasses.length, classesPerMonth);
+            const feeData = this.calculateMonthlyFee(selectedClasses.length, totalClassesPerMonth);
 
             // Display the results
             this.displayFeeBreakdown(feeData, classesData);
