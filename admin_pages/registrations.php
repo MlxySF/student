@@ -29,6 +29,7 @@ $sql = "
         payment_amount,
         payment_date,
         payment_receipt_path,
+        payment_method,
         payment_status,
         class_count,
         student_account_id,
@@ -543,65 +544,89 @@ $totalCount = array_sum($statusCounts);
                     </div>
 
                     <!-- Payment Information -->
-                    <div class="col-md-6 mb-4">
-                        <div class="card">
-                            <div class="card-header bg-light">
-                                <strong><i class="fas fa-credit-card"></i> Payment Information</strong>
-                            </div>
-                            <div class="card-body">
-                                <table class="table table-sm">
-                                    <tr>
-                                        <th width="40%">Amount:</th>
-                                        <td><strong class="text-primary">RM <?php echo number_format($reg['payment_amount'], 2); ?></strong></td>
-                                    </tr>
-                                    <tr>
-                                        <th>Payment Date:</th>
-                                        <td><?php echo date('F j, Y', strtotime($reg['payment_date'])); ?></td>
-                                    </tr>
-                                    <tr>
-                                        <th>Status:</th>
-                                        <td>
-                                            <?php 
-                                            $statusValue = $reg['payment_status'] ?? '';
-                                            $badgeColor = 'secondary';
-                                            $statusText = 'No Status';
-                                            
-                                            if ($statusValue === 'approved') {
-                                                $badgeColor = 'success';
-                                                $statusText = 'Approved';
-                                            } elseif ($statusValue === 'pending') {
-                                                $badgeColor = 'warning';
-                                                $statusText = 'Pending';
-                                            } elseif ($statusValue === 'rejected') {
-                                                $badgeColor = 'danger';
-                                                $statusText = 'Rejected';
-                                            } elseif (!empty($statusValue)) {
-                                                $statusText = ucfirst($statusValue);
-                                            }
-                                            ?>
-                                            <span class="badge bg-<?php echo $badgeColor; ?>">
-                                                <?php echo htmlspecialchars($statusText); ?>
-                                            </span>
-                                        </td>
-                                    </tr>
-                                </table>
-                                
-                                <div class="mt-3">
-                                    <strong>Payment Receipt:</strong>
-                                    <div class="border p-2 mt-2 text-center">
-                                        <?php if (!empty($reg['payment_receipt_path'])): ?>
-                                            <img src="serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>" 
-                                                 alt="Payment Receipt" 
-                                                 class="img-fluid" 
-                                                 style="max-height: 300px;">
-                                        <?php else: ?>
-                                            <p class="text-muted mb-0">No receipt available</p>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            </div>
+<div class="col-md-6 mb-4">
+    <div class="card">
+        <div class="card-header bg-light">
+            <strong><i class="fas fa-credit-card"></i> Payment Information</strong>
+        </div>
+        <div class="card-body">
+            <table class="table table-sm">
+                <tr>
+                    <th width="40%">Amount:</th>
+                    <td><strong class="text-primary">RM <?php echo number_format($reg['payment_amount'], 2); ?></strong></td>
+                </tr>
+                <?php 
+                // Check payment method
+                $isCashPayment = (!empty($reg['payment_method']) && $reg['payment_method'] === 'cash');
+                $hasReceipt = !empty($reg['payment_receipt_path']);
+                ?>
+                <tr>
+                    <th>Payment Method:</th>
+                    <td>
+                        <?php if ($isCashPayment): ?>
+                            <span class="badge bg-success"><i class="fas fa-money-bill-wave"></i> Cash Payment</span>
+                        <?php else: ?>
+                            <span class="badge bg-info"><i class="fas fa-university"></i> Bank Transfer</span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Payment Date:</th>
+                    <td><?php echo date('F j, Y', strtotime($reg['payment_date'])); ?></td>
+                </tr>
+                <tr>
+                    <th>Status:</th>
+                    <td>
+                        <?php 
+                        $statusValue = $reg['payment_status'] ?? '';
+                        $badgeColor = 'secondary';
+                        $statusText = 'No Status';
+                        
+                        if ($statusValue === 'approved') {
+                            $badgeColor = 'success';
+                            $statusText = 'Approved';
+                        } elseif ($statusValue === 'pending') {
+                            $badgeColor = 'warning';
+                            $statusText = 'Pending';
+                        } elseif ($statusValue === 'rejected') {
+                            $badgeColor = 'danger';
+                            $statusText = 'Rejected';
+                        } elseif (!empty($statusValue)) {
+                            $statusText = ucfirst($statusValue);
+                        }
+                        ?>
+                        <span class="badge bg-<?php echo $badgeColor; ?>">
+                            <?php echo htmlspecialchars($statusText); ?>
+                        </span>
+                    </td>
+                </tr>
+            </table>
+            
+            <div class="mt-3">
+                <strong>Payment Receipt:</strong>
+                <div class="border p-2 mt-2 text-center">
+                    <?php if ($isCashPayment): ?>
+                        <!-- Cash Payment - No Receipt -->
+                        <div class="alert alert-success mb-0">
+                            <i class="fas fa-money-bill-wave"></i> <strong>Cash Payment</strong>
+                            <p class="mb-0 mt-2">This registration was paid in cash. No receipt upload required.</p>
                         </div>
-                    </div>
+                    <?php elseif ($hasReceipt): ?>
+                        <!-- Bank Transfer - Show Receipt -->
+                        <img src="serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>" 
+                             alt="Payment Receipt" 
+                             class="img-fluid" 
+                             style="max-height: 300px;">
+                    <?php else: ?>
+                        <!-- No receipt available -->
+                        <p class="text-muted mb-0">No receipt available</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
                     <!-- Account Information -->
                     <!-- <div class="col-md-12 mb-4">

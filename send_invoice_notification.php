@@ -231,25 +231,24 @@ function getInvoiceNotificationEmailHTML($invoice) {
             
             <div class="payment-box">
                 <strong style="font-size: 18px; color: #1e293b;">&#128178; Make Payment Now</strong><br><br>
-                <p style="margin: 10px 0; color: #64748b;">Login to your student/parent portal to pay this invoice online.</p>
+                <p style="margin: 10px 0; color: #64748b;">Login to your dashbaord to pay this invoice online.</p>
                 <a href="' . $portalUrl . '" class="payment-btn" style="color: white;">&#128274; Go to Payment Portal</a><br>
                 <small style="color: #64748b; margin-top: 10px; display: inline-block;">Secure online payment available</small>
             </div>
             
             <p><strong>How to Pay:</strong></p>
             <ul>
-                <li>Login to your student/parent dashboard</li>
+                <li>Login to your dashboard</li>
                 <li>Go to &quot;Invoices&quot; or &quot;Payments&quot; section</li>
                 <li>Find invoice <strong>' . $invoiceNumber . '</strong></li>
-                <li>Upload payment receipt or make online payment</li>
+                <li>Upload payment receipt</li>
                 <li>Wait for admin verification</li>
             </ul>
             
             <p><strong>Payment Methods:</strong></p>
             <ul>
                 <li>Online Banking Transfer</li>
-                <li>Credit/Debit Card (if available)</li>
-                <li>Cash payment at office (upload receipt)</li>
+                <li>Cash payment</li>
             </ul>
             
             <p>If you have any questions about this invoice, please don\'t hesitate to contact us.</p>
@@ -260,7 +259,7 @@ function getInvoiceNotificationEmailHTML($invoice) {
         
         <div class="footer">
             <p style="margin: 0 0 8px 0; font-weight: 600; color: #1e293b; font-size: 15px;">Wushu Sport Academy &#27494;&#26415;&#20307;&#32946;&#23398;&#38498;</p>
-            <p style="margin: 4px 0;">Student &amp; Parent Portal System</p>
+            <p style="margin: 4px 0;">Student &amp; Wushu Sport Academy System</p>
             <p style="margin: 16px 0 0 0; font-size: 11px; color: #94a3b8;">This is an automated notification. Invoice reference: ' . $invoiceNumber . '</p>
         </div>
     </div>

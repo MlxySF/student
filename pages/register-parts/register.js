@@ -1275,123 +1275,119 @@ const customPassword = passwordType === 'custom' ? document.getElementById('cust
 
 // NEW FEE CALCULATION FUNCTION - MATCHING YOUR EXACT REQUIREMENTS
 function calculateFees() {
-    const schedules = document.querySelectorAll('input[name="sch"]:checked');
-    const scheduleCount = schedules.length;
+    const selectedSchedules = Array.from(document.querySelectorAll('input[name="sch"]:checked'))
+        .map(cb => cb.value);
     
-    if (scheduleCount === 0) {
-        return { classCount: 0, totalFee: 0, holidayDeduction: 0 };
+    if (selectedSchedules.length === 0) {
+        return { classCount: 0, totalFee: 0, breakdown: [] };
     }
     
-    let totalFee = 0;
+    // Calculate actual class counts
+    const classData = calculateActualClassCounts();
+    const totalClassesAfterDeductions = classData.totalClasses;
     
-    // Scenario 1: Single class selection (individual pricing per day)
-    if (scheduleCount === 1) {
-        const scheduleText = schedules[0].value;
+    // Determine weekly fee based on number of schedules
+    let weeklyFee = 0;
+    const numSchedules = selectedSchedules.length;
+    
+    if (numSchedules === 1) {
+        weeklyFee = 90;
+    } else if (numSchedules === 2) {
+        weeklyFee = 200;
+    } else if (numSchedules === 3) {
+        weeklyFee = 280;
+    } else if (numSchedules >= 4) {
+        weeklyFee = 320;
+    }
+    
+    // ✅ ADD NULL CHECKS before setting innerHTML
+    const feeSummaryElement = document.getElementById('fee-summary');
+    if (feeSummaryElement) {
+        let feeSummaryContent = `
+            <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+                <h4 style="font-weight: bold; color: #1e293b; margin-bottom: 12px;">
+                    <i class="fas fa-calendar-alt"></i> Selected Classes (After Holiday Deductions)
+                </h4>
+        `;
         
-        // Tuesday: RM90
-        if (scheduleText.includes('Tue') || scheduleText.includes('Tuesday')) {
-            totalFee = 90;
-        }
-        // Wednesday: RM90
-        else if (scheduleText.includes('Wed') || scheduleText.includes('Wednesday')) {
-            totalFee = 90;
-        }
-        // Friday: RM90
-        else if (scheduleText.includes('Fri') || scheduleText.includes('Friday')) {
-            totalFee = 90;
-        }
-        // Sunday: RM60
-        else if (scheduleText.includes('Sun') || scheduleText.includes('Sunday')) {
-            totalFee = 60;
-        }
-    }
-    // Scenario 2: Two classes per week - RM200
-    else if (scheduleCount === 2) {
-        totalFee = 200;
-    }
-    // Scenario 3: Three classes per week - RM280
-    else if (scheduleCount === 3) {
-        totalFee = 280;
-    }
-    // Scenario 4: Four classes per week - RM320
-    else if (scheduleCount >= 4) {
-        totalFee = 320;
+        classData.breakdown.forEach(item => {
+            feeSummaryContent += `
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                    <span style="color: #475569;">${item.schedule}</span>
+                    <span style="font-weight: bold; color: #1e293b;">${item.classes} classes</span>
+                </div>
+            `;
+        });
+        
+        feeSummaryContent += `
+                <div style="display: flex; justify-content: space-between; padding: 12px 0; margin-top: 8px; border-top: 2px solid #cbd5e1;">
+                    <span style="font-weight: bold; color: #1e293b;">Total Classes (January 2026):</span>
+                    <span style="font-weight: bold; color: #7c3aed; font-size: 18px;">${totalClassesAfterDeductions} classes</span>
+                </div>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); border-radius: 12px; padding: 20px; color: white; text-align: center;">
+                <p style="margin: 0 0 8px 0; opacity: 0.9; font-size: 14px;">Monthly Fee (${numSchedules} ${numSchedules === 1 ? 'class' : 'classes'} per week)</p>
+                <p style="margin: 0; font-size: 32px; font-weight: bold;">RM ${weeklyFee}</p>
+            </div>
+        `;
+        
+        feeSummaryElement.innerHTML = feeSummaryContent;
+    } else {
+        console.warn('⚠️ fee-summary element not found');
     }
     
-    // Get actual class counts
-    const { totalClasses } = calculateActualClassCounts();
-    
-    console.log(`💰 Fee Calculation (New Pricing Structure):`);
-    console.log(`   Schedules Selected: ${scheduleCount}`);
-    console.log(`   Total Fee: RM${totalFee}`);
-    console.log(`   Total Classes: ${totalClasses}`);
-    
-    return { 
-        classCount: totalClasses, 
-        totalFee: totalFee,
-        baseFee: totalFee,
-        holidayDeduction: 0,
-        missedClasses: 0
+    return {
+        classCount: totalClassesAfterDeductions,
+        totalFee: weeklyFee,
+        breakdown: classData.breakdown
     };
 }
 
 
 
+
 function updatePaymentDisplay() {
-    const { classCount, totalFee } = calculateFees();
-    const { breakdown } = calculateActualClassCounts();
+    const { classCount, totalFee, breakdown } = calculateFees();
     
-    // Get selected schedules
-    const scheduleCheckboxes = document.querySelectorAll('input[name="sch"]:checked');
-    const selectedClasses = Array.from(scheduleCheckboxes).map(cb => cb.value);
+    // ✅ ADD NULL CHECK
+    const paymentAmountElement = document.getElementById('payment-amount');
+    if (paymentAmountElement) {
+        paymentAmountElement.textContent = `RM ${totalFee}`;
+    } else {
+        console.warn('⚠️ payment-amount element not found');
+    }
     
-    // Update class count
-    document.getElementById('payment-class-count').innerText = classCount;
-    
-    // Create a detailed list of selected classes with actual class counts
-    let classListHTML = '';
-    if (selectedClasses.length > 0) {
-        classListHTML = '<div style="margin-top: 8px; padding: 8px; background: #f8fafc; border-radius: 6px; border-left: 3px solid #7c3aed;">';
-        classListHTML += '<div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 4px; text-transform: uppercase;">📅 Selected Classes (After Holiday Deductions):</div>';
+    // ✅ ADD NULL CHECK
+    const paymentBreakdownElement = document.getElementById('payment-breakdown');
+    if (paymentBreakdownElement) {
+        let breakdownHTML = '<div style="margin-top: 16px;">';
+        breakdownHTML += '<h4 style="font-weight: bold; color: #1e293b; margin-bottom: 12px;">Class Summary (January 2026):</h4>';
         
-        breakdown.forEach(({ schedule, classes }) => {
-            classListHTML += `<div style="font-size: 12px; color: #1e293b; padding: 3px 0;">• ${schedule} <span style="color: #16a34a; font-weight: 600;">(${classes} classes)</span></div>`;
+        breakdown.forEach(item => {
+            breakdownHTML += `
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                    <span style="color: #475569;">${item.schedule}</span>
+                    <span style="font-weight: bold; color: #1e293b;">${item.classes} classes</span>
+                </div>
+            `;
         });
         
-        classListHTML += `<div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #e2e8f0; font-weight: 600; color: #7c3aed; font-size: 13px;">Total Classes: ${classCount}</div>`;
-        classListHTML += '</div>';
+        breakdownHTML += `
+            <div style="display: flex; justify-content: space-between; padding: 12px 0; margin-top: 8px; border-top: 2px solid #cbd5e1; font-weight: bold;">
+                <span>Total Classes:</span>
+                <span style="color: #7c3aed;">${classCount} classes</span>
+            </div>
+        `;
+        
+        breakdownHTML += '</div>';
+        paymentBreakdownElement.innerHTML = breakdownHTML;
+    } else {
+        console.warn('⚠️ payment-breakdown element not found');
     }
-    
-    // Find the parent container and update it
-    const classCountElement = document.getElementById('payment-class-count');
-    const parentDiv = classCountElement.closest('.flex.justify-between.items-center');
-    
-    // Remove any existing class list
-    const existingList = parentDiv.parentElement.querySelector('.selected-classes-list');
-    if (existingList) existingList.remove();
-    
-    // Add the new class list after the count div
-    if (classListHTML) {
-        const listContainer = document.createElement('div');
-        listContainer.className = 'selected-classes-list';
-        listContainer.innerHTML = classListHTML;
-        parentDiv.parentElement.insertBefore(listContainer, parentDiv.nextSibling);
-    }
-    
-    // Update total
-    document.getElementById('payment-total').innerText = `RM ${totalFee}`;
-    
-    // Update status
-    const statusRadios = document.getElementsByName('status');
-    let status = '';
-    for (const radio of statusRadios) {
-        if (radio.checked) {
-            status = radio.value;
-            break;
-        }
-    }
-    document.getElementById('payment-status').innerText = status;
 }
+
+
     
     // Toggle payment method sections
 function togglePaymentMethod() {

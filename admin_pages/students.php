@@ -38,6 +38,50 @@ $statusList = $pdo->query("SELECT DISTINCT student_status FROM registrations WHE
 
 // Get all classes for enrollment dropdown
 $allClasses = $pdo->query("SELECT * FROM classes ORDER BY class_name")->fetchAll();
+
+// Get all unique events from registrations table for the dropdown
+$allEvents = [];
+try {
+    // Extract all unique events from the registrations table
+    $eventsQuery = "SELECT DISTINCT 
+        TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(events, ',', numbers.n), ',', -1)) as event_name
+        FROM registrations
+        CROSS JOIN (
+            SELECT 1 n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 
+            UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10
+            UNION SELECT 11 UNION SELECT 12 UNION SELECT 13 UNION SELECT 14 UNION SELECT 15
+        ) numbers
+        WHERE CHAR_LENGTH(events) - CHAR_LENGTH(REPLACE(events, ',', '')) >= numbers.n - 1
+        AND events IS NOT NULL AND events != ''
+        AND TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(events, ',', numbers.n), ',', -1)) != ''
+        ORDER BY event_name";
+    
+    $eventsStmt = $pdo->query($eventsQuery);
+    $eventNames = $eventsStmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    // Categorize events
+    foreach ($eventNames as $index => $name) {
+        $name = trim($name);
+        if (!empty($name)) {
+            $category = 'Other';
+            
+            // Categorize based on naming patterns
+            if (stripos($name, '初级') !== false || stripos($name, 'Basic') !== false) {
+                $category = 'Basic';
+            } elseif (stripos($name, '高级') !== false || stripos($name, 'Advanced') !== false || stripos($name, '国际') !== false) {
+                $category = 'Advanced';
+            }
+            
+            $allEvents[] = [
+                'id' => $index + 1,
+                'name' => $name,
+                'category' => $category
+            ];
+        }
+    }
+} catch (Exception $e) {
+    error_log("Error loading events: " . $e->getMessage());
+}
 ?>
 
 <div class="card">
@@ -89,6 +133,7 @@ $allClasses = $pdo->query("SELECT * FROM classes ORDER BY class_name")->fetchAll
                         <th>School</th>
                         <th>Parent</th>
                         <th>Status</th>
+                        <th>Events</th>
                         <th>Enrolled</th>
                         <th>Registered</th>
                         <th>Actions</th>
@@ -124,6 +169,13 @@ $allClasses = $pdo->query("SELECT * FROM classes ORDER BY class_name")->fetchAll
                             <?php endif; ?>
                         </td>
                         <td>
+                            <?php if (!empty($student['events'])): ?>
+                                <small class="text-primary"><?php echo htmlspecialchars($student['events']); ?></small>
+                            <?php else: ?>
+                                <small class="text-muted fst-italic">No events</small>
+                            <?php endif; ?>
+                        </td>
+                        <td>
                             <span class="badge bg-info">
                                 <?php echo $student['enrollment_count']; ?> <?php echo $student['enrollment_count'] === 1 ? 'class' : 'classes'; ?>
                             </span>
@@ -151,7 +203,7 @@ $allClasses = $pdo->query("SELECT * FROM classes ORDER BY class_name")->fetchAll
                     
                     <?php if (empty($students)): ?>
                     <tr>
-                        <td colspan="9" class="text-center text-muted py-4">
+                        <td colspan="10" class="text-center text-muted py-4">
                             <i class="fas fa-users fa-3x mb-3"></i><br>
                             No students found with selected filters
                         </td>
@@ -227,50 +279,113 @@ $allClasses = $pdo->query("SELECT * FROM classes ORDER BY class_name")->fetchAll
     </div>
 </div>
 
-<!-- Edit Student Modal -->
+<!-- Edit Student Modal (with Events + Dropdown Selection) -->
 <div class="modal fade" id="editStudentModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <form method="POST" action="admin_handler.php" id="editStudentForm">
+            <form method="POST" action="" class="submit-with-loading">
                 <input type="hidden" name="action" value="edit_student_registration">
                 <input type="hidden" name="registration_id" id="edit_registration_id">
                 
                 <div class="modal-header bg-warning text-dark">
-                    <h5 class="modal-title"><i class="fas fa-edit"></i> Edit Student</h5>
+                    <h5 class="modal-title"><i class="fas fa-edit"></i> Edit Student Information & Events</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">English Name</label>
-                        <input type="text" class="form-control" name="name_en" id="edit_name_en" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Chinese Name</label>
-                        <input type="text" class="form-control" name="name_cn" id="edit_name_cn">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Age</label>
-                        <input type="number" class="form-control" name="age" id="edit_age" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">School</label>
-                        <input type="text" class="form-control" name="school" id="edit_school" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Phone</label>
-                        <input type="text" class="form-control" name="phone" id="edit_phone" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">IC Number</label>
-                        <input type="text" class="form-control" name="ic" id="edit_ic">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Student Status</label>
-                        <select class="form-select" name="student_status" id="edit_student_status" required>
-                            <option value="Student 学生">Student 学生</option>
-                            <option value="State Team 州队">State Team 州队</option>
-                            <option value="Backup Team 后备队">Backup Team 后备队</option>
-                        </select>
+                    <div class="row">
+                        <!-- Left Column: Basic Info -->
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3"><i class="fas fa-user"></i> Basic Information</h6>
+                            <div class="mb-3">
+                                <label class="form-label">English Name *</label>
+                                <input type="text" class="form-control" name="name_en" id="edit_name_en" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Chinese Name</label>
+                                <input type="text" class="form-control" name="name_cn" id="edit_name_cn">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Age *</label>
+                                <input type="number" class="form-control" name="age" id="edit_age" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">School *</label>
+                                <input type="text" class="form-control" name="school" id="edit_school" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Phone *</label>
+                                <input type="text" class="form-control" name="phone" id="edit_phone" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">IC Number</label>
+                                <input type="text" class="form-control" name="ic" id="edit_ic">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Student Status *</label>
+                                <select class="form-select" name="student_status" id="edit_student_status" required>
+                                    <option value="Student 学生">Student 学生</option>
+                                    <option value="State Team 州队">State Team 州队</option>
+                                    <option value="Backup Team 后备队">Backup Team 后备队</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Events -->
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="text-muted mb-0"><i class="fas fa-trophy"></i> Competition Events</h6>
+                            </div>
+                            <div class="alert alert-info">
+                                <small><i class="fas fa-info-circle"></i> Select events from dropdown or check/uncheck existing ones</small>
+                            </div>
+                            
+                            <!-- Quick Add Event Dropdown -->
+                            <div class="card border-success mb-3">
+                                <div class="card-body p-3">
+                                    <label class="form-label fw-bold mb-2">
+                                        <i class="fas fa-plus-circle text-success"></i> Quick Add Event
+                                    </label>
+                                    <div class="input-group">
+                                        <select class="form-select" id="quick_add_event_select">
+                                            <option value="">-- Select an event to add --</option>
+                                        </select>
+                                        <button type="button" class="btn btn-success" onclick="quickAddEvent()" title="Add selected event">
+                                            <i class="fas fa-plus"></i> Add
+                                        </button>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="fas fa-lightbulb"></i> Choose from <?php echo count($allEvents); ?> available events
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div id="edit_events_container" style="max-height: 400px; overflow-y: auto;">
+                                <div class="mb-2">
+                                    <strong class="text-muted">
+                                        <i class="fas fa-check-double"></i> Selected Events 
+                                        (<span id="selected_count">0</span>)
+                                    </strong>
+                                </div>
+                                
+                                <!-- Basic Events -->
+                                <div class="mb-3">
+                                    <label class="fw-bold text-primary"><i class="fas fa-star"></i> Basic Events (基础套路)</label>
+                                    <div id="edit_events_basic" class="mt-2"></div>
+                                </div>
+
+                                <!-- Advanced Events -->
+                                <div class="mb-3">
+                                    <label class="fw-bold text-success"><i class="fas fa-fire"></i> Advanced Events (高级套路)</label>
+                                    <div id="edit_events_advanced" class="mt-2"></div>
+                                </div>
+
+                                <!-- Other Events -->
+                                <div class="mb-3">
+                                    <label class="fw-bold text-secondary"><i class="fas fa-list"></i> Other Events</label>
+                                    <div id="edit_events_other" class="mt-2"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -284,8 +399,53 @@ $allClasses = $pdo->query("SELECT * FROM classes ORDER BY class_name")->fetchAll
     </div>
 </div>
 
+<style>
+/* Event checkbox styling */
+.event-checkbox {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+}
+
+.event-checkbox:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+}
+
+.event-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.event-checkbox input[type="checkbox"]:checked + label {
+    font-weight: 600;
+    color: #2563eb;
+}
+
+.event-checkbox label {
+    flex: 1;
+    cursor: pointer;
+    margin: 0;
+    user-select: none;
+}
+
+.event-checkbox.checked {
+    border-color: #2563eb;
+    background: #eff6ff;
+}
+</style>
+
 <script>
 const studentsData = <?php echo json_encode($students); ?>;
+const allAvailableEvents = <?php echo json_encode($allEvents); ?>;
 
 function updateFilters(paramName, value) {
     const urlParams = new URLSearchParams(window.location.search);
@@ -348,6 +508,10 @@ function viewStudent(registrationId, studentAccountId) {
                                         ${student.student_status}
                                     </span>
                                 </td>
+                            </tr>
+                            <tr>
+                                <th>Events:</th>
+                                <td>${student.events || '<em class="text-muted">No events</em>'}</td>
                             </tr>
                             <tr>
                                 <th>Registered:</th>
@@ -442,6 +606,7 @@ function editStudent(registrationId) {
     const student = studentsData.find(s => s.id == registrationId);
     if (!student) return;
 
+    // Fill basic info
     document.getElementById('edit_registration_id').value = student.id;
     document.getElementById('edit_name_en').value = student.name_en;
     document.getElementById('edit_name_cn').value = student.name_cn || '';
@@ -451,7 +616,196 @@ function editStudent(registrationId) {
     document.getElementById('edit_ic').value = student.ic || '';
     document.getElementById('edit_student_status').value = student.student_status;
 
+    // Get student's current events
+    const currentEvents = student.events ? student.events.split(',').map(e => e.trim()) : [];
+
+    // Populate quick add dropdown
+    populateQuickAddDropdown(allAvailableEvents);
+    
+    // Clear containers
+    document.getElementById('edit_events_basic').innerHTML = '';
+    document.getElementById('edit_events_advanced').innerHTML = '';
+    document.getElementById('edit_events_other').innerHTML = '';
+
+    // Group events by category
+    const basicEvents = allAvailableEvents.filter(e => e.category === 'Basic');
+    const advancedEvents = allAvailableEvents.filter(e => e.category === 'Advanced');
+    const otherEvents = allAvailableEvents.filter(e => e.category === 'Other');
+
+    // Create checkboxes for each category
+    createEventCheckboxes(basicEvents, 'edit_events_basic', currentEvents);
+    createEventCheckboxes(advancedEvents, 'edit_events_advanced', currentEvents);
+    createEventCheckboxes(otherEvents, 'edit_events_other', currentEvents);
+
+    // Update selected count
+    updateSelectedCount();
+
+    // Show modal
     const modal = new bootstrap.Modal(document.getElementById('editStudentModal'));
     modal.show();
 }
+
+// Populate the quick add dropdown with available events
+function populateQuickAddDropdown(events) {
+    const dropdown = document.getElementById('quick_add_event_select');
+    dropdown.innerHTML = '<option value="">-- Select an event to add --</option>';
+    
+    // Group by category
+    const basicEvents = events.filter(e => e.category === 'Basic');
+    const advancedEvents = events.filter(e => e.category === 'Advanced');
+    const otherEvents = events.filter(e => e.category === 'Other');
+    
+    // Add Basic Events
+    if (basicEvents.length > 0) {
+        const basicOptgroup = document.createElement('optgroup');
+        basicOptgroup.label = '⭐ Basic Events (基础套路)';
+        basicEvents.forEach(event => {
+            const option = document.createElement('option');
+            option.value = event.name;
+            option.dataset.category = event.category;
+            option.textContent = event.name;
+            basicOptgroup.appendChild(option);
+        });
+        dropdown.appendChild(basicOptgroup);
+    }
+    
+    // Add Advanced Events
+    if (advancedEvents.length > 0) {
+        const advancedOptgroup = document.createElement('optgroup');
+        advancedOptgroup.label = '🔥 Advanced Events (高级套路)';
+        advancedEvents.forEach(event => {
+            const option = document.createElement('option');
+            option.value = event.name;
+            option.dataset.category = event.category;
+            option.textContent = event.name;
+            advancedOptgroup.appendChild(option);
+        });
+        dropdown.appendChild(advancedOptgroup);
+    }
+    
+    // Add Other Events
+    if (otherEvents.length > 0) {
+        const otherOptgroup = document.createElement('optgroup');
+        otherOptgroup.label = '📋 Other Events';
+        otherEvents.forEach(event => {
+            const option = document.createElement('option');
+            option.value = event.name;
+            option.dataset.category = event.category;
+            option.textContent = event.name;
+            otherOptgroup.appendChild(option);
+        });
+        dropdown.appendChild(otherOptgroup);
+    }
+}
+
+// Quick add event from dropdown
+function quickAddEvent() {
+    const dropdown = document.getElementById('quick_add_event_select');
+    const selectedOption = dropdown.options[dropdown.selectedIndex];
+    const eventName = selectedOption.value;
+    
+    if (!eventName) {
+        alert('Please select an event to add');
+        return;
+    }
+    
+    // Check if already checked
+    const existingCheckbox = document.querySelector(`#edit_events_container input[value="${eventName}"]`);
+    if (existingCheckbox) {
+        if (existingCheckbox.checked) {
+            alert('This event is already selected!');
+            dropdown.selectedIndex = 0;
+            return;
+        } else {
+            // Check the existing checkbox
+            existingCheckbox.checked = true;
+            existingCheckbox.parentElement.classList.add('checked');
+            updateSelectedCount();
+            
+            // Reset dropdown
+            dropdown.selectedIndex = 0;
+            
+            // Show success message
+            showToast(`✓ "${eventName}" added successfully!`, 'success');
+            return;
+        }
+    }
+    
+    // Event doesn't exist in list, shouldn't happen
+    alert('Event not found in the list');
+    dropdown.selectedIndex = 0;
+}
+
+// Update selected events count
+function updateSelectedCount() {
+    const checkedBoxes = document.querySelectorAll('#edit_events_container input[type="checkbox"]:checked');
+    document.getElementById('selected_count').textContent = checkedBoxes.length;
+}
+
+// Toast notification helper
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} position-fixed shadow-lg`;
+    toast.style.cssText = 'top: 90px; right: 20px; z-index: 9999; min-width: 300px; animation: slideIn 0.3s ease-out;';
+    toast.innerHTML = `
+        <strong><i class="fas fa-${type === 'success' ? 'check' : 'info'}-circle"></i> ${message}</strong>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+
+function createEventCheckboxes(events, containerId, selectedEvents) {
+    const container = document.getElementById(containerId);
+    
+    if (events.length === 0) {
+        container.innerHTML = '<p class="text-muted fst-italic small">No events in this category</p>';
+        return;
+    }
+
+    events.forEach(event => {
+        const isChecked = selectedEvents.includes(event.name);
+        const div = document.createElement('div');
+        div.className = `event-checkbox ${isChecked ? 'checked' : ''}`;
+        div.innerHTML = `
+            <input type="checkbox" 
+                   name="events[]" 
+                   value="${event.name}" 
+                   id="event_${event.id}"
+                   ${isChecked ? 'checked' : ''}
+                   onchange="this.parentElement.classList.toggle('checked', this.checked); updateSelectedCount();">
+            <label for="event_${event.id}">${event.name}</label>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// Add CSS animation for toast
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
 </script>

@@ -2154,13 +2154,13 @@ function playVideo(language, part, element) {
     const videos = {
         'en': {
             1: 'videos/tutorials/english/Registration Tutorial.mp4',
-            2: 'videos/tutorials/english/Parent System Tutorial.mp4',
-            3: 'videos/tutorials/english/Payment Invoicing System.mp4'
+            2: 'videos/tutorials/english/Student System Guide.mp4',
+            3: 'videos/tutorials/english/Invoice Payment Tutorial.mp4'
         },
         'zh': {
-            1: 'videos/tutorials/chinese/注册教学.mp4',
-            2: 'videos/tutorials/chinese/家长系统教学.mp4',
-            3: 'videos/tutorials/chinese/账单缴付教学.mp4'
+            1: 'videos/tutorials/chinese/如何注册报名表格.mp4',
+            2: 'videos/tutorials/chinese/如何使用学生系统.mp4',
+            3: 'videos/tutorials/chinese/如何缴付学费指南.mp4'
         }
     };
     
@@ -2306,7 +2306,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="fas fa-play"></i>
                             </div>
                             <div class="tutorial-video-content">
-                                <h4 class="tutorial-video-title">注册教学</h4>
+                                <h4 class="tutorial-video-title">如何注册报名表格</h4>
                                 <p class="tutorial-video-desc">注册表格概述</p>
                             </div>
                         </div>
@@ -2319,8 +2319,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="fas fa-play"></i>
                             </div>
                             <div class="tutorial-video-content">
-                                <h4 class="tutorial-video-title">家长系统教学</h4>
-                                <p class="tutorial-video-desc">使用家长系统教学</p>
+                                <h4 class="tutorial-video-title">如何使用学生系统</h4>
+                                <p class="tutorial-video-desc">学生系统指南</p>
                             </div>
                         </div>
                         
@@ -2332,8 +2332,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="fas fa-play"></i>
                             </div>
                             <div class="tutorial-video-content">
-                                <h4 class="tutorial-video-title">账单缴付教学</h4>
-                                <p class="tutorial-video-desc">使用账单页面教学</p>
+                                <h4 class="tutorial-video-title">如何缴付学费指南</h4>
+                                <p class="tutorial-video-desc">缴付学费指南</p>
                             </div>
                         </div>
                         
@@ -2371,8 +2371,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="fas fa-play"></i>
                             </div>
                             <div class="tutorial-video-content">
-                                <h4 class="tutorial-video-title">Parent's Portal Tutorial</h4>
-                                <p class="tutorial-video-desc">Guides you around the parent's portal</p>
+                                <h4 class="tutorial-video-title">Student System Tutorial</h4>
+                                <p class="tutorial-video-desc">Guides you around the student portal</p>
                             </div>
                         </div>
                         
