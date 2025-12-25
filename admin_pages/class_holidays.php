@@ -36,6 +36,9 @@ $month_names = [
     5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
     9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
 ];
+
+// Get the base URL for API calls
+$base_url = rtrim(SITE_URL, '/');
 ?>
 
 <!DOCTYPE html>
@@ -284,6 +287,8 @@ $month_names = [
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Use absolute URL for API calls
+        const API_BASE_URL = '<?php echo $base_url; ?>/admin_pages/api';
         let holidayModal;
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -320,7 +325,7 @@ $month_names = [
                 return;
             }
 
-            fetch('api/save_class_holiday.php', {
+            fetch(API_BASE_URL + '/save_class_holiday.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -351,7 +356,7 @@ $month_names = [
                 return;
             }
 
-            fetch('api/save_class_holiday.php', {
+            fetch(API_BASE_URL + '/save_class_holiday.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
