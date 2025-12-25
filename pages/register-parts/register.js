@@ -1269,11 +1269,11 @@ const customPassword = passwordType === 'custom' ? document.getElementById('cust
     }
 
     // ========================================
-    // PAYMENT FUNCTIONS - UPDATED TO NEW PRICING STRUCTURE
+    // PAYMENT FUNCTIONS - UPDATED TO NEW 2025 PRICING STRUCTURE
     // ========================================
     let receiptBase64 = null;
 
-// NEW FEE CALCULATION FUNCTION - MATCHING YOUR EXACT REQUIREMENTS
+// NEW FEE CALCULATION FUNCTION - MATCHING 2025 REQUIREMENTS
 function calculateFees() {
     const selectedSchedules = Array.from(document.querySelectorAll('input[name="sch"]:checked'))
         .map(cb => cb.value);
@@ -1282,31 +1282,42 @@ function calculateFees() {
         return { classCount: 0, totalFee: 0, breakdown: [] };
     }
     
-    // Calculate actual class counts
+    // Calculate actual class counts after holiday deductions
     const classData = calculateActualClassCounts();
     const totalClassesAfterDeductions = classData.totalClasses;
     
-    // Determine weekly fee based on number of schedules
+    // Determine weekly fee based on number of unique schedules (classes per week)
+    const numClassesPerWeek = selectedSchedules.length;
     let weeklyFee = 0;
-    const numSchedules = selectedSchedules.length;
     
-    if (numSchedules === 1) {
-        weeklyFee = 90;
-    } else if (numSchedules === 2) {
-        weeklyFee = 200;
-    } else if (numSchedules === 3) {
-        weeklyFee = 280;
-    } else if (numSchedules >= 4) {
-        weeklyFee = 320;
+    // 2025 Pricing Structure:
+    // 1 class: RM30
+    // 2 classes: RM57 (RM30 + RM27)
+    // 3 classes: RM81 (RM30 + RM27 + RM24)
+    // 4 classes: RM102 (RM30 + RM27 + RM24 + RM21)
+    if (numClassesPerWeek === 1) {
+        weeklyFee = 30;
+    } else if (numClassesPerWeek === 2) {
+        weeklyFee = 57;
+    } else if (numClassesPerWeek === 3) {
+        weeklyFee = 81;
+    } else if (numClassesPerWeek >= 4) {
+        weeklyFee = 102;
     }
     
-    // ✅ ADD NULL CHECKS before setting innerHTML
+    // Calculate number of weeks in January 2026 based on actual classes
+    const numberOfWeeks = totalClassesAfterDeductions / numClassesPerWeek;
+    
+    // Total monthly fee = weekly fee × number of weeks
+    const totalMonthlyFee = Math.round(weeklyFee * numberOfWeeks);
+    
+    // ✅ UPDATE FEE SUMMARY - with null check
     const feeSummaryElement = document.getElementById('fee-summary');
     if (feeSummaryElement) {
         let feeSummaryContent = `
             <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
                 <h4 style="font-weight: bold; color: #1e293b; margin-bottom: 12px;">
-                    <i class="fas fa-calendar-alt"></i> Selected Classes (After Holiday Deductions)
+                    <i class="fas fa-calendar-alt"></i> Selected Classes (January 2026 - After Holiday Deductions)
                 </h4>
         `;
         
@@ -1324,23 +1335,35 @@ function calculateFees() {
                     <span style="font-weight: bold; color: #1e293b;">Total Classes (January 2026):</span>
                     <span style="font-weight: bold; color: #7c3aed; font-size: 18px;">${totalClassesAfterDeductions} classes</span>
                 </div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; color: #64748b; font-size: 14px;">
+                    <span>Classes per week:</span>
+                    <span>${numClassesPerWeek}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; color: #64748b; font-size: 14px;">
+                    <span>Number of weeks:</span>
+                    <span>${numberOfWeeks.toFixed(2)}</span>
+                </div>
             </div>
             
             <div style="background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); border-radius: 12px; padding: 20px; color: white; text-align: center;">
-                <p style="margin: 0 0 8px 0; opacity: 0.9; font-size: 14px;">Monthly Fee (${numSchedules} ${numSchedules === 1 ? 'class' : 'classes'} per week)</p>
-                <p style="margin: 0; font-size: 32px; font-weight: bold;">RM ${weeklyFee}</p>
+                <p style="margin: 0 0 4px 0; opacity: 0.9; font-size: 13px;">Weekly Fee (${numClassesPerWeek} ${numClassesPerWeek === 1 ? 'class' : 'classes'} per week)</p>
+                <p style="margin: 0 0 12px 0; font-size: 24px; font-weight: bold;">RM ${weeklyFee}</p>
+                <p style="margin: 0 0 4px 0; opacity: 0.9; font-size: 13px;">Monthly Fee (January 2026)</p>
+                <p style="margin: 0; font-size: 32px; font-weight: bold;">RM ${totalMonthlyFee}</p>
             </div>
         `;
         
         feeSummaryElement.innerHTML = feeSummaryContent;
     } else {
-        console.warn('⚠️ fee-summary element not found');
+        console.warn('⚠️ fee-summary element not found in DOM');
     }
     
     return {
         classCount: totalClassesAfterDeductions,
-        totalFee: weeklyFee,
-        breakdown: classData.breakdown
+        totalFee: totalMonthlyFee,
+        breakdown: classData.breakdown,
+        weeklyFee: weeklyFee,
+        numberOfWeeks: numberOfWeeks
     };
 }
 
@@ -1348,9 +1371,9 @@ function calculateFees() {
 
 
 function updatePaymentDisplay() {
-    const { classCount, totalFee, breakdown } = calculateFees();
+    const { classCount, totalFee, breakdown, weeklyFee, numberOfWeeks } = calculateFees();
     
-    // ✅ ADD NULL CHECK
+    // ✅ UPDATE PAYMENT AMOUNT - with null check
     const paymentAmountElement = document.getElementById('payment-amount');
     if (paymentAmountElement) {
         paymentAmountElement.textContent = `RM ${totalFee}`;
@@ -1358,7 +1381,13 @@ function updatePaymentDisplay() {
         console.warn('⚠️ payment-amount element not found');
     }
     
-    // ✅ ADD NULL CHECK
+    // ✅ UPDATE PAYMENT TOTAL - with null check
+    const paymentTotalElement = document.getElementById('payment-total');
+    if (paymentTotalElement) {
+        paymentTotalElement.textContent = `RM ${totalFee}`;
+    }
+    
+    // ✅ UPDATE BREAKDOWN - with null check
     const paymentBreakdownElement = document.getElementById('payment-breakdown');
     if (paymentBreakdownElement) {
         let breakdownHTML = '<div style="margin-top: 16px;">';
@@ -1377,6 +1406,18 @@ function updatePaymentDisplay() {
             <div style="display: flex; justify-content: space-between; padding: 12px 0; margin-top: 8px; border-top: 2px solid #cbd5e1; font-weight: bold;">
                 <span>Total Classes:</span>
                 <span style="color: #7c3aed;">${classCount} classes</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; color: #64748b;">
+                <span>Weekly Fee:</span>
+                <span>RM ${weeklyFee}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; color: #64748b;">
+                <span>Number of Weeks:</span>
+                <span>${numberOfWeeks.toFixed(2)}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 12px 0; margin-top: 8px; border-top: 2px solid #7c3aed; font-weight: bold; font-size: 18px;">
+                <span>Monthly Total:</span>
+                <span style="color: #7c3aed;">RM ${totalFee}</span>
             </div>
         `;
         
