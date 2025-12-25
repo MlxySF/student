@@ -1269,11 +1269,12 @@ const customPassword = passwordType === 'custom' ? document.getElementById('cust
     }
 
     // ========================================
-    // PAYMENT FUNCTIONS - UPDATED TO NEW PRICING STRUCTURE
+    // PAYMENT FUNCTIONS - UPDATED FOR JANUARY 2026 PRICING
     // ========================================
     let receiptBase64 = null;
 
-// NEW FEE CALCULATION FUNCTION - MATCHING YOUR EXACT REQUIREMENTS
+// CORRECTED FEE CALCULATION - January 2026 Per-Session Pricing
+// 1st class: RM30/session, 2nd class: RM27/session, 3rd class: RM24/session, 4th class: RM21/session
 function calculateFees() {
     const schedules = document.querySelectorAll('input[name="sch"]:checked');
     const scheduleCount = schedules.length;
@@ -1282,52 +1283,31 @@ function calculateFees() {
         return { classCount: 0, totalFee: 0, holidayDeduction: 0 };
     }
     
+    // Get actual class counts using breakdown
+    const { breakdown } = calculateActualClassCounts();
+    
+    // Per-session pricing based on class position
+    const sessionPricing = [30, 27, 24, 21]; // RM30, RM27, RM24, RM21
+    
     let totalFee = 0;
+    let totalSessions = 0;
     
-    // Scenario 1: Single class selection (individual pricing per day)
-    if (scheduleCount === 1) {
-        const scheduleText = schedules[0].value;
+    // Calculate fee for each class based on its position
+    breakdown.forEach((classData, index) => {
+        const pricePerSession = sessionPricing[index] || sessionPricing[sessionPricing.length - 1];
+        const sessionCount = classData.classes;
+        const classFee = pricePerSession * sessionCount;
         
-        // Tuesday: RM90
-        if (scheduleText.includes('Tue') || scheduleText.includes('Tuesday')) {
-            totalFee = 90;
-        }
-        // Wednesday: RM90
-        else if (scheduleText.includes('Wed') || scheduleText.includes('Wednesday')) {
-            totalFee = 90;
-        }
-        // Friday: RM90
-        else if (scheduleText.includes('Fri') || scheduleText.includes('Friday')) {
-            totalFee = 90;
-        }
-        // Sunday: RM60
-        else if (scheduleText.includes('Sun') || scheduleText.includes('Sunday')) {
-            totalFee = 60;
-        }
-    }
-    // Scenario 2: Two classes per week - RM200
-    else if (scheduleCount === 2) {
-        totalFee = 200;
-    }
-    // Scenario 3: Three classes per week - RM280
-    else if (scheduleCount === 3) {
-        totalFee = 280;
-    }
-    // Scenario 4: Four classes per week - RM320
-    else if (scheduleCount >= 4) {
-        totalFee = 320;
-    }
+        totalFee += classFee;
+        totalSessions += sessionCount;
+        
+        console.log(`💰 Class ${index + 1} (${classData.schedule}): ${sessionCount} sessions × RM${pricePerSession} = RM${classFee}`);
+    });
     
-    // Get actual class counts
-    const { totalClasses } = calculateActualClassCounts();
-    
-    console.log(`💰 Fee Calculation (New Pricing Structure):`);
-    console.log(`   Schedules Selected: ${scheduleCount}`);
-    console.log(`   Total Fee: RM${totalFee}`);
-    console.log(`   Total Classes: ${totalClasses}`);
+    console.log(`💰 TOTAL FEE: RM${totalFee} (${totalSessions} total sessions)`);
     
     return { 
-        classCount: totalClasses, 
+        classCount: totalSessions, 
         totalFee: totalFee,
         baseFee: totalFee,
         holidayDeduction: 0,
