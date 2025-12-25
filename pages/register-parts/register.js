@@ -52,15 +52,15 @@
     });
 
 // ========================================
-// LOAD HOLIDAYS FROM API
+// LOAD HOLIDAYS FROM API - FIXED PATH
 // ========================================
 async function loadHolidays() {
     try {
-        const response = await fetch('../api/get_holidays.php');
+        const response = await fetch('../admin_pages/api/get_available_dates.php');
         const result = await response.json();
         
-        if (result.success) {
-            classHolidays = result.holidays.map(h => h.holiday_date);
+        if (result.success && result.holidays) {
+            classHolidays = result.holidays;
             console.log('✅ Holidays loaded:', classHolidays);
         } else {
             console.error('❌ Failed to load holidays:', result.message);
@@ -755,7 +755,7 @@ document.head.appendChild(style);
                 const successContent = document.querySelector('#step-7 > div');
                 const credentialsHTML = `
                     <div style="background: #dcfce7; border: 2px solid #16a34a; border-radius: 12px; padding: 24px; margin: 24px auto; max-width: 600px;">
-                        <h3 style="font-weight: bold; color: #15803d; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                        <h3 style="font-weight: bold; color: #15803d; margin-bottom: 16px; display: flex; align-items-center; gap: 8px;">
                             <i class="fas fa-key"></i>
                             Your Account Credentials 您的账户凭证
                         </h3>
