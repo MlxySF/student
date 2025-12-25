@@ -587,18 +587,43 @@ $totalCount = array_sum($statusCounts);
                                 </table>
                                 
                                 <div class="mt-3">
-                                    <strong>Payment Receipt:</strong>
-                                    <div class="border p-2 mt-2 text-center">
-                                        <?php if (!empty($reg['payment_receipt_path'])): ?>
-                                            <img src="serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>" 
-                                                 alt="Payment Receipt" 
-                                                 class="img-fluid" 
-                                                 style="max-height: 300px;">
-                                        <?php else: ?>
-                                            <p class="text-muted mb-0">No receipt available</p>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
+    <strong>Payment Receipt:</strong>
+    <div class="border p-2 mt-2" style="min-height: 400px; background: #f8f9fa;">
+        <?php if (!empty($reg['payment_receipt_path'])): ?>
+            <?php 
+            $fileExt = strtolower(pathinfo($reg['payment_receipt_path'], PATHINFO_EXTENSION));
+            $isPdf = ($fileExt === 'pdf');
+            ?>
+            
+            <?php if ($isPdf): ?>
+                <!-- PDF - Live Preview -->
+                <div class="text-center mb-2">
+                    <span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF Receipt</span>
+                    <a href="../serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>" 
+                       class="btn btn-sm btn-outline-danger ms-2" target="_blank">
+                        <i class="fas fa-external-link-alt"></i> Open Full Screen
+                    </a>
+                </div>
+                <iframe src="../serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>" 
+                    style="width: 100%; height: 500px; border: 1px solid #dee2e6; border-radius: 4px;">
+                </iframe>
+            <?php else: ?>
+                <!-- Image -->
+                <div class="text-center">
+                    <img src="../serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>" 
+                         alt="Payment Receipt" class="img-fluid" 
+                         style="max-height: 500px; cursor: pointer;"
+                         onclick="window.open('../serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>', '_blank')">
+                </div>
+            <?php endif; ?>
+        <?php else: ?>
+            <div class="d-flex align-items-center justify-content-center" style="height: 400px;">
+                <p class="text-muted mb-0">No receipt available</p>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
                             </div>
                         </div>
                     </div>
