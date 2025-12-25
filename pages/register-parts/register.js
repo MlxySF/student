@@ -1274,7 +1274,8 @@ const customPassword = passwordType === 'custom' ? document.getElementById('cust
     let receiptBase64 = null;
 
 // CORRECTED FEE CALCULATION - January 2026 Per-Session Pricing
-// 1st class: RM30/session, 2nd class: RM27/session, 3rd class: RM24/session, 4th class: RM21/session
+// IMPORTANT: Classes with FEWER sessions get LOWER pricing (last position)
+// Sort by session count DESCENDING, then apply pricing
 function calculateFees() {
     const schedules = document.querySelectorAll('input[name="sch"]:checked');
     const scheduleCount = schedules.length;
@@ -1286,14 +1287,18 @@ function calculateFees() {
     // Get actual class counts using breakdown
     const { breakdown } = calculateActualClassCounts();
     
+    // ✅ SORT by session count DESCENDING (most sessions first, least sessions last)
+    // This ensures classes with fewer sessions get the lower price
+    const sortedBreakdown = breakdown.sort((a, b) => b.classes - a.classes);
+    
     // Per-session pricing based on class position
     const sessionPricing = [30, 27, 24, 21]; // RM30, RM27, RM24, RM21
     
     let totalFee = 0;
     let totalSessions = 0;
     
-    // Calculate fee for each class based on its position
-    breakdown.forEach((classData, index) => {
+    // Calculate fee for each class based on its SORTED position
+    sortedBreakdown.forEach((classData, index) => {
         const pricePerSession = sessionPricing[index] || sessionPricing[sessionPricing.length - 1];
         const sessionCount = classData.classes;
         const classFee = pricePerSession * sessionCount;
@@ -1301,7 +1306,7 @@ function calculateFees() {
         totalFee += classFee;
         totalSessions += sessionCount;
         
-        console.log(`💰 Class ${index + 1} (${classData.schedule}): ${sessionCount} sessions × RM${pricePerSession} = RM${classFee}`);
+        console.log(`💰 Position ${index + 1} - ${classData.schedule}: ${sessionCount} sessions × RM${pricePerSession} = RM${classFee}`);
     });
     
     console.log(`💰 TOTAL FEE: RM${totalFee} (${totalSessions} total sessions)`);
@@ -1311,15 +1316,15 @@ function calculateFees() {
         totalFee: totalFee,
         baseFee: totalFee,
         holidayDeduction: 0,
-        missedClasses: 0
+        missedClasses: 0,
+        sortedBreakdown: sortedBreakdown // Return sorted breakdown for display
     };
 }
 
 
 
 function updatePaymentDisplay() {
-    const { classCount, totalFee } = calculateFees();
-    const { breakdown } = calculateActualClassCounts();
+    const { classCount, totalFee, sortedBreakdown } = calculateFees();
     
     // Get selected schedules
     const scheduleCheckboxes = document.querySelectorAll('input[name="sch"]:checked');
@@ -1328,17 +1333,21 @@ function updatePaymentDisplay() {
     // Update class count
     document.getElementById('payment-class-count').innerText = classCount;
     
-    // Create a detailed list of selected classes with actual class counts
+    // Create a detailed list of selected classes with pricing (SORTED by session count)
     let classListHTML = '';
-    if (selectedClasses.length > 0) {
-        classListHTML = '<div style="margin-top: 8px; padding: 8px; background: #f8fafc; border-radius: 6px; border-left: 3px solid #7c3aed;">';
-        classListHTML += '<div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 4px; text-transform: uppercase;">📅 Selected Classes (After Holiday Deductions):</div>';
+    if (selectedClasses.length > 0 && sortedBreakdown) {
+        const sessionPricing = [30, 27, 24, 21];
         
-        breakdown.forEach(({ schedule, classes }) => {
-            classListHTML += `<div style="font-size: 12px; color: #1e293b; padding: 3px 0;">• ${schedule} <span style="color: #16a34a; font-weight: 600;">(${classes} classes)</span></div>`;
+        classListHTML = '<div style="margin-top: 8px; padding: 8px; background: #f8fafc; border-radius: 6px; border-left: 3px solid #7c3aed;">';
+        classListHTML += '<div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 4px; text-transform: uppercase;">📅 Fee Calculation (Sorted by Sessions):</div>';
+        
+        sortedBreakdown.forEach((classData, index) => {
+            const pricePerSession = sessionPricing[index] || sessionPricing[sessionPricing.length - 1];
+            const classFee = pricePerSession * classData.classes;
+            classListHTML += `<div style="font-size: 12px; color: #1e293b; padding: 3px 0;">• ${classData.schedule} <span style="color: #7c3aed; font-weight: 600;">(${classData.classes} × RM${pricePerSession} = RM${classFee})</span></div>`;
         });
         
-        classListHTML += `<div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #e2e8f0; font-weight: 600; color: #7c3aed; font-size: 13px;">Total Classes: ${classCount}</div>`;
+        classListHTML += `<div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #e2e8f0; font-weight: 600; color: #16a34a; font-size: 13px;">Total: ${classCount} sessions = RM${totalFee}</div>`;
         classListHTML += '</div>';
     }
     
