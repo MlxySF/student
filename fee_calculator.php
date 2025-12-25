@@ -2,11 +2,20 @@
 /**
  * fee_calculator.php - Centralized fee calculation logic
  * 
- * New Fee Structure:
- * - 1 class per week: RM30
- * - 2 classes per week: RM30 + RM27 = RM57
- * - 3 classes per week: RM30 + RM27 + RM24 = RM81
- * - 4 classes per week: RM30 + RM27 + RM24 + RM21 = RM102
+ * Updated Fee Structure (2025):
+ * 🎯一堂 (1 class): RM30
+ * 🎯二堂 (2 classes): RM30 + RM27 = RM57 Per Week
+ *   - 星期二 + 星期三 (6堂): RM171
+ *   - 星期二 + 星期五 (6堂): RM171
+ *   - 星期二 + 星期曰 (5堂): RM144
+ *   - 星期三 + 星期五 (6堂): RM171
+ *   - 星期三 + 星期日 (5堂): RM144
+ * 🎯三堂 (3 classes): RM30 + RM27 + RM24 = RM81 Per Week
+ *   - 星期二 星期三 星期五 (9堂): RM243
+ *   - 星期二 星期三 星期日 (9堂): RM243
+ *   - 星期三 星期五 星期日 (8堂): RM219
+ * 🎯四堂 (4 classes): RM30 + RM27 + RM24 + RM21 = RM102 Per Week
+ *   - 星期二 星期三 星期五 星期日 (11堂): RM102 per week
  */
 
 /**
@@ -15,11 +24,11 @@
 function getWeeklyFee($numberOfClasses) {
     switch ($numberOfClasses) {
         case 1:
-            return 30.00;
+            return 30.00;  // RM30
         case 2:
-            return 57.00; // RM30 + RM27
+            return 57.00;  // RM30 + RM27
         case 3:
-            return 81.00; // RM30 + RM27 + RM24
+            return 81.00;  // RM30 + RM27 + RM24
         case 4:
             return 102.00; // RM30 + RM27 + RM24 + RM21
         default:
@@ -43,6 +52,59 @@ function getFeeBreakdown($numberOfClasses) {
         default:
             return 'N/A';
     }
+}
+
+/**
+ * Get specific monthly fee examples based on class combinations
+ */
+function getMonthlyFeeExamples($numberOfClasses, $classDays = []) {
+    if ($numberOfClasses == 1) {
+        return 'RM30 per week';
+    }
+    
+    // Convert days to simplified format for comparison
+    $daysSet = array_map('strtolower', array_map('trim', $classDays));
+    sort($daysSet);
+    
+    if ($numberOfClasses == 2) {
+        // Check specific combinations for 2 classes
+        if (in_array('tuesday', $daysSet) && in_array('wednesday', $daysSet)) {
+            return '星期二 + 星期三 (6堂): RM171';
+        }
+        if (in_array('tuesday', $daysSet) && in_array('friday', $daysSet)) {
+            return '星期二 + 星期五 (6堂): RM171';
+        }
+        if (in_array('tuesday', $daysSet) && in_array('sunday', $daysSet)) {
+            return '星期二 + 星期曰 (5堂): RM144';
+        }
+        if (in_array('wednesday', $daysSet) && in_array('friday', $daysSet)) {
+            return '星期三 + 星期五 (6堂): RM171';
+        }
+        if (in_array('wednesday', $daysSet) && in_array('sunday', $daysSet)) {
+            return '星期三 + 星期日 (5堂): RM144';
+        }
+        return 'RM30 + RM27 = RM57 per week';
+    }
+    
+    if ($numberOfClasses == 3) {
+        // Check specific combinations for 3 classes
+        if (in_array('tuesday', $daysSet) && in_array('wednesday', $daysSet) && in_array('friday', $daysSet)) {
+            return '星期二 星期三 星期五 (9堂): RM243';
+        }
+        if (in_array('tuesday', $daysSet) && in_array('wednesday', $daysSet) && in_array('sunday', $daysSet)) {
+            return '星期二 星期三 星期日 (9堂): RM243';
+        }
+        if (in_array('wednesday', $daysSet) && in_array('friday', $daysSet) && in_array('sunday', $daysSet)) {
+            return '星期三 星期五 星期日 (8堂): RM219';
+        }
+        return 'RM30 + RM27 + RM24 = RM81 per week';
+    }
+    
+    if ($numberOfClasses == 4) {
+        return '星期二 星期三 星期五 星期日 (11堂): RM102 per week';
+    }
+    
+    return 'N/A';
 }
 
 /**
@@ -144,9 +206,11 @@ function calculateMonthlyFee($enrolledClasses, $classHolidays, $monthNumber, $ye
     // Calculate classes per day
     $classesByDay = [];
     $totalClassesInMonth = 0;
+    $classDays = [];
     
     foreach ($enrolledClasses as $class) {
         $dayOfWeek = $class['day_of_week'];
+        $classDays[] = $dayOfWeek;
         
         if (!isset($classesByDay[$dayOfWeek])) {
             $classCount = calculateClassesForDay($dayOfWeek, $classHolidays, $monthNumber, $yearNumber);
@@ -188,7 +252,8 @@ function calculateMonthlyFee($enrolledClasses, $classHolidays, $monthNumber, $ye
         'weeklyFee' => $weeklyFee,
         'numberOfWeeks' => round($numberOfWeeks, 2),
         'classesPerWeek' => $numberOfClassesPerWeek,
-        'feeBreakdown' => getFeeBreakdown($numberOfClassesPerWeek)
+        'feeBreakdown' => getFeeBreakdown($numberOfClassesPerWeek),
+        'monthlyExample' => getMonthlyFeeExamples($numberOfClassesPerWeek, $classDays)
     ];
 }
 
@@ -199,8 +264,13 @@ function formatFeeDescription($feeData, $monthName) {
     $desc = "Monthly Fee - $monthName\n";
     $desc .= "Classes per week: {$feeData['classesPerWeek']}\n";
     $desc .= "Weekly fee: {$feeData['feeBreakdown']}\n";
-    $desc .= "Number of weeks: {$feeData['numberOfWeeks']}\n\n";
-    $desc .= "Class breakdown:\n";
+    $desc .= "Number of weeks: {$feeData['numberOfWeeks']}\n";
+    
+    if (isset($feeData['monthlyExample'])) {
+        $desc .= "Package: {$feeData['monthlyExample']}\n";
+    }
+    
+    $desc .= "\nClass breakdown:\n";
     
     foreach ($feeData['breakdown'] as $item) {
         $desc .= "- {$item['day']}: {$item['className']} ({$item['classes']} classes)\n";
