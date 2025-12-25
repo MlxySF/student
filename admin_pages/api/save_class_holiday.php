@@ -1,4 +1,7 @@
 <?php
+// Set JSON header first
+header('Content-Type: application/json');
+
 // Initialize session if not started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -6,14 +9,25 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Include necessary files
 require_once '../../config.php';
-require_once '../../security.php';
 
-// Set JSON header
-header('Content-Type: application/json');
+// Debug: Log session info (remove this after fixing)
+error_log('Session ID: ' . session_id());
+error_log('User ID in session: ' . ($_SESSION['user_id'] ?? 'NOT SET'));
+error_log('Role in session: ' . ($_SESSION['role'] ?? 'NOT SET'));
 
 // Check if user is logged in and is admin
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
+    error_log('Authorization failed - User ID: ' . ($_SESSION['user_id'] ?? 'none') . ', Role: ' . ($_SESSION['role'] ?? 'none'));
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Unauthorized access',
+        'debug' => [
+            'session_id' => session_id(),
+            'has_user_id' => isset($_SESSION['user_id']),
+            'has_role' => isset($_SESSION['role']),
+            'role_value' => $_SESSION['role'] ?? 'not set'
+        ]
+    ]);
     exit();
 }
 
