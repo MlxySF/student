@@ -1,6 +1,7 @@
 <?php
 // admin_pages/registrations.php - View registrations with proper status colors
 // UPDATED 2025-12-21: Changed from base64 display to file serving
+// UPDATED 2025-12-26: Added payment method display and hide receipt for cash
 
 // Get filter parameter from URL, default to 'all'
 $statusFilter = isset($_GET['status']) ? $_GET['status'] : 'all';
@@ -30,6 +31,7 @@ $sql = "
         payment_date,
         payment_receipt_path,
         payment_status,
+        payment_method,
         class_count,
         student_account_id,
         account_created,
@@ -555,6 +557,30 @@ $totalCount = array_sum($statusCounts);
                                         <td><strong class="text-primary">RM <?php echo number_format($reg['payment_amount'], 2); ?></strong></td>
                                     </tr>
                                     <tr>
+                                        <th>Payment Method:</th>
+                                        <td>
+                                            <?php 
+                                            $paymentMethod = $reg['payment_method'] ?? 'Not specified';
+                                            $methodBadge = 'secondary';
+                                            $methodIcon = 'fa-question';
+                                            
+                                            if (strtolower($paymentMethod) === 'bank_transfer') {
+                                                $methodBadge = 'primary';
+                                                $methodIcon = 'fa-university';
+                                                $paymentMethod = 'Bank Transfer';
+                                            } elseif (strtolower($paymentMethod) === 'cash') {
+                                                $methodBadge = 'success';
+                                                $methodIcon = 'fa-money-bill-wave';
+                                                $paymentMethod = 'Cash';
+                                            }
+                                            ?>
+                                            <span class="badge bg-<?php echo $methodBadge; ?>">
+                                                <i class="fas <?php echo $methodIcon; ?>"></i> 
+                                                <?php echo htmlspecialchars($paymentMethod); ?>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
                                         <th>Payment Date:</th>
                                         <td><?php echo date('F j, Y', strtotime($reg['payment_date'])); ?></td>
                                     </tr>
@@ -586,43 +612,56 @@ $totalCount = array_sum($statusCounts);
                                     </tr>
                                 </table>
                                 
+                                <?php 
+                                // Only show receipt preview if payment method is NOT cash
+                                $isCashPayment = (strtolower($reg['payment_method'] ?? '') === 'cash');
+                                ?>
+                                
+                                <?php if (!$isCashPayment): ?>
                                 <div class="mt-3">
-    <strong>Payment Receipt:</strong>
-    <div class="border p-2 mt-2" style="min-height: 400px; background: #f8f9fa;">
-        <?php if (!empty($reg['payment_receipt_path'])): ?>
-            <?php 
-            $fileExt = strtolower(pathinfo($reg['payment_receipt_path'], PATHINFO_EXTENSION));
-            $isPdf = ($fileExt === 'pdf');
-            ?>
-            
-            <?php if ($isPdf): ?>
-                <!-- PDF - Live Preview -->
-                <div class="text-center mb-2">
-                    <span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF Receipt</span>
-                    <a href="../serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>" 
-                       class="btn btn-sm btn-outline-danger ms-2" target="_blank">
-                        <i class="fas fa-external-link-alt"></i> Open Full Screen
-                    </a>
-                </div>
-                <iframe src="../serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>" 
-                    style="width: 100%; height: 500px; border: 1px solid #dee2e6; border-radius: 4px;">
-                </iframe>
-            <?php else: ?>
-                <!-- Image -->
-                <div class="text-center">
-                    <img src="../serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>" 
-                         alt="Payment Receipt" class="img-fluid" 
-                         style="max-height: 500px; cursor: pointer;"
-                         onclick="window.open('../serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>', '_blank')">
-                </div>
-            <?php endif; ?>
-        <?php else: ?>
-            <div class="d-flex align-items-center justify-content-center" style="height: 400px;">
-                <p class="text-muted mb-0">No receipt available</p>
-            </div>
-        <?php endif; ?>
-    </div>
-</div>
+                                    <strong>Payment Receipt:</strong>
+                                    <div class="border p-2 mt-2" style="min-height: 400px; background: #f8f9fa;">
+                                        <?php if (!empty($reg['payment_receipt_path'])): ?>
+                                            <?php 
+                                            $fileExt = strtolower(pathinfo($reg['payment_receipt_path'], PATHINFO_EXTENSION));
+                                            $isPdf = ($fileExt === 'pdf');
+                                            ?>
+                                            
+                                            <?php if ($isPdf): ?>
+                                                <!-- PDF - Live Preview -->
+                                                <div class="text-center mb-2">
+                                                    <span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF Receipt</span>
+                                                    <a href="../serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>" 
+                                                       class="btn btn-sm btn-outline-danger ms-2" target="_blank">
+                                                        <i class="fas fa-external-link-alt"></i> Open Full Screen
+                                                    </a>
+                                                </div>
+                                                <iframe src="../serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>" 
+                                                    style="width: 100%; height: 500px; border: 1px solid #dee2e6; border-radius: 4px;">
+                                                </iframe>
+                                            <?php else: ?>
+                                                <!-- Image -->
+                                                <div class="text-center">
+                                                    <img src="../serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>" 
+                                                         alt="Payment Receipt" class="img-fluid" 
+                                                         style="max-height: 500px; cursor: pointer;"
+                                                         onclick="window.open('../serve_file.php?path=<?php echo urlencode($reg['payment_receipt_path']); ?>', '_blank')">
+                                                </div>
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <div class="d-flex align-items-center justify-content-center" style="height: 400px;">
+                                                <p class="text-muted mb-0">No receipt available</p>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <?php else: ?>
+                                <div class="mt-3">
+                                    <div class="alert alert-info mb-0">
+                                        <i class="fas fa-info-circle"></i> Cash payment - No receipt required
+                                    </div>
+                                </div>
+                                <?php endif; ?>
 
                             </div>
                         </div>
