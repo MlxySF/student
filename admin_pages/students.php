@@ -70,12 +70,15 @@ $allClasses = $pdo->query("SELECT * FROM classes ORDER BY class_name")->fetchAll
                 </select>
             </div>
             <div class="col-md-6 text-end d-flex align-items-end">
-                <div class="btn-group" role="group">
-                    <a href="?page=students" class="btn btn-outline-secondary">
-                        <i class="fas fa-sync"></i> Reset Filters
-                    </a>
-                </div>
-            </div>
+    <div class="btn-group" role="group">
+        <a href="?page=students" class="btn btn-outline-secondary">
+            <i class="fas fa-sync"></i> Reset Filters
+        </a>
+        <button type="button" class="btn btn-success" onclick="exportStudents()">
+            <i class="fas fa-file-excel"></i> Export to Excel
+        </button>
+    </div>
+</div>
         </div>
 
         <!-- Students Table -->
@@ -467,4 +470,23 @@ function editStudent(registrationId) {
     const modal = new bootstrap.Modal(document.getElementById('editStudentModal'));
     modal.show();
 }
+
+function exportStudents() {
+    const urlParams = new URLSearchParams();
+    
+    // Include current filters in export
+    const paymentStatus = '<?php echo $paymentStatusFilter; ?>';
+    const statusFilter = '<?php echo $statusFilter; ?>';
+    
+    if (paymentStatus) {
+        urlParams.set('payment_status', paymentStatus);
+    }
+    if (statusFilter) {
+        urlParams.set('status_filter', statusFilter);
+    }
+    
+    // Redirect to export script
+    window.location.href = 'export_students_excel.php?' + urlParams.toString();
+}
+
 </script>

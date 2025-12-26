@@ -70,8 +70,6 @@ $stmt = $pdo->query("
 $recent_attendance = $stmt->fetchAll();
 ?>
 
-<h3><i class="fas fa-calendar-check"></i> Attendance Management</h3>
-
 <!-- Export Section -->
 <div class="card mb-3">
     <div class="card-header bg-success text-white">

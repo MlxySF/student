@@ -238,8 +238,8 @@ function getInvoiceNotificationEmailHTML($invoice) {
             
             <p><strong>How to Pay:</strong></p>
             <ul>
-                <li>Login to your student/parent dashboard</li>
-                <li>Go to &quot;Invoices&quot; or &quot;Payments&quot; section</li>
+                <li>Login to your dashboard</li>
+                <li>Go to &quot;Invoices&quot; or &quot;Invoices&quot; section</li>
                 <li>Find invoice <strong>' . $invoiceNumber . '</strong></li>
                 <li>Upload payment receipt or make online payment</li>
                 <li>Wait for admin verification</li>
@@ -247,9 +247,8 @@ function getInvoiceNotificationEmailHTML($invoice) {
             
             <p><strong>Payment Methods:</strong></p>
             <ul>
-                <li>Online Banking Transfer</li>
-                <li>Credit/Debit Card (if available)</li>
-                <li>Cash payment at office (upload receipt)</li>
+                <li>Bank Transfer</li>
+                <li>Cash payment</li>
             </ul>
             
             <p>If you have any questions about this invoice, please don\'t hesitate to contact us.</p>

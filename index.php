@@ -704,7 +704,7 @@ $page = $_GET['page'] ?? 'login';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo SITE_NAME; ?> - Parent Portal</title>
+    <title><?php echo SITE_NAME; ?></title>
     
     <link rel="icon" type="image/png" href="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png">
     <link rel="shortcut icon" type="image/png" href="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png">
@@ -1886,9 +1886,9 @@ $page = $_GET['page'] ?? 'login';
                 <a href="pages/register.php" class="btn btn-success w-100" style="padding: 15px 20px; font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 10px 20px rgba(3, 138, 255, 0.3); border-radius: 12px; background-color: #4169E1;">
                     <i class="fas fa-pen-to-square"></i> Register for 2026 Class
                 </a>
-                <p class="text-muted mt-3 mb-0" style="font-size: 15px; font-weight: 600;">
+                <!--<p class="text-muted mt-3 mb-0" style="font-size: 15px; font-weight: 600;">
                     Click to register!
-                </p>
+                </p>-->
             </div>
 
             <?php if (isset($_SESSION['error'])): ?>
@@ -2153,9 +2153,9 @@ function playVideo(language, part, element) {
     // Define your video file paths
     const videos = {
         'en': {
-            1: 'videos/tutorials/english/Registration Tutorial.mp4',
+            1: 'videos/tutorials/english/Registration Video.mp4',
             2: 'videos/tutorials/english/Student System Guide.mp4',
-            3: 'videos/tutorials/english/Invoice Payment Tutorial.mp4'
+            3: 'videos/tutorials/english/Invoice Payment Video.mp4'
         },
         'zh': {
             1: 'videos/tutorials/chinese/如何注册报名表格.mp4',

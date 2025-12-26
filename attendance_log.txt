@@ -880,3 +880,103 @@ POST Data: Array
     [registration_id] => 24
 )
 
+
+=== 2025-12-26 00:29:47 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 27
+)
+
+
+=== 2025-12-26 00:29:51 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 26
+)
+
+
+=== 2025-12-26 02:07:34 ===
+Action: verify_registration
+POST Data: Array
+(
+    [action] => verify_registration
+    [registration_id] => 28
+)
+
+
+=== 2025-12-26 09:08:03 ===
+Action: reject_registration
+POST Data: Array
+(
+    [action] => reject_registration
+    [registration_id] => 29
+    [reject_reason] => test
+)
+
+
+=== 2025-12-26 09:08:19 ===
+Action: reapprove_registration
+POST Data: Array
+(
+    [action] => reapprove_registration
+    [registration_id] => 29
+)
+
+
+=== 2025-12-26 09:08:27 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 29
+)
+
+
+=== 2025-12-26 11:12:19 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 30
+)
+
+
+=== 2025-12-26 11:12:22 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 28
+)
+
+
+=== 2025-12-26 11:56:13 ===
+Action: verify_registration
+POST Data: Array
+(
+    [action] => verify_registration
+    [registration_id] => 32
+)
+
+
+=== 2025-12-26 15:27:43 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 32
+)
+
+
+=== 2025-12-26 15:27:46 ===
+Action: delete_registration
+POST Data: Array
+(
+    [action] => delete_registration
+    [registration_id] => 31
+)
+

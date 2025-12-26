@@ -691,6 +691,8 @@ document.head.appendChild(style);
 
         // ✨ FORCE SCROLL TO TOP - Multiple attempts
         scrollToTop();
+        
+        updateBackButton(); // Update back button text based on current step
     }
 
     async function submitPayment() {
@@ -1274,8 +1276,8 @@ const customPassword = passwordType === 'custom' ? document.getElementById('cust
     let receiptBase64 = null;
 
 // CORRECTED FEE CALCULATION - January 2026 Per-Session Pricing
-// ✅ MORE SESSIONS → HIGHER RATE (RM30, RM27, RM24, RM21)
-// ✅ FEWER SESSIONS → LOWER RATE
+// ✅ FIXED: Sort ASCENDING so classes with FEWER sessions get positioned LAST
+// This ensures they get the LOWER pricing rates (RM21, RM24, etc.)
 function calculateFees() {
     const schedules = document.querySelectorAll('input[name="sch"]:checked');
     const scheduleCount = schedules.length;
@@ -1287,8 +1289,8 @@ function calculateFees() {
     // Get actual class counts using breakdown
     const { breakdown } = calculateActualClassCounts();
     
-    // ✅ SORT DESCENDING (most sessions first → positioned first → gets RM30)
-    // Example: 5 sessions gets RM30, 4 sessions gets RM27, 4 sessions gets RM24, 3 sessions gets RM21
+    // ✅ SORT ASCENDING (fewest sessions first → positioned first → gets RM30)
+    // This way: 3 sessions gets RM30, 4 sessions gets RM27, 4 sessions gets RM24, 5 sessions gets RM21
     const sortedBreakdown = breakdown.sort((a, b) => b.classes - a.classes);
     
     // Per-session pricing based on class position
@@ -1324,10 +1326,48 @@ function calculateFees() {
 
 
 function updatePaymentDisplay() {
-    const { classCount, totalFee } = calculateFees();
+    const { classCount, totalFee, sortedBreakdown } = calculateFees();
     
-    // Update class count (just the number, no breakdown)
+    // Get selected schedules
+    const scheduleCheckboxes = document.querySelectorAll('input[name="sch"]:checked');
+    const selectedClasses = Array.from(scheduleCheckboxes).map(cb => cb.value);
+    
+    // Update class count
     document.getElementById('payment-class-count').innerText = classCount;
+    
+    // Create a detailed list of selected classes with pricing (SORTED by session count)
+    let classListHTML = '';
+    if (selectedClasses.length > 0 && sortedBreakdown) {
+        const sessionPricing = [30, 27, 24, 21];
+        
+        classListHTML = '<div style="margin-top: 8px; padding: 8px; background: #f8fafc; border-radius: 6px; border-left: 3px solid #7c3aed;">';
+        classListHTML += '<div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 4px; text-transform: uppercase;">📅 Fee Calculation:</div>';
+        
+        sortedBreakdown.forEach((classData, index) => {
+            const pricePerSession = sessionPricing[index] || sessionPricing[sessionPricing.length - 1];
+            const classFee = pricePerSession * classData.classes;
+            classListHTML += `<div style="font-size: 12px; color: #1e293b; padding: 3px 0;">• ${classData.schedule} <span style="color: #7c3aed; font-weight: 600;">(${classData.classes})</span></div>`;
+        });
+        
+        classListHTML += `<div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #e2e8f0; font-weight: 600; color: #16a34a; font-size: 13px;">Total: ${classCount} sessions</div>`;
+        classListHTML += '</div>';
+    }
+    
+    // Find the parent container and update it
+    const classCountElement = document.getElementById('payment-class-count');
+    const parentDiv = classCountElement.closest('.flex.justify-between.items-center');
+    
+    // Remove any existing class list
+    const existingList = parentDiv.parentElement.querySelector('.selected-classes-list');
+    if (existingList) existingList.remove();
+    
+    // Add the new class list after the count div
+    if (classListHTML) {
+        const listContainer = document.createElement('div');
+        listContainer.className = 'selected-classes-list';
+        listContainer.innerHTML = classListHTML;
+        parentDiv.parentElement.insertBefore(listContainer, parentDiv.nextSibling);
+    }
     
     // Update total
     document.getElementById('payment-total').innerText = `RM ${totalFee}`;
@@ -1376,6 +1416,75 @@ function togglePaymentMethod() {
 }
 
 // Copy account number to clipboard
+function copyAccountNumber() {
+    const accountNumber = '5050 1981 6740';
+    navigator.clipboard.writeText(accountNumber).then(function() {
+        // Show success message
+        alert('Account number copied! 账户号码已复制！');
+    }, function(err) {
+        console.error('Could not copy text: ', err);
+    });
+}
+
+// Handle receipt upload
+// Handle receipt upload
+function handleReceiptUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Check file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB!');
+        event.target.value = '';
+        return;
+    }
+
+    // Show preview
+    const uploadPrompt = document.getElementById('upload-prompt');
+    const uploadPreview = document.getElementById('upload-preview');
+    const previewImage = document.getElementById('preview-image');
+    const previewFilename = document.getElementById('preview-filename');
+
+    uploadPrompt.classList.add('hidden');
+    uploadPreview.classList.remove('hidden');
+
+    // Set filename
+    previewFilename.textContent = file.name;
+
+    // Convert to base64 and store in receiptBase64
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        receiptBase64 = e.target.result; // ✅ STORE BASE64 DATA
+        console.log('[Receipt Upload] File converted to base64, size:', receiptBase64.length);
+        
+        // Show image preview if it's an image
+        if (file.type.startsWith('image/')) {
+            previewImage.src = e.target.result;
+            previewImage.style.display = 'block';
+        } else {
+            // For PDF, show PDF icon
+            previewImage.style.display = 'none';
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+
+// Remove receipt
+function removeReceipt() {
+    const uploadPrompt = document.getElementById('upload-prompt');
+    const uploadPreview = document.getElementById('upload-preview');
+    const receiptUpload = document.getElementById('receipt-upload');
+    const previewImage = document.getElementById('preview-image');
+    
+    uploadPreview.classList.add('hidden');
+    uploadPrompt.classList.remove('hidden');
+    receiptUpload.value = '';
+    previewImage.src = '';
+}
+
+
+    // Copy account number to clipboard
 function copyAccountNumber() {
     const accountNumber = '5050 1981 6740';
     navigator.clipboard.writeText(accountNumber).then(function() {
@@ -1456,4 +1565,115 @@ function removeReceipt() {
     // Clear base64 data
     receiptBase64 = null;
     console.log('[Receipt Upload] Receipt removed, receiptBase64 cleared');
+}
+
+// Handle back button behavior based on current step
+function handleBackButton() {
+    const currentStepElement = document.querySelector('.step-content.active');
+    if (!currentStepElement) return;
+    
+    const currentStep = parseInt(currentStepElement.id.split('-')[1]);
+    
+    if (currentStep === 1) {
+        // On first step, redirect to login page
+        if (confirm('Are you sure you want to go back to login? Any entered information will be lost.\n\n确定要返回登录页面吗？任何已输入的信息将会丢失。')) {
+            window.location.href = '../index.php';
+        }
+    } else {
+        // On other steps, go back to previous step
+        changeStep(-1);
+    }
+}
+
+// Update back button text and style based on current step
+function updateBackButton() {
+    const currentStepElement = document.querySelector('.step-content.active');
+    if (!currentStepElement) return;
+    
+    const currentStep = parseInt(currentStepElement.id.split('-')[1]);
+    const backBtn = document.getElementById('btn-prev');
+    const backBtnIcon = document.getElementById('back-btn-icon');
+    const backBtnText = document.getElementById('back-btn-text');
+    const backBtnSubtext = document.getElementById('back-btn-subtext');
+    const footerButtons = document.getElementById('footer-buttons');
+    
+    if (currentStep === 1) {
+        // FIRST STEP ONLY - show styled "Back to Login" button
+        backBtn.style.display = 'inline-flex';
+        backBtn.style.background = '#1e293b';
+        backBtn.style.color = 'white';
+        backBtn.style.border = '2px solid #fbbf24';
+        backBtn.style.boxShadow = '0 4px 12px rgba(30, 41, 59, 0.3)';
+        backBtn.style.opacity = '1';
+        backBtn.style.cursor = 'pointer';
+        backBtn.disabled = false;
+        
+        // Show icon
+        backBtnIcon.style.display = 'flex';
+        
+        // Update text
+        backBtnText.innerHTML = 'Back to Login';
+        backBtnText.style.color = 'white';
+        backBtnSubtext.innerHTML = '返回登录 ←';
+        backBtnSubtext.style.display = 'block';
+        
+        // Add hover effect
+        backBtn.onmouseover = function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 6px 16px rgba(30, 41, 59, 0.4)';
+        };
+        backBtn.onmouseout = function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 4px 12px rgba(30, 41, 59, 0.3)';
+        };
+        
+        footerButtons.style.justifyContent = 'space-between';
+        
+    } else if (currentStep === 7) {
+        // SUCCESS PAGE - hide the entire back button
+        backBtn.style.display = 'none';
+        footerButtons.style.justifyContent = 'center';
+        
+    } else {
+        // STEPS 2-6 - show regular gray "← Back" button
+        backBtn.style.display = 'inline-flex';
+        backBtn.style.background = 'transparent';
+        backBtn.style.color = '#64748b';
+        backBtn.style.border = 'none';
+        backBtn.style.boxShadow = 'none';
+        backBtn.style.opacity = '1';
+        backBtn.style.cursor = 'pointer';
+        backBtn.style.transform = 'none';
+        backBtn.disabled = false;
+        
+        // Hide icon
+        backBtnIcon.style.display = 'none';
+        
+        // Update text
+        backBtnText.innerHTML = '← Back';
+        backBtnText.style.color = '#64748b';
+        backBtnSubtext.innerHTML = '';
+        backBtnSubtext.style.display = 'none';
+        
+        // Remove hover effect
+        backBtn.onmouseover = null;
+        backBtn.onmouseout = null;
+        
+        footerButtons.style.justifyContent = 'space-between';
+    }
+}
+
+// Call updateBackButton when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    updateBackButton();
+});
+
+// Override the original changeStep to also update back button
+// This ensures the back button updates whenever the step changes
+const originalChangeStep = window.changeStep;
+if (typeof originalChangeStep === 'function') {
+    window.changeStep = function(direction) {
+        originalChangeStep(direction);
+        setTimeout(updateBackButton, 50); // Small delay to ensure DOM is updated
+    };
 }

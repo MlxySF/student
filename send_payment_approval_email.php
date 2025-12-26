@@ -189,7 +189,7 @@ function getApprovedPaymentEmailHTML($payment, $adminNotes) {
     $paymentMethod = ucfirst(str_replace('_', ' ', $payment['payment_method'] ?? 'Bank Transfer'));
     
     // Portal URL for downloading receipt
-    $portalUrl = 'https://wushusportacademy.app.tc/student/';
+    $portalUrl = 'https://wushusportacademy.com/';
     
     return '
 <!DOCTYPE html>
@@ -263,7 +263,7 @@ function getApprovedPaymentEmailHTML($payment, $adminNotes) {
             
             <div class="dashboard-box">
                 <strong style="font-size: 18px; color: #1e293b;">&#128196; Download Your Receipt</strong><br><br>
-                <p style="margin: 10px 0; color: #64748b;">Your official payment receipt is ready to download from your student dashboard.</p>
+                <p style="margin: 10px 0; color: #64748b;">Your official payment receipt is ready to download from your dashboard if your payment method is bank transfer. Cash payments doesn\'t have receipts!</p>
                 <a href="' . $portalUrl . '" class="dashboard-btn" style="color: white;">&#128279; Go to Dashboard</a><br>
                 <small style="color: #64748b; margin-top: 10px; display: inline-block;">Login to view and download your payment receipt</small>
             </div>

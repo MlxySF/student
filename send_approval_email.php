@@ -91,7 +91,7 @@ function getApprovalEmailHTML($parentEmail, $studentName, $registrationNumber, $
         ";
     }
     
-    $portalUrl = 'https://wushusportacademy.app.tc/student/index.php'; // Update with your actual portal URL
+    $portalUrl = 'https://wushusportacademy.com/'; // Update with your actual portal URL
     
     $html = "<!DOCTYPE html>
 <html lang='en'>
@@ -146,7 +146,7 @@ function getApprovalEmailHTML($parentEmail, $studentName, $registrationNumber, $
             <div style='background: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; margin: 24px 0; border-radius: 8px;'>
                 <h3 style='margin: 0 0 12px 0; color: #1e40af; font-size: 16px;'>📝 What's Next?</h3>
                 <ol style='margin: 0; padding-left: 20px; color: #1e40af; font-size: 14px; line-height: 1.8;'>
-                    <li><strong>Login to Parent Portal</strong> to view your child's class schedule</li>
+                    <li><strong>Login to our system</strong> to view your child's class schedule</li>
                     <li><strong>Check attendance records</strong> and track progress</li>
                     <li><strong>View and pay monthly invoices</strong> online</li>
                     <li><strong>Bring your child to class</strong> on scheduled training days</li>

@@ -103,7 +103,7 @@ if (empty($_SESSION['csrf_token'])) {
                         <div class="bg-blue-50 border-l-4 border-blue-500 p-3 mb-2 rounded-r-lg">
                             <p class="text-s text-blue-800 leading-relaxed">
                                 <i class="fas fa-info-circle mr-1"></i>
-                                <strong>Registering another child?</strong> Use the <strong>same parent email</strong> to link all your children under one parent account.
+                                <strong>Registering another child?</strong> Use the <strong>same parent email</strong> to link all your children under one account.
                             </p>
                             <p class="text-s text-blue-700 leading-relaxed mt-1">
                                 <strong>注册另一个孩子？</strong>使用<strong>相同的家长电邮</strong>将所有孩子连接到一个家长账户。
@@ -121,10 +121,10 @@ if (empty($_SESSION['csrf_token'])) {
                     <!-- PASSWORD SELECTION SECTION -->
 <div class="bg-purple-50 border-l-4 border-purple-500 p-4 mb-2 rounded-r-lg mt-5">
     <p class="text-sm text-purple-800 leading-relaxed font-semibold mb-2">
-        <i class="fas fa-lock mr-1"></i> Parent Account Password Setup 家长账户密码设置
+        <i class="fas fa-lock mr-1"></i> Account Password Setup 家长账户密码设置
     </p>
     <p class="text-xs text-purple-700 leading-relaxed">
-        Choose how you want to set up your login password for the parent portal.
+        Choose how you want to set up your login password for the account.
         <br>选择您想要如何设置家长门户的登录密码。
     </p>
 </div>
@@ -132,7 +132,7 @@ if (empty($_SESSION['csrf_token'])) {
 <!-- EXISTING PARENT INFO (Hidden by default) -->
 <div id="existing-parent-info" class="bg-green-50 border-l-4 border-green-500 p-4 mb-2 rounded-r-lg mt-5 hidden">
     <p class="text-sm text-green-800 leading-relaxed font-semibold mb-2">
-        <i class="fas fa-check-circle mr-1"></i> Existing Parent Account Detected 检测到现有家长账户
+        <i class="fas fa-check-circle mr-1"></i> Existing Account Detected 检测到现有家长账户
     </p>
     <div id="existing-parent-details" class="text-xs text-green-700 leading-relaxed">
         <!-- Will be populated by JavaScript -->
@@ -146,10 +146,10 @@ if (empty($_SESSION['csrf_token'])) {
 <!-- NEW PARENT INFO (Hidden by default) -->
 <div id="new-parent-info" class="bg-purple-50 border-l-4 border-purple-500 p-4 mb-2 rounded-r-lg mt-5 hidden">
     <p class="text-sm text-purple-800 leading-relaxed font-semibold mb-2">
-        <i class="fas fa-user-plus mr-1"></i> New Parent Account 新家长账户
+        <i class="fas fa-user-plus mr-1"></i> New Account 新家长账户
     </p>
     <p class="text-xs text-purple-700 leading-relaxed">
-        This email is not registered. We'll create a new parent account for you.
+        This email is not registered. We'll create a new account for you.
         <br>此邮箱未注册。我们将为您创建新的家长账户。
     </p>
 </div>
@@ -486,16 +486,16 @@ if (empty($_SESSION['csrf_token'])) {
 
     <!-- Fee Info -->
     <div class="bg-amber-50 text-amber-900 p-4 rounded-xl text-xs mb-8 border border-amber-100">
-        <p class="font-bold mb-1 text-m" style="font-size: 16px;"><i class="fas fa-info-circle"></i> 注明 (Remark)：州队运动员需至少选择 两堂课。</p>
-        <p style="font-size: 15px;">• 选择 一堂课：收费 <strong>RM 120</strong></p>
-        <p style="font-size: 15px;">• 选择 二堂课：收费 <strong>RM 200</strong></p>
-        <p style="font-size: 15px;">• 选择 三堂课：收费 <strong>RM 280</strong></p>
-        <p style="font-size: 15px;">• 选择 四堂课：收费 <strong>RM 320</strong></p>
-        <p class="font-bold mt-1" style="font-size: 16px;"><br>State team athletes must choose at least two classes.</p>
-        <p style="font-size: 15px;">• Choose one class: <strong>RM 120</strong></p>
-        <p style="font-size: 15px;">• Choose two classes: <strong>RM 200</strong></p>
-        <p style="font-size: 15px;">• Choose three classes: <strong>RM 280</strong></p>
-        <p style="font-size: 15px;">• Choose four classes: <strong>RM 320</strong></p>
+        <p class="font-bold mb-1 text-m" style="font-size: 16px;"><i class="fas fa-info-circle"></i> 注明 (Remark)：州队运动员需至少选择 两堂课程。</p>
+        <p style="font-size: 15px;">• 选择 <strong>一堂课程</strong>：<strong>RM30</strong><br></p>
+        <p style="font-size: 15px;">• 选择 <strong>二堂课程</strong>：<strong>RM27</strong></p>
+        <p style="font-size: 15px;">• 选择 <strong>三堂课程</strong>：<strong>RM24</strong></p>
+        <p style="font-size: 15px;">• 选择 <strong>四堂课程</strong>：<strong>RM21</strong></p>
+        <p class="font-bold mt-1" style="font-size: 16px;"><br>State team athletes must choose at least two courses.</p>
+        <p style="font-size: 15px;">• Select <strong>one course</strong>：<strong>RM30</strong><br></p>
+        <p style="font-size: 15px;">• Select <strong>two courses</strong>：<strong>RM27</strong></p>
+        <p style="font-size: 15px;">• Select <strong>three courses</strong>：<strong>RM24</strong></p>
+        <p style="font-size: 15px;">• Select <strong>four courses</strong>：<strong>RM21</strong></p>
     </div>
 
     <div class="space-y-4">
@@ -611,7 +611,7 @@ if (empty($_SESSION['csrf_token'])) {
                             </div>
                         </label>
                         <label class="custom-checkbox border-2 border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/30 transition-all" data-schedule="pc2-fri-8pm">
-                            <input type="checkbox" name="sch" value="SJK(C) Puay Chai 2: Wed 8pm-10pm">
+                            <input type="checkbox" name="sch" value="SJK(C) Puay Chai 2: Fri 8pm-10pm">
                             <div class="custom-checkbox-label">
                                 <div class="text-sm font-bold text-slate-800 mb-1">
                                     <i class="far fa-calendar mr-2 text-amber-500"></i>Friday 星期五 · 8:00 PM - 10:00 PM
@@ -841,16 +841,16 @@ if (empty($_SESSION['csrf_token'])) {
         </div>
         <div class="bg-blue-50 border-l-4 border-blue-500 p-3 text-lg text-blue-800">
             <p class="font-semibold mb-1"><i class="fas fa-info-circle"></i> 收费标准:</p>
-            <p>• 1 堂课: RM 120</p>
-            <p>• 2 堂课: RM 200</p>
-            <p>• 3 堂课: RM 280</p>
-            <p>• 4 堂课或以上: RM 320</p>
+            <p>• <strong>一堂课程</strong>：<strong>RM30</strong></p>
+            <p>• <strong>二堂课程</strong>：<strong>RM27</strong></p>
+            <p>• <strong>三堂课程</strong>：<strong>RM24</strong></p>
+            <p>• <strong>四堂课程</strong>：<strong>RM21</strong></p>
             <p><br></p>
             <p class="font-semibold mb-1"><i class="fas fa-info-circle"></i> Fee Structure:</p>
-            <p>• 1 class: RM 120</p>
-            <p>• 2 classes: RM 200</p>
-            <p>• 3 classes: RM 280</p>
-            <p>• 4 classes: RM 320</p>
+            <p>• <strong>One Course</strong>：<strong>RM30</strong></p>
+            <p>• <strong>Two Courses</strong>：<strong>RM27</strong></p>
+            <p>• <strong>Three Courses</strong>：<strong>RM24</strong></p>
+            <p>• <strong>Four Courses</strong>：<strong>RM21</strong></p>
         </div>
     </div>
 
@@ -873,12 +873,12 @@ if (empty($_SESSION['csrf_token'])) {
 
         <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 text-lg text-yellow-800">
             <p class="font-semibold mb-1 text-lg"><i class="fas fa-info-circle"></i> 付款说明:</p>
-            <p>• <strong>现金:</strong> 训练时直接交给教练</p>
-            <p>• <strong>银行转账:</strong> 转账至提供的银行账户并上传收据<br></p>
+            <p>• <strong>现金:</strong> 将学费以现金付款方式交于林金教练</p>
+            <p>• <strong>银行转账:</strong> 转账至银行账户并上传收据<br></p>
             <p><br></p>
             <p class="font-semibold mb-1"><i class="fas fa-info-circle"></i> Payment Instructions:</p>
-            <p>• <strong>Cash:</strong> Pay directly to coach during training</p>
-            <p>• <strong>Bank Transfer:</strong> Transfer to provided bank account and upload receipt</p>
+            <p>• <strong>Cash:</strong> Pay directly to coach</p>
+            <p>• <strong>Bank Transfer:</strong> Transfer to bank account and upload receipt</p>
         </div>
     </div>
 
@@ -1080,8 +1080,8 @@ if (empty($_SESSION['csrf_token'])) {
             <i class="fas fa-arrow-right" style="font-size: 14px; color: #1e293b;"></i>
         </div>
         <div style="text-align: left;">
-            <div style="font-size: 13px; font-weight: 700; line-height: 1.3;">Parent Login</div>
-            <div style="font-size: 10px; color: #fbbf24; font-weight: 500;">家长登录 →</div>
+            <div style="font-size: 13px; font-weight: 700; line-height: 1.3;">Login</div>
+            <div style="font-size: 10px; color: #fbbf24; font-weight: 500;">登录 →</div>
         </div>
     </a>
 </div>
@@ -1094,14 +1094,44 @@ if (empty($_SESSION['csrf_token'])) {
     </div>
 
     <!-- Footer buttons -->
-    <div style="padding: 24px; background: white; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-        <button id="btn-prev" onclick="changeStep(-1)" style="padding: 10px 24px; border-radius: 12px; font-weight: 600; color: #64748b; background: transparent; border: none; cursor: pointer; transition: background 0.2s;" disabled>
-            ← Back
-        </button>
-        <button id="btn-next" onclick="changeStep(1)" style="background: #1e293b; color: white; padding: 10px 32px; border-radius: 12px; font-weight: 600; box-shadow: 0 4px 12px rgba(30, 41, 59, 0.3); border: none; cursor: pointer; transition: all 0.2s;">
-            Next Step <i class="fa-solid fa-arrow-right"></i>
-        </button>
-    </div>
+<div id="footer-buttons" style="padding: 24px; background: white; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+    <!-- Back/Login Button -->
+    <button id="btn-prev" onclick="handleBackButton()" style="
+        padding: 10px 16px; 
+        border-radius: 12px; 
+        font-weight: 600; 
+        background: transparent; 
+        color: #64748b; 
+        border: none; 
+        cursor: pointer; 
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: none;
+    ">
+        <div id="back-btn-icon" style="
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            border-radius: 8px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        ">
+            <i class="fas fa-arrow-left" style="font-size: 12px; color: #1e293b;"></i>
+        </div>
+        <div style="text-align: left;">
+            <div id="back-btn-text" style="font-size: 14px; font-weight: 700; line-height: 1.2;">← Back</div>
+            <div id="back-btn-subtext" style="font-size: 9px; color: #fbbf24; font-weight: 500; display: none;"></div>
+        </div>
+    </button>
+    
+    <!-- Next Button -->
+    <button id="btn-next" onclick="changeStep(1)" style="background: #1e293b; color: white; padding: 10px 32px; border-radius: 12px; font-weight: 600; box-shadow: 0 4px 12px rgba(30, 41, 59, 0.3); border: none; cursor: pointer; transition: all 0.2s;">
+        Next Step <i class="fa-solid fa-arrow-right"></i>
+    </button>
 </div>
 
 <!-- HIDDEN PDF TEMPLATE - PAGE 1 -->

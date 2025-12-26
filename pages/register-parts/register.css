@@ -419,3 +419,38 @@
                 padding: 0 16px 16px 16px !important;
             }
         }
+        
+    /* Mobile responsive styles for footer buttons */
+@media (max-width: 768px) {
+    #footer-buttons {
+        padding: 16px !important;
+        gap: 8px !important;
+    }
+    
+    #btn-prev {
+        padding: 8px 12px !important;
+        gap: 6px !important;
+    }
+    
+    #back-btn-icon {
+        width: 24px !important;
+        height: 24px !important;
+    }
+    
+    #back-btn-icon i {
+        font-size: 11px !important;
+    }
+    
+    #back-btn-text {
+        font-size: 12px !important;
+    }
+    
+    #back-btn-subtext {
+        font-size: 8px !important;
+    }
+    
+    #btn-next {
+        padding: 8px 20px !important;
+        font-size: 14px !important;
+    }
+}

@@ -420,6 +420,113 @@ if ($_POST['action'] === 'verify_payment') {
     exit;
 }
 
+// REJECT APPROVED PAYMENT (Reverse approval)
+if ($_POST['action'] === 'reject_approved_payment') {
+    $payment_id = $_POST['payment_id'];
+    $invoice_id = $_POST['invoice_id'];
+    $rejection_reason = $_POST['rejection_reason'] ?? 'Payment approval reversed by admin';
+
+    error_log("========================================");
+    error_log("[admin.php reject_approved_payment] Starting - Payment ID: {$payment_id}");
+    
+    try {
+        $pdo->beginTransaction();
+        
+        // Get payment and receipt details
+        $stmt = $pdo->prepare("SELECT receipt_path FROM payments WHERE id = ?");
+        $stmt->execute([$payment_id]);
+        $payment = $stmt->fetch();
+        $receiptPath = $payment['receipt_path'] ?? null;
+        
+        error_log("[admin.php reject_approved_payment] Receipt path: " . ($receiptPath ?? 'none'));
+        
+        // Update payment status back to rejected
+        $stmt = $pdo->prepare("
+            UPDATE payments 
+            SET verification_status = 'rejected', 
+                admin_notes = ?,
+                verified_date = NOW(),
+                verified_by = ?
+            WHERE id = ?
+        ");
+        $stmt->execute([$rejection_reason, $_SESSION['admin_id'] ?? null, $payment_id]);
+        
+        error_log("[admin.php reject_approved_payment] Payment status updated to rejected");
+        
+        // Rename receipt file to include "rejected" marker
+        if (!empty($receiptPath)) {
+            require_once 'file_helper.php';
+            
+            error_log("[admin.php reject_approved_payment] Renaming receipt file...");
+            $renameResult = renameFileWithRejection($receiptPath);
+            
+            if ($renameResult['success']) {
+                $newPath = $renameResult['new_path'];
+                
+                // Update receipt_path in database
+                $stmt = $pdo->prepare("UPDATE payments SET receipt_path = ? WHERE id = ?");
+                $stmt->execute([$newPath, $payment_id]);
+                
+                if ($renameResult['already_renamed']) {
+                    error_log("[admin.php reject_approved_payment] Receipt already marked as rejected: {$newPath}");
+                } else {
+                    error_log("[admin.php reject_approved_payment] Receipt renamed: {$receiptPath} -> {$newPath}");
+                }
+            } else {
+                error_log("[admin.php reject_approved_payment] WARNING: Failed to rename receipt: " . $renameResult['error']);
+            }
+        }
+        
+        // Update invoice status back to rejected
+        $stmt = $pdo->prepare("
+            UPDATE invoices 
+            SET status = 'rejected', 
+                paid_date = NULL 
+            WHERE id = ?
+        ");
+        $stmt->execute([$invoice_id]);
+        
+        error_log("[admin.php reject_approved_payment] Invoice marked as REJECTED");
+        
+        $pdo->commit();
+        
+        $_SESSION['success'] = "Approved payment has been rejected successfully! Invoice marked as REJECTED.";
+        
+        // Send rejection email notification
+        error_log("[admin.php reject_approved_payment] Sending rejection notification email");
+        require_once 'send_payment_approval_email.php';
+        
+        try {
+            $emailSent = sendPaymentApprovalEmail($pdo, $payment_id, 'rejected', $rejection_reason);
+            
+            if ($emailSent) {
+                $_SESSION['success'] .= " Rejection notification sent to parent.";
+                error_log("[admin.php reject_approved_payment] Rejection email sent successfully");
+            } else {
+                error_log("[admin.php reject_approved_payment] Rejection email failed");
+                $_SESSION['success'] .= " (Note: Email notification could not be sent)";
+            }
+        } catch (Exception $e) {
+            error_log("[admin.php reject_approved_payment] Email error: " . $e->getMessage());
+            $_SESSION['success'] .= " (Note: Email notification could not be sent)";
+        }
+        
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        error_log("[admin.php reject_approved_payment] ERROR: " . $e->getMessage());
+        $_SESSION['error'] = "Failed to reject payment: " . $e->getMessage();
+    }
+    
+    error_log("[admin.php reject_approved_payment] Redirecting to invoices page");
+    error_log("========================================");
+    
+    header('Location: admin.php?page=invoices');
+    exit;
+}
+
+
 }
 
 $page = $_GET['page'] ?? 'login';

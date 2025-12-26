@@ -110,12 +110,12 @@ $sql = "
            c.class_code, c.class_name,
            p.id as payment_id, p.verification_status, 
            p.upload_date, p.payment_date, p.admin_notes, p.receipt_path,
-           r.payment_method
+           p.payment_method
     FROM invoices i
     JOIN students s ON i.student_id = s.id
     LEFT JOIN classes c ON i.class_id = c.id
-    LEFT JOIN payments p ON i.id = p.invoice_id
-    LEFT JOIN registrations r ON i.student_id = r.student_account_id";
+    LEFT JOIN payments p ON i.id = p.invoice_id";
+
 
 
 if (count($where_conditions_join) > 0) {
@@ -320,6 +320,30 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
     text-align: center; 
     padding: 40px; 
 }
+
+/* PDF Preview Styling */
+.receipt-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.receipt-actions .btn {
+    flex: 1;
+    min-width: 150px;
+}
+
+embed[type="application/pdf"] {
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+    embed[type="application/pdf"] {
+        height: 400px !important;
+    }
+}
+
 </style>
 
 <!-- Filter Form -->
@@ -668,6 +692,30 @@ $all_classes = $pdo->query("SELECT id, class_code, class_name FROM classes ORDER
                         <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Verify Payment</button>
                     </form>
                 <?php endif; ?>
+                <!-- ✨ ADD THIS NEW SECTION HERE ✨ -->
+<?php if ($invoice['status'] === 'paid' && $invoice['verification_status'] === 'verified'): ?>
+    <hr class="my-4">
+    <h6 class="mb-3 text-danger">
+        <i class="fas fa-exclamation-triangle"></i> Reject Approved Payment
+    </h6>
+    <div class="alert alert-warning">
+        <i class="fas fa-info-circle"></i> <strong>Warning:</strong> This will reverse the payment approval and mark the invoice as REJECTED again. Use this if the payment was approved by mistake.
+    </div>
+    <form method="POST" action="admin.php" class="submit-with-loading" onsubmit="return confirm('Are you sure you want to REJECT this approved payment?\n\nThis will:\n• Mark invoice as REJECTED\n• Update payment status to rejected\n• Send rejection notification to parent\n\nThis action cannot be easily undone.');">
+        <input type="hidden" name="action" value="reject_approved_payment">
+        <input type="hidden" name="payment_id" value="<?php echo $invoice['payment_id']; ?>">
+        <input type="hidden" name="invoice_id" value="<?php echo $invoice['id']; ?>">
+        <div class="mb-3">
+            <label class="form-label">Rejection Reason *</label>
+            <textarea name="rejection_reason" class="form-control" rows="3" placeholder="Explain why this approved payment is being rejected..." required></textarea>
+            <small class="text-muted">This reason will be sent to the parent.</small>
+        </div>
+        <button type="submit" class="btn btn-danger">
+            <i class="fas fa-times-circle"></i> Reject Approved Payment
+        </button>
+    </form>
+<?php endif; ?>
+<!-- ✨ END OF NEW SECTION ✨ -->
             <?php else: ?>
                 <hr class="my-4">
                 <div class="alert alert-secondary"><i class="fas fa-info-circle"></i> <strong>No payment uploaded yet.</strong> Student hasn't submitted payment receipt for this invoice.</div>
@@ -826,24 +874,32 @@ function loadReceipt(invoiceId) {
                 loadedReceipts.add(invoiceId);
                 
                 if (data.receipt_mime_type === 'application/pdf') {
-                    // PDF Receipt - Download button + link to actual file
-                    const downloadUrl = 'data:' + data.receipt_mime_type + ';base64,' + data.receipt_data;
-                    const fileUrl = '../' + data.receipt_path; // Direct link to file on server
-                    
-                    container.innerHTML = `
-                        <div class="alert alert-info">
-                            <i class="fas fa-file-pdf"></i> <strong>PDF Receipt Uploaded</strong>
-                        </div>
-                        <div class="receipt-actions">
-                            <a href="${downloadUrl}" download="receipt-invoice-${invoiceId}.pdf" class="btn btn-primary">
-                                <i class="fas fa-download"></i> Download PDF
-                            </a>
-                            <a href="${fileUrl}" target="_blank" class="btn btn-secondary">
-                                <i class="fas fa-external-link-alt"></i> Open in New Tab
-                            </a>
-                        </div>
-                    `;
-                } else {
+    // PDF Receipt - Show live preview + download options
+    const downloadUrl = 'data:' + data.receipt_mime_type + ';base64,' + data.receipt_data;
+    const fileUrl = '../uploads/' + data.receipt_path; // Direct link to file on server
+    
+    container.innerHTML = `
+        <div class="alert alert-info mb-3">
+            <i class="fas fa-file-pdf"></i> <strong>PDF Receipt Preview</strong>
+        </div>
+        <div class="receipt-actions">
+            <a href="${downloadUrl}" download="receipt-invoice-${invoiceId}.pdf" class="btn btn-primary">
+                <i class="fas fa-download"></i> Download PDF
+            </a>
+            <a href="${fileUrl}" target="_blank" class="btn btn-secondary">
+                <i class="fas fa-external-link-alt"></i> Open in New Tab
+            </a>
+        </div>
+        <div style="border: 2px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #f8f9fa;">
+            <embed src="${downloadUrl}" type="application/pdf" width="100%" height="600px" style="display: block;">
+        </div>
+        <div class="text-center mt-2">
+            <small class="text-muted">
+                <i class="fas fa-info-circle"></i> If the preview doesn't load, use the buttons above to download or open in a new tab.
+            </small>
+        </div>
+    `;
+} else {
                     // Image Receipt - Display directly
                     const dataUrl = 'data:' + data.receipt_mime_type + ';base64,' + data.receipt_data;
                     container.innerHTML = '<img src="' + dataUrl + '" alt="Receipt" class="receipt-image">';

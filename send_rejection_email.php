@@ -120,7 +120,6 @@ function getRejectionEmailHTML($studentName, $registrationNumber, $rejectReason)
                 <h6 style='margin: 0 0 12px 0; color: #1e293b; font-size: 16px;'>📞 Contact Information</h6>
                 <p style='margin: 8px 0; color: #475569; font-size: 14px;'>
                     <strong>Email:</strong> admin@wushusportacademy.com<br>
-                    <strong>Phone:</strong> +60 12-345 6789
                 </p>
                 <p style='margin: 12px 0 0 0; color: #64748b; font-size: 13px;'>
                     Our staff will be happy to assist you with any questions about this decision or help you with a new registration.
@@ -128,7 +127,7 @@ function getRejectionEmailHTML($studentName, $registrationNumber, $rejectReason)
             </div>
             
             <div style='text-align: center; margin-top: 32px;'>
-                <a href='https://wushusportacademy.app.tc/student/pages/register.php' style='display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;'>
+                <a href='https://wushusportacademy.com/pages/register.php' style='display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;'>
                     🔄 Register Again
                 </a>
             </div>
@@ -142,7 +141,6 @@ function getRejectionEmailHTML($studentName, $registrationNumber, $rejectReason)
         <div style='text-align: center; padding: 24px; background: #f8fafc; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0;'>
             <p style='margin: 0 0 8px 0; font-weight: 600; color: #1e293b; font-size: 15px;'>Wushu Sport Academy 武术体育学院</p>
             <p style='margin: 4px 0;'>📧 Email: admin@wushusportacademy.com</p>
-            <p style='margin: 4px 0;'>📱 Phone: +60 12-345 6789</p>
             <p style='margin: 16px 0 0 0; font-size: 11px; color: #94a3b8;'>This is an automated email. Please contact us if you have any questions.</p>
         </div>
     </div>

@@ -28,14 +28,18 @@ $filter_status = isset($_GET['filter_status']) ? $_GET['filter_status'] : '';
 $filter_invoice_number = isset($_GET['filter_invoice_number']) ? trim($_GET['filter_invoice_number']) : '';
 $filter_applied = isset($_GET['filter_applied']) ? $_GET['filter_applied'] : false;
 
-// Check if user has clicked the search/filter button
-if (isset($_GET['page']) && $_GET['page'] === 'invoices' && 
-    (isset($_GET['filter_type']) || isset($_GET['filter_month']) || isset($_GET['filter_status']) || isset($_GET['filter_invoice_number']) || $_SERVER['REQUEST_METHOD'] === 'GET')) {
-    // Check if filter form was actually submitted (has filter parameters in URL)
-    if (array_key_exists('filter_type', $_GET) || array_key_exists('filter_month', $_GET) || array_key_exists('filter_status', $_GET) || array_key_exists('filter_invoice_number', $_GET)) {
+// Check if user has clicked the search/filter button OR if just visiting the page for the first time
+if (isset($_GET['page']) && $_GET['page'] === 'invoices') {
+    // If any filter parameter exists in URL, or if just visiting the page with no parameters
+    if (array_key_exists('filter_type', $_GET) || 
+        array_key_exists('filter_month', $_GET) || 
+        array_key_exists('filter_status', $_GET) || 
+        array_key_exists('filter_invoice_number', $_GET) ||
+        count($_GET) === 1) { // Only 'page' parameter exists, meaning first visit
         $filter_applied = true;
     }
 }
+
 
 // Initialize arrays
 $all_invoices = [];
@@ -684,8 +688,25 @@ function getReceiptUrl($receipt_path) {
                                     <td><strong><?php echo formatCurrency($inv['amount']); ?></strong></td>
                                     <td class="sp-hide-mobile"><?php echo $inv['paid_date'] ? date('d M Y', strtotime($inv['paid_date'])) : '-'; ?></td>
                                     <td class="sp-invoice-actions-cell">
-                                        <button type="button" class="btn btn-sm btn-success" onclick="downloadInvoicePDF(<?php echo $inv['id']; ?>)"><i class="fas fa-download"></i> PDF</button>
-                                    </td>
+    <?php 
+    // Get payment method for this invoice
+    $payment_method_stmt = $pdo->prepare("SELECT payment_method FROM payments WHERE invoice_id = ? AND student_id = ? ORDER BY id DESC LIMIT 1");
+    $payment_method_stmt->execute([$inv['id'], $studentAccountId]);
+    $payment_info = $payment_method_stmt->fetch();
+    $payment_method = $payment_info['payment_method'] ?? 'bank_transfer';
+    
+    // Only show download button if payment method is NOT cash
+    if ($payment_method !== 'cash'):
+    ?>
+        <button type="button" class="btn btn-sm btn-success" onclick="downloadInvoicePDF(<?php echo $inv['id']; ?>)">
+            <i class="fas fa-download"></i> PDF
+        </button>
+    <?php else: ?>
+        <span class="badge bg-info">
+            <i class="fas fa-money-bill-wave"></i> Cash Payment (No Receipt)
+        </span>
+    <?php endif; ?>
+</td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
