@@ -7,7 +7,7 @@
  * UPDATED: Auto-enrollment into classes based on schedule selection
  * UPDATED: Creates registration fee invoice viewable in parent portal
  * UPDATED: Links payment receipt to invoice for admin verification
- * UPDATED: Split invoices by class - one invoice per registered class with class code
+ * UPDATED 2025-12-28: COMBINED registration invoice - one invoice for all classes instead of splitting
  * FIXED: Use student_status column name in registrations INSERT statement
  * FIXED: Validate form_date to prevent invalid dates like "-0001"
  * UPDATED: Changed form_date to record both date and time (DATETIME format)
@@ -401,121 +401,126 @@ function autoEnrollStudent(PDO $conn, int $studentId, string $scheduleString): a
 
 // ==========================================
 // REGISTRATION FEE INVOICES & PAYMENTS
-// UPDATED: Create one invoice per class
-// UPDATED: Save receipt as file instead of base64
+// UPDATED 2025-12-28: Create ONE COMBINED invoice instead of splitting by class
 // ==========================================
 
 /**
- * Create registration fee invoices - ONE PER CLASS
- * Links the uploaded payment receipt to each invoice
- * Splits total registration fee equally across all classes
- * UPDATED: Now saves receipt to file and stores path
- * UPDATED: Receipt path is passed in, not created here
+ * Create ONE combined registration fee invoice for all classes
+ * Links the uploaded payment receipt to the invoice
+ * UPDATED: Now creates single invoice instead of splitting
  */
 function createRegistrationInvoicesAndPayments(PDO $conn, int $studentId, int $parentAccountId, float $totalAmount, string $studentName, array $enrolledClasses, array $paymentData, ?string $receiptPath): array {
     try {
-        $results = [];
         $classCount = count($enrolledClasses);
         
         if ($classCount === 0) {
             throw new Exception("No enrolled classes found");
         }
         
-        // Calculate amount per class (split total registration fee)
-        $amountPerClass = round($totalAmount / $classCount, 2);
+        // Generate unique invoice number
+        $invoiceNumber = 'INV-REG-' . date('Ym') . '-' . str_pad(mt_rand(1000, 9999), 4, '0', STR_PAD_LEFT);
         
-        error_log("[Invoice Split] Total: {$totalAmount}, Classes: {$classCount}, Per Class: {$amountPerClass}");
-        error_log("[Invoice] Using receipt path: {$receiptPath}");
+        // Set due date to today (since payment is already uploaded)
+        $dueDate = date('Y-m-d');
+        
+        // Build description with all enrolled classes
+        $description = "Registration Fee for {$studentName} (" . date('Y') . ")\n";
+        $description .= "Enrolled in {$classCount} class(es):\n";
+        
+        $classNames = [];
+        $classCodes = [];
         
         foreach ($enrolledClasses as $classData) {
-            // Generate unique invoice number
-            $invoiceNumber = 'INV-REG-' . date('Ym') . '-' . str_pad(mt_rand(1000, 9999), 4, '0', STR_PAD_LEFT);
-            
-            // Set due date to today (since payment is already uploaded)
-            $dueDate = date('Y-m-d');
-            
-            // Description includes class name
-            $description = "Registration Fee for {$studentName} - {$classData['class_name']} (" . date('Y') . ")";
-            
-            // Create invoice WITH class_id and class_code
-            $stmt = $conn->prepare("
-                INSERT INTO invoices (
-                    invoice_number,
-                    student_id,
-                    parent_account_id,
-                    class_id,
-                    class_code,
-                    invoice_type,
-                    description,
-                    amount,
-                    due_date,
-                    status,
-                    created_at
-                ) VALUES (?, ?, ?, ?, ?, 'registration', ?, ?, ?, 'pending', NOW())
-            ");
-            
-            $stmt->execute([
-                $invoiceNumber,
-                $studentId,
-                $parentAccountId,
-                $classData['class_id'],
-                $classData['class_code'],
-                $description,
-                $amountPerClass,
-                $dueDate
-            ]);
-            
-            $invoiceId = (int)$conn->lastInsertId();
-            
-            error_log("[Invoice] Created invoice: {$invoiceNumber} (ID: {$invoiceId}) for class {$classData['class_code']}, amount={$amountPerClass}");
-            
-            // Create payment record with FILE PATH instead of base64
-            $stmt = $conn->prepare("
-                INSERT INTO payments (
-                    student_id,
-                    class_id,
-                    invoice_id,
-                    parent_account_id,
-                    amount,
-                    payment_month,
-                    payment_date,
-                    payment_method,
-                    receipt_path,
-                    verification_status,
-                    upload_date
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
-            ");
-            
-            $stmt->execute([
-                $studentId,
-                $classData['class_id'],
-                $invoiceId,
-                $parentAccountId,
-                $amountPerClass,
-                date('Y-m'),
-                $paymentData['payment_date'],
-                $paymentData['payment_method'],
-                $receiptPath // Store file path instead of base64
-            ]);
-            
-            $paymentId = (int)$conn->lastInsertId();
-            
-            error_log("[Payment] Created payment record (ID: {$paymentId}) linked to invoice {$invoiceNumber}, receipt_path={$receiptPath}");
-            
-            $results[] = [
-                'invoice_id' => $invoiceId,
-                'invoice_number' => $invoiceNumber,
-                'payment_id' => $paymentId,
-                'class_code' => $classData['class_code'],
-                'class_name' => $classData['class_name'],
-                'amount' => $amountPerClass
-            ];
+            $classNames[] = $classData['class_name'];
+            $classCodes[] = $classData['class_code'];
+            $description .= "- {$classData['class_name']} ({$classData['class_code']})\n";
         }
+        
+        // For single invoice, we store NULL for class_id if multiple classes
+        // Store first class code for reference, or NULL if multiple
+        $singleClassId = ($classCount === 1) ? $enrolledClasses[0]['class_id'] : null;
+        $singleClassCode = ($classCount === 1) ? $enrolledClasses[0]['class_code'] : null;
+        
+        error_log("[Invoice Combined] Creating single invoice for {$classCount} classes, total: {$totalAmount}");
+        error_log("[Invoice] Using receipt path: {$receiptPath}");
+        
+        // Create ONE invoice for all classes
+        $stmt = $conn->prepare("
+            INSERT INTO invoices (
+                invoice_number,
+                student_id,
+                parent_account_id,
+                class_id,
+                class_code,
+                invoice_type,
+                description,
+                amount,
+                due_date,
+                status,
+                created_at
+            ) VALUES (?, ?, ?, ?, ?, 'registration', ?, ?, ?, 'pending', NOW())
+        ");
+        
+        $stmt->execute([
+            $invoiceNumber,
+            $studentId,
+            $parentAccountId,
+            $singleClassId,
+            $singleClassCode,
+            $description,
+            $totalAmount,
+            $dueDate
+        ]);
+        
+        $invoiceId = (int)$conn->lastInsertId();
+        
+        error_log("[Invoice] Created combined invoice: {$invoiceNumber} (ID: {$invoiceId}), amount={$totalAmount}");
+        
+        // Create ONE payment record linked to the combined invoice
+        $stmt = $conn->prepare("
+            INSERT INTO payments (
+                student_id,
+                class_id,
+                invoice_id,
+                parent_account_id,
+                amount,
+                payment_month,
+                payment_date,
+                payment_method,
+                receipt_path,
+                verification_status,
+                upload_date
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
+        ");
+        
+        $stmt->execute([
+            $studentId,
+            $singleClassId,
+            $invoiceId,
+            $parentAccountId,
+            $totalAmount,
+            date('Y-m'),
+            $paymentData['payment_date'],
+            $paymentData['payment_method'],
+            $receiptPath
+        ]);
+        
+        $paymentId = (int)$conn->lastInsertId();
+        
+        error_log("[Payment] Created payment record (ID: {$paymentId}) linked to invoice {$invoiceNumber}, receipt_path={$receiptPath}");
         
         return [
             'success' => true,
-            'invoices' => $results,
-            'total_invoices' => count($results),
+            'invoices' => [[
+                'invoice_id' => $invoiceId,
+                'invoice_number' => $invoiceNumber,
+                'payment_id' => $paymentId,
+                'class_count' => $classCount,
+                'class_names' => implode(', ', $classNames),
+                'class_codes' => implode(', ', $classCodes),
+                'amount' => $totalAmount
+            ]],
+            'total_invoices' => 1,
             'receipt_path' => $receiptPath
         ];
         
@@ -731,8 +736,8 @@ function getAdminRegistrationEmailHTML($data) {
                         <td style='padding: 8px 0; color: #991b1b;'>{$data['payment_date']}</td>
                     </tr>
                     <tr>
-                        <td style='padding: 8px 0; color: #991b1b; font-weight: 600;'>Invoices Created:</td>
-                        <td style='padding: 8px 0; color: #991b1b;'>{$data['total_invoices']} invoices (RM " . number_format($data['payment_amount'] / $data['class_count'], 2) . " each)</td>
+                        <td style='padding: 8px 0; color: #991b1b; font-weight: 600;'>Invoice:</td>
+                        <td style='padding: 8px 0; color: #991b1b;'>1 combined invoice for all {$data['class_count']} classes</td>
                     </tr>
                     <tr>
                         <td style='padding: 8px 0; color: #991b1b; font-weight: 600;'>Payment Status:</td>
@@ -870,8 +875,8 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
                 <ol style='margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.8;'>
                     <li>Your payment receipt is under review by the academy</li>
                     <li>You will receive approval notification via email</li>
-                    <li>Login to the dashbaord system to view separate invoices for each class (registration fee is split equally)</li>
-                    <li>After approval, all invoice statuses will change to Paid</li>
+                    <li>Login to the dashboard system to view ONE combined invoice for all enrolled classes</li>
+                    <li>After approval, the invoice status will change to Paid</li>
                     <li>Your child has been automatically enrolled in the selected classes</li>
                 </ol>
             </div>
@@ -1192,8 +1197,8 @@ $stmt->execute([
               ", Skipped: " . count($enrollmentResults['skipped']));
 
     // ===============================
-    // CREATE INVOICES (ONE PER CLASS) AND LINK PAYMENTS
-    // UPDATED: Pass receipt path to function
+    // CREATE COMBINED INVOICE AND LINK PAYMENT
+    // UPDATED: Now creates ONE invoice for all classes
     // ===============================
     
     $paymentData = [
@@ -1209,19 +1214,19 @@ $stmt->execute([
         $fullName,
         $enrollmentResults['success'],
         $paymentData,
-        $receiptPath // FIXED: Pass receipt path
+        $receiptPath
     );
 
     $conn->commit();
     
-    error_log("[Success] Reg#: {$regNumber}, Parent: {$parentCode} (ID:{$parentAccountId}), Student: {$studentAccountId}, Invoices: " . ($invoiceResult['total_invoices'] ?? 0) . ", Payment Date: {$paymentDate}, Receipt: {$receiptPath}");
+    error_log("[Success] Reg#: {$regNumber}, Parent: {$parentCode} (ID:{$parentAccountId}), Student: {$studentAccountId}, Invoice: COMBINED (1 invoice), Payment Date: {$paymentDate}, Receipt: {$receiptPath}");
 
     // Send email to parent with proper parameters
     $emailSent = sendRegistrationEmail(
         $parentEmail, 
         $fullName, 
         $regNumber, 
-        $generatedPassword, 
+                $generatedPassword, 
         $studentStatus, 
         $isNewParentAccount, 
         $parentPlainPassword
@@ -1247,7 +1252,7 @@ $stmt->execute([
         'classes' => $enrollmentResults['success'],
         'payment_amount' => number_format($paymentAmount, 2),
         'payment_date' => $paymentDate,
-        'total_invoices' => $invoiceResult['total_invoices'] ?? 0
+        'total_invoices' => $invoiceResult['total_invoices'] ?? 1
     ];
     
     $adminEmailSent = sendAdminRegistrationNotification($adminNotificationData);
@@ -1269,17 +1274,17 @@ $stmt->execute([
         'enrollment_results' => $enrollmentResults,
         'invoice_created' => $invoiceResult['success'],
         'invoices' => $invoiceResult['invoices'] ?? [],
-        'total_invoices' => $invoiceResult['total_invoices'] ?? 0,
+        'total_invoices' => 1, // Always 1 now (combined)
         'form_datetime_recorded' => $validatedFormDateTime,
         'payment_date' => $paymentDate,
         'files_saved' => [
             'signature' => $signaturePath,
             'pdf' => $pdfPath,
-            'receipt' => $receiptPath // FIXED: Now properly saved
+            'receipt' => $receiptPath
         ],
         'message' => $isNewParentAccount 
-            ? 'Parent account created! Child registered with ' . ($invoiceResult['total_invoices'] ?? 0) . ' invoices (one per class).' 
-            : 'Child added with ' . ($invoiceResult['total_invoices'] ?? 0) . ' invoices (one per class)!',
+            ? 'Parent account created! Child registered with 1 combined invoice for all ' . count($enrollmentResults['success']) . ' classes.' 
+            : 'Child added with 1 combined invoice for all ' . count($enrollmentResults['success']) . ' classes!',
     ]);
 
 } catch (PDOException $e) {
