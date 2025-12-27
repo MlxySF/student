@@ -241,7 +241,7 @@ if ($_POST['action'] === 'create_invoice') {
 }
 
     
-    // ✅ UPDATED: GENERATE MONTHLY INVOICES - Join using students.student_id = registrations.student_id
+    // ✅ FIXED: GENERATE MONTHLY INVOICES - Join using students.student_id = registrations.registration_number
 if ($_POST['action'] === 'generate_monthly_invoices') {
     $current_month_name = date('M Y'); // e.g., "Dec 2025"
     $month = date('n'); // Month as number (1-12)
@@ -257,12 +257,12 @@ if ($_POST['action'] === 'generate_monthly_invoices') {
     error_log("[Generate Monthly Invoices] Starting for {$current_month_name}");
     
     try {
-        // ✅ FIXED: Join registrations using students.student_id = registrations.student_id
+        // ✅ FIXED: Join registrations using students.student_id = registrations.registration_number
         $stmt = $pdo->prepare("
             SELECT DISTINCT s.id as student_id, s.full_name, s.student_id as student_number
             FROM students s
             INNER JOIN enrollments e ON s.id = e.student_id
-            INNER JOIN registrations r ON s.student_id = r.student_id
+            INNER JOIN registrations r ON s.student_id = r.registration_number
             WHERE r.payment_status = 'paid' AND e.status = 'active'
             ORDER BY s.full_name
         ");
