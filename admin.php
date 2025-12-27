@@ -33,6 +33,126 @@ if (!function_exists('getStudentId')) {
     }
 }
 
+/**
+ * Calculate monthly fee for a student based on their active enrollments
+ * Uses the same logic as fee_calculator.js:
+ * - Fetches session counts for each enrolled class
+ * - Sorts classes by session count (descending)
+ * - Applies tiered pricing: 1st=RM30, 2nd=RM27, 3rd=RM24, 4th=RM21 per session
+ * 
+ * @param PDO $pdo Database connection
+ * @param int $student_id Student ID
+ * @param int $month Month (1-12)
+ * @param int $year Year
+ * @return array ['total_fee' => float, 'breakdown' => array, 'total_sessions' => int]
+ */
+function calculateStudentMonthlyFee($pdo, $student_id, $month, $year) {
+    // Session pricing tiers (matches fee_calculator.js)
+    $sessionPricing = [30, 27, 24, 21];
+    
+    // Get all active enrollments for the student
+    $stmt = $pdo->prepare("
+        SELECT 
+            e.class_id,
+            c.class_code,
+            c.class_name,
+            c.day_of_week
+        FROM enrollments e
+        JOIN classes c ON e.class_id = c.id
+        WHERE e.student_id = ? AND e.status = 'active'
+        ORDER BY c.class_name
+    ");
+    $stmt->execute([$student_id]);
+    $enrollments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    if (empty($enrollments)) {
+        return [
+            'total_fee' => 0,
+            'breakdown' => [],
+            'total_sessions' => 0,
+            'num_classes' => 0
+        ];
+    }
+    
+    // Get holidays for the month
+    $holidays_stmt = $pdo->prepare("
+        SELECT holiday_date 
+        FROM class_holidays 
+        WHERE MONTH(holiday_date) = ? AND YEAR(holiday_date) = ?
+    ");
+    $holidays_stmt->execute([$month, $year]);
+    $holidays = [];
+    while ($row = $holidays_stmt->fetch()) {
+        $holidays[] = $row['holiday_date'];
+    }
+    
+    // Calculate session count for each class
+    $classesData = [];
+    $total_days = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+    
+    foreach ($enrollments as $enrollment) {
+        $session_count = 0;
+        $day_name = $enrollment['day_of_week']; // e.g., "Monday", "Tuesday"
+        
+        // Count available dates (non-holidays matching the class day)
+        for ($day = 1; $day <= $total_days; $day++) {
+            $date = sprintf("%04d-%02d-%02d", $year, $month, $day);
+            $current_day_name = date('l', strtotime($date));
+            
+            // If not a holiday and matches the class day, count it
+            if (!in_array($date, $holidays) && $current_day_name === $day_name) {
+                $session_count++;
+            }
+        }
+        
+        $classesData[] = [
+            'class_id' => $enrollment['class_id'],
+            'class_code' => $enrollment['class_code'],
+            'class_name' => $enrollment['class_name'],
+            'day_of_week' => $day_name,
+            'session_count' => $session_count
+        ];
+    }
+    
+    // ✅ SORT classes by session count DESCENDING (matches fee_calculator.js)
+    // This ensures classes with fewer sessions get lower pricing (last position)
+    usort($classesData, function($a, $b) {
+        return $b['session_count'] - $a['session_count'];
+    });
+    
+    // Calculate fee for each class based on sorted position
+    $total_fee = 0;
+    $breakdown = [];
+    $total_sessions = 0;
+    
+    foreach ($classesData as $index => $classData) {
+        $price_per_session = $sessionPricing[$index] ?? $sessionPricing[count($sessionPricing) - 1];
+        $session_count = $classData['session_count'];
+        $class_fee = $price_per_session * $session_count;
+        
+        $total_fee += $class_fee;
+        $total_sessions += $session_count;
+        
+        $breakdown[] = [
+            'position' => $index + 1,
+            'class_id' => $classData['class_id'],
+            'class_code' => $classData['class_code'],
+            'class_name' => $classData['class_name'],
+            'day_of_week' => $classData['day_of_week'],
+            'price_per_session' => $price_per_session,
+            'session_count' => $session_count,
+            'class_fee' => $class_fee
+        ];
+    }
+    
+    return [
+        'total_fee' => $total_fee,
+        'breakdown' => $breakdown,
+        'total_sessions' => $total_sessions,
+        'num_classes' => count($classesData)
+    ];
+}
+
 // Handle Admin Login
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'admin_login') {
     $username = $_POST['username'];
@@ -121,40 +241,120 @@ if ($_POST['action'] === 'create_invoice') {
 }
 
     
-    // GENERATE MONTHLY INVOICES
+    // ✅ COMPLETE IMPLEMENTATION: GENERATE MONTHLY INVOICES WITH PROPER FEE CALCULATION
 if ($_POST['action'] === 'generate_monthly_invoices') {
-    $current_month = date('M Y');
-    $due_date = date('Y-m-10');
+    $current_month_name = date('M Y'); // e.g., "Dec 2025"
+    $month = date('n'); // Month as number (1-12)
+    $year = date('Y');
+    $due_date = date('Y-m-10'); // Due on the 10th of the month
+    
     $generated_count = 0;
-    $emailsSent = 0;        // ✨ NEW
-    $emailsFailed = 0;      // ✨ NEW
+    $skipped_count = 0;
+    $emailsSent = 0;
+    $emailsFailed = 0;
+    $total_amount = 0;
     
-    // ... existing enrollment query ...
+    error_log("[Generate Monthly Invoices] Starting for {$current_month_name}");
     
-    foreach ($enrollments as $enrollment) {
-        // ... existing duplicate check ...
+    try {
+        // Get all students with active enrollments
+        $stmt = $pdo->prepare("
+            SELECT DISTINCT s.id as student_id, s.full_name, s.student_id as student_number
+            FROM students s
+            INNER JOIN enrollments e ON s.id = e.student_id
+            WHERE e.status = 'active'
+            ORDER BY s.full_name
+        ");
+        $stmt->execute();
+        $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        if ($check_stmt->rowCount() == 0) {
-            $invoice_number = 'INV-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
-            $description = "Monthly Fee - $current_month";
+        error_log("[Generate Monthly Invoices] Found " . count($students) . " students with active enrollments");
+        
+        foreach ($students as $student) {
+            $student_id = $student['student_id'];
+            $student_name = $student['full_name'];
             
+            // Check if invoice already exists for this student and month
+            $check_stmt = $pdo->prepare("
+                SELECT COUNT(*) as count 
+                FROM invoices 
+                WHERE student_id = ? 
+                  AND invoice_type = 'monthly_fee' 
+                  AND payment_month = ?
+            ");
+            $check_stmt->execute([$student_id, $current_month_name]);
+            $existing = $check_stmt->fetch();
+            
+            if ($existing['count'] > 0) {
+                error_log("[Generate Monthly Invoices] Skipping {$student_name} - invoice already exists for {$current_month_name}");
+                $skipped_count++;
+                continue;
+            }
+            
+            // ✅ Calculate fee using the same logic as fee_calculator.js
+            $feeData = calculateStudentMonthlyFee($pdo, $student_id, $month, $year);
+            
+            // Skip if no active enrollments or zero fee
+            if ($feeData['total_fee'] <= 0) {
+                error_log("[Generate Monthly Invoices] Skipping {$student_name} - no classes or zero fee");
+                $skipped_count++;
+                continue;
+            }
+            
+            // Generate invoice number
+            $invoice_number = 'INV-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+            
+            // Build description with breakdown
+            $description = "Monthly Fee - {$current_month_name}\n";
+            $description .= "Total: {$feeData['num_classes']} class(es), {$feeData['total_sessions']} session(s)\n\n";
+            $description .= "Breakdown (sorted by sessions):\n";
+            
+            foreach ($feeData['breakdown'] as $item) {
+                $description .= sprintf(
+                    "%d. %s (%s): %d sessions × RM%.2f = RM%.2f\n",
+                    $item['position'],
+                    $item['class_name'],
+                    $item['day_of_week'],
+                    $item['session_count'],
+                    $item['price_per_session'],
+                    $item['class_fee']
+                );
+            }
+            
+            // Use the first class_id for the invoice (or null if multiple classes)
+            $class_id = ($feeData['num_classes'] == 1) ? $feeData['breakdown'][0]['class_id'] : null;
+            
+            // Insert invoice
             $insert_stmt = $pdo->prepare("
-                INSERT INTO invoices (student_id, invoice_number, invoice_type, class_id, description, amount, due_date, payment_month, status, created_at) 
-                VALUES (?, ?, 'monthly_fee', ?, ?, ?, ?, ?, 'unpaid', NOW())
+                INSERT INTO invoices (
+                    student_id, 
+                    invoice_number, 
+                    invoice_type, 
+                    class_id, 
+                    description, 
+                    amount, 
+                    due_date, 
+                    payment_month, 
+                    status, 
+                    created_at
+                ) VALUES (?, ?, 'monthly_fee', ?, ?, ?, ?, ?, 'unpaid', NOW())
             ");
             
             if ($insert_stmt->execute([
-                $enrollment['student_id'],
+                $student_id,
                 $invoice_number,
-                $enrollment['class_id'],
+                $class_id,
                 $description,
-                $enrollment['monthly_fee'],
+                $feeData['total_fee'],
                 $due_date,
-                $current_month
+                $current_month_name
             ])) {
                 $generated_count++;
+                $total_amount += $feeData['total_fee'];
                 
-                // ✨ NEW: Send email notification
+                error_log("[Generate Monthly Invoices] ✅ Created {$invoice_number} for {$student_name}: RM" . number_format($feeData['total_fee'], 2));
+                
+                // Send email notification
                 $invoiceId = $pdo->lastInsertId();
                 require_once 'send_invoice_notification.php';
                 try {
@@ -165,18 +365,35 @@ if ($_POST['action'] === 'generate_monthly_invoices') {
                     }
                 } catch (Exception $e) {
                     $emailsFailed++;
-                    error_log("[Generate Invoices] Email error: " . $e->getMessage());
+                    error_log("[Generate Monthly Invoices] Email error for {$student_name}: " . $e->getMessage());
                 }
+            } else {
+                error_log("[Generate Monthly Invoices] ❌ Failed to create invoice for {$student_name}");
             }
         }
+        
+        // Build detailed success message
+        $message = "Generated {$generated_count} monthly invoices for {$current_month_name}!";
+        
+        if ($generated_count > 0) {
+            $message .= " Total amount: RM" . number_format($total_amount, 2);
+        }
+        
+        if ($skipped_count > 0) {
+            $message .= " | Skipped {$skipped_count} (already exists or no classes)";
+        }
+        
+        if ($emailsSent > 0 || $emailsFailed > 0) {
+            $message .= " | Emails: {$emailsSent} sent, {$emailsFailed} failed";
+        }
+        
+        $_SESSION['success'] = $message;
+        error_log("[Generate Monthly Invoices] Completed: {$message}");
+        
+    } catch (Exception $e) {
+        error_log("[Generate Monthly Invoices] Error: " . $e->getMessage());
+        $_SESSION['error'] = "Error generating invoices: " . $e->getMessage();
     }
-    
-    // ✨ UPDATED: Enhanced success message
-    $message = "Generated $generated_count monthly invoices for $current_month!";
-    if ($generated_count > 0) {
-        $message .= " | Email notifications: {$emailsSent} sent, {$emailsFailed} failed";
-    }
-    $_SESSION['success'] = $message;
     
     header('Location: admin.php?page=invoices');
     exit;
