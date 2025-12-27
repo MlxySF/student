@@ -241,7 +241,7 @@ if ($_POST['action'] === 'create_invoice') {
 }
 
     
-    // ✅ COMPLETE IMPLEMENTATION: GENERATE MONTHLY INVOICES WITH PROPER FEE CALCULATION
+    // ✅ COMPLETE IMPLEMENTATION: GENERATE MONTHLY INVOICES - ACTIVE STUDENTS ONLY
 if ($_POST['action'] === 'generate_monthly_invoices') {
     $current_month_name = date('M Y'); // e.g., "Dec 2025"
     $month = date('n'); // Month as number (1-12)
@@ -257,18 +257,18 @@ if ($_POST['action'] === 'generate_monthly_invoices') {
     error_log("[Generate Monthly Invoices] Starting for {$current_month_name}");
     
     try {
-        // Get all students with active enrollments
+        // ✅ UPDATED: Get only ACTIVE students with active enrollments
         $stmt = $pdo->prepare("
             SELECT DISTINCT s.id as student_id, s.full_name, s.student_id as student_number
             FROM students s
             INNER JOIN enrollments e ON s.id = e.student_id
-            WHERE e.status = 'active'
+            WHERE s.status = 'active' AND e.status = 'active'
             ORDER BY s.full_name
         ");
         $stmt->execute();
         $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        error_log("[Generate Monthly Invoices] Found " . count($students) . " students with active enrollments");
+        error_log("[Generate Monthly Invoices] Found " . count($students) . " active students with active enrollments");
         
         foreach ($students as $student) {
             $student_id = $student['student_id'];
