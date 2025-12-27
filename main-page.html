@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Wushu Sport Academy - Master the Art of Wushu 武术体育学院</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;600;700;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- fullPage.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullPage.js/4.0.20/fullpage.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background: #000;
+            color: white;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Animated Gradient Backgrounds */
+        .gradient-bg-1 {
+            background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #f5576c);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        .gradient-bg-2 {
+            background: linear-gradient(-45deg, #fbbf24, #f59e0b, #d97706, #b45309);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        .gradient-bg-3 {
+            background: linear-gradient(-45deg, #1e293b, #334155, #475569, #64748b);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        .gradient-bg-4 {
+            background: linear-gradient(-45deg, #667eea, #764ba2, #667eea, #764ba2);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        .gradient-bg-5 {
+            background: linear-gradient(-45deg, #f093fb, #f5576c, #fbbf24, #f59e0b);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        .gradient-bg-6 {
+            background: linear-gradient(-45deg, #0f172a, #1e293b, #334155, #0f172a);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* fullPage.js Sections */
+        .section {
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Glassmorphism Navigation */
+        .navbar {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 95%;
+            max-width: 1200px;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 9999;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s ease;
+        }
+
+        .navbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .navbar-logo img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+        }
+
+        .navbar-logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar-logo-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: white;
+            line-height: 1.2;
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(90deg, #fff, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .navbar-logo-subtitle {
+            font-size: 9px;
+            color: #fbbf24;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .navbar-menu {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+            align-items: center;
+        }
+
+        .navbar-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .navbar-menu a:hover {
+            color: #fbbf24;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Content Container */
+        .content-wrapper {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px 40px;
+            position: relative;
+            z-index: 100;
+        }
+
+        .content-center {
+            max-width: 1200px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            z-index: 100;
+        }
+
+        /* Animation Classes */
+        .animate-content {
+            opacity: 0;
+            transform: translateY(50px) scale(0.9);
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .animate-content.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .animate-content.exit {
+            opacity: 0;
+            transform: translateY(-50px) scale(0.9);
+        }
+
+        /* Stagger animation delays */
+        .animate-content:nth-child(1) { transition-delay: 0.1s; }
+        .animate-content:nth-child(2) { transition-delay: 0.2s; }
+        .animate-content:nth-child(3) { transition-delay: 0.3s; }
+        .animate-content:nth-child(4) { transition-delay: 0.4s; }
+        .animate-content:nth-child(5) { transition-delay: 0.5s; }
+
+        /* Hero Section */
+        .hero-badge {
+            display: inline-block;
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 2px solid #fbbf24;
+            border-radius: 50px;
+            color: #fbbf24;
+            font-weight: 800;
+            font-size: 12px;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .hero-title {
+            font-size: 64px;
+            font-weight: 900;
+            margin-bottom: 20px;
+            line-height: 1.1;
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, #ffffff 0%, #fbbf24 50%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-title-chinese {
+            font-size: 32px;
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #fbbf24 0%, #ffffff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block;
+            margin-top: 15px;
+        }
+
+        .hero-subtitle {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 35px;
+            font-weight: 500;
+            line-height: 1.6;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 16px 35px;
+            border: none;
+            border-radius: 50px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: #0f172a;
+            box-shadow: 0 10px 30px rgba(251, 191, 36, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.95);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:active {
+            transform: scale(0.95);
+        }
+
+        /* Section Titles */
+        .section-badge {
+            display: inline-block;
+            padding: 8px 25px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid #fbbf24;
+            border-radius: 50px;
+            color: #fbbf24;
+            font-weight: 700;
+            font-size: 12px;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .section-title {
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 15px;
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, #ffffff 0%, #fbbf24 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.9);
+            max-width: 700px;
+            margin: 0 auto 30px;
+            line-height: 1.6;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 100%;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: #0f172a;
+            margin: 0 auto 15px;
+        }
+
+        .feature-title {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .feature-desc {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.5;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            max-width: 100%;
+        }
+
+        .stat-item {
+            padding: 30px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-number {
+            font-size: 48px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fbbf24 0%, #ffffff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Testimonial */
+        .testimonial-card {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px 30px;
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+        }
+
+        .testimonial-text {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.95);
+            line-height: 1.7;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .author-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #0f172a;
+            font-weight: 900;
+        }
+
+        .author-info h4 {
+            font-size: 20px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .author-info p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Footer Content - REDUCED PADDING FOR DESKTOP */
+        .footer-wrapper {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px 40px;
+            position: relative;
+            z-index: 100;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+            text-align: left;
+            margin-bottom: 40px;
+        }
+
+        .footer-section h3 {
+            font-size: 18px;
+            font-weight: 800;
+            color: #fbbf24;
+            margin-bottom: 20px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .footer-section p, .footer-section a {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            line-height: 2;
+            text-decoration: none;
+            display: block;
+        }
+
+        .footer-section a:hover {
+            color: #fbbf24;
+        }
+
+        .footer-logo-section {
+            text-align: center;
+            grid-column: 1 / -1;
+        }
+
+        .footer-logo-section img {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            margin-bottom: 20px;
+            box-shadow: 0 0 30px rgba(251, 191, 36, 0.5);
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        .social-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            text-decoration: none;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .social-icon:hover {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #0f172a;
+            transform: scale(1.1);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .footer-copyright {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+        }
+
+        /* Scroll Hint */
+        .scroll-hint {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            animation: bounce 2s infinite;
+            z-index: 100;
+        }
+
+        .scroll-hint-text {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .scroll-hint-icon {
+            font-size: 20px;
+            color: #fbbf24;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateX(-50%) translateY(0);
+            }
+            40% {
+                transform: translateX(-50%) translateY(-15px);
+            }
+            60% {
+                transform: translateX(-50%) translateY(-8px);
+            }
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .navbar-menu {
+                position: fixed;
+                top: 70px;
+                left: 2.5%;
+                width: 95%;
+                background: rgba(15, 23, 42, 0.98);
+                backdrop-filter: blur(20px);
+                flex-direction: column;
+                padding: 20px;
+                gap: 20px;
+                border-radius: 15px;
+                transform: translateY(-20px);
+                opacity: 0;
+                pointer-events: none;
+                transition: all 0.4s ease;
+                z-index: 9998;
+            }
+
+            .navbar-menu.active {
+                opacity: 1;
+                transform: translateY(0);
+                pointer-events: auto;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .content-wrapper {
+                padding: 85px 12px 15px;
+            }
+
+            .hero-title {
+                font-size: 36px;
+            }
+
+            .hero-title-chinese {
+                font-size: 22px;
+            }
+
+            .hero-subtitle {
+                font-size: 15px;
+                margin-bottom: 25px;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                width: 100%;
+                gap: 10px;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 100%;
+                justify-content: center;
+                padding: 13px 28px;
+                font-size: 13px;
+            }
+
+            .section-badge {
+                font-size: 10px;
+                padding: 6px 18px;
+                margin-bottom: 12px;
+            }
+
+            .section-title {
+                font-size: 28px;
+                margin-bottom: 10px;
+            }
+
+            .section-subtitle {
+                font-size: 13px;
+                margin-bottom: 20px;
+            }
+
+            /* FEATURES - MAJOR FIXES FOR MOBILE */
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .feature-card {
+                padding: 20px 15px;
+            }
+
+            .feature-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+                margin-bottom: 12px;
+            }
+
+            .feature-title {
+                font-size: 16px;
+                margin-bottom: 8px;
+            }
+
+            .feature-desc {
+                font-size: 12px;
+                line-height: 1.4;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .stat-item {
+                padding: 20px 15px;
+            }
+
+            .stat-number {
+                font-size: 32px;
+            }
+
+            .stat-label {
+                font-size: 11px;
+            }
+
+            .testimonial-card {
+                padding: 25px 20px;
+            }
+
+            .testimonial-text {
+                font-size: 15px;
+            }
+
+            .author-avatar {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            .author-info h4 {
+                font-size: 16px;
+            }
+
+            .author-info p {
+                font-size: 12px;
+            }
+
+            .footer-wrapper {
+                padding: 85px 12px 25px;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 25px;
+                margin-bottom: 30px;
+            }
+
+            .footer-logo-section img {
+                width: 60px;
+                height: 60px;
+                margin-bottom: 15px;
+            }
+
+            .social-icon {
+                width: 45px;
+                height: 45px;
+                font-size: 18px;
+            }
+
+            .footer-section h3 {
+                font-size: 16px;
+                margin-bottom: 15px;
+            }
+
+            .footer-section p, .footer-section a {
+                font-size: 13px;
+                line-height: 1.8;
+            }
+
+            .footer-bottom {
+                padding-top: 25px;
+            }
+
+            .footer-copyright {
+                font-size: 11px;
+            }
+        }
+
+        /* Extra small devices */
+        @media (max-width: 480px) {
+            .content-wrapper {
+                padding: 80px 10px 10px;
+            }
+
+            .hero-title {
+                font-size: 32px;
+            }
+
+            .hero-title-chinese {
+                font-size: 20px;
+            }
+
+            .hero-subtitle {
+                font-size: 14px;
+            }
+
+            .section-title {
+                font-size: 26px;
+            }
+
+            .section-subtitle {
+                font-size: 12px;
+            }
+
+            .feature-card {
+                padding: 18px 12px;
+            }
+
+            .feature-title {
+                font-size: 15px;
+            }
+
+            .feature-desc {
+                font-size: 11px;
+            }
+
+            .stat-number {
+                font-size: 28px;
+            }
+
+            .testimonial-text {
+                font-size: 14px;
+            }
+        }
+
+        /* Landscape mobile fix */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .content-wrapper {
+                padding: 65px 12px 10px;
+            }
+
+            .hero-title {
+                font-size: 26px;
+            }
+
+            .hero-title-chinese {
+                font-size: 16px;
+            }
+
+            .hero-subtitle {
+                font-size: 12px;
+                margin-bottom: 12px;
+            }
+
+            .section-title {
+                font-size: 22px;
+            }
+
+            .section-subtitle {
+                font-size: 11px;
+                margin-bottom: 15px;
+            }
+
+            .scroll-hint {
+                display: none;
+            }
+
+            .btn {
+                padding: 10px 22px;
+                font-size: 12px;
+            }
+
+            .feature-card {
+                padding: 15px 10px;
+            }
+
+            .feature-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+                margin-bottom: 8px;
+            }
+
+            .feature-title {
+                font-size: 14px;
+                margin-bottom: 6px;
+            }
+
+            .feature-desc {
+                font-size: 10px;
+            }
+        }
+
+        /* Desktop - reduce footer spacing */
+        @media (min-width: 769px) {
+            .footer-wrapper {
+                padding: 60px 20px 30px;
+            }
+
+            .stats-grid {
+                gap: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Glassmorphism Navigation -->
+    <nav class="navbar" id="navbar">
+        <a href="#" class="navbar-logo">
+            <img src="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png" alt="WSA Logo">
+            <div class="navbar-logo-text">
+                <div class="navbar-logo-title">WUSHU ACADEMY</div>
+                <div class="navbar-logo-subtitle">武术体育学院</div>
+            </div>
+        </a>
+        <ul class="navbar-menu" id="navbarMenu">
+            <li><a data-menuanchor="home">HOME</a></li>
+            <li><a data-menuanchor="features">FEATURES</a></li>
+            <li><a data-menuanchor="stats">STATS</a></li>
+            <li><a data-menuanchor="testimonial">REVIEWS</a></li>
+            <li><a data-menuanchor="cta">JOIN US</a></li>
+            <li><a href="tutorial_videos_page.html">VIDEOS</a></li>
+        </ul>
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+            <i class="fas fa-bars"></i>
+        </button>
+    </nav>
+
+    <!-- fullPage.js Container -->
+    <div id="fullpage">
+
+        <!-- Section 1: Hero -->
+        <div class="section gradient-bg-1" data-anchor="home">
+            <div class="content-wrapper">
+                <div class="content-center">
+                    <div class="hero-badge animate-content">
+                        2026 WUSHU TRAINING
+                    </div>
+                    <h1 class="hero-title animate-content">
+                        MASTER THE<br> ART OF WUSHU
+                        <span class="hero-title-chinese">传承武术精神</span>
+                    </h1>
+                    <p class="hero-subtitle animate-content">
+                        Transform your body, mind, and spirit through the timeless wisdom of Chinese Wushu. Join our academy and unlock your true potential.
+                    </p>
+                    <div class="hero-buttons animate-content">
+                        <a href="pages/register.php" class="btn btn-primary">
+                            <span>Start Journey</span>
+                            <i class="fas fa-rocket"></i>
+                        </a>
+                        <a href="index.php" class="btn btn-secondary">
+                            <span>Student Portal</span>
+                            <i class="fas fa-sign-in-alt"></i>
+                        </a>
+                        <a href="pages/videos.php" class="btn btn-secondary">
+                            <span>Video Guides</span>
+                            <i class="fas fa-play-circle"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="scroll-hint">
+                <span class="scroll-hint-text">Swipe Up</span>
+                <i class="fas fa-chevron-down scroll-hint-icon"></i>
+            </div>
+        </div>
+
+        <!-- Section 2: Features -->
+        <div class="section gradient-bg-2" data-anchor="features">
+            <div class="content-wrapper">
+                <div class="content-center">
+                    <div class="section-badge animate-content">EXCELLENCE</div>
+                    <h2 class="section-title animate-content">Why We're Different</h2>
+                    <p class="section-subtitle animate-content">
+                        World-class martial arts training backed by cutting-edge technology
+                    </p>
+                    <div class="features-grid animate-content">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-user-ninja"></i>
+                            </div>
+                            <h3 class="feature-title">Ceritified Coaches</h3>
+                            <p class="feature-desc">Train under certified coaches with years of experience in wushu routines.</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                            <h3 class="feature-title">Champions Program</h3>
+                            <p class="feature-desc">Elite training pathways for national and international competitions with personalized coaching strategies.</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-heart-pulse"></i>
+                            </div>
+                            <h3 class="feature-title">Holistic Development</h3>
+                            <p class="feature-desc">Comprehensive programs focusing on physical fitness, mental discipline, and spiritual growth for all ages.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Stats -->
+        <div class="section gradient-bg-3" data-anchor="stats">
+            <div class="content-wrapper">
+                <div class="content-center">
+                    <div class="section-badge animate-content">OUR ACHIEVEMENTS</div>
+                    <h2 class="section-title animate-content">Numbers That Matter</h2>
+                    <p class="section-subtitle animate-content">
+                        Building a legacy of excellence, one student at a time
+                    </p>
+                    <div class="stats-grid animate-content">
+                        <div class="stat-item">
+                            <div class="stat-number">100+</div>
+                            <div class="stat-label">Students</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">5+</div>
+                            <div class="stat-label">Classes</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">20+</div>
+                            <div class="stat-label">Years</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">50+</div>
+                            <div class="stat-label">Championships</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Testimonial -->
+        <div class="section gradient-bg-4" data-anchor="testimonial">
+            <div class="content-wrapper">
+                <div class="content-center">
+                    <div class="section-badge animate-content">SUCCESS STORIES</div>
+                    <h2 class="section-title animate-content">What Students Say</h2>
+                    <div class="testimonial-card animate-content">
+                        <p class="testimonial-text">
+                            "Wushu Sport Academy is good."
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">JL</div>
+                            <div class="author-info">
+                                <h4>John Doe</h4>
+                                <p>KPM Awarder</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 5: CTA -->
+        <div class="section gradient-bg-5" data-anchor="cta">
+            <div class="content-wrapper">
+                <div class="content-center">
+                    <div class="section-badge animate-content">READY TO START?</div>
+                    <h2 class="section-title animate-content">Begin Your Legend</h2>
+                    <p class="section-subtitle animate-content">
+                        Join hundreds of students mastering Wushu.<br>Your transformation starts now.
+                    </p>
+                    <div class="hero-buttons animate-content">
+                        <a href="/pages/register.php" class="btn btn-primary">
+                            <span>Register Now</span>
+                            <i class="fas fa-bolt"></i>
+                        </a>
+                        <a href="/pages/videos.php" class="btn btn-secondary">
+                            <span>Watch Tutorials</span>
+                            <i class="fas fa-video"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 6: Footer -->
+        <div class="section gradient-bg-6" data-anchor="footer">
+            <div class="footer-wrapper">
+                <div class="content-center">
+                    <div class="footer-content animate-content">
+                        <div class="footer-logo-section">
+                            <img src="https://wushu-assets.s3.ap-southeast-1.amazonaws.com/Wushu+Sport+Academy+Circle+Yellow.png" alt="WSA Logo">
+                            <p style="font-size: 18px; font-weight: 700; color: #fbbf24; margin-top: 15px;">
+                                Wushu Sport Academy<br>
+                                <span style="font-size: 13px; color: rgba(255,255,255,0.7);">武术体育学院</span>
+                            </p>
+                            <div class="footer-social">
+                                <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                                <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                                <a href="#" class="social-icon"><i class="fab fa-youtube"></i></a>
+                                <a href="#" class="social-icon"><i class="fab fa-tiktok"></i></a>
+                            </div>
+                        </div>
+                        <div class="footer-section">
+                            <h3>Quick Links</h3>
+                            <a href="#home">Home</a>
+                            <a href="#features">Features</a>
+                            <a href="#stats">Stats</a>
+                            <a href="tutorial_videos_page.html">Videos</a>
+                        </div>
+                        <div class="footer-section">
+                            <h3>Contact</h3>
+                            <p>📧 admin@wushusportacademy.com</p>
+                        </div>
+                    </div>
+                    <div class="footer-bottom animate-content">
+                        <p class="footer-copyright">
+                            © 2025 Wushu Sport Academy. All Rights Reserved.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- fullPage.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullPage.js/4.0.20/fullpage.min.js"></script>
+
+    <script>
+        // Initialize fullPage.js
+        new fullpage('#fullpage', {
+            navigation: true,
+            navigationPosition: 'right',
+            navigationTooltips: ['Home', 'Features', 'Stats', 'Reviews', 'Join Us', 'Footer'],
+            showActiveTooltip: true,
+            scrollingSpeed: 800,
+            autoScrolling: true,
+            fitToSection: true,
+            fitToSectionDelay: 500,
+            scrollBar: false,
+            easing: 'easeInOutCubic',
+            easingcss3: 'ease',
+            keyboardScrolling: true,
+            animateAnchor: true,
+            recordHistory: true,
+            controlArrows: false,
+            verticalCentered: false,
+            fixedElements: '#navbar',
+            touchSensitivity: 5,
+            normalScrollElementTouchThreshold: 5,
+
+            // Animation on section leave
+            onLeave: function(origin, destination, direction){
+                const leavingSection = origin.item;
+                const contents = leavingSection.querySelectorAll('.animate-content');
+
+                // Exit animation
+                contents.forEach(content => {
+                    content.classList.remove('active');
+                    content.classList.add('exit');
+                });
+            },
+
+            // Animation on section load
+            afterLoad: function(origin, destination, direction){
+                const currentSection = destination.item;
+                const contents = currentSection.querySelectorAll('.animate-content');
+
+                // Reset and trigger entry animation
+                setTimeout(() => {
+                    contents.forEach(content => {
+                        content.classList.remove('exit');
+                        content.classList.add('active');
+                    });
+                }, 100);
+            },
+
+            // On page load
+            afterRender: function(){
+                // Activate first section animations
+                setTimeout(() => {
+                    const firstSection = document.querySelector('.section.active');
+                    if (firstSection) {
+                        const contents = firstSection.querySelectorAll('.animate-content');
+                        contents.forEach(content => {
+                            content.classList.add('active');
+                        });
+                    }
+                }, 300);
+            }
+        });
+
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const navbarMenu = document.getElementById('navbarMenu');
+
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', function() {
+                navbarMenu.classList.toggle('active');
+                const icon = mobileMenuBtn.querySelector('i');
+                icon.classList.toggle('fa-bars');
+                icon.classList.toggle('fa-times');
+            });
+        }
+
+        // Close mobile menu when clicking link
+        document.querySelectorAll('.navbar-menu a').forEach(link => {
+            link.addEventListener('click', function() {
+                navbarMenu.classList.remove('active');
+                if (mobileMenuBtn) {
+                    const icon = mobileMenuBtn.querySelector('i');
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+            });
+        });
+
+        // Prevent zoom on double tap
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
+</body>
+</html>

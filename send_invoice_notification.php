@@ -87,23 +87,36 @@ function sendInvoiceNotification($pdo, $invoiceId) {
         // Setup email - use fully qualified class name to avoid conflicts
         $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
         
-        // SMTP Configuration
-        $mail->isSMTP();
-        $mail->Host       = 'mail.wushusportacademy.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'admin@wushusportacademy.com';
-        $mail->Password   = 'P1}tKwojKgl0vdMv';
-        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-        $mail->CharSet    = 'UTF-8';
-        $mail->Encoding   = 'base64';
-        
-        error_log("[Invoice Notification] SMTP configured");
-        
-        // Recipients
-        $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
-        $mail->addAddress($recipientEmail, $recipientName);
-        $mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
+        // SMTP Configuration (existing code - keep as is)
+$mail->isSMTP();
+$mail->Host       = 'smtp.mailgun.org';
+$mail->SMTPAuth   = true;
+$mail->Username   = 'admin@wushusportacademy.com';
+$mail->Password   = 'ecba365b1738b89bf64a840726e5171e-df55650e-001e65fb';
+$mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+$mail->Port       = 587;
+$mail->CharSet    = 'UTF-8';
+$mail->Encoding   = 'base64';
+
+// **ADD THESE NEW CONFIGURATIONS**
+// Set sender/return path to match From address
+$mail->Sender = 'admin@wushusportacademy.com';
+
+// Add Message-ID and other anti-spam headers
+$mail->MessageID = sprintf("<%s@%s>", uniqid(), 'wushusportacademy.com');
+$mail->XMailer = ' '; // Hide PHPMailer signature to avoid spam triggers
+
+// Add List-Unsubscribe header (important for bulk emails)
+$mail->addCustomHeader('List-Unsubscribe', '<mailto:admin@wushusportacademy.com?subject=unsubscribe>');
+
+// Add precedence header for transactional emails
+$mail->addCustomHeader('Precedence', 'bulk');
+$mail->addCustomHeader('X-Priority', '3');
+
+// Recipients (existing code - keep as is)
+$mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
+$mail->addAddress($recipientEmail, $recipientName);
+$mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
         
         // Email content
         $mail->isHTML(true);

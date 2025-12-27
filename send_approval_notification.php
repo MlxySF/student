@@ -42,17 +42,29 @@ function sendApprovalNotification($registrationId, $conn) {
     
     $mail = new PHPMailer(true);
     try {
-        $mail->isSMTP();
-        $mail->Host       = 'mail.wushusportacademy.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'admin@wushusportacademy.com';
-        $mail->Password   = 'P1}tKwojKgl0vdMv';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
+        // SMTP Configuration (existing code - keep as is)
+$mail->isSMTP();
+$mail->Host       = 'smtp.mailgun.org';
+$mail->SMTPAuth   = true;
+$mail->Username   = 'admin@wushusportacademy.com';
+$mail->Password   = 'ecba365b1738b89bf64a840726e5171e-df55650e-001e65fb';
+$mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+$mail->Port       = 587;
+$mail->CharSet    = 'UTF-8';
+$mail->Encoding   = 'base64';
 
-        $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
-        $mail->addAddress($reg['email']);
-        $mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
+// **ADD THESE NEW CONFIGURATIONS**
+// Set sender/return path to match From address
+$mail->Sender = 'admin@wushusportacademy.com';
+
+// Add Message-ID and other anti-spam headers
+$mail->MessageID = sprintf("<%s@%s>", uniqid(), 'wushusportacademy.com');
+$mail->XMailer = ' '; // Hide PHPMailer signature to avoid spam triggers
+
+// Recipients (existing code - keep as is)
+$mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
+$mail->addAddress($reg['email']);
+$mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
 
         $mail->isHTML(true);
         $mail->CharSet = 'UTF-8';

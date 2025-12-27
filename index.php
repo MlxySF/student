@@ -34,7 +34,7 @@ function sendAdminPaymentNotification($paymentData) {
     try {
         error_log("[Admin Email] Sending payment notification to " . ADMIN_EMAIL);
         
-        $mail->isSMTP();
+        // SMTP Configuration (existing code - keep as is)
         $mail->isSMTP();
         $mail->Host       = 'mail.wushusportacademy.com';
         $mail->SMTPAuth   = true;
@@ -42,13 +42,23 @@ function sendAdminPaymentNotification($paymentData) {
         $mail->Password   = 'P1}tKwojKgl0vdMv';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
+        $mail->CharSet    = 'UTF-8';
+        $mail->Encoding   = 'base64';
 
-        $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
-        $mail->addAddress(ADMIN_EMAIL, ADMIN_NAME);
-        $mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
+// **ADD THESE NEW CONFIGURATIONS**
+// Set sender/return path to match From address
+$mail->Sender = 'admin@wushusportacademy.com';
+
+// Add Message-ID and other anti-spam headers
+$mail->MessageID = sprintf("<%s@%s>", uniqid(), 'wushusportacademy.com');
+$mail->XMailer = ' '; // Hide PHPMailer signature to avoid spam triggers
+
+// Recipients (existing code - keep as is)
+$mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
+$mail->addAddress(ADMIN_EMAIL, ADMIN_NAME);
+$mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
 
         $mail->isHTML(true);
-        $mail->CharSet = 'UTF-8';
         $mail->Subject = '💳 Payment Upload: ' . $paymentData['student_name'] . ' - RM ' . $paymentData['amount'];
         $mail->Body    = getAdminPaymentEmailHTML($paymentData);
         $mail->AltBody = "Payment Upload: {$paymentData['student_name']} paid RM {$paymentData['amount']}";

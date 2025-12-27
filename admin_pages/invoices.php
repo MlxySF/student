@@ -4,7 +4,6 @@ $filter_month = isset($_GET['filter_month']) ? trim($_GET['filter_month']) : '';
 $filter_type = isset($_GET['filter_type']) ? trim($_GET['filter_type']) : '';
 $filter_status = isset($_GET['filter_status']) ? trim($_GET['filter_status']) : '';
 $filter_invoice_number = isset($_GET['filter_invoice_number']) ? trim($_GET['filter_invoice_number']) : '';
-$filter_student_name = isset($_GET['filter_student_name']) ? trim($_GET['filter_student_name']) : ''; // NEW: Student name filter
 
 // Parse the filter_month to handle year-only or year-month format
 $filter_year = '';
@@ -81,13 +80,6 @@ if ($filter_status) {
 if ($filter_invoice_number) {
     $where_conditions_join[] = "i.invoice_number LIKE ?";
     $params_join[] = '%' . $filter_invoice_number . '%';
-}
-
-// NEW: Add student name filter
-if ($filter_student_name) {
-    $where_conditions_join[] = "(s.full_name LIKE ? OR s.student_id LIKE ?)";
-    $params_join[] = '%' . $filter_student_name . '%';
-    $params_join[] = '%' . $filter_student_name . '%';
 }
 
 // Get invoice statistics
@@ -361,14 +353,7 @@ embed[type="application/pdf"] {
         <form method="GET" action="" class="row g-3 align-items-end">
             <input type="hidden" name="page" value="invoices">
             
-            <!-- NEW: Student Name Search -->
-            <div class="col-md-3">
-                <label class="form-label"><i class="fas fa-user"></i> Student Name / ID</label>
-                <input type="text" name="filter_student_name" class="form-control" value="<?php echo htmlspecialchars($filter_student_name); ?>" placeholder="Enter name or student ID">
-                <small class="text-muted">Search by student name or ID</small>
-            </div>
-            
-            <!-- Invoice Number Search -->
+            <!-- NEW: Invoice Number Search -->
             <div class="col-md-3">
                 <label class="form-label"><i class="fas fa-hashtag"></i> Invoice Number</label>
                 <input type="text" name="filter_invoice_number" class="form-control" value="<?php echo htmlspecialchars($filter_invoice_number); ?>" placeholder="INV-20251222-0001">
@@ -412,19 +397,16 @@ embed[type="application/pdf"] {
                 </button>
             </div>
             
-            <?php if ($filter_month || $filter_type || $filter_status || $filter_invoice_number || $filter_student_name): ?>
+            <?php if ($filter_month || $filter_type || $filter_status || $filter_invoice_number): ?>
             <div class="col-md-1">
                 <a href="?page=invoices" class="btn btn-secondary w-100"><i class="fas fa-times"></i></a>
             </div>
             <?php endif; ?>
         </form>
         
-        <?php if ($filter_month || $filter_type || $filter_status || $filter_invoice_number || $filter_student_name): ?>
+        <?php if ($filter_month || $filter_type || $filter_status || $filter_invoice_number): ?>
             <div class="alert alert-info mt-3 mb-0">
                 <i class="fas fa-info-circle"></i> <strong>Active Filters:</strong>
-                <?php if ($filter_student_name): ?>
-                    <span class="badge bg-primary ms-2">Student: <?php echo htmlspecialchars($filter_student_name); ?></span>
-                <?php endif; ?>
                 <?php if ($filter_invoice_number): ?>
                     <span class="badge bg-primary ms-2">Invoice: <?php echo htmlspecialchars($filter_invoice_number); ?></span>
                 <?php endif; ?>
@@ -492,10 +474,7 @@ embed[type="application/pdf"] {
         $export_url .= 'filter_month=' . urlencode($filter_month) . '&';
     }
     if ($filter_invoice_number) {
-        $export_url .= 'filter_invoice_number=' . urlencode($filter_invoice_number) . '&';
-    }
-    if ($filter_student_name) {
-        $export_url .= 'filter_student_name=' . urlencode($filter_student_name);
+        $export_url .= 'filter_invoice_number=' . urlencode($filter_invoice_number);
     }
     $export_url = rtrim($export_url, '?&');
     ?>
@@ -579,7 +558,7 @@ embed[type="application/pdf"] {
             </div>
         <?php else: ?>
             <div class="alert alert-info"><i class="fas fa-info-circle"></i> 
-                <?php if ($filter_month || $filter_type || $filter_status || $filter_invoice_number || $filter_student_name): ?>
+                <?php if ($filter_month || $filter_type || $filter_status || $filter_invoice_number): ?>
                     No invoices match your selected filters. Try adjusting your search criteria.
                 <?php else: ?>
                     No invoices found. Use the filter above to search for invoices.

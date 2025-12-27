@@ -543,20 +543,31 @@ function sendRegistrationEmail($toEmail, $studentName, $registrationNumber, $chi
     try {
         error_log("[Email] Sending to: {$toEmail}, isNewParent: " . ($isNewParent ? 'YES' : 'NO') . ", parentPassword: " . ($parentPassword ?? 'NULL'));
         
-        $mail->isSMTP();
-        $mail->Host       = 'mail.wushusportacademy.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'admin@wushusportacademy.com';
-        $mail->Password   = 'P1}tKwojKgl0vdMv';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
+        // SMTP Configuration (existing code - keep as is)
+$mail->isSMTP();
+$mail->Host       = 'smtp.mailgun.org';
+$mail->SMTPAuth   = true;
+$mail->Username   = 'admin@wushusportacademy.com';
+$mail->Password   = 'ecba365b1738b89bf64a840726e5171e-df55650e-001e65fb';
+$mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+$mail->Port       = 587;
+$mail->CharSet    = 'UTF-8';
+$mail->Encoding   = 'base64';
 
-        $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
-        $mail->addAddress($toEmail);
-        $mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
+// **ADD THESE NEW CONFIGURATIONS**
+// Set sender/return path to match From address
+$mail->Sender = 'admin@wushusportacademy.com';
+
+// Add Message-ID and other anti-spam headers
+$mail->MessageID = sprintf("<%s@%s>", uniqid(), 'wushusportacademy.com');
+$mail->XMailer = ' '; // Hide PHPMailer signature to avoid spam triggers
+
+// Recipients (existing code - keep as is)
+$mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
+$mail->addAddress($toEmail);
+$mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
 
         $mail->isHTML(true);
-        $mail->CharSet = 'UTF-8';
         $mail->Subject = '🎊 Wushu Sport Academy - Child Registration Successful';
         $mail->Body    = getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $childPassword, $studentStatus, $isNewParent, $parentPassword);
         $mail->AltBody = "Registration Successful!";
@@ -578,20 +589,30 @@ function sendAdminRegistrationNotification($registrationData) {
     try {
         error_log("[Admin Email] Sending registration notification to " . ADMIN_EMAIL);
         
-        $mail->isSMTP();
+        // SMTP Configuration (existing code - keep as is)
         $mail->isSMTP();
         $mail->Host       = 'mail.wushusportacademy.com';
         $mail->SMTPAuth   = true;
         $mail->Username   = 'admin@wushusportacademy.com';
-        $mail->Password   = 'UZa;nENf]!xqpRak';
+        $mail->Password   = 'P1}tKwojKgl0vdMv';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
+        $mail->CharSet    = 'UTF-8';
+        $mail->Encoding   = 'base64';
 
-        $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
-        $mail->addAddress(ADMIN_EMAIL, ADMIN_NAME);
+// Set sender/return path to match From address
+$mail->Sender = 'admin@wushusportacademy.com';
+
+// Add Message-ID and other anti-spam headers
+$mail->MessageID = sprintf("<%s@%s>", uniqid(), 'wushusportacademy.com');
+$mail->XMailer = ' '; // Hide PHPMailer signature to avoid spam triggers
+
+// Recipients (existing code - keep as is)
+$mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
+$mail->addAddress(ADMIN_EMAIL, ADMIN_NAME);
+$mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
 
         $mail->isHTML(true);
-        $mail->CharSet = 'UTF-8';
         $mail->Subject = '🔔 New Registration: ' . $registrationData['student_name'] . ' - ' . $registrationData['registration_number'];
         $mail->Body    = getAdminRegistrationEmailHTML($registrationData);
         $mail->AltBody = "New Registration: {$registrationData['student_name']} ({$registrationData['registration_number']})";
@@ -757,16 +778,16 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
         
         $parentSection = "
         <div style='background: #fff3cd; border-left: 4px solid #ffc107; padding: 24px; margin: 24px 0; border-radius: 8px;'>
-            <h3 style='margin: 0 0 16px 0; color: #856404; font-size: 20px;'>🔑 Parent Account Created!</h3>
-            <p style='margin: 0 0 12px 0; color: #856404; font-size: 15px;'><strong>This is your FIRST child registration.</strong> A parent account has been created for you to manage all your children.</p>
+            <h3 style='margin: 0 0 16px 0; color: #856404; font-size: 20px;'>🔑 Account Created!</h3>
+            <p style='margin: 0 0 12px 0; color: #856404; font-size: 15px;'><strong>This is your FIRST registration.</strong> An account has been created for you to manage all your children.</p>
             
             <table style='width: 100%; margin: 16px 0;'>
                 <tr>
-                    <td style='padding: 8px 0; color: #856404; font-weight: 600; width: 40%;'>Parent Login Email:</td>
+                    <td style='padding: 8px 0; color: #856404; font-weight: 600; width: 40%;'>Login Email:</td>
                     <td style='padding: 8px 0; color: #856404;'>{$toEmail}</td>
                 </tr>
                 <tr>
-                    <td style='padding: 12px 0 8px 0; color: #856404; font-weight: 600; vertical-align: top;'>Parent Password:</td>
+                    <td style='padding: 12px 0 8px 0; color: #856404; font-weight: 600; vertical-align: top;'>Password:</td>
                     <td style='padding: 12px 0 8px 0;'>
                         <div style='font-size: 28px; color: #dc2626; font-weight: bold; font-family: Courier, monospace; letter-spacing: 4px; background: #fff; padding: 16px 20px; border-radius: 8px; display: inline-block; border: 2px solid #ffc107;'>{$parentPassword}</div>
                         <br>
@@ -778,7 +799,7 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
             <div style='background: #fff; padding: 12px 16px; border-radius: 6px; margin-top: 16px;'>
                 <p style='margin: 0; font-size: 14px; color: #856404;'>⚠️ <strong>IMPORTANT:</strong> Save this password securely! You'll need it to:</p>
                 <ul style='margin: 8px 0 0 20px; padding: 0; color: #856404; font-size: 14px;'>
-                    <li>Login to the parent portal</li>
+                    <li>Login to the dashboard system</li>
                     <li>View all your children's data</li>
                     <li>Manage payments and attendance</li>
                     <li>Register additional children</li>
@@ -790,8 +811,8 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
         // ADDITIONAL CHILD - Show confirmation
         $parentSection = "
         <div style='background: #d1ecf1; border-left: 4px solid #0dcaf0; padding: 20px; margin: 20px 0; border-radius: 8px;'>
-            <h3 style='margin: 0 0 12px 0; color: #0c5460; font-size: 18px;'>✅ Child Added to Your Parent Account</h3>
-            <p style='margin: 0; color: #0c5460; font-size: 14px;'>This child has been successfully linked to your existing parent account. Login with your parent email and password to view all children.</p>
+            <h3 style='margin: 0 0 12px 0; color: #0c5460; font-size: 18px;'>✅ Child Added to Your Account</h3>
+            <p style='margin: 0; color: #0c5460; font-size: 14px;'>This child has been successfully linked to your existing account. Login with your parent email and password to view all children.</p>
         </div>
         ";
     }
@@ -817,7 +838,7 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
             {$parentSection}
             
             <div style='background: #f0fdf4; border-left: 4px solid #22c55e; padding: 20px; margin: 24px 0; border-radius: 8px;'>
-                <h3 style='margin: 0 0 16px 0; color: #166534; font-size: 18px;'>👶 Child Account Details</h3>
+                <h3 style='margin: 0 0 16px 0; color: #166534; font-size: 18px;'>👶 Child Details</h3>
                 <table style='width: 100%;'>
                     <tr>
                         <td style='padding: 6px 0; color: #166534; font-weight: 600; width: 40%;'>Child Name:</td>
@@ -836,7 +857,7 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
             
             <div style='background: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 24px 0;'>
                 <p style='margin: 0 0 8px 0; font-weight: 600; color: #1e40af; font-size: 16px;'>💡 Register More Children</p>
-                <p style='margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;'>To register additional children, simply use the <strong>same email address</strong> ({$toEmail}) when filling the registration form. All your children will be automatically linked to your parent account!</p>
+                <p style='margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;'>To register additional children, simply use the <strong>same email address</strong> ({$toEmail}) when filling the registration form. All your children will be automatically linked to your existing account!</p>
             </div>
             
             <div style='background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 8px; margin: 24px 0;'>
@@ -849,7 +870,7 @@ function getEmailHTMLContent($studentName, $registrationNumber, $toEmail, $child
                 <ol style='margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.8;'>
                     <li>Your payment receipt is under review by the academy</li>
                     <li>You will receive approval notification via email</li>
-                    <li>Login to the parent portal to view separate invoices for each class (registration fee is split equally)</li>
+                    <li>Login to the dashbaord system to view separate invoices for each class (registration fee is split equally)</li>
                     <li>After approval, all invoice statuses will change to Paid</li>
                     <li>Your child has been automatically enrolled in the selected classes</li>
                 </ol>

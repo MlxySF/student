@@ -25,23 +25,32 @@ function sendRejectionEmail($toEmail, $studentName, $registrationNumber, $reject
     try {
         error_log("[Rejection Email] Sending to: {$toEmail}, Student: {$studentName}, Reg#: {$registrationNumber}");
         
-        // SMTP Configuration
-        $mail->isSMTP();
-        $mail->Host       = 'mail.wushusportacademy.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'admin@wushusportacademy.com';
-        $mail->Password   = 'P1}tKwojKgl0vdMv';
-        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
+        // SMTP Configuration (existing code - keep as is)
+$mail->isSMTP();
+$mail->Host       = 'smtp.mailgun.org';
+$mail->SMTPAuth   = true;
+$mail->Username   = 'admin@wushusportacademy.com';
+$mail->Password   = 'ecba365b1738b89bf64a840726e5171e-df55650e-001e65fb';
+$mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+$mail->Port       = 587;
+$mail->CharSet    = 'UTF-8';
+$mail->Encoding   = 'base64';
 
-        // Email Headers
-        $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
-        $mail->addAddress($toEmail);
-        $mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
+// **ADD THESE NEW CONFIGURATIONS**
+// Set sender/return path to match From address
+$mail->Sender = 'admin@wushusportacademy.com';
+
+// Add Message-ID and other anti-spam headers
+$mail->MessageID = sprintf("<%s@%s>", uniqid(), 'wushusportacademy.com');
+$mail->XMailer = ' '; // Hide PHPMailer signature to avoid spam triggers
+
+// Recipients (existing code - keep as is)
+$mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
+$mail->addAddress($toEmail);
+$mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
 
         // Email Content
         $mail->isHTML(true);
-        $mail->CharSet = 'UTF-8';
         $mail->Subject = '❌ Wushu Sport Academy - Registration Not Approved';
         $mail->Body    = getRejectionEmailHTML($studentName, $registrationNumber, $rejectReason);
         $mail->AltBody = "Your registration for {$studentName} (#{$registrationNumber}) was not approved. Please contact us or register again.";

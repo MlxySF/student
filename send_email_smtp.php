@@ -17,23 +17,29 @@ function sendRegistrationEmailSMTP($toEmail, $studentName, $registrationNumber, 
 
     try {
         // Server settings
-        $mail->isSMTP();
-        $mail->Host       = 'mail.wushusportacademy.com'; // Change to your SMTP server
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'admin@wushusportacademy.com'; // Your email
-        $mail->Password   = 'P1}tKwojKgl0vdMv'; // Your email app password
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-        
-        // For Gmail, you need to:
-        // 1. Enable 2-factor authentication
-        // 2. Generate an "App Password" from Google Account settings
-        // 3. Use that app password here
+        // SMTP Configuration (existing code - keep as is)
+$mail->isSMTP();
+$mail->Host       = 'smtp.mailgun.org';
+$mail->SMTPAuth   = true;
+$mail->Username   = 'admin@wushusportacademy.com';
+$mail->Password   = 'ecba365b1738b89bf64a840726e5171e-df55650e-001e65fb';
+$mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+$mail->Port       = 587;
+$mail->CharSet    = 'UTF-8';
+$mail->Encoding   = 'base64';
 
-        // Recipients
-        $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
-        $mail->addAddress($toEmail, $studentName);
-        $mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
+// **ADD THESE NEW CONFIGURATIONS**
+// Set sender/return path to match From address
+$mail->Sender = 'admin@wushusportacademy.com';
+
+// Add Message-ID and other anti-spam headers
+$mail->MessageID = sprintf("<%s@%s>", uniqid(), 'wushusportacademy.com');
+$mail->XMailer = ' '; // Hide PHPMailer signature to avoid spam triggers
+
+// Recipients (existing code - keep as is)
+$mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
+$mail->addAddress($toEmail, $studentName);
+$mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
 
         // Content
         $mail->isHTML(true);

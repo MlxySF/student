@@ -28,22 +28,32 @@ function sendApprovalEmail($parentEmail, $studentName, $registrationNumber, $stu
     
     try {
         // Server settings
-        $mail->isSMTP();
-        $mail->Host       = 'mail.wushusportacademy.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'admin@wushusportacademy.com';
-        $mail->Password   = 'P1}tKwojKgl0vdMv';
-        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
+        // SMTP Configuration (existing code - keep as is)
+$mail->isSMTP();
+$mail->Host       = 'smtp.mailgun.org';
+$mail->SMTPAuth   = true;
+$mail->Username   = 'admin@wushusportacademy.com';
+$mail->Password   = 'ecba365b1738b89bf64a840726e5171e-df55650e-001e65fb';
+$mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+$mail->Port       = 587;
+$mail->CharSet    = 'UTF-8';
+$mail->Encoding   = 'base64';
 
-        // Recipients
-        $mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
-        $mail->addAddress($parentEmail);
-        $mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
+// **ADD THESE NEW CONFIGURATIONS**
+// Set sender/return path to match From address
+$mail->Sender = 'admin@wushusportacademy.com';
+
+// Add Message-ID and other anti-spam headers
+$mail->MessageID = sprintf("<%s@%s>", uniqid(), 'wushusportacademy.com');
+$mail->XMailer = ' '; // Hide PHPMailer signature to avoid spam triggers
+
+// Recipients (existing code - keep as is)
+$mail->setFrom('admin@wushusportacademy.com', 'Wushu Sport Academy');
+$mail->addAddress($parentEmail);
+$mail->addReplyTo('admin@wushusportacademy.com', 'Wushu Sport Academy');
 
         // Content
         $mail->isHTML(true);
-        $mail->CharSet = 'UTF-8';
         $mail->Subject = '✅ Registration Approved - Wushu Sport Academy';
         $mail->Body    = getApprovalEmailHTML($parentEmail, $studentName, $registrationNumber, $studentStatus, $parentPassword, $isFirstChild);
         $mail->AltBody = "Your child {$studentName}'s registration has been approved!";
@@ -86,7 +96,7 @@ function getApprovalEmailHTML($parentEmail, $studentName, $registrationNumber, $
     } else {
         $loginSection = "
         <div style='background: #e0f2fe; border-left: 4px solid #0ea5e9; padding: 16px; margin: 24px 0; border-radius: 8px;'>
-            <p style='margin: 0; color: #075985; font-size: 14px;'>🔐 <strong>Login to Parent Portal:</strong> Use your existing parent email and password (parent's IC last 4 digit number) to view all your children.</p>
+            <p style='margin: 0; color: #075985; font-size: 14px;'>🔐 <strong>Login to your dashboard:</strong> Use your existing parent email and password to view all your children.</p>
         </div>
         ";
     }
@@ -156,7 +166,7 @@ function getApprovalEmailHTML($parentEmail, $studentName, $registrationNumber, $
             <!-- CTA Button -->
             <div style='text-align: center; margin: 32px 0;'>
                 <a href='{$portalUrl}' style='display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);'>
-                    🚀 Access Parent Portal
+                    🚀 Access Your Dashboard
                 </a>
             </div>
         </div>
