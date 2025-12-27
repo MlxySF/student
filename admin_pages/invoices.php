@@ -141,11 +141,12 @@ if (count($where_conditions_join) > 0) {
 $sql .= "
     ORDER BY 
         CASE 
-            WHEN i.status = 'unpaid' THEN 1
-            WHEN i.status = 'pending' THEN 2
-            WHEN i.status = 'overdue' THEN 3
+            WHEN i.status = 'pending' THEN 1
+            WHEN i.status = 'unpaid' THEN 2
+            WHEN i.status = 'rejected' THEN 3
             WHEN i.status = 'paid' THEN 4
-            ELSE 5
+            WHEN i.status = 'overdue' THEN 5
+            ELSE 6
         END,
         i.created_at DESC
 ";
