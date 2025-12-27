@@ -1,0 +1,32 @@
+BULK DELETE ADDITIONS FOR STUDENTS.PHP:
+
+1. After "Reset Filters" button (around line 62), ADD:
+                    <button id="bulkSelectBtn-students" class="btn btn-primary ms-2">
+                        <i class="fas fa-check-square"></i> Select
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bulk Actions Bar -->
+        <div id="bulkActions-students" class="bulk-actions">
+            <div class="d-flex align-items-center gap-3">
+                <input type="checkbox" id="selectAll-students" class="bulk-checkbox form-check-input">
+                <label for="selectAll-students" class="form-check-label fw-bold mb-0">Select All</label>
+                <button id="bulkDeleteBtn-students" class="btn btn-bulk-delete" disabled>
+                    <i class="fas fa-trash-alt"></i> Delete Selected
+                </button>
+            </div>
+        </div>
+
+2. In table header (around line 74), ADD checkbox column:
+                    <tr>
+                        <th style="width: 40px;"></th>  <!-- ADD THIS LINE -->
+                        <th>Student ID</th>
+
+3. In table body rows (around line 87), ADD checkbox:
+                    <tr>
+                        <td>  <!-- ADD THIS TD -->
+                            <input type="checkbox" class="bulk-checkbox bulk-checkbox-students form-check-input" value="<?php echo $student['id']; ?>">
+                        </td>
+                        <td><strong><?php echo htmlspecialchars($student['registration_number']); ?></strong></td>
