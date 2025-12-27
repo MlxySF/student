@@ -112,7 +112,7 @@ $mail->isSMTP();
 $mail->Host       = 'smtp.mailgun.org';
 $mail->SMTPAuth   = true;
 $mail->Username   = 'admin@wushusportacademy.com';
-$mail->Password   = 'ecba365b1738b89bf64a840726e5171e-df55650e-001e65fb';
+$mail->Password   = 'mailgun api here';
 $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
 $mail->Port       = 587;
 $mail->CharSet    = 'UTF-8';
