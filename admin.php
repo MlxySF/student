@@ -1727,7 +1727,7 @@ $page = $_GET['page'] ?? 'login';
         });
     });
 
-    // ✨ ENHANCED: DataTables with customizable page length selector
+    // ✨ FIXED: DataTables - Disable initial sorting to respect SQL ORDER BY
     $(document).ready(function() {
         $('.data-table').DataTable({
             pageLength: 10,
@@ -1735,7 +1735,7 @@ $page = $_GET['page'] ?? 'login';
                 [10, 25, 50, 100, -1],
                 ['10 rows', '25 rows', '50 rows', '100 rows', 'Show all']
             ],
-            order: [[0, 'desc']],
+            order: [], // Disable initial sorting - respect server-side SQL order
             language: {
                 lengthMenu: '<i class="fas fa-list"></i> Display _MENU_ per page',
                 info: 'Showing _START_ to _END_ of _TOTAL_ entries',
